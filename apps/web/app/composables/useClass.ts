@@ -8,7 +8,7 @@ export const useClass = () => {
 
   const fetchClasses = async (schoolId: string, academicYearId?: string) => {
     try {
-      const res: any = await fetcher(`/sekolah/${schoolId}/kelas`, {
+      const res: any = await fetcher(`/school/${schoolId}/class`, {
         query: academicYearId ? { academic_year_id: academicYearId } : {}
       })
       if (res.success) {
@@ -21,7 +21,7 @@ export const useClass = () => {
 
   const fetchClassStudents = async (schoolId: string, classId: string) => {
     try {
-      const res: any = await fetcher(`/sekolah/${schoolId}/kelas/${classId}/siswa`)
+      const res: any = await fetcher(`/school/${schoolId}/class/${classId}/student`)
       if (res.success) {
         classStudents.value = res.data
       }
@@ -32,7 +32,7 @@ export const useClass = () => {
 
   const fetchTeachers = async (schoolId: string) => {
     try {
-      const res: any = await fetcher(`/sekolah/${schoolId}/kelas/guru`)
+      const res: any = await fetcher(`/school/${schoolId}/class/teacher`)
       if (res.success) {
         teachers.value = res.data
       }
@@ -42,7 +42,7 @@ export const useClass = () => {
   }
 
   const createClass = async (schoolId: string, data: any) => {
-    const res: any = await fetcher(`/sekolah/${schoolId}/kelas`, {
+    const res: any = await fetcher(`/school/${schoolId}/class`, {
       method: 'POST',
       body: data
     })
@@ -51,7 +51,7 @@ export const useClass = () => {
   }
 
   const updateClass = async (schoolId: string, id: string, data: any) => {
-    const res: any = await fetcher(`/sekolah/${schoolId}/kelas/${id}`, {
+    const res: any = await fetcher(`/school/${schoolId}/class/${id}`, {
       method: 'PUT',
       body: data
     })
@@ -60,7 +60,7 @@ export const useClass = () => {
   }
 
   const deleteClass = async (schoolId: string, id: string, academicYearId?: string) => {
-    const res = await fetcher(`/sekolah/${schoolId}/kelas/${id}`, {
+    const res = await fetcher(`/school/${schoolId}/class/${id}`, {
       method: 'DELETE'
     })
     await fetchClasses(schoolId, academicYearId)

@@ -6,7 +6,7 @@ export const useExtracurricular = () => {
 
   const fetchExtracurriculars = async (schoolId: string) => {
     try {
-      const res: any = await fetcher(`/sekolah/${schoolId}/ekskul`)
+      const res: any = await fetcher(`/school/${schoolId}/extracurricular`)
       if (res.success) {
         extracurriculars.value = res.data
       }
@@ -16,7 +16,7 @@ export const useExtracurricular = () => {
   }
 
   const createExtracurricular = async (schoolId: string, data: any) => {
-    const res: any = await fetcher(`/sekolah/${schoolId}/ekskul`, {
+    const res: any = await fetcher(`/school/${schoolId}/extracurricular`, {
       method: 'POST',
       body: data
     })
@@ -25,7 +25,7 @@ export const useExtracurricular = () => {
   }
 
   const updateExtracurricular = async (schoolId: string, id: string, data: any) => {
-    const res: any = await fetcher(`/sekolah/${schoolId}/ekskul/${id}`, {
+    const res: any = await fetcher(`/school/${schoolId}/extracurricular/${id}`, {
       method: 'PUT',
       body: data
     })
@@ -34,7 +34,7 @@ export const useExtracurricular = () => {
   }
 
   const deleteExtracurricular = async (schoolId: string, id: string) => {
-    const res = await fetcher(`/sekolah/${schoolId}/ekskul/${id}`, {
+    const res = await fetcher(`/school/${schoolId}/extracurricular/${id}`, {
       method: 'DELETE'
     })
     await fetchExtracurriculars(schoolId)

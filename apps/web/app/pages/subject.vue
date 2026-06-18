@@ -22,6 +22,14 @@ const selectedFoundationId = ref('')
 const selectedSchoolId = ref('')
 const typeFilter = ref('') // all
 
+const selectedSchool = computed(() => {
+  return schools.value.find(s => s.id === selectedSchoolId.value)
+})
+
+const selectedSchoolLevel = computed(() => {
+  return selectedSchool.value?.level || ''
+})
+
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 
@@ -92,15 +100,20 @@ watch(typeFilter, async (newVal) => {
   }
 })
 
+watch(selectedSchoolLevel, (newVal) => {
+  subjectForm.level = newVal
+}, { immediate: true })
+
 const handleCreateSubject = async () => {
   try {
+    subjectForm.level = selectedSchoolLevel.value
     const res = await createSubject(selectedSchoolId.value, { ...subjectForm })
     if (res.success) {
       showCreateModal.value = false
       Object.assign(subjectForm, {
         name: '',
         code: '',
-        level: '',
+        level: selectedSchoolLevel.value,
         subject_category_id: '',
         is_active: true
       })
@@ -122,7 +135,7 @@ const openEditModal = (sub: any) => {
   Object.assign(editForm, {
     name: sub.name,
     code: sub.code,
-    level: sub.level || '',
+    level: selectedSchoolLevel.value || sub.level || '',
     subject_category_id: sub.subject_category_id || '',
     is_active: !!sub.is_active
   })
@@ -272,7 +285,16 @@ const handleDeleteSubject = async (id: string) => {
         <BaseInput v-model="subjectForm.name" label="Nama Mata Pelajaran" placeholder="Contoh: Matematika Wajib" required />
         <div class="grid grid-cols-2 gap-4">
           <BaseInput v-model="subjectForm.code" label="Kode Mapel" placeholder="Contoh: MTK" required />
-          <BaseInput v-model="subjectForm.level" label="Tingkat / Jenjang" placeholder="Contoh: SMP" />
+          <div class="flex flex-col gap-1.5 w-full">
+            <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tingkat / Jenjang</label>
+            <select v-model="subjectForm.level" disabled class="w-full bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none opacity-70 cursor-not-allowed">
+              <option value="">Pilih Tingkat</option>
+              <option value="TK">TK / KB / PAUD</option>
+              <option value="SD">SD</option>
+              <option value="SMP">SMP</option>
+              <option value="SMA">SMA / SMK</option>
+            </select>
+          </div>
         </div>
         
         <div class="flex flex-col gap-1.5 w-full">
@@ -301,7 +323,16 @@ const handleDeleteSubject = async (id: string) => {
         <BaseInput v-model="editForm.name" label="Nama Mata Pelajaran" placeholder="Contoh: Matematika Wajib" required />
         <div class="grid grid-cols-2 gap-4">
           <BaseInput v-model="editForm.code" label="Kode Mapel" placeholder="Contoh: MTK" required />
-          <BaseInput v-model="editForm.level" label="Tingkat / Jenjang" placeholder="Contoh: SMP" />
+          <div class="flex flex-col gap-1.5 w-full">
+            <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tingkat / Jenjang</label>
+            <select v-model="editForm.level" disabled class="w-full bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none opacity-70 cursor-not-allowed">
+              <option value="">Pilih Tingkat</option>
+              <option value="TK">TK / KB / PAUD</option>
+              <option value="SD">SD</option>
+              <option value="SMP">SMP</option>
+              <option value="SMA">SMA / SMK</option>
+            </select>
+          </div>
         </div>
         
         <div class="flex flex-col gap-1.5 w-full">

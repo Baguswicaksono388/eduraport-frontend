@@ -6,7 +6,7 @@ export const useAcademicYear = () => {
 
   const fetchAcademicYears = async (schoolId: string) => {
     try {
-      const res: any = await fetcher(`/sekolah/${schoolId}/tahun-ajaran`)
+      const res: any = await fetcher(`/school/${schoolId}/academic-year`)
       if (res.success) {
         academicYears.value = res.data
       }
@@ -16,7 +16,7 @@ export const useAcademicYear = () => {
   }
 
   const createAcademicYear = async (schoolId: string, data: any) => {
-    const res: any = await fetcher(`/sekolah/${schoolId}/tahun-ajaran`, {
+    const res: any = await fetcher(`/school/${schoolId}/academic-year`, {
       method: 'POST',
       body: data
     })
@@ -25,7 +25,7 @@ export const useAcademicYear = () => {
   }
 
   const updateAcademicYear = async (schoolId: string, id: string, data: any) => {
-    const res: any = await fetcher(`/sekolah/${schoolId}/tahun-ajaran/${id}`, {
+    const res: any = await fetcher(`/school/${schoolId}/academic-year/${id}`, {
       method: 'PUT',
       body: data
     })
@@ -34,7 +34,7 @@ export const useAcademicYear = () => {
   }
 
   const deleteAcademicYear = async (schoolId: string, id: string) => {
-    const res = await fetcher(`/sekolah/${schoolId}/tahun-ajaran/${id}`, {
+    const res = await fetcher(`/school/${schoolId}/academic-year/${id}`, {
       method: 'DELETE'
     })
     await fetchAcademicYears(schoolId)
@@ -42,7 +42,7 @@ export const useAcademicYear = () => {
   }
 
   const activateAcademicYear = async (schoolId: string, id: string) => {
-    const res: any = await fetcher(`/sekolah/${schoolId}/tahun-ajaran/${id}/activate`, {
+    const res: any = await fetcher(`/school/${schoolId}/academic-year/${id}/activate`, {
       method: 'PUT'
     })
     await fetchAcademicYears(schoolId)

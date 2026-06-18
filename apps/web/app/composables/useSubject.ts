@@ -6,7 +6,7 @@ export const useSubject = () => {
 
   const fetchSubjects = async (schoolId: string, type?: string) => {
     try {
-      const res: any = await fetcher(`/sekolah/${schoolId}/mata-pelajaran`, {
+      const res: any = await fetcher(`/school/${schoolId}/subject`, {
         query: type ? { type } : {}
       })
       if (res.success) {
@@ -18,7 +18,7 @@ export const useSubject = () => {
   }
 
   const createSubject = async (schoolId: string, data: any) => {
-    const res: any = await fetcher(`/sekolah/${schoolId}/mata-pelajaran`, {
+    const res: any = await fetcher(`/school/${schoolId}/subject`, {
       method: 'POST',
       body: data
     })
@@ -27,7 +27,7 @@ export const useSubject = () => {
   }
 
   const updateSubject = async (schoolId: string, id: string, data: any) => {
-    const res: any = await fetcher(`/sekolah/${schoolId}/mata-pelajaran/${id}`, {
+    const res: any = await fetcher(`/school/${schoolId}/subject/${id}`, {
       method: 'PUT',
       body: data
     })
@@ -36,7 +36,7 @@ export const useSubject = () => {
   }
 
   const deleteSubject = async (schoolId: string, id: string) => {
-    const res = await fetcher(`/sekolah/${schoolId}/mata-pelajaran/${id}`, {
+    const res = await fetcher(`/school/${schoolId}/subject/${id}`, {
       method: 'DELETE'
     })
     await fetchSubjects(schoolId)

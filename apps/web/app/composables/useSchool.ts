@@ -10,7 +10,7 @@ export const useSchool = () => {
 
   const fetchFoundations = async () => {
     try {
-      const res: any = await fetcher('/management/yayasan')
+      const res: any = await fetcher('/management/foundation')
       foundations.value = res.data
     } catch (error) {
       console.error('Failed to fetch foundations:', error)
@@ -18,7 +18,7 @@ export const useSchool = () => {
   }
 
   const createFoundation = async (data: any) => {
-    const res: any = await fetcher('/management/yayasan', {
+    const res: any = await fetcher('/management/foundation', {
       method: 'POST',
       body: data
     })
@@ -27,7 +27,7 @@ export const useSchool = () => {
   }
 
   const deleteFoundation = async (id: string) => {
-    const res = await fetcher(`/management/yayasan/${id}`, {
+    const res = await fetcher(`/management/foundation/${id}`, {
       method: 'DELETE'
     })
     await fetchFoundations()
@@ -35,7 +35,7 @@ export const useSchool = () => {
   }
 
   const updateFoundation = async (id: string, data: any) => {
-    const res: any = await fetcher(`/management/yayasan/${id}`, {
+    const res: any = await fetcher(`/management/foundation/${id}`, {
       method: 'PUT',
       body: data
     })
@@ -80,7 +80,7 @@ export const useSchool = () => {
 
   const fetchSchools = async (foundationId: string) => {
     try {
-      const res: any = await fetcher(`/management/sekolah/yayasan/${foundationId}`)
+      const res: any = await fetcher(`/management/school/foundation/${foundationId}`)
       schools.value = res.data
       
       // Auto-set first school if current is invalid

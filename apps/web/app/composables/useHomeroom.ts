@@ -12,7 +12,7 @@ export const useHomeroom = () => {
     semester: string
   ) => {
     try {
-      const res: any = await fetcher(`/sekolah/${schoolId}/kelas/${classId}/wali-kelas/data`, {
+      const res: any = await fetcher(`/school/${schoolId}/class/${classId}/homeroom/data`, {
         query: { academic_year_id: academicYearId, semester }
       })
       if (res.success) {
@@ -36,7 +36,7 @@ export const useHomeroom = () => {
     }
   ) => {
     try {
-      const res: any = await fetcher(`/sekolah/${schoolId}/kelas/${classId}/wali-kelas/data`, {
+      const res: any = await fetcher(`/school/${schoolId}/class/${classId}/homeroom/data`, {
         method: 'POST',
         body: payload
       })
@@ -57,7 +57,7 @@ export const useHomeroom = () => {
     semester: string
   ) => {
     try {
-      const blob: any = await fetcher(`/sekolah/${schoolId}/kelas/${classId}/wali-kelas/xls`, {
+      const blob: any = await fetcher(`/school/${schoolId}/class/${classId}/homeroom/xls`, {
         query: { academic_year_id: academicYearId, semester },
         responseType: 'blob'
       })
@@ -86,7 +86,7 @@ export const useHomeroom = () => {
       formData.append('academic_year_id', academicYearId)
       formData.append('semester', semester)
 
-      const res: any = await fetcher(`/sekolah/${schoolId}/kelas/${classId}/wali-kelas/xls`, {
+      const res: any = await fetcher(`/school/${schoolId}/class/${classId}/homeroom/xls`, {
         method: 'POST',
         body: formData,
         query: { academic_year_id: academicYearId, semester }

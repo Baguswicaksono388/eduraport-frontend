@@ -6,7 +6,7 @@ export const useTeacher = () => {
 
   const fetchTeachers = async (schoolId: string) => {
     try {
-      const res: any = await fetcher(`/sekolah/${schoolId}/guru`)
+      const res: any = await fetcher(`/school/${schoolId}/teacher`)
       if (res.success) {
         teachers.value = res.data
       }
@@ -16,7 +16,7 @@ export const useTeacher = () => {
   }
 
   const createTeacher = async (schoolId: string, data: any) => {
-    const res: any = await fetcher(`/sekolah/${schoolId}/guru`, {
+    const res: any = await fetcher(`/school/${schoolId}/teacher`, {
       method: 'POST',
       body: data
     })
@@ -25,7 +25,7 @@ export const useTeacher = () => {
   }
 
   const updateTeacher = async (schoolId: string, id: string, data: any) => {
-    const res: any = await fetcher(`/sekolah/${schoolId}/guru/${id}`, {
+    const res: any = await fetcher(`/school/${schoolId}/teacher/${id}`, {
       method: 'PUT',
       body: data
     })
@@ -34,7 +34,7 @@ export const useTeacher = () => {
   }
 
   const deleteTeacher = async (schoolId: string, id: string) => {
-    const res = await fetcher(`/sekolah/${schoolId}/guru/${id}`, {
+    const res = await fetcher(`/school/${schoolId}/teacher/${id}`, {
       method: 'DELETE'
     })
     await fetchTeachers(schoolId)
@@ -43,7 +43,7 @@ export const useTeacher = () => {
 
   const downloadTemplate = async (schoolId: string) => {
     try {
-      const blob: any = await fetcher(`/sekolah/${schoolId}/guru/xls`, {
+      const blob: any = await fetcher(`/school/${schoolId}/teacher/xls`, {
         responseType: 'blob'
       })
       const url = URL.createObjectURL(blob)
@@ -61,7 +61,7 @@ export const useTeacher = () => {
   const importTeachers = async (schoolId: string, file: File) => {
     const formData = new FormData()
     formData.append('file', file)
-    const res: any = await fetcher(`/sekolah/${schoolId}/guru/xls`, {
+    const res: any = await fetcher(`/school/${schoolId}/teacher/xls`, {
       method: 'POST',
       body: formData
     })

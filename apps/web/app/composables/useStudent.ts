@@ -9,7 +9,7 @@ export const useStudent = () => {
 
   const fetchStudents = async (schoolId: string, page = 1, limit = 20) => {
     try {
-      const res: any = await fetcher(`/sekolah/${schoolId}/siswa`, {
+      const res: any = await fetcher(`/school/${schoolId}/student`, {
         query: { page, limit }
       })
       if (res.success) {
@@ -22,7 +22,7 @@ export const useStudent = () => {
   }
 
   const createStudent = async (schoolId: string, data: any) => {
-    const res: any = await fetcher(`/sekolah/${schoolId}/siswa`, {
+    const res: any = await fetcher(`/school/${schoolId}/student`, {
       method: 'POST',
       body: data
     })
@@ -31,7 +31,7 @@ export const useStudent = () => {
   }
 
   const updateStudent = async (schoolId: string, id: string, data: any) => {
-    const res: any = await fetcher(`/sekolah/${schoolId}/siswa/${id}`, {
+    const res: any = await fetcher(`/school/${schoolId}/student/${id}`, {
       method: 'PUT',
       body: data
     })
@@ -40,7 +40,7 @@ export const useStudent = () => {
   }
 
   const deleteStudent = async (schoolId: string, id: string) => {
-    const res = await fetcher(`/sekolah/${schoolId}/siswa/${id}`, {
+    const res = await fetcher(`/school/${schoolId}/student/${id}`, {
       method: 'DELETE'
     })
     await fetchStudents(schoolId)
@@ -49,7 +49,7 @@ export const useStudent = () => {
 
   // ─── Download Excel template ─────────────────────────────────
   const downloadTemplate = async (schoolId: string) => {
-    const blob: any = await fetcher(`/sekolah/${schoolId}/siswa/xls`, {
+    const blob: any = await fetcher(`/school/${schoolId}/student/xls`, {
       responseType: 'blob'
     })
     const url = URL.createObjectURL(blob)
@@ -64,7 +64,7 @@ export const useStudent = () => {
   const importStudents = async (schoolId: string, file: File) => {
     const formData = new FormData()
     formData.append('file', file)
-    const res = await fetcher(`/sekolah/${schoolId}/siswa/xls`, {
+    const res = await fetcher(`/school/${schoolId}/student/xls`, {
       method: 'POST',
       body: formData
     })
