@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet } from 'lucide-vue-next'
+import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign } from 'lucide-vue-next'
 import { useAuth } from '../composables/useAuth'
 import { useSchool } from '../composables/useSchool'
 import { useAcademicYear } from '../composables/useAcademicYear'
@@ -124,6 +124,20 @@ watch(currentSchoolId, async (newVal) => {
           active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
         >
           <ClipboardCheck :size="16" /> Input Nilai
+        </NuxtLink>
+        <NuxtLink 
+          to="/report" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
+          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
+        >
+          <ClipboardCheck :size="16" /> Cetak Rapor
+        </NuxtLink>
+        <NuxtLink 
+          to="/financial" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
+          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
+        >
+          <DollarSign :size="16" /> Keuangan & SPP
         </NuxtLink>
       </nav>
 
