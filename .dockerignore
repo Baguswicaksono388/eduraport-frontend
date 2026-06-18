@@ -1,0 +1,15 @@
+node_modules
+.output
+.nuxt
+.turbo
+dist
+.env
+.env.local
+.git
+.gitignore
+README.md
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

@@ -1,0 +1,27 @@
+{
+  "name": "@eduraport/web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@eduraport/shared": "workspace:*",
+    "@eduraport/ui": "workspace:*",
+    "lucide-vue-next": "^0.470.0",
+    "nuxt": "^4.4.5",
+    "vue": "^3.5.34",
+    "vue-router": "^4.5.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "^6.12.0",
+    "@vitejs/plugin-vue": "^6.0.6",
+    "tailwindcss": "^3.4.0"
+  }
+}
