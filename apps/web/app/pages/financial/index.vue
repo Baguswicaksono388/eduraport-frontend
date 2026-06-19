@@ -35,11 +35,13 @@ const {
   billsList, 
   accountsList, 
   journalsList, 
+  categoriesList,
   fetchBills, 
   generateBulkSPP, 
   recordPayment, 
   fetchAccounts, 
-  fetchJournals 
+  fetchJournals,
+  fetchCategories
 } = useFinancial()
 const toast = useToast()
 
@@ -51,6 +53,53 @@ const filterStatus = ref('') // all, pending, paid
 const activeTab = ref('bills') // bills, accounts, journals
 const loading = ref(false)
 
+// Grouped Bills & Details Modal States
+const showDetailModal = ref(false)
+const activeStudentId = ref('')
+
+const groupedBills = computed(() => {
+  const groups: Record<string, {
+    student_id: string
+    student_name: string
+    student_nis: string | null
+    class_name: string | null
+    bills: any[]
+    total_amount: number
+    unpaid_amount: number
+    status: 'paid' | 'pending'
+  }> = {}
+
+  for (const bill of billsList.value) {
+    const studentId = bill.student_id
+    if (!groups[studentId]) {
+      groups[studentId] = {
+        student_id: studentId,
+        student_name: bill.student_name,
+        student_nis: bill.student_nis,
+        class_name: bill.class_name,
+        bills: [],
+        total_amount: 0,
+        unpaid_amount: 0,
+        status: 'paid'
+      }
+    }
+
+    groups[studentId].bills.push(bill)
+    const amt = Number(bill.amount) || 0
+    groups[studentId].total_amount += amt
+    if (bill.status !== 'paid') {
+      groups[studentId].unpaid_amount += amt
+      groups[studentId].status = 'pending'
+    }
+  }
+
+  return Object.values(groups).sort((a, b) => a.student_name.localeCompare(b.student_name))
+})
+
+const activeStudent = computed(() => {
+  return groupedBills.value.find(s => s.student_id === activeStudentId.value) || null
+})
+
 // SPP Gen Modal
 const showSPPModal = ref(false)
 const sppForm = reactive({
@@ -58,7 +107,7 @@ const sppForm = reactive({
   period: new Date().toISOString().substring(0, 7), // YYYY-MM
   amount: '450000',
   due_date: new Date(new Date().setDate(new Date().getDate() + 10)).toISOString().substring(0, 10), // YYYY-MM-DD
-  name: 'SPP Bulanan'
+  category_id: ''
 })
 
 // Payment Modal
@@ -88,7 +137,8 @@ const loadSchoolData = async (schoolId: string) => {
     await fetchClasses(schoolId)
     await Promise.all([
       fetchAccounts(schoolId),
-      fetchJournals(schoolId)
+      fetchJournals(schoolId),
+      fetchCategories(schoolId)
     ])
   } catch (error) {
     console.error('Failed loading school data:', error)
@@ -111,14 +161,19 @@ watch(selectedFoundationId, async (newVal) => {
 
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {
+    selectedClassId.value = ''
     await loadSchoolData(newVal)
   } else {
     classes.value = []
+    billsList.value = []
   }
 })
 
 const loadBills = async () => {
-  if (!selectedSchoolId.value) return
+  if (!selectedSchoolId.value) {
+    billsList.value = []
+    return
+  }
   loading.value = true
   try {
     const filters: any = {}
@@ -133,13 +188,23 @@ const loadBills = async () => {
   }
 }
 
-watch([selectedClassId, filterStatus], async () => {
+watch([selectedSchoolId, selectedClassId, filterStatus], async () => {
   await loadBills()
 })
 
 const openSPPModal = () => {
   sppForm.class_id = selectedClassId.value
+  if (categoriesList.value.length > 0) {
+    sppForm.category_id = categoriesList.value[0].id
+  } else {
+    sppForm.category_id = ''
+  }
   showSPPModal.value = true
+}
+
+const openDetailModal = (student: any) => {
+  activeStudentId.value = student.student_id
+  showDetailModal.value = true
 }
 
 const handleGenerateSPP = async () => {
@@ -154,7 +219,7 @@ const handleGenerateSPP = async () => {
       period: sppForm.period,
       amount: sppForm.amount,
       due_date: sppForm.due_date,
-      name: sppForm.name
+      category_id: sppForm.category_id
     })
 
     if (res.success) {
@@ -332,43 +397,44 @@ const formatDate = (dateStr: any) => {
                 <tr class="border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/30 dark:bg-zinc-900/20 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
                   <th class="p-4 pl-6">Nama Siswa</th>
                   <th class="p-4">Kelas</th>
-                  <th class="p-4">Nama Tagihan</th>
-                  <th class="p-4">Periode</th>
-                  <th class="p-4">Nominal</th>
-                  <th class="p-4">Batas Tempo</th>
+                  <th class="p-4">Jumlah Tagihan</th>
+                  <th class="p-4">Total Tagihan</th>
+                  <th class="p-4">Sisa Tagihan</th>
                   <th class="p-4 text-center">Status</th>
                   <th class="p-4 text-right pr-6">Aksi</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-150 dark:divide-zinc-850">
-                <tr v-for="bill in billsList" :key="bill.id" class="hover:bg-slate-50/20 dark:hover:bg-zinc-900/20 transition-colors">
-                  <td class="p-4 pl-6 font-bold text-slate-900 dark:text-zinc-200">{{ bill.student_name }}</td>
-                  <td class="p-4">{{ bill.class_name || '-' }}</td>
-                  <td class="p-4 text-slate-500">{{ bill.name }}</td>
-                  <td class="p-4 font-semibold text-slate-650">{{ bill.period }}</td>
-                  <td class="p-4 font-bold text-slate-900 dark:text-zinc-200">{{ formatNumber(bill.amount) }}</td>
-                  <td class="p-4">{{ formatDate(bill.due_date) }}</td>
+                <tr v-for="student in groupedBills" :key="student.student_id" class="hover:bg-slate-50/20 dark:hover:bg-zinc-900/20 transition-colors">
+                  <td class="p-4 pl-6">
+                    <div class="font-bold text-slate-900 dark:text-zinc-200">{{ student.student_name }}</div>
+                    <div class="text-[10px] text-slate-400 font-mono">{{ student.student_nis || '-' }}</div>
+                  </td>
+                  <td class="p-4 text-slate-650 dark:text-zinc-400 font-semibold">{{ student.class_name || '-' }}</td>
+                  <td class="p-4 font-semibold text-slate-600 dark:text-zinc-400">{{ student.bills.length }} Tagihan</td>
+                  <td class="p-4 font-semibold text-slate-600 dark:text-zinc-400">{{ formatNumber(student.total_amount) }}</td>
+                  <td class="p-4 font-bold" :class="student.unpaid_amount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-450'">
+                    {{ formatNumber(student.unpaid_amount) }}
+                  </td>
                   <td class="p-4 text-center">
                     <span 
                       class="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold border"
                       :class="[
-                        bill.status === 'paid'
+                        student.status === 'paid'
                           ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
                           : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
                       ]"
                     >
-                      {{ bill.status === 'paid' ? 'Lunas' : 'Belum Lunas' }}
+                      {{ student.status === 'paid' ? 'Lunas' : 'Belum Lunas' }}
                     </span>
                   </td>
                   <td class="p-4 text-right pr-6">
                     <button 
-                      v-if="bill.status !== 'paid'"
-                      @click="openPaymentModal(bill)"
-                      class="px-2.5 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded text-[10px] font-bold transition-colors shadow-sm"
+                      @click="openDetailModal(student)"
+                      class="px-2.5 py-1.5 bg-violet-600 hover:bg-violet-750 text-white rounded text-[10px] font-bold transition-colors shadow-sm inline-flex items-center gap-1"
                     >
-                      Bayar SPP
+                      <Search :size="10" /> Detail Tagihan
                     </button>
-                    <span v-else class="text-[10px] text-slate-400 font-bold">Terbayar ✓</span>
                   </td>
                 </tr>
               </tbody>
@@ -457,7 +523,13 @@ const formatDate = (dateStr: any) => {
           </select>
         </div>
 
-        <BaseInput v-model="sppForm.name" label="Nama Tagihan SPP" required />
+        <div class="flex flex-col gap-1.5 w-full">
+          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Tipe/Kategori Tagihan</label>
+          <select v-model="sppForm.category_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
+            <option value="" disabled>Pilih Kategori</option>
+            <option v-for="cat in categoriesList" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+          </select>
+        </div>
         <BaseInput v-model="sppForm.amount" label="Nominal Tagihan (IDR)" type="number" required />
         
         <div class="grid grid-cols-2 gap-4">
@@ -470,6 +542,85 @@ const formatDate = (dateStr: any) => {
           <BaseButton variant="primary" type="submit">Buat Tagihan Kelas</BaseButton>
         </div>
       </form>
+    </BaseModal>
+
+    <!-- Modal: Detail Tagihan Siswa -->
+    <BaseModal :show="showDetailModal" title="Detail Tagihan Siswa" @close="showDetailModal = false">
+      <div v-if="activeStudent" class="space-y-6">
+        <!-- Student Summary Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50 dark:bg-zinc-950 border border-slate-200/60 dark:border-zinc-850 p-4 rounded-xl shadow-sm text-xs">
+          <div class="space-y-1">
+            <h4 class="font-bold text-slate-800 dark:text-zinc-200">{{ activeStudent.student_name }}</h4>
+            <p class="text-slate-400">NIS: {{ activeStudent.student_nis || '-' }} | Kelas: {{ activeStudent.class_name || '-' }}</p>
+          </div>
+          <div class="flex gap-4">
+            <div class="text-right">
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Total Tagihan</span>
+              <span class="font-bold text-slate-700 dark:text-zinc-300">{{ formatNumber(activeStudent.total_amount) }}</span>
+            </div>
+            <div class="text-right border-l border-slate-200 dark:border-zinc-800 pl-4">
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Sisa Tagihan</span>
+              <span class="font-bold" :class="activeStudent.unpaid_amount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-450'">
+                {{ formatNumber(activeStudent.unpaid_amount) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Individual Bills List -->
+        <div class="space-y-3">
+          <h5 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Rincian Item Tagihan</h5>
+          
+          <div 
+            v-for="bill in activeStudent.bills" 
+            :key="bill.id" 
+            class="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl hover:border-violet-600/30 transition-all"
+          >
+            <div class="space-y-1">
+              <div class="font-bold text-slate-800 dark:text-zinc-200 text-xs">{{ bill.name }}</div>
+              <div class="flex items-center gap-2 text-[10px] text-slate-400">
+                <span>Tempo: {{ formatDate(bill.due_date) }}</span>
+                <span>•</span>
+                <span class="font-mono text-slate-500">{{ bill.period }}</span>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+              <div class="text-right">
+                <div class="font-extrabold text-slate-900 dark:text-zinc-100 text-xs">{{ formatNumber(bill.amount) }}</div>
+                <div class="mt-0.5">
+                  <span 
+                    class="inline-block px-1.5 py-0.5 rounded-full text-[8px] font-extrabold border"
+                    :class="[
+                      bill.status === 'paid'
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                        : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                    ]"
+                  >
+                    {{ bill.status === 'paid' ? 'Lunas' : 'Belum Lunas' }}
+                  </span>
+                </div>
+              </div>
+              
+              <div>
+                <button 
+                  v-if="bill.status !== 'paid'"
+                  @click="openPaymentModal(bill)"
+                  class="px-3 py-1.5 bg-violet-600 hover:bg-violet-750 text-white rounded-lg text-[10px] font-bold transition-all shadow-sm shadow-violet-600/15"
+                >
+                  Bayar
+                </button>
+                <span v-else class="text-xs text-emerald-500 dark:text-emerald-450 font-bold block px-2">✓</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-end pt-4 border-t border-slate-100 dark:border-zinc-800">
+          <BaseButton variant="outline" type="button" @click="showDetailModal = false">Tutup</BaseButton>
+        </div>
+      </div>
     </BaseModal>
 
     <!-- Modal: Record Payment -->

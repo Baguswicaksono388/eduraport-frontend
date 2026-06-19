@@ -5,6 +5,7 @@ export const useFinancial = () => {
   const billsList = useState<any[]>('bills_list', () => [])
   const accountsList = useState<any[]>('accounts_list', () => [])
   const journalsList = useState<any[]>('journals_list', () => [])
+  const categoriesList = useState<any[]>('categories_list', () => [])
 
   const fetchBills = async (
     schoolId: string,
@@ -32,7 +33,7 @@ export const useFinancial = () => {
       period: string
       amount: string
       due_date: string
-      name: string
+      category_id: string
     }
   ) => {
     try {
@@ -105,14 +106,30 @@ export const useFinancial = () => {
     }
   }
 
+  const fetchCategories = async (schoolId: string) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/categories`)
+      if (res.success) {
+        categoriesList.value = res.data
+      }
+      return res
+    } catch (error) {
+      console.error('Failed to fetch categories:', error)
+      categoriesList.value = []
+      throw error
+    }
+  }
+
   return {
     billsList,
     accountsList,
     journalsList,
+    categoriesList,
     fetchBills,
     generateBulkSPP,
     recordPayment,
     fetchAccounts,
-    fetchJournals
+    fetchJournals,
+    fetchCategories
   }
 }
