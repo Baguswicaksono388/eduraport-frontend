@@ -13,7 +13,8 @@ import {
   ClipboardCheck, 
   Award, 
   FileText,
-  X
+  X,
+  Camera
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal } from '@eduraport/ui'
 import { useSchool } from '../composables/useSchool'
@@ -26,8 +27,9 @@ import { useToast } from '../composables/useToast'
 definePageMeta({
   middleware: [
     function () {
-      const token = useCookie('auth_token')
-      if (!token.value) {
+      const token = useCookie('auth_cookie') // fallback or auth check
+      const auth_token = useCookie('auth_token')
+      if (!auth_token.value && !token.value) {
         return navigateTo('/login')
       }
     }
@@ -54,7 +56,7 @@ const selectedAcademicYearId = ref('')
 const selectedClassId = ref('')
 const selectedSemester = ref('odd') // odd, even
 
-const activeTab = ref('attendance') // attendance, extracurricular, notes
+const activeTab = ref('attendance') // attendance, extracurricular, notes, photos
 const loading = ref(false)
 const saving = ref(false)
 
@@ -66,25 +68,49 @@ const importResult = ref<{ success: boolean; importedCount: number; errors?: any
 // Local copy for direct bindings in grid
 const studentDataList = ref<any[]>([])
 
+const selectedSchool = computed(() => {
+  return schools.value.find(s => s.id === selectedSchoolId.value)
+})
+
+const isTKSchool = computed(() => {
+  return selectedSchool.value?.level === 'TK'
+})
+
 // Populate local grid when API states change
 watch(homeroomStudents, (newVal) => {
-  studentDataList.value = newVal.map(s => ({
-    student_id: s.student_id,
-    full_name: s.full_name,
-    student_number: s.student_number,
-    national_student_number: s.national_student_number,
-    attendance: {
-      sick: s.sick ?? 0,
-      leave: s.leave ?? 0,
-      absent: s.absent ?? 0
-    },
-    extracurricular: {
-      extracurricular_id: s.extracurricular_id || '',
-      grade: s.grade || '',
-      description: s.description || ''
-    },
-    homeroom_notes: s.homeroom_notes || ''
-  }))
+  studentDataList.value = newVal.map(s => {
+    let photos = []
+    if (Array.isArray(s.activity_photos)) {
+      photos = [...s.activity_photos]
+    } else if (typeof s.activity_photos === 'string' && s.activity_photos) {
+      try {
+        photos = JSON.parse(s.activity_photos)
+      } catch {
+        photos = []
+      }
+    }
+    while (photos.length < 3) photos.push('')
+    photos = photos.slice(0, 3)
+
+    return {
+      student_id: s.student_id,
+      full_name: s.full_name,
+      student_number: s.student_number,
+      national_student_number: s.national_student_number,
+      attendance: {
+        sick: s.sick ?? 0,
+        leave: s.leave ?? 0,
+        absent: s.absent ?? 0
+      },
+      extracurricular: {
+        extracurricular_id: s.extracurricular_id || '',
+        grade: s.grade || '',
+        description: s.description || ''
+      },
+      homeroom_notes: s.homeroom_notes || '',
+      activity_photos: photos
+    }
+  })
 }, { deep: true })
 
 onMounted(async () => {
@@ -221,7 +247,8 @@ const handleSave = async () => {
           grade: s.extracurricular.grade || null,
           description: s.extracurricular.description || null
         } : null,
-        homeroom_notes: s.homeroom_notes || null
+        homeroom_notes: s.homeroom_notes || null,
+        activity_photos: s.activity_photos || []
       }))
     }
     const res = await saveHomeroomData(selectedSchoolId.value, selectedClassId.value, payload)
@@ -286,6 +313,65 @@ const handleImport = async () => {
     }
   } finally {
     importLoading.value = false
+  }
+}
+
+// ─── PHOTO UPLOAD & CANVAS COMPRESSION LOGIC ───
+const handlePhotoUpload = (event: Event, studentId: string, slotIndex: number) => {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+
+  if (!file.type.startsWith('image/')) {
+    toast.error('Berkas harus berupa gambar.', 'Error')
+    return
+  }
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      let width = img.width
+      let height = img.height
+      const MAX_SIZE = 800
+
+      if (width > height) {
+        if (width > MAX_SIZE) {
+          height *= MAX_SIZE / width
+          width = MAX_SIZE
+        }
+      } else {
+        if (height > MAX_SIZE) {
+          width *= MAX_SIZE / height
+          height = MAX_SIZE
+        }
+      }
+
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, width, height)
+        const base64 = canvas.toDataURL('image/jpeg', 0.8)
+        
+        const student = studentDataList.value.find(s => s.student_id === studentId)
+        if (student) {
+          if (!student.activity_photos) {
+            student.activity_photos = ['', '', '']
+          }
+          student.activity_photos[slotIndex] = base64
+        }
+      }
+    }
+    img.src = e.target?.result as string
+  }
+  reader.readAsDataURL(file)
+}
+
+const removePhoto = (studentId: string, slotIndex: number) => {
+  const student = studentDataList.value.find(s => s.student_id === studentId)
+  if (student && student.activity_photos) {
+    student.activity_photos[slotIndex] = ''
   }
 }
 </script>
@@ -401,6 +487,18 @@ const handleImport = async () => {
           ]"
         >
           <FileText :size="14" /> Catatan Wali Kelas
+        </button>
+        <button 
+          v-if="isTKSchool"
+          @click="activeTab = 'photos'" 
+          class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5"
+          :class="[
+            activeTab === 'photos'
+              ? 'border-violet-600 text-violet-600 dark:text-violet-400'
+              : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'
+          ]"
+        >
+          <Camera :size="14" /> Foto Kegiatan (TK)
         </button>
       </div>
 
@@ -538,6 +636,57 @@ const handleImport = async () => {
             </tbody>
           </table>
         </div>
+
+        <!-- Tab 4: Photos (TK) -->
+        <div v-if="activeTab === 'photos' && isTKSchool" class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/30 dark:bg-zinc-900/20 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
+                <th class="p-4 pl-6 w-1/4">Nama Siswa</th>
+                <th class="p-4 pr-6">Foto Kegiatan (Maksimal 3 Foto)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="student in studentDataList" :key="student.student_id" class="border-b border-slate-100 dark:border-zinc-800/80 last:border-0 hover:bg-slate-50/20 dark:hover:bg-zinc-900/20 transition-colors">
+                <td class="p-4 pl-6">
+                  <span class="font-bold text-slate-800 dark:text-zinc-200 text-sm block leading-snug">{{ student.full_name }}</span>
+                  <span class="text-[10px] text-slate-400 dark:text-zinc-500">NIS/NISN: {{ student.student_number || '-' }}</span>
+                </td>
+                <td class="p-4 pr-6">
+                  <div class="grid grid-cols-3 gap-4 max-w-2xl">
+                    <div v-for="idx in [0, 1, 2]" :key="idx" class="relative group aspect-[16/9] border border-slate-200 dark:border-zinc-800 rounded-lg overflow-hidden bg-slate-50 dark:bg-zinc-950 flex items-center justify-center">
+                      <!-- Image preview -->
+                      <template v-if="student.activity_photos && student.activity_photos[idx]">
+                        <img :src="student.activity_photos[idx]" class="w-full h-full object-cover" />
+                        <button 
+                          @click="removePhoto(student.student_id, idx)"
+                          class="absolute top-1.5 right-1.5 bg-rose-600/90 text-white rounded-full p-1 hover:bg-rose-700 transition-colors shadow shadow-black/25"
+                        >
+                          <X :size="12" />
+                        </button>
+                      </template>
+                      
+                      <!-- Upload input -->
+                      <template v-else>
+                        <label class="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100/50 dark:hover:bg-zinc-900/50 transition-colors">
+                          <Camera class="text-slate-400 dark:text-zinc-500 mb-1" :size="16" />
+                          <span class="text-[9px] font-bold text-slate-400 dark:text-zinc-500">Pilih Foto {{ idx + 1 }}</span>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            class="hidden" 
+                            @change="handlePhotoUpload($event, student.student_id, idx)" 
+                          />
+                        </label>
+                      </template>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
       </div>
     </div>
 
@@ -565,7 +714,7 @@ const handleImport = async () => {
             <Upload class="text-slate-400 group-hover:text-violet-500 transition-colors" :size="20" />
             <div class="flex-1 min-w-0">
               <p v-if="importFile" class="text-sm font-semibold text-slate-800 dark:text-zinc-200 truncate">{{ importFile.name }}</p>
-              <p v-else class="text-sm text-slate-400 dark:text-zinc-500">Klik untuk memilih file atau seret ke sini</p>
+              <p v-else class="text-sm text-slate-400 dark:text-zinc-555 truncate">Klik untuk memilih file atau seret ke sini</p>
             </div>
             <input type="file" accept=".xlsx,.xls" class="hidden" @change="onFileChange" />
           </label>

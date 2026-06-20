@@ -146,6 +146,43 @@ export const useSchool = () => {
     return res
   }
 
+  const p5Dimensions = useState<any[]>('p5Dimensions', () => [])
+
+  const fetchP5Dimensions = async (schoolId: string) => {
+    try {
+      const res: any = await fetcher(`/management/school/${schoolId}/p5-dimensions`)
+      p5Dimensions.value = res.data
+    } catch (error) {
+      console.error('Failed to fetch P5 dimensions:', error)
+    }
+  }
+
+  const createP5Dimension = async (schoolId: string, data: any) => {
+    const res: any = await fetcher(`/management/school/${schoolId}/p5-dimensions`, {
+      method: 'POST',
+      body: data
+    })
+    await fetchP5Dimensions(schoolId)
+    return res
+  }
+
+  const updateP5Dimension = async (schoolId: string, id: string, data: any) => {
+    const res: any = await fetcher(`/management/school/${schoolId}/p5-dimensions/${id}`, {
+      method: 'PUT',
+      body: data
+    })
+    await fetchP5Dimensions(schoolId)
+    return res
+  }
+
+  const deleteP5Dimension = async (schoolId: string, id: string) => {
+    const res = await fetcher(`/management/school/${schoolId}/p5-dimensions/${id}`, {
+      method: 'DELETE'
+    })
+    await fetchP5Dimensions(schoolId)
+    return res
+  }
+
   const currentSchool = computed(() => 
     schools.value.find(s => s.id === currentSchoolId.value) || schools.value[0]
   )
@@ -157,6 +194,11 @@ export const useSchool = () => {
     curriculumCategories,
     currentSchoolId,
     currentSchool,
+    p5Dimensions,
+    fetchP5Dimensions,
+    createP5Dimension,
+    updateP5Dimension,
+    deleteP5Dimension,
     fetchFoundations,
     createFoundation,
     updateFoundation,

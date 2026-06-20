@@ -19,7 +19,7 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
-const { currentSchoolId } = useSchool()
+const { currentSchoolId, p5Dimensions } = useSchool()
 const { fetchReportDetail } = useReport()
 const toast = useToast()
 
@@ -30,7 +30,7 @@ const selectedTKFormat = ref((route.query.format as string) || 'dinas') // 'dina
 
 watch(() => route.query.format, (newFormat) => {
   if (newFormat === 'dinas' || newFormat === 'intra') {
-    selectedTKFormat.value = newFormat
+    selectedTKFormat.value = newFormat as string
   }
 })
 
@@ -65,6 +65,23 @@ onMounted(async () => {
   }
 })
 
+// Active P5 Dimensions – uses school-level config, falls back to defaults
+const activeP5Dimensions = computed(() => {
+  if (p5Dimensions.value && p5Dimensions.value.length > 0) {
+    return p5Dimensions.value
+  }
+  return [
+    { id: 'keimanan', name: 'Keimanan & Takwa' },
+    { id: 'kewargaan', name: 'Kewargaan / Kebinekaan' },
+    { id: 'penalaran', name: 'Penalaran Kritis' },
+    { id: 'kreativitas', name: 'Kreativitas' },
+    { id: 'kolaborasi', name: 'Kolaborasi / Gotong Royong' },
+    { id: 'kemandirian', name: 'Kemandirian' },
+    { id: 'kesehatan', name: 'Jasmani & Kesehatan' },
+    { id: 'komunikasi', name: 'Komunikasi & Bahasa' }
+  ]
+})
+
 const tkDinasAssessments = computed(() => {
   if (!reportData.value?.assessments) return []
   return reportData.value.assessments.filter((a: any) => 
@@ -79,21 +96,92 @@ const tkIntraAssessments = computed(() => {
   )
 })
 
-const tkDinasIntraAssessments = computed(() => {
-  const intrakurikulerNames = [
-    'Nilai Agama & Budi Pekerti',
-    'Jati Diri',
-    'Dasar-dasar Literasi, Matematika, Sains, Teknologi, Rekayasa, dan Seni'
-  ]
-  return tkDinasAssessments.value.filter((a: any) => 
-    intrakurikulerNames.includes(a.element_name)
-  )
+const mappedTKDinasSections = computed(() => {
+  const sections = reportData.value?.template?.element_structure?.tk_sections
+  const assessments = reportData.value?.assessments || []
+  
+  if (!sections || !Array.isArray(sections)) return null
+  
+  const findAssessment = (eid: string) => {
+    return assessments.find((a: any) => a.element_id === eid)
+  }
+
+  return sections.map((sec: any) => {
+    return {
+      id: sec.id,
+      title: sec.title,
+      categories: (sec.categories || []).map((cat: any) => {
+        const narrativeAsm = findAssessment(cat.narrative_element_id)
+        const subAsms = (cat.sub_element_ids || [])
+          .map((sid: string) => findAssessment(sid))
+          .filter(Boolean)
+        
+        const p5DimsData: any = {}
+        if (cat.is_p5_matrix && cat.p5_dimensions) {
+          // Helper to map dim name to legacy key
+          const getDimensionKey = (dimName: string) => {
+            const normalized = dimName.toLowerCase()
+            if (normalized.includes('keimanan')) return 'keimanan'
+            if (normalized.includes('kewargaan') || normalized.includes('kebinekaan')) return 'kewargaan'
+            if (normalized.includes('penalaran')) return 'penalaran'
+            if (normalized.includes('kreativitas')) return 'kreativitas'
+            if (normalized.includes('kolaborasi') || normalized.includes('gotong royong')) return 'kolaborasi'
+            if (normalized.includes('kemandirian')) return 'kemandirian'
+            if (normalized.includes('jasmani') || normalized.includes('kesehatan')) return 'kesehatan'
+            if (normalized.includes('komunikasi') || normalized.includes('bahasa')) return 'komunikasi'
+            return ''
+          }
+          activeP5Dimensions.value.forEach((dim: any) => {
+            const oldKey = getDimensionKey(dim.name)
+            const eid = cat.p5_dimensions[dim.id] || (oldKey ? cat.p5_dimensions[oldKey] : undefined)
+            const asm = eid ? findAssessment(eid) : null
+            p5DimsData[dim.id] = asm?.letter_grade || asm?.predicate || '-'
+          })
+        }
+        
+        return {
+          id: cat.id,
+          title: cat.title,
+          narrative: narrativeAsm?.narrative || 'Belum ada narasi pencapaian.',
+          is_p5_matrix: !!cat.is_p5_matrix,
+          p5_dimensions: p5DimsData,
+          subAssessments: subAsms.map((a: any) => ({
+            name: a.element_name,
+            grade: a.letter_grade || a.predicate || '-'
+          }))
+        }
+      })
+    }
+  })
 })
 
-const tkDinasP5Narrative = computed(() => {
-  return tkDinasAssessments.value.find((a: any) => 
-    a.element_name.includes('Kokurikuler') || a.element_name.includes('Projek')
-  )?.narrative || 'Dalam projek semester ini, ananda aktif berpartisipasi dan menunjukkan nilai-nilai luhur Pancasila meliputi kemandirian, gotong royong, dan berpikir kritis. Ananda mampu menyelesaikan tugas kelompok dengan baik serta menghargai pendapat temannya.'
+const intraCategories = computed(() => {
+  const list: any[] = []
+  if (!mappedTKDinasSections.value) return list
+  mappedTKDinasSections.value.forEach((sec: any) => {
+    if (sec.categories) {
+      sec.categories.forEach((cat: any) => {
+        if (!cat.is_p5_matrix) {
+          list.push(cat)
+        }
+      })
+    }
+  })
+  return list
+})
+
+const p5Category = computed(() => {
+  if (!mappedTKDinasSections.value) return null
+  for (const sec of mappedTKDinasSections.value) {
+    if (sec.categories) {
+      for (const cat of sec.categories) {
+        if (cat.is_p5_matrix) {
+          return cat
+        }
+      }
+    }
+  }
+  return null
 })
 
 const intraGroup1 = computed(() => {
@@ -132,6 +220,27 @@ const intraMotorikNarrative = computed(() =>
 const intraAgamaNarrative = computed(() => 
   tkIntraAssessments.value.find((a: any) => a.element_name.includes('Keagamaan') || a.element_name.includes('Ibadah'))?.narrative || ''
 )
+
+const activityPhotos = computed(() => {
+  const photos = reportData.value?.report?.activity_photos
+  if (!photos) return []
+  let list: any[] = []
+  if (Array.isArray(photos)) {
+    list = photos
+  } else if (typeof photos === 'string') {
+    try {
+      list = JSON.parse(photos)
+    } catch {
+      list = []
+    }
+  }
+  return list.filter((photo: any) => {
+    if (!photo) return false
+    if (typeof photo === 'string') return photo.trim() !== ''
+    if (typeof photo === 'object') return !!(photo.url || photo.src)
+    return false
+  })
+})
 
 const handlePrint = () => {
   window.print()
@@ -210,17 +319,27 @@ const formatDate = (dateStr: any) => {
       <button @click="handleClose" class="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg">Kembali</button>
     </div>
 
-    <div v-else class="max-w-4xl mx-auto bg-white dark:bg-zinc-900 border border-slate-300/60 dark:border-zinc-800 rounded-none sm:rounded-2xl p-8 sm:p-12 shadow-sm print:p-0 print:border-none print:shadow-none print:bg-white print:text-black">
+    <div 
+      v-else 
+      class="print-report-container"
+      :class="[
+        reportData.student.school_level === 'TK' && selectedTKFormat === 'dinas' ? 'dinas-format' : 'standard-format',
+        'max-w-4xl mx-auto print:border-none print:shadow-none print:bg-white print:text-black shadow-sm',
+        reportData.student.school_level === 'TK' && selectedTKFormat === 'dinas' 
+          ? 'bg-transparent border-none p-0 space-y-6 shadow-none' 
+          : 'bg-white dark:bg-zinc-900 border border-slate-300/60 dark:border-zinc-800 rounded-none sm:rounded-2xl p-8 sm:p-12 print:p-[20mm_20mm]'
+      ]"
+    >
       
-      <!-- Report Header (Logo and School/Student Info) -->
-      <div class="text-center border-b-2 border-slate-900 pb-6 mb-8 print:pb-4 print:mb-6">
+      <!-- Report Header (shown for non-TK-Dinas formats) -->
+      <div v-if="reportData.student.school_level !== 'TK' || selectedTKFormat !== 'dinas'" class="text-center border-b-2 border-slate-900 pb-6 mb-8 print:pb-4 print:mb-6">
         <h2 class="text-lg font-black uppercase tracking-wide">{{ reportData.student.school_name }}</h2>
         <p class="text-xs font-semibold">{{ reportData.student.school_address }}</p>
         <p class="text-[10px] text-slate-500 font-medium">NPSN: {{ reportData.student.school_npsn || '-' }} | NSM: {{ reportData.student.school_nsm || '-' }}</p>
       </div>
 
-      <!-- Student & Period Metadata Grid -->
-      <div class="grid grid-cols-2 gap-4 text-xs font-semibold mb-8 print:mb-6">
+      <!-- Student & Period Metadata Grid (shown for non-TK-Dinas formats) -->
+      <div v-if="reportData.student.school_level !== 'TK' || selectedTKFormat !== 'dinas'" class="grid grid-cols-2 gap-4 text-xs font-semibold mb-8 print:mb-6">
         <div class="space-y-1">
           <div class="flex"><span class="w-24 text-slate-500">Nama Siswa</span><span class="mr-2">:</span><span class="text-slate-900 dark:text-zinc-100 print:text-black">{{ reportData.student.full_name }}</span></div>
           <div class="flex"><span class="w-24 text-slate-500">NIS / NISN</span><span class="mr-2">:</span><span>{{ reportData.student.student_number || '-' }} / {{ reportData.student.national_student_number || '-' }}</span></div>
@@ -236,43 +355,246 @@ const formatDate = (dateStr: any) => {
       <!-- ─── JENJANG TK / PAUD TEMPLATE ─── -->
       <div v-if="reportData.student.school_level === 'TK'" class="space-y-8 print:space-y-6">
         
-        <!-- FORMAT DINAS -->
-        <div v-if="selectedTKFormat === 'dinas'" class="space-y-8 print:space-y-6">
-          <!-- Intrakurikuler Section -->
-          <div>
-            <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">I. Program Intrakurikuler (Capaian Pembelajaran)</h3>
-            
-            <div class="space-y-4">
-              <div 
-                v-for="asm in tkDinasIntraAssessments" 
-                :key="asm.element_id"
-                class="bg-slate-50 dark:bg-zinc-950/40 p-4 rounded-lg border border-slate-200/60 dark:border-zinc-800 print:bg-white print:p-0 print:border-none"
-              >
-                <div class="flex justify-between items-start mb-2">
-                  <span class="text-xs font-bold text-slate-900 dark:text-zinc-100 print:text-black">{{ asm.element_name }}</span>
-                  <span class="inline-flex px-2 py-0.5 rounded text-[9px] font-bold bg-violet-600/10 text-violet-600 border border-violet-500/10 print:border print:border-black print:text-black print:bg-white">
-                    Capaian: {{ asm.letter_grade || asm.predicate || 'BSH' }}
-                  </span>
+        <!-- ══════ FORMAT DINAS (2-page layout) ══════ -->
+        <div v-if="selectedTKFormat === 'dinas'" class="space-y-0 text-black">
+
+          <!-- ── PAGE 1: Header + Intrakurikuler ── -->
+          <div
+            class="print-page bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 rounded-none sm:rounded-2xl p-8 sm:p-12 min-h-[29.7cm] flex flex-col justify-between"
+            style="page-break-after: always; break-after: page;"
+          >
+            <div>
+              <!-- Dinas Page Header -->
+              <div class="flex items-center justify-between border-b-2 border-slate-900 pb-3 mb-6">
+                <div class="flex items-center gap-3">
+                  <div class="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-lg select-none">TK</div>
+                  <div class="text-left">
+                    <h2 class="text-xs font-black tracking-wide uppercase">{{ reportData.student.school_name || 'TAMAN KANAK-KANAK' }}</h2>
+                    <h1 class="text-sm font-black uppercase">LAPORAN PERKEMBANGAN PESERTA DIDIK</h1>
+                    <p class="text-[10px] font-bold uppercase tracking-wider">KELOMPOK B</p>
+                    <p class="text-[9px] font-bold">
+                      Semester {{ reportData.report.semester === 'odd' ? 'I' : 'II' }} - Tahun Ajaran {{ reportData.report.academic_year_name || '2025/2026' }}
+                    </p>
+                  </div>
                 </div>
-                <p class="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed text-justify print:text-black">
-                  {{ asm.narrative || 'Ananda menunjukkan capaian perkembangan yang sangat baik dalam aspek ini.' }}
-                </p>
+                <div class="text-right flex flex-col items-end">
+                  <div class="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center text-white font-extrabold text-xs">R</div>
+                  <span class="text-[8px] font-black text-slate-500 uppercase mt-1">{{ reportData.student.school_name?.substring(0, 8) || 'Rapor' }}</span>
+                </div>
+              </div>
+
+              <!-- Student Info Bar -->
+              <div class="flex justify-between items-center bg-slate-50 border border-slate-200 rounded-lg p-3 mb-6 text-xs font-bold text-slate-700">
+                <div class="flex gap-2">
+                  <span>Nama Anak Didik:</span>
+                  <span class="text-slate-950 underline decoration-slate-400 underline-offset-4">{{ reportData.student.full_name }}</span>
+                </div>
+                <div class="flex gap-2">
+                  <span>No. Urut:</span>
+                  <span class="text-slate-950 font-black">{{ reportData.student.student_number || '-' }}</span>
+                </div>
+              </div>
+
+              <!-- A. Program Intrakurikuler -->
+              <div class="space-y-4">
+                <h3 class="text-sm font-black uppercase tracking-wider mb-2">A. Program Intrakurikuler</h3>
+                <table class="w-full text-left border-2 border-slate-950 text-[11px] border-collapse print:bg-white print:text-black">
+                  <thead>
+                    <tr class="bg-slate-50 border-b-2 border-slate-950 font-black">
+                      <th class="p-2 border-r border-slate-950 w-10 text-center">No.</th>
+                      <th class="p-2 border-r border-slate-950">ELEMEN CAPAIAN</th>
+                      <th class="p-2 text-center w-20">Capaian</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template v-if="intraCategories && intraCategories.length > 0">
+                      <template v-for="(cat, cIdx) in intraCategories" :key="cat.id">
+                        <tr class="border-b border-slate-950 bg-slate-100/50 font-black">
+                          <td class="p-2 border-r border-slate-950 text-center font-bold">{{ cIdx + 1 }}.</td>
+                          <td class="p-2 border-r border-slate-950 font-black uppercase" colspan="2">{{ cat.title }}</td>
+                        </tr>
+                        <template v-for="(sub, subIdx) in cat.subAssessments" :key="subIdx">
+                          <tr class="border-b border-slate-950 text-[10px]">
+                            <td class="p-2 border-r border-slate-950"></td>
+                            <td class="p-2 border-r border-slate-950 leading-snug pl-4">{{ subIdx + 1 }}. {{ sub.name }}</td>
+                            <td class="p-2 text-center font-black bg-slate-50/20">{{ sub.grade }}</td>
+                          </tr>
+                        </template>
+                        <tr class="border-b-2 border-slate-950 last:border-b-0">
+                          <td colspan="3" class="p-3 text-justify leading-relaxed bg-white text-[10px]">
+                            <strong>Narasi |</strong> {{ cat.narrative }}
+                          </td>
+                        </tr>
+                      </template>
+                    </template>
+                    <template v-else>
+                      <tr>
+                        <td colspan="3" class="p-4 text-center text-slate-400">
+                          Tata letak Rapor Dinas belum dikonfigurasi. Silakan lakukan pemetaan elemen di menu Template Rapor.
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
 
-          <!-- Kokurikuler (Projek P5) Section -->
-          <div>
-            <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">II. Projek Penguatan Profil Pelajar Pancasila (Kokurikuler)</h3>
-            <div class="bg-slate-50 dark:bg-zinc-950/40 p-5 rounded-lg border border-slate-200/60 dark:border-zinc-800 print:bg-white print:p-0 print:border-none space-y-3">
-              <p class="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed text-justify print:text-black">
-                {{ tkDinasP5Narrative }}
-              </p>
+          <!-- ── PAGE 2: Kokurikuler + Attendance + Signatures ── -->
+          <div
+            class="print-page bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 rounded-none sm:rounded-2xl p-8 sm:p-12 min-h-[29.7cm] flex flex-col justify-between"
+            style="page-break-before: always; break-before: page;"
+          >
+            <div class="space-y-4">
+              <!-- B. Program Kurikuler (Kokurikuler P5) -->
+              <div>
+                <h3 class="text-sm font-black uppercase tracking-wider mb-2">B. Program Kurikuler</h3>
+
+                <!-- Foto Kegiatan -->
+                <div v-if="activityPhotos && activityPhotos.length > 0" class="space-y-1 mb-3">
+                  <div class="text-[9px] font-bold uppercase text-slate-500">Foto Kegiatan</div>
+                  <div class="grid grid-cols-3 gap-3">
+                    <div
+                      v-for="(photo, idx) in activityPhotos.slice(0, 3)"
+                      :key="idx"
+                      class="aspect-[16/9] max-h-[85px] border border-slate-300 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center"
+                    >
+                      <img :src="photo.url || photo" :alt="photo.caption || `Foto ${idx + 1}`" class="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- P5 Narrative & Matrix -->
+                <template v-if="p5Category">
+                  <div class="space-y-3">
+                    <div class="text-[9.5px] text-justify leading-relaxed text-slate-800">
+                      <strong>Narasi |</strong> {{ p5Category.narrative }}
+                    </div>
+                    <div class="border-2 border-slate-950 p-2.5 bg-slate-50 text-[9px] leading-relaxed text-justify">
+                      <strong>Projek 1 | {{ p5Category.title }} :</strong>
+                      Projek ini dapat menguatkan karakter dan kemampuan anak dalam dimensi profil lulusan.
+                      <span class="italic font-semibold">Dimensi Keimanan dan Ketaqwaan terhadap Tuhan YME</span> dimana murid melakukan interaksi dengan sesama dengan bimbingan orang dewasa.
+                      <span class="italic font-semibold">Dimensi Kreativitas</span> dimana murid mengeksplorasi bentuk karya dan/atau tindakan sederhana menggunakan keterampilan motorik halus.
+                      <span class="italic font-semibold">Dimensi Kolaborasi</span> dimana murid mengenali perilaku kerjasama dengan orang lain pada kegiatan bermain dan interaksi di sekolah.
+                      <span class="italic font-semibold">Dimensi Komunikasi</span> murid dapat menyampaikan, menggali dan menanggapi secara lisan berbagai jenis informasi.
+                    </div>
+                    <!-- P5 Dimensions Matrix Table -->
+                    <div class="space-y-2 mt-3">
+                      <table class="w-full text-left border-2 border-slate-950 text-[9px] border-collapse table-fixed">
+                        <thead>
+                          <tr class="bg-slate-100 border-b-2 border-slate-950">
+                            <th class="p-1 border-r border-slate-950 font-black text-center align-middle" rowspan="2" style="width: 20%;">Projek Kelas B2</th>
+                            <th class="p-1 border-r border-slate-950 text-center font-bold" :colspan="activeP5Dimensions.length">Dimensi Profil Pelajar Pancasila</th>
+                          </tr>
+                          <tr class="bg-slate-50 border-b border-slate-950 text-[8px] h-[100px]">
+                            <template v-for="(dim, idx) in activeP5Dimensions" :key="dim.id">
+                              <th :class="[{ 'border-r': idx < activeP5Dimensions.length - 1 }, 'p-1 text-center font-bold align-middle']">
+                                <div class="vertical-text-header">{{ dim.name }}</div>
+                              </th>
+                            </template>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr class="border-b-0 font-black text-center">
+                            <td class="p-2 border-r border-slate-950 font-bold bg-slate-50 text-left whitespace-normal break-words text-[8.5px] leading-tight">
+                              {{ p5Category.title }}
+                            </td>
+                            <template v-for="(dim, idx) in activeP5Dimensions" :key="dim.id">
+                              <td :class="[{ 'border-r': idx < activeP5Dimensions.length - 1 }, 'p-1 text-center font-black']">
+                                {{ p5Category.p5_dimensions?.[dim.id] || '-' }}
+                              </td>
+                            </template>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </template>
+                <template v-else>
+                  <div class="text-xs text-center text-slate-400 p-4 border border-dashed rounded-lg">
+                    Dimensi Projek Kurikuler belum dipetakan.
+                  </div>
+                </template>
+              </div>
+
+              <!-- Attendance, Legend, Growth Grid -->
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mt-4">
+                <!-- Legend -->
+                <div class="md:col-span-5 border-2 border-slate-950 p-2 rounded-lg text-[8.5px] space-y-1 bg-white">
+                  <div class="font-black border-b border-slate-300 pb-0.5 mb-0.5 uppercase text-slate-800">Kategori Perkembangan Kemampuan & Penilaian</div>
+                  <div class="flex justify-between"><span><strong>BB</strong> : Belum Berkembang</span></div>
+                  <div class="flex justify-between"><span><strong>MB</strong> : Mulai Berkembang</span></div>
+                  <div class="flex justify-between"><span><strong>BSH</strong> : Berkembang Sesuai Harapan</span></div>
+                  <div class="flex justify-between"><span><strong>BSB</strong> : Berkembang Sangat Baik</span></div>
+                </div>
+                <!-- Attendance & Growth -->
+                <div class="md:col-span-7 grid grid-cols-2 gap-3 text-[8.5px]">
+                  <!-- Attendance -->
+                  <div class="border-2 border-slate-950 rounded-lg overflow-hidden bg-white">
+                    <div class="bg-slate-100 p-1 font-black border-b-2 border-slate-950 uppercase text-center text-[8px]">A. Ketidakhadiran</div>
+                    <table class="w-full text-left">
+                      <tbody>
+                        <tr class="border-b border-slate-950">
+                          <td class="p-1 pl-2 border-r border-slate-950">1. Sakit</td>
+                          <td class="p-1 text-center w-14 font-bold">{{ reportData.attendance?.sick ?? '-' }} (Hari)</td>
+                        </tr>
+                        <tr class="border-b border-slate-950">
+                          <td class="p-1 pl-2 border-r border-slate-950">2. Izin</td>
+                          <td class="p-1 text-center font-bold">{{ reportData.attendance?.leave ?? '-' }}</td>
+                        </tr>
+                        <tr class="border-b border-slate-950">
+                          <td class="p-1 pl-2 border-r border-slate-950">3. Tanpa Keterangan</td>
+                          <td class="p-1 text-center font-bold">{{ reportData.attendance?.absent ?? '-' }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <div class="bg-slate-100 p-0.5 font-black border-b border-slate-950 uppercase text-center text-[8px]">B. Keterlambatan</div>
+                    <div class="p-0.5 text-center font-bold">-</div>
+                  </div>
+                  <!-- Physical Growth -->
+                  <div class="border-2 border-slate-950 rounded-lg overflow-hidden bg-white flex flex-col h-full">
+                    <div class="bg-slate-100 p-1 font-black border-b-2 border-slate-950 uppercase text-center text-[8px]">C. Tumbuh Kembang Anak</div>
+                    <table class="w-full text-left flex-1">
+                      <tbody>
+                        <tr class="border-b border-slate-950">
+                          <td class="p-1 pl-2 border-r border-slate-950">1. Berat Badan</td>
+                          <td class="p-1 text-center w-20 font-bold">{{ reportData.student.weight || '-' }} kg</td>
+                        </tr>
+                        <tr>
+                          <td class="p-1 pl-2 border-r border-slate-950">2. Tinggi Badan</td>
+                          <td class="p-1 text-center w-20 font-bold">{{ reportData.student.height || '-' }} cm</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dinas Signatures Footer -->
+            <div class="mt-6 text-[10px] font-semibold text-slate-950 print:mt-4">
+              <div class="grid grid-cols-2 gap-4 text-center">
+                <div class="flex flex-col justify-between h-[80px]">
+                  <p>Orang Tua Anak Didik</p>
+                  <p class="underline">____________________</p>
+                </div>
+                <div class="flex flex-col justify-between h-[80px]">
+                  <div>
+                    <p class="text-xs mb-1">{{ reportData.student.school_address?.split(',')[1]?.trim() || 'Karanganyar' }}, {{ formatDate(reportData.report.generated_at || reportData.report.created_at) }}</p>
+                    <p>Guru Kelas</p>
+                  </div>
+                  <p class="font-bold underline">{{ reportData.student.homeroom_teacher_name || 'Wahyuli, S.Pd.' }}</p>
+                </div>
+              </div>
+              <div class="mt-6 text-center flex flex-col justify-between h-[80px] max-w-xs mx-auto">
+                <p>Mengetahui,<br>Kepala {{ reportData.student.school_name || 'TK' }}</p>
+                <p class="font-bold underline">{{ reportData.student.principal_name || 'Puji Wuryanti, S.Pd.' }}</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- FORMAT SEKOLAH (INTRA) -->
+        <!-- ══════ FORMAT SEKOLAH (INTRA) ══════ -->
         <div v-else class="space-y-8 print:space-y-6">
           <!-- Tema & Penilaian Legend Header -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 print:grid-cols-2">
@@ -407,73 +729,77 @@ const formatDate = (dateStr: any) => {
           </div>
         </div>
 
-        <!-- Bagian Bersama: Ekstrakurikuler, Tumbuh Kembang, Absensi -->
-        <!-- Extracurricular Section -->
-        <div>
-          <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">II. Kegiatan Ekstrakurikuler</h3>
-          <table class="w-full text-left border border-slate-900 text-xs">
-            <thead>
-              <tr class="bg-slate-50 border-b border-slate-900 font-bold">
-                <th class="p-2 border-r border-slate-900 w-1/3">Kegiatan Ekstrakurikuler</th>
-                <th class="p-2 border-r border-slate-900 text-center w-24">Predikat</th>
-                <th class="p-2">Deskripsi / Capaian</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="ex in reportData.extracurriculars" :key="ex.extracurricular_name" class="border-b border-slate-900 last:border-0">
-                <td class="p-2 border-r border-slate-900 font-bold">{{ ex.extracurricular_name }}</td>
-                <td class="p-2 border-r border-slate-900 text-center font-black text-violet-600 print:text-black">{{ ex.grade || 'A' }}</td>
-                <td class="p-2 leading-relaxed text-slate-600 print:text-black">{{ ex.description }}</td>
-              </tr>
-              <tr v-if="reportData.extracurriculars.length === 0">
-                <td colspan="3" class="p-4 text-center text-slate-400">Tidak mengikuti kegiatan ekstrakurikuler.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Attendance & Physical Growth Grid -->
-        <div class="grid grid-cols-2 gap-8 print:gap-6">
-          <!-- Physical Growth -->
+        <!-- Shared Sections for Intra format only -->
+        <div v-if="selectedTKFormat !== 'dinas'" class="space-y-8">
+          <!-- Extracurricular Section -->
           <div>
-            <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">III. Tumbuh Kembang</h3>
+            <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">II. Kegiatan Ekstrakurikuler</h3>
             <table class="w-full text-left border border-slate-900 text-xs">
-              <tbody>
-                <tr class="border-b border-slate-900">
-                  <td class="p-2 border-r border-slate-900 font-bold bg-slate-50 w-1/2">Tinggi Badan</td>
-                  <td class="p-2">{{ reportData.student.height ? `${reportData.student.height} cm` : '-' }}</td>
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-900 font-bold">
+                  <th class="p-2 border-r border-slate-900 w-1/3">Kegiatan Ekstrakurikuler</th>
+                  <th class="p-2 border-r border-slate-900 text-center w-24">Predikat</th>
+                  <th class="p-2">Deskripsi / Capaian</th>
                 </tr>
-                <tr>
-                  <td class="p-2 border-r border-slate-900 font-bold bg-slate-50">Berat Badan</td>
-                  <td class="p-2">{{ reportData.student.weight ? `${reportData.student.weight} kg` : '-' }}</td>
+              </thead>
+              <tbody>
+                <tr v-for="ex in reportData.extracurriculars" :key="ex.extracurricular_name" class="border-b border-slate-900 last:border-0">
+                  <td class="p-2 border-r border-slate-900 font-bold">{{ ex.extracurricular_name }}</td>
+                  <td class="p-2 border-r border-slate-900 text-center font-black text-violet-600 print:text-black">{{ ex.grade || 'A' }}</td>
+                  <td class="p-2 leading-relaxed text-slate-600 print:text-black">{{ ex.description }}</td>
+                </tr>
+                <tr v-if="reportData.extracurriculars.length === 0">
+                  <td colspan="3" class="p-4 text-center text-slate-400">Tidak mengikuti kegiatan ekstrakurikuler.</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <!-- Attendance -->
-          <div>
-            <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">IV. Kehadiran (Absensi)</h3>
-            <table class="w-full text-left border border-slate-900 text-xs">
-              <tbody>
-                <tr class="border-b border-slate-900">
-                  <td class="p-2 border-r border-slate-900 font-bold bg-slate-50 w-1/2">Sakit (S)</td>
-                  <td class="p-2 text-center">{{ reportData.attendance.sick }} hari</td>
-                </tr>
-                <tr class="border-b border-slate-900">
-                  <td class="p-2 border-r border-slate-900 font-bold bg-slate-50">Izin (I)</td>
-                  <td class="p-2 text-center">{{ reportData.attendance.leave }} hari</td>
-                </tr>
-                <tr>
-                  <td class="p-2 border-r border-slate-900 font-bold bg-slate-50">Tanpa Keterangan (A)</td>
-                  <td class="p-2 text-center">{{ reportData.attendance.absent }} hari</td>
-                </tr>
-              </tbody>
-            </table>
+          <!-- Attendance & Physical Growth Grid -->
+          <div class="grid grid-cols-2 gap-8 print:gap-6">
+            <!-- Physical Growth -->
+            <div>
+              <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">III. Tumbuh Kembang</h3>
+              <table class="w-full text-left border border-slate-900 text-xs">
+                <tbody>
+                  <tr class="border-b border-slate-900">
+                    <td class="p-2 border-r border-slate-900 font-bold bg-slate-50 w-1/2">Tinggi Badan</td>
+                    <td class="p-2">{{ reportData.student.height ? `${reportData.student.height} cm` : '-' }}</td>
+                  </tr>
+                  <tr>
+                    <td class="p-2 border-r border-slate-900 font-bold bg-slate-50">Berat Badan</td>
+                    <td class="p-2">{{ reportData.student.weight ? `${reportData.student.weight} kg` : '-' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Attendance -->
+            <div>
+              <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">IV. Kehadiran (Absensi)</h3>
+              <table class="w-full text-left border border-slate-900 text-xs">
+                <tbody>
+                  <tr class="border-b border-slate-900">
+                    <td class="p-2 border-r border-slate-900 font-bold bg-slate-50 w-1/2">Sakit (S)</td>
+                    <td class="p-2 text-center">{{ reportData.attendance.sick }} hari</td>
+                  </tr>
+                  <tr class="border-b border-slate-900">
+                    <td class="p-2 border-r border-slate-900 font-bold bg-slate-50">Izin (I)</td>
+                    <td class="p-2 text-center">{{ reportData.attendance.leave }} hari</td>
+                  </tr>
+                  <tr>
+                    <td class="p-2 border-r border-slate-900 font-bold bg-slate-50">Tanpa Keterangan (A)</td>
+                    <td class="p-2 text-center">{{ reportData.attendance.absent }} hari</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
-      </div>      <!-- ─── JENJANG SD / SMP / SMA TEMPLATE ─── -->
+      </div>
+
+      <!-- ─── JENJANG SD / SMP / SMA TEMPLATE ─── -->
       <div v-else class="space-y-8 print:space-y-6">
         
         <!-- Subject Grades Table -->
@@ -568,8 +894,8 @@ const formatDate = (dateStr: any) => {
 
       </div>
 
-      <!-- Signatures Footer -->
-      <div class="mt-16 print:mt-12 text-xs font-semibold">
+      <!-- Signatures Footer (shown for non-TK-Dinas formats) -->
+      <div v-if="reportData.student.school_level !== 'TK' || selectedTKFormat !== 'dinas'" class="mt-16 print:mt-12 text-xs font-semibold">
         <div class="grid grid-cols-3 text-center gap-4">
           <div class="space-y-16">
             <p>Orang Tua / Wali Murid</p>
@@ -599,5 +925,108 @@ const formatDate = (dateStr: any) => {
   .print\:hidden {
     display: none !important;
   }
+  @page {
+    margin: 15mm 12mm 12mm 12mm;
+    size: A4;
+  }
+
+  .print-report-container {
+    max-width: none !important;
+    width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .print-page {
+    min-height: 270mm !important; /* A4 height (297mm) - page margins (15mm + 12mm) */
+    width: 100% !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    margin: 0 auto !important;
+    border: none !important;
+    box-shadow: none !important;
+    background-color: white !important;
+    color: black !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Compact elements for print */
+  .print-page table {
+    font-size: 9.5px !important;
+    line-height: 1.25 !important;
+  }
+  .print-page th,
+  .print-page td {
+    padding: 3px 5px !important;
+  }
+  .print-page td[colspan="3"], 
+  .print-page td[colspan="2"] {
+    padding: 5px 8px !important;
+  }
+
+  /* Margin and spacing overrides to fit Page 1 and Page 2 on exactly 2 sheets */
+  .print-page .mb-6 {
+    margin-bottom: 8px !important;
+  }
+  .print-page .mb-3 {
+    margin-bottom: 6px !important;
+  }
+  .print-page .mb-2 {
+    margin-bottom: 4px !important;
+  }
+  .print-page .pb-3 {
+    padding-bottom: 4px !important;
+  }
+  .print-page .pb-6 {
+    padding-bottom: 10px !important;
+  }
+  .print-page .mt-6 {
+    margin-top: 8px !important;
+  }
+  .print-page .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 6px !important;
+  }
+  .print-page .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 4px !important;
+  }
+  .print-page .space-y-8 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 12px !important;
+  }
+
+  /* Student Info Bar and Boxes */
+  .print-page .bg-slate-50 {
+    padding: 6px 10px !important;
+    margin-bottom: 10px !important;
+    font-size: 11px !important;
+  }
+  
+  /* Text and line-height compaction */
+  .print-page .leading-relaxed {
+    line-height: 1.35 !important;
+  }
+  
+  /* Signature height adjustment to prevent overflow to 3rd page */
+  .print-page div[class*="h-[80px]"] {
+    height: 55px !important;
+  }
+}
+
+/* Vertical text for P5 dimension column headers */
+.vertical-text-header {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  display: inline-block;
+  height: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>
