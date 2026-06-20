@@ -81,11 +81,36 @@ export const useReport = () => {
     }
   }
 
+  const fetchReportAssessments = async (schoolId: string, reportId: string) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/report/${reportId}/assessments`)
+      return res
+    } catch (error) {
+      console.error('Failed to fetch report assessments:', error)
+      throw error
+    }
+  }
+
+  const saveReportAssessments = async (schoolId: string, reportId: string, assessments: any[]) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/report/${reportId}/assessments`, {
+        method: 'PUT',
+        body: { assessments }
+      })
+      return res
+    } catch (error) {
+      console.error('Failed to save report assessments:', error)
+      throw error
+    }
+  }
+
   return {
     reportsList,
     fetchReports,
     generateReports,
     updateReportStatus,
-    fetchReportDetail
+    fetchReportDetail,
+    fetchReportAssessments,
+    saveReportAssessments
   }
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ClipboardCheck, FileText, CheckCircle, AlertCircle, Play, Eye, ArrowUpRight, ShieldCheck, Printer } from 'lucide-vue-next'
-import { BaseCard, BaseButton } from '@eduraport/ui'
+import { BaseCard, BaseButton, BaseModal } from '@eduraport/ui'
 import { useSchool } from '../../composables/useSchool'
 import { useAcademicYear } from '../../composables/useAcademicYear'
 import { useClass } from '../../composables/useClass'
@@ -22,7 +22,7 @@ definePageMeta({
 const { foundations, schools, fetchFoundations, fetchSchools } = useSchool()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
 const { classes, fetchClasses } = useClass()
-const { reportsList, fetchReports, generateReports, updateReportStatus } = useReport()
+const { reportsList, fetchReports, generateReports, updateReportStatus, fetchReportAssessments, saveReportAssessments } = useReport()
 const { user: currentUser } = useAuth()
 const toast = useToast()
 
@@ -34,6 +34,59 @@ const selectedSemester = ref('odd') // odd, even
 
 const loading = ref(false)
 const generating = ref(false)
+const printFormat = ref('dinas') // 'dinas' or 'intra'
+
+// TK State
+const showTKInputModal = ref(false)
+const activeReport = ref<any>(null)
+const tkAssessmentsForm = ref<any[]>([])
+const loadingAssessments = ref(false)
+const savingAssessments = ref(false)
+
+const isTKSchool = computed(() => {
+  const school = schools.value.find(s => s.id === selectedSchoolId.value)
+  return school?.level === 'TK'
+})
+
+const openTKInputModal = async (report: any) => {
+  activeReport.value = report
+  showTKInputModal.value = true
+  loadingAssessments.value = true
+  tkAssessmentsForm.value = []
+  try {
+    const res = await fetchReportAssessments(selectedSchoolId.value, report.report_id)
+    if (res.success) {
+      tkAssessmentsForm.value = res.data
+    }
+  } catch (e: any) {
+    toast.error(e?.message || 'Gagal memuat form penilaian TK.', 'Gagal')
+    showTKInputModal.value = false
+  } finally {
+    loadingAssessments.value = false
+  }
+}
+
+const handleSaveTKAssessments = async () => {
+  if (!activeReport.value) return
+  savingAssessments.value = true
+  try {
+    const payload = tkAssessmentsForm.value.map(item => ({
+      element_id: item.element_id,
+      letter_grade: item.letter_grade,
+      narrative: item.narrative
+    }))
+    const res = await saveReportAssessments(selectedSchoolId.value, activeReport.value.report_id, payload)
+    if (res.success) {
+      toast.success('Penilaian TK berhasil disimpan.', 'Sukses')
+      showTKInputModal.value = false
+      await loadReports()
+    }
+  } catch (e: any) {
+    toast.error(e?.message || 'Gagal menyimpan penilaian TK.', 'Gagal')
+  } finally {
+    savingAssessments.value = false
+  }
+}
 
 onMounted(async () => {
   await fetchFoundations()
@@ -284,6 +337,39 @@ const getStatusLabel = (status: string) => {
 
     <!-- Main Content Grid -->
     <div v-else class="space-y-6">
+      <!-- Format Selector for TK School -->
+      <div v-if="isTKSchool && reportsList.length > 0" class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
+        <div>
+          <h4 class="text-sm font-bold text-slate-900 dark:text-zinc-100">Pilihan Format Cetak Rapor</h4>
+          <p class="text-xs text-slate-500 dark:text-zinc-400">Pilih format template yang ingin digunakan saat melihat atau mencetak rapor.</p>
+        </div>
+        <div class="flex bg-slate-100 dark:bg-zinc-800 rounded-lg p-1 border border-slate-200 dark:border-zinc-700">
+          <button 
+            @click="printFormat = 'dinas'" 
+            type="button"
+            :class="[
+              'px-4 py-2 text-xs font-bold rounded-md transition-all',
+              printFormat === 'dinas' 
+                ? 'bg-white dark:bg-zinc-900 text-violet-600 dark:text-violet-400 shadow-sm' 
+                : 'text-slate-650 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
+            ]"
+          >
+            Format Dinas
+          </button>
+          <button 
+            @click="printFormat = 'intra'" 
+            type="button"
+            :class="[
+              'px-4 py-2 text-xs font-bold rounded-md transition-all',
+              printFormat === 'intra' 
+                ? 'bg-white dark:bg-zinc-900 text-violet-600 dark:text-violet-400 shadow-sm' 
+                : 'text-slate-655 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
+            ]"
+          >
+            Format Sekolah (Intra)
+          </button>
+        </div>
+      </div>
       <div v-if="reportsList.length === 0" class="py-16 text-center text-slate-400 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl">
         <AlertCircle class="mx-auto mb-2 text-amber-500 opacity-80" :size="32" />
         <p class="text-xs font-bold text-slate-700 dark:text-zinc-300">Draft Rapor Belum Di-generate</p>
@@ -325,12 +411,21 @@ const getStatusLabel = (status: string) => {
                     <!-- Read action -->
                     <NuxtLink 
                       v-if="rep.report_id"
-                      :to="`/report/${rep.report_id}?school_id=${selectedSchoolId}`" 
+                      :to="`/report/${rep.report_id}?school_id=${selectedSchoolId}&format=${printFormat}`" 
                       target="_blank"
                       class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-250 hover:bg-slate-200 rounded-lg text-[10px] font-bold transition-colors"
                     >
                       <Eye :size="12" /> Lihat Rapor
                     </NuxtLink>
+
+                    <!-- TK: Input Nilai -->
+                    <button 
+                      v-if="rep.report_id && isTKSchool && ['teacher', 'super_admin'].includes(currentUser?.role)"
+                      @click="openTKInputModal(rep)"
+                      class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-violet-600 text-white hover:bg-violet-750 rounded-lg text-[10px] font-bold transition-colors"
+                    >
+                      <ClipboardCheck :size="12" /> Input Nilai TK
+                    </button>
 
                     <!-- Wali kelas: Submit draft -->
                     <button 
@@ -366,5 +461,68 @@ const getStatusLabel = (status: string) => {
         </div>
       </div>
     </div>
+
+    <!-- TK Grade Input Modal -->
+    <BaseModal :show="showTKInputModal" :title="`Input Penilaian TK - ${activeReport?.full_name || ''}`" @close="showTKInputModal = false">
+      <div v-if="loadingAssessments" class="py-12 text-center text-slate-400">
+        <div class="w-8 h-8 rounded-full border-2 border-violet-600 border-t-transparent animate-spin mx-auto mb-3"></div>
+        <p class="text-xs font-semibold">Memuat elemen penilaian...</p>
+      </div>
+
+      <div v-else class="space-y-6">
+        <div class="max-h-[60vh] overflow-y-auto pr-1 space-y-5">
+          <div 
+            v-for="(item, index) in tkAssessmentsForm" 
+            :key="item.element_id" 
+            class="bg-slate-50 dark:bg-zinc-950/40 p-4 border border-slate-200/60 dark:border-zinc-800 rounded-xl space-y-3.5"
+          >
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/50 dark:border-zinc-800 pb-2">
+              <span class="text-xs font-black text-slate-900 dark:text-zinc-100 leading-snug">
+                {{ index + 1 }}. {{ item.element_name }}
+              </span>
+              <!-- Select letter grade for TK (BB / MB / BSH / BSB) -->
+              <div class="flex items-center gap-2 shrink-0">
+                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Capaian:</label>
+                <select 
+                  v-model="item.letter_grade" 
+                  class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1 text-xs font-black outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600"
+                >
+                  <option :value="null">- Pilih Capaian -</option>
+                  <option value="BB">BB (Belum Berkembang)</option>
+                  <option value="MB">MB (Mulai Berkembang)</option>
+                  <option value="BSH">BSH (Berkembang Sesuai Harapan)</option>
+                  <option value="BSB">BSB (Berkembang Sangat Baik)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Narrative / Deskripsi text area -->
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-1">Deskripsi / Capaian Perkembangan</label>
+              <textarea 
+                v-model="item.narrative" 
+                rows="4" 
+                placeholder="Masukkan catatan perkembangan atau deskripsi capaian ananda untuk aspek ini..."
+                class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs font-semibold leading-relaxed outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600"
+              ></textarea>
+            </div>
+          </div>
+
+          <div v-if="tkAssessmentsForm.length === 0" class="text-center py-8 text-slate-400">
+            <AlertCircle class="mx-auto mb-2 text-amber-500 opacity-80" :size="32" />
+            <p class="text-xs font-bold text-slate-700 dark:text-zinc-350">Tidak ada elemen penilaian ditemukan.</p>
+            <p class="text-[10px] mt-1">Pastikan template rapor untuk jenjang TK sudah dikonfigurasi dengan elemen penilaian.</p>
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
+          <BaseButton variant="outline" type="button" @click="showTKInputModal = false" :disabled="savingAssessments">Batal</BaseButton>
+          <BaseButton variant="primary" @click="handleSaveTKAssessments" :disabled="savingAssessments || tkAssessmentsForm.length === 0" class="py-2.5 px-4 text-xs font-bold">
+            {{ savingAssessments ? 'Menyimpan...' : 'Simpan Penilaian Rapor' }}
+          </BaseButton>
+        </div>
+      </div>
+    </BaseModal>
   </div>
 </template>
