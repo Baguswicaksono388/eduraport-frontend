@@ -7,6 +7,8 @@ import { useSubject } from '../../composables/useSubject'
 import { useAcademicYear } from '../../composables/useAcademicYear'
 import { useGradebook } from '../../composables/useGradebook'
 import { useToast } from '../../composables/useToast'
+import { useReport } from '../../composables/useReport'
+import { useReportTemplate } from '../../composables/useReportTemplate'
 
 definePageMeta({
   middleware: [
@@ -32,6 +34,21 @@ const selectedClassId = ref('')
 const selectedSubjectId = ref('')
 const selectedAcademicYearId = ref('')
 const selectedSemester = ref('odd') // odd or even
+
+// TK Grade Input States
+const isTKSchool = computed(() => {
+  const school = schools.value.find(s => s.id === selectedSchoolId.value)
+  return school?.level === 'TK'
+})
+const { reportTemplates, fetchReportTemplates } = useReportTemplate()
+const selectedTemplateId = ref('')
+const tkReportsList = ref<any[]>([])
+const loadingTK = ref(false)
+const activeTKReport = ref<any>(null)
+const tkAssessmentsForm = ref<any[]>([])
+const loadingTKAssessments = ref(false)
+const savingTKAssessments = ref(false)
+const generatingTK = ref(false)
 
 const scheme = ref<any>(null)
 const groups = ref<any[]>([])
@@ -99,15 +116,32 @@ watch(selectedSchoolId, async (newVal) => {
     selectedClassId.value = ''
     selectedSubjectId.value = ''
     await loadSchoolData(newVal)
+    
+    // Fetch TK templates if it is a TK school
+    if (isTKSchool.value) {
+      await fetchReportTemplates(newVal, 'TK')
+      if (reportTemplates.value.length > 0) {
+        selectedTemplateId.value = reportTemplates.value[0].id
+      } else {
+        selectedTemplateId.value = ''
+      }
+    } else {
+      selectedTemplateId.value = ''
+    }
   } else {
     classes.value = []
     subjects.value = []
     academicYears.value = []
+    selectedTemplateId.value = ''
   }
 })
 
-watch([selectedClassId, selectedSubjectId, selectedAcademicYearId, selectedSemester], async () => {
-  await loadMatrix()
+watch([selectedClassId, selectedSubjectId, selectedAcademicYearId, selectedSemester, isTKSchool, selectedTemplateId], async () => {
+  if (isTKSchool.value) {
+    await loadTKReports()
+  } else {
+    await loadMatrix()
+  }
 })
 
 const loadMatrix = async () => {
@@ -487,6 +521,140 @@ const handleBulkInputSubmit = async () => {
     toast.error(error.message || 'Gagal menyimpan bulk nilai', 'Gagal')
   }
 }
+
+// TK Grade Input Functions
+const loadTKReports = async () => {
+  if (!selectedSchoolId.value || !selectedClassId.value || !selectedAcademicYearId.value) {
+    tkReportsList.value = []
+    activeTKReport.value = null
+    tkAssessmentsForm.value = []
+    return
+  }
+  loadingTK.value = true
+  try {
+    const { fetchReports } = useReport()
+    const res = await fetchReports(
+      selectedSchoolId.value,
+      selectedClassId.value,
+      selectedAcademicYearId.value,
+      selectedSemester.value
+    )
+    if (res.success) {
+      tkReportsList.value = res.data
+      
+      // Auto-select first student if available and not already selected
+      if (tkReportsList.value.length > 0) {
+        const stillExists = activeTKReport.value ? tkReportsList.value.find(r => r.report_id === activeTKReport.value.report_id) : null;
+        if (stillExists) {
+          await selectTKStudent(stillExists)
+        } else {
+          const firstWithReport = tkReportsList.value.find(r => r.report_id)
+          if (firstWithReport) {
+            await selectTKStudent(firstWithReport)
+          } else {
+            activeTKReport.value = null
+            tkAssessmentsForm.value = []
+          }
+        }
+      } else {
+        activeTKReport.value = null
+        tkAssessmentsForm.value = []
+      }
+    }
+  } catch (e: any) {
+    toast.error(e?.message || 'Gagal memuat daftar rapor TK.', 'Gagal')
+    tkReportsList.value = []
+    activeTKReport.value = null
+    tkAssessmentsForm.value = []
+  } finally {
+    loadingTK.value = false
+  }
+}
+
+const selectTKStudent = async (report: any) => {
+  if (!report.report_id) {
+    toast.warning('Draft rapor belum di-generate untuk siswa ini.', 'Peringatan')
+    return
+  }
+  activeTKReport.value = report
+  loadingTKAssessments.value = true
+  tkAssessmentsForm.value = []
+  try {
+    const { fetchReportAssessments } = useReport()
+    const res = await fetchReportAssessments(selectedSchoolId.value, report.report_id, selectedTemplateId.value)
+    if (res.success) {
+      tkAssessmentsForm.value = res.data
+    }
+  } catch (e: any) {
+    toast.error(e?.message || 'Gagal memuat form penilaian TK.', 'Gagal')
+  } finally {
+    loadingTKAssessments.value = false
+  }
+}
+
+const handleSaveTKAssessments = async () => {
+  if (!activeTKReport.value) return
+  savingTKAssessments.value = true
+  try {
+    const { saveReportAssessments } = useReport()
+    const payload = tkAssessmentsForm.value.map(item => ({
+      element_id: item.element_id,
+      letter_grade: item.letter_grade,
+      narrative: item.narrative
+    }))
+    const res = await saveReportAssessments(selectedSchoolId.value, activeTKReport.value.report_id, payload)
+    if (res.success) {
+      toast.success('Penilaian TK berhasil disimpan.', 'Sukses')
+      await loadTKReports()
+    }
+  } catch (e: any) {
+    toast.error(e?.message || 'Gagal menyimpan penilaian TK.', 'Gagal')
+  } finally {
+    savingTKAssessments.value = false
+  }
+}
+
+const handleGenerateTK = async () => {
+  if (!selectedSchoolId.value || !selectedClassId.value || !selectedAcademicYearId.value) return
+  generatingTK.value = true
+  try {
+    const { generateReports } = useReport()
+    const payload = {
+      class_id: selectedClassId.value,
+      academic_year_id: selectedAcademicYearId.value,
+      semester: selectedSemester.value
+    }
+    const res = await generateReports(selectedSchoolId.value, payload)
+    if (res.success) {
+      toast.success('Draft rapor kelas berhasil dibuat/diperbarui.', 'Sukses')
+      await loadTKReports()
+    }
+  } catch (e: any) {
+    toast.error(e?.message || 'Gagal generate rapor kelas.', 'Gagal')
+  } finally {
+    generatingTK.value = false
+  }
+}
+
+const getStatusBadgeClass = (status: string) => {
+  const classes: Record<string, string> = {
+    draft: 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-350 border-slate-200/60 dark:border-zinc-700',
+    submitted: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+    approved: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+    published: 'bg-violet-600/10 text-violet-600 dark:text-violet-400 border-violet-500/20'
+  }
+  return classes[status] || 'bg-slate-100 text-slate-600'
+}
+
+const getStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    draft: 'Draft',
+    submitted: 'Submitted',
+    approved: 'Approved',
+    published: 'Published'
+  }
+  return labels[status] || status
+}
 </script>
 
 <template>
@@ -495,10 +663,14 @@ const handleBulkInputSubmit = async () => {
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">Input Nilai Siswa</h2>
-        <p class="text-xs text-slate-500 dark:text-zinc-400">Guru mata pelajaran dapat menginput nilai secara live, finalisasi per komponen, atau kunci nilai raport.</p>
+        <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">
+          {{ isTKSchool ? 'Input Penilaian Perkembangan TK' : 'Input Nilai Siswa' }}
+        </h2>
+        <p class="text-xs text-slate-500 dark:text-zinc-400">
+          {{ isTKSchool ? 'Wali kelas dapat mengisi capaian perkembangan dan deskripsi naratif untuk siswa TK.' : 'Guru mata pelajaran dapat menginput nilai secara live, finalisasi per komponen, atau kunci nilai rapor.' }}
+        </p>
       </div>
-      <div v-if="scheme && matrix.length > 0" class="flex gap-2">
+      <div v-if="!isTKSchool && scheme && matrix.length > 0" class="flex gap-2">
         <BaseButton variant="primary" @click="handleFinalizeScheme" class="py-2.5 px-4 text-xs font-bold shadow-lg shadow-violet-600/15">
           <Save class="mr-1.5" :size="14" /> Simpan & Kunci Nilai Akhir
         </BaseButton>
@@ -507,7 +679,7 @@ const handleBulkInputSubmit = async () => {
 
     <!-- Filters Bar -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
-      <div class="flex flex-col gap-1.5 lg:col-span-2">
+      <div class="flex flex-col gap-1.5" :class="isTKSchool ? 'lg:col-span-3' : 'lg:col-span-2'">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
         <select v-model="selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
           <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
@@ -522,7 +694,17 @@ const handleBulkInputSubmit = async () => {
         </select>
       </div>
 
-      <div class="flex flex-col gap-1.5">
+      <!-- If TK: Template select filter -->
+      <div v-if="isTKSchool" class="flex flex-col gap-1.5">
+        <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Template Rapor</label>
+        <select v-model="selectedTemplateId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
+          <option value="" disabled>Pilih Template</option>
+          <option v-for="temp in reportTemplates" :key="temp.id" :value="temp.id">{{ temp.name }}</option>
+        </select>
+      </div>
+
+      <!-- If non-TK: Mata Pelajaran select filter -->
+      <div v-else class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Mata Pelajaran</label>
         <select v-model="selectedSubjectId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
           <option value="" disabled>Pilih Mapel</option>
@@ -547,16 +729,182 @@ const handleBulkInputSubmit = async () => {
     </div>
 
     <!-- Loading Panel -->
-    <div v-if="loading" class="flex flex-col items-center justify-center py-20 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm animate-pulse">
+    <div v-if="loading || loadingTK" class="flex flex-col items-center justify-center py-20 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm animate-pulse">
       <Loader2 class="text-violet-500 animate-spin mb-4" :size="36" />
-      <p class="text-xs font-bold text-slate-500">Memuat lembar penilaian siswa...</p>
+      <p class="text-xs font-bold text-slate-500">Memuat data...</p>
     </div>
 
     <!-- Filters Warning placeholders -->
-    <div v-else-if="!selectedClassId || !selectedSubjectId" class="flex flex-col items-center justify-center py-16 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm text-center">
+    <div v-else-if="!selectedClassId || (!isTKSchool && !selectedSubjectId)" class="flex flex-col items-center justify-center py-16 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm text-center">
       <ClipboardCheck class="text-slate-350 dark:text-zinc-700 mb-3" :size="48" />
       <p class="text-sm font-bold text-slate-700 dark:text-zinc-200">Pilih Parameter Penilaian</p>
-      <p class="text-xs text-slate-400 max-w-sm mt-1">Pilih Unit Sekolah, Kelas, dan Mata Pelajaran di atas untuk membuka lembar penilaian siswa.</p>
+      <p class="text-xs text-slate-400 max-w-sm mt-1">
+        Pilih Unit Sekolah, Kelas, <span v-if="!isTKSchool">dan Mata Pelajaran</span> di atas untuk membuka lembar penilaian siswa.
+      </p>
+    </div>
+
+    <!-- TK Workspace -->
+    <div v-else-if="isTKSchool" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left side: List of students -->
+      <div class="lg:col-span-1 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl p-4 shadow-sm h-fit space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-black text-slate-900 dark:text-zinc-100 uppercase tracking-wider">Daftar Murid</h3>
+          <BaseButton 
+            v-if="tkReportsList.length > 0" 
+            variant="outline" 
+            @click="handleGenerateTK" 
+            :disabled="generatingTK"
+            class="text-[10px] py-1 px-2 font-semibold"
+          >
+            {{ generatingTK ? 'Syncing...' : 'Sync Draft Rapor' }}
+          </BaseButton>
+        </div>
+
+        <!-- If no reports at all, show generate draft CTA -->
+        <div v-if="tkReportsList.length === 0" class="py-12 text-center text-slate-400">
+          <AlertCircle class="mx-auto mb-2 text-amber-500 opacity-80" :size="24" />
+          <p class="text-xs font-bold text-slate-700 dark:text-zinc-300">Draft Rapor Belum Di-generate</p>
+          <p class="text-[10px] mt-1 mb-4">Silakan buat draft rapor kelas terlebih dahulu.</p>
+          <BaseButton variant="primary" @click="handleGenerateTK" :disabled="generatingTK" class="py-2 px-3 text-xs font-bold">
+            Buat Draft Rapor
+          </BaseButton>
+        </div>
+
+        <div v-else class="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+          <button
+            v-for="rep in tkReportsList"
+            :key="rep.student_id"
+            @click="selectTKStudent(rep)"
+            type="button"
+            class="w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between"
+            :class="[
+              activeTKReport?.student_id === rep.student_id
+                ? 'bg-violet-600 border-violet-600 text-white shadow-md shadow-violet-600/10'
+                : 'bg-slate-50/50 hover:bg-slate-50 dark:bg-zinc-950/40 dark:hover:bg-zinc-950 border-slate-200/60 dark:border-zinc-800 text-slate-800 dark:text-zinc-300'
+            ]"
+          >
+            <div class="space-y-0.5">
+              <p class="text-xs font-bold leading-tight" :class="{'text-white': activeTKReport?.student_id === rep.student_id}">
+                {{ rep.full_name }}
+              </p>
+              <p class="text-[9px]" :class="activeTKReport?.student_id === rep.student_id ? 'text-violet-200' : 'text-slate-400'">
+                NIS: {{ rep.student_number || '-' }}
+              </p>
+            </div>
+            
+            <!-- Badge status -->
+            <span 
+              v-if="rep.report_id"
+              class="px-1.5 py-0.5 rounded text-[8px] font-bold border"
+              :class="[
+                activeTKReport?.student_id === rep.student_id
+                  ? 'bg-white/10 text-white border-white/20'
+                  : getStatusBadgeClass(rep.status)
+              ]"
+            >
+              {{ getStatusLabel(rep.status) }}
+            </span>
+            <span v-else class="text-[9px] font-bold text-rose-500">
+              Belum Terdaftar
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right side: TK assessments form -->
+      <div class="lg:col-span-2 space-y-6">
+        <div v-if="loadingTKAssessments" class="py-20 text-center text-slate-400 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm">
+          <div class="w-8 h-8 rounded-full border-2 border-violet-600 border-t-transparent animate-spin mx-auto mb-3"></div>
+          <p class="text-xs font-semibold">Memuat elemen penilaian...</p>
+        </div>
+
+        <div v-else-if="!activeTKReport" class="flex flex-col items-center justify-center py-20 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm text-center">
+          <ClipboardCheck class="text-slate-350 dark:text-zinc-700 mb-3" :size="40" />
+          <p class="text-xs font-bold text-slate-700 dark:text-zinc-200">Belum Ada Siswa yang Dipilih</p>
+          <p class="text-[10px] text-slate-400 max-w-xs mt-1">Pilih salah satu siswa dari daftar di sebelah kiri untuk mulai mengisi penilaian perkembangan TK.</p>
+        </div>
+
+        <div v-else class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl p-6 shadow-sm space-y-6">
+          <div class="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-4">
+            <div>
+              <h3 class="text-sm font-black text-slate-900 dark:text-zinc-100">
+                Input Penilaian TK - {{ activeTKReport.full_name }}
+              </h3>
+              <p class="text-[10px] text-slate-400 mt-0.5">
+                Mengisi capaian perkembangan dan narasi deskripsi untuk {{ activeTKReport.full_name }}.
+              </p>
+            </div>
+            
+            <BaseButton 
+              variant="primary" 
+              @click="handleSaveTKAssessments" 
+              :disabled="savingTKAssessments || tkAssessmentsForm.length === 0" 
+              class="py-2 px-3 text-xs font-bold shadow-lg shadow-violet-600/10"
+            >
+              <Save class="mr-1.5" :size="14" /> {{ savingTKAssessments ? 'Menyimpan...' : 'Simpan Penilaian' }}
+            </BaseButton>
+          </div>
+
+          <div class="space-y-5 max-h-[60vh] overflow-y-auto pr-1">
+            <div 
+              v-for="(item, index) in tkAssessmentsForm" 
+              :key="item.element_id" 
+              class="bg-slate-50/50 dark:bg-zinc-950/20 p-4 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl space-y-3"
+            >
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-250/50 dark:border-zinc-800 pb-2">
+                <span class="text-xs font-bold text-slate-900 dark:text-zinc-100 leading-snug">
+                  {{ index + 1 }}. {{ item.element_name }}
+                </span>
+                
+                <div class="flex items-center gap-2 shrink-0">
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-wider">Capaian:</label>
+                  <select 
+                    v-model="item.letter_grade" 
+                    class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-1 text-xs font-black outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600"
+                  >
+                    <option :value="null">- Pilih Capaian -</option>
+                    <option value="BB">BB (Belum Berkembang)</option>
+                    <option value="MB">MB (Mulai Berkembang)</option>
+                    <option value="BSH">BSH (Berkembang Sesuai Harapan)</option>
+                    <option value="BSB">BSB (Berkembang Sangat Baik)</option>
+                    <option value="BS">BS (Baik Sekali)</option>
+                    <option value="B">B (Baik)</option>
+                    <option value="C">C (Cukup)</option>
+                    <option value="K">K (Kurang)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[9px] font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-widest px-1">Deskripsi / Capaian Perkembangan</label>
+                <textarea 
+                  v-model="item.narrative" 
+                  rows="4" 
+                  placeholder="Masukkan catatan perkembangan atau deskripsi capaian ananda untuk aspek ini..."
+                  class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs font-semibold leading-relaxed outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600"
+                ></textarea>
+              </div>
+            </div>
+
+            <div v-if="tkAssessmentsForm.length === 0" class="text-center py-12 text-slate-400">
+              <AlertCircle class="mx-auto mb-2 text-amber-500 opacity-80" :size="32" />
+              <p class="text-xs font-bold text-slate-700 dark:text-zinc-350">Tidak ada elemen penilaian ditemukan.</p>
+              <p class="text-[10px] mt-1">Pastikan template rapor untuk jenjang TK sudah dikonfigurasi dengan elemen penilaian.</p>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
+            <BaseButton 
+              variant="primary" 
+              @click="handleSaveTKAssessments" 
+              :disabled="savingTKAssessments || tkAssessmentsForm.length === 0" 
+              class="py-2.5 px-4 text-xs font-bold"
+            >
+              <Save class="mr-1.5" :size="14" /> {{ savingTKAssessments ? 'Menyimpan...' : 'Simpan Penilaian Rapor' }}
+            </BaseButton>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div v-else-if="!scheme" class="flex flex-col items-center justify-center py-16 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm text-center">

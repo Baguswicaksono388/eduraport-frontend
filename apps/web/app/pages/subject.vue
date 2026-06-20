@@ -22,8 +22,12 @@ const selectedFoundationId = ref('')
 const selectedSchoolId = ref('')
 const typeFilter = ref('') // all
 
+const filteredSchools = computed(() => {
+  return schools.value.filter(s => s.level !== 'TK')
+})
+
 const selectedSchool = computed(() => {
-  return schools.value.find(s => s.id === selectedSchoolId.value)
+  return filteredSchools.value.find(s => s.id === selectedSchoolId.value)
 })
 
 const selectedSchoolLevel = computed(() => {
@@ -55,10 +59,10 @@ onMounted(async () => {
   if (foundations.value.length > 0) {
     selectedFoundationId.value = foundations.value[0].id
     await fetchSchools(selectedFoundationId.value)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
+    if (filteredSchools.value.length > 0) {
+      selectedSchoolId.value = filteredSchools.value[0].id
       await fetchSubjects(selectedSchoolId.value, typeFilter.value || undefined)
-      const school = schools.value.find(s => s.id === selectedSchoolId.value)
+      const school = filteredSchools.value.find(s => s.id === selectedSchoolId.value)
       if (school && school.curriculum_id) {
         await fetchCurriculumCategories(school.curriculum_id)
       }
@@ -69,8 +73,8 @@ onMounted(async () => {
 watch(selectedFoundationId, async (newVal) => {
   if (newVal) {
     await fetchSchools(newVal)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
+    if (filteredSchools.value.length > 0) {
+      selectedSchoolId.value = filteredSchools.value[0].id
     } else {
       selectedSchoolId.value = ''
       subjects.value = []
@@ -82,7 +86,7 @@ watch(selectedFoundationId, async (newVal) => {
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {
     await fetchSubjects(newVal, typeFilter.value || undefined)
-    const school = schools.value.find(s => s.id === newVal)
+    const school = filteredSchools.value.find(s => s.id === newVal)
     if (school && school.curriculum_id) {
       await fetchCurriculumCategories(school.curriculum_id)
     } else {
@@ -200,7 +204,7 @@ const handleDeleteSubject = async (id: string) => {
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
         <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10">
           <option value="" disabled>Pilih Unit Sekolah</option>
-          <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
+          <option v-for="school in filteredSchools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
       </div>
 

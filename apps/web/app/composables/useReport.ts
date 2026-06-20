@@ -81,9 +81,11 @@ export const useReport = () => {
     }
   }
 
-  const fetchReportAssessments = async (schoolId: string, reportId: string) => {
+  const fetchReportAssessments = async (schoolId: string, reportId: string, templateId?: string) => {
     try {
-      const res: any = await fetcher(`/school/${schoolId}/report/${reportId}/assessments`)
+      const res: any = await fetcher(`/school/${schoolId}/report/${reportId}/assessments`, {
+        query: templateId ? { template_id: templateId } : {}
+      })
       return res
     } catch (error) {
       console.error('Failed to fetch report assessments:', error)
