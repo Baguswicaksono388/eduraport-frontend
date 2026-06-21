@@ -123,11 +123,20 @@ const handleFilterChange = async () => {
       await loadRecapitulation()
     } else if (activeTab.value === 'subject') {
       await loadRecapitulation() // Needed to get subjects listing
-      if (recapData.value?.subjects?.length > 0) {
-        selectedSchemeId.value = recapData.value.subjects[0].scheme_id
-        await loadDistribution()
+      if (recapData.value?.level === 'TK') {
+        if (recapData.value?.elements?.length > 0) {
+          selectedSchemeId.value = recapData.value.elements[0].id
+          await loadDistribution()
+        } else {
+          distributionData.value = null
+        }
       } else {
-        distributionData.value = null
+        if (recapData.value?.subjects?.length > 0) {
+          selectedSchemeId.value = recapData.value.subjects[0].scheme_id
+          await loadDistribution()
+        } else {
+          distributionData.value = null
+        }
       }
     } else if (activeTab.value === 'progression') {
       await loadRecapitulation() // Needed for student listing
@@ -168,7 +177,17 @@ const loadRecapitulation = async () => {
 
 const loadDistribution = async () => {
   if (!selectedSchoolId.value || !selectedSchemeId.value) return
-  const res: any = await gradebook.fetchClassDistribution(selectedSchoolId.value, selectedSchemeId.value)
+  let params: any = {}
+  if (recapData.value?.level === 'TK') {
+    params = {
+      element_id: selectedSchemeId.value,
+      academic_year_id: selectedAcademicYearId.value,
+      semester: selectedSemester.value
+    }
+  } else {
+    params = { scheme_id: selectedSchemeId.value }
+  }
+  const res: any = await gradebook.fetchClassDistribution(selectedSchoolId.value, params)
   if (res.success) {
     distributionData.value = res.data
   }
@@ -238,6 +257,12 @@ const filteredRecapStudents = computed(() => {
 
 const getPassingRate = computed(() => {
   if (!distributionData.value?.students || !recapData.value) return 0
+  if (recapData.value.level === 'TK') {
+    const total = distributionData.value.students.length
+    if (total === 0) return 0
+    const passed = distributionData.value.students.filter(s => ['BSH', 'BSB'].includes(s.predicate)).length
+    return Math.round((passed / total) * 100)
+  }
   const activeScheme = recapData.value.subjects?.find(s => s.scheme_id === selectedSchemeId.value)
   const kkmVal = activeScheme?.kkm_score || 70
   
@@ -573,17 +598,55 @@ const getTKGradeLabel = (grade: string) => {
       <div v-else-if="activeTab === 'subject' && recapData" class="space-y-6">
         <!-- Sub selector for subjects -->
         <div class="flex items-center gap-3 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 p-4 rounded-xl shadow-sm">
-          <label class="text-xs font-bold text-slate-600 dark:text-zinc-400">Pilih Mata Pelajaran:</label>
+          <label class="text-xs font-bold text-slate-600 dark:text-zinc-400">
+            {{ recapData.level === 'TK' ? 'Pilih Elemen Perkembangan:' : 'Pilih Mata Pelajaran:' }}
+          </label>
           <select v-model="selectedSchemeId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 min-w-[200px]">
-            <option v-for="sub in recapData.subjects" :key="sub.scheme_id" :value="sub.scheme_id">
-              {{ sub.subject_name }}
-            </option>
+            <template v-if="recapData.level === 'TK'">
+              <option v-for="el in recapData.elements" :key="el.id" :value="el.id">
+                {{ el.name }}
+              </option>
+            </template>
+            <template v-else>
+              <option v-for="sub in recapData.subjects" :key="sub.scheme_id" :value="sub.scheme_id">
+                {{ sub.subject_name }}
+              </option>
+            </template>
           </select>
         </div>
 
         <div v-if="distributionData" class="space-y-6 animate-in fade-in duration-300">
-          <!-- Numeric Subject Analytics -->
-          <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <!-- TK Subject Analytics -->
+          <div v-if="recapData.level === 'TK'" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm text-center">
+              <p class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Total Penilaian</p>
+              <h3 class="text-3xl font-black text-violet-600 dark:text-violet-400 mt-2">
+                {{ distributionData.stats.total_students }}
+              </h3>
+              <p class="text-[9px] text-slate-400 mt-1">Siswa teramati</p>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm text-center">
+              <p class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Target Tercapai (BSH/BSB)</p>
+              <h3 class="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-2">
+                {{ 
+                  Math.round((( (distributionData.distribution.BSH || 0) + (distributionData.distribution.BSB || 0) ) / Math.max(distributionData.stats.total_students, 1)) * 100)
+                }}%
+              </h3>
+              <p class="text-[9px] text-slate-400 mt-1">Berkembang Sesuai Harapan / Sangat Baik</p>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm text-center">
+              <p class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Stimulasi Ekstra (BB/MB)</p>
+              <h3 class="text-3xl font-black text-rose-600 dark:text-rose-400 mt-2">
+                {{ 
+                  Math.round((( (distributionData.distribution.BB || 0) + (distributionData.distribution.MB || 0) ) / Math.max(distributionData.stats.total_students, 1)) * 100)
+                }}%
+              </h3>
+              <p class="text-[9px] text-slate-400 mt-1">Belum / Mulai Berkembang</p>
+            </div>
+          </div>
+          
+          <!-- Numeric SD-SMA Subject Analytics -->
+          <div v-else class="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm text-center">
               <p class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Rata-rata Kelas</p>
               <h3 class="text-3xl font-black text-violet-600 dark:text-violet-400 mt-2">{{ distributionData.stats.average || '-' }}</h3>
@@ -605,13 +668,13 @@ const getTKGradeLabel = (grade: string) => {
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Distribution Chart Card -->
             <div class="lg:col-span-1 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm space-y-6">
-              <h4 class="text-xs font-black text-slate-900 dark:text-zinc-150 uppercase tracking-wider">Sebaran Predikat</h4>
+              <h4 class="text-xs font-black text-slate-900 dark:text-zinc-150 uppercase tracking-wider">Sebaran Capaian</h4>
               
               <div class="space-y-4">
                 <!-- Predicate bars -->
                 <div v-for="(count, pred) in distributionData.distribution" :key="pred" class="space-y-1.5">
                   <div class="flex justify-between text-xs font-bold text-slate-700 dark:text-zinc-350">
-                    <span>Predikat {{ getTKGradeLabel(pred) }}</span>
+                    <span>{{ recapData.level === 'TK' ? getTKGradeLabel(pred) : `Predikat ${pred}` }}</span>
                     <span>{{ count }} siswa</span>
                   </div>
                   <div class="h-3 w-full bg-slate-100 dark:bg-zinc-950 rounded-full overflow-hidden">
@@ -632,12 +695,12 @@ const getTKGradeLabel = (grade: string) => {
             <!-- Students details list -->
             <div class="lg:col-span-2 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm space-y-4">
               <div class="flex justify-between items-center">
-                <h4 class="text-xs font-black text-slate-900 dark:text-zinc-150 uppercase tracking-wider">Daftar Nilai Murid</h4>
+                <h4 class="text-xs font-black text-slate-900 dark:text-zinc-150 uppercase tracking-wider">Daftar Capaian Murid</h4>
                 <!-- Predicate Filter options -->
                 <select v-model="selectedDistributionPredicate" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1 text-[11px] font-bold outline-none">
                   <option value="all">Semua Nilai</option>
                   <option v-for="(_, pred) in distributionData.distribution" :key="pred" :value="pred">
-                    Predikat {{ pred }}
+                    {{ recapData.level === 'TK' ? pred : `Predikat ${pred}` }}
                   </option>
                 </select>
               </div>
@@ -648,14 +711,14 @@ const getTKGradeLabel = (grade: string) => {
                     <thead>
                       <tr class="bg-slate-50/50 dark:bg-zinc-950 border-b border-slate-100 dark:border-zinc-850">
                         <th class="p-3 font-bold text-slate-500">Nama Siswa</th>
-                        <th class="p-3 font-bold text-slate-500 text-center w-24">Nilai Akhir</th>
-                        <th class="p-3 font-bold text-slate-500 text-center w-24">Predikat</th>
+                        <th v-if="recapData.level !== 'TK'" class="p-3 font-bold text-slate-500 text-center w-24">Nilai Akhir</th>
+                        <th class="p-3 font-bold text-slate-500 text-center w-24">Capaian</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-zinc-850">
                       <tr v-for="std in filteredDistributionStudents" :key="std.student_id" class="hover:bg-slate-50/20">
                         <td class="p-3 font-semibold text-slate-800 dark:text-zinc-200">{{ std.full_name }}</td>
-                        <td class="p-3 text-center font-black text-slate-700 dark:text-zinc-300">
+                        <td v-if="recapData.level !== 'TK'" class="p-3 text-center font-black text-slate-700 dark:text-zinc-300">
                           {{ std.final_score !== null ? std.final_score : '-' }}
                         </td>
                         <td class="p-3 text-center">
@@ -735,13 +798,20 @@ const getTKGradeLabel = (grade: string) => {
                     >
                       {{ item.final_score }}
                     </span>
-                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold" :class="[
-                      ['A', 'B', 'BSB', 'BSH'].includes(item.predicate) 
-                        ? 'bg-emerald-500/10 text-emerald-600' 
-                        : 'bg-rose-500/10 text-rose-600'
-                    ]">
-                      Predikat {{ item.predicate || '-' }}
-                    </span>
+                    <template v-if="recapData.level === 'TK'">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-black" :class="getTKGradeColor(item.predicate)">
+                        {{ getTKGradeLabel(item.predicate) }}
+                      </span>
+                    </template>
+                    <template v-else>
+                      <span class="px-1.5 py-0.5 rounded text-[9px] font-bold" :class="[
+                        ['A', 'B', 'BSB', 'BSH'].includes(item.predicate) 
+                          ? 'bg-emerald-500/10 text-emerald-600' 
+                          : 'bg-rose-500/10 text-rose-600'
+                      ]">
+                        Predikat {{ item.predicate || '-' }}
+                      </span>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -763,9 +833,16 @@ const getTKGradeLabel = (grade: string) => {
             <AlertTriangle :size="20" />
           </div>
           <div>
-            <h4 class="text-sm font-bold text-rose-900 dark:text-rose-300">Peringatan Dini Ketuntasan Siswa (Early Warning)</h4>
+            <h4 class="text-sm font-bold text-rose-900 dark:text-rose-300">
+              {{ recapData.level === 'TK' ? 'Deteksi Stimulasi Perkembangan Siswa (Early Warning)' : 'Peringatan Dini Ketuntasan Siswa (Early Warning)' }}
+            </h4>
             <p class="text-xs text-rose-700/80 dark:text-rose-400/70 mt-1 leading-relaxed">
-              Daftar siswa di bawah ini teridentifikasi memiliki nilai akhir semester di bawah KKM pada satu atau beberapa mata pelajaran. Disarankan untuk segera menjadwalkan program remedial atau bimbingan khusus.
+              <span v-if="recapData.level === 'TK'">
+                Daftar siswa di bawah ini teridentifikasi memiliki aspek perkembangan yang masih 'Belum Berkembang (BB)' atau 'Mulai Berkembang (MB)'. Disarankan untuk memberikan stimulasi tambahan atau berkolaborasi dengan orang tua untuk mengoptimalkan tumbuh kembang anak.
+              </span>
+              <span v-else>
+                Daftar siswa di bawah ini teridentifikasi memiliki nilai akhir semester di bawah KKM pada satu atau beberapa mata pelajaran. Disarankan untuk segera menjadwalkan program remedial atau bimbingan khusus.
+              </span>
             </p>
           </div>
         </div>
@@ -779,10 +856,12 @@ const getTKGradeLabel = (grade: string) => {
             <div class="flex items-center justify-between border-b border-slate-100 dark:border-zinc-850 pb-3">
               <div>
                 <h4 class="text-sm font-bold text-slate-800 dark:text-zinc-200">{{ warn.full_name }}</h4>
-                <p class="text-[10px] text-slate-400 font-medium">Memiliki {{ warn.failing_subjects.length }} mata pelajaran tidak tuntas</p>
+                <p class="text-[10px] text-slate-400 font-medium">
+                  {{ recapData.level === 'TK' ? `Memiliki ${warn.failing_subjects.length} aspek perlu stimulasi` : `Memiliki ${warn.failing_subjects.length} mata pelajaran tidak tuntas` }}
+                </p>
               </div>
               <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-500/10 text-rose-600 border border-rose-500/20 animate-pulse">
-                PERLU REMEDIAL
+                {{ recapData.level === 'TK' ? 'BUTUH STIMULASI' : 'PERLU REMEDIAL' }}
               </span>
             </div>
 
@@ -793,13 +872,20 @@ const getTKGradeLabel = (grade: string) => {
                 :key="sidx"
                 class="flex items-center justify-between text-xs bg-slate-50/50 dark:bg-zinc-950/40 p-2.5 rounded-lg border border-slate-100 dark:border-zinc-850"
               >
-                <div class="font-bold text-slate-700 dark:text-zinc-350">
+                <div class="font-bold text-slate-700 dark:text-zinc-350 max-w-[55%]">
                   {{ sub.subject_name }}
                 </div>
                 <div class="flex items-center gap-3 font-semibold">
-                  <span class="text-rose-500 font-black">Nilai: {{ sub.final_score }}</span>
-                  <span class="text-slate-400 font-normal">|</span>
-                  <span class="text-slate-500 font-bold">KKM: {{ sub.kkm_score }}</span>
+                  <template v-if="recapData.level === 'TK'">
+                    <span class="text-rose-500 font-black">{{ sub.final_score }}</span>
+                    <span class="text-slate-400 font-normal">|</span>
+                    <span class="text-slate-500 font-bold">Target: {{ sub.kkm_score }}</span>
+                  </template>
+                  <template v-else>
+                    <span class="text-rose-500 font-black">Nilai: {{ sub.final_score }}</span>
+                    <span class="text-slate-400 font-normal">|</span>
+                    <span class="text-slate-500 font-bold">KKM: {{ sub.kkm_score }}</span>
+                  </template>
                 </div>
               </div>
             </div>

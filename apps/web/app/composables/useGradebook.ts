@@ -142,6 +142,38 @@ export const useGradebook = () => {
     })
   }
 
+  const fetchClassRecapitulation = async (
+    schoolId: string,
+    classId: string,
+    academicYearId: string,
+    semester: string
+  ) => {
+    return await fetcher(`/school/${schoolId}/gradebook/analytics/recapitulation`, {
+      query: { class_id: classId, academic_year_id: academicYearId, semester }
+    })
+  }
+
+  const fetchClassDistribution = async (schoolId: string, params: any) => {
+    return await fetcher(`/school/${schoolId}/gradebook/analytics/distribution`, {
+      query: params
+    })
+  }
+
+  const fetchStudentProgression = async (schoolId: string, studentId: string) => {
+    return await fetcher(`/school/${schoolId}/gradebook/analytics/student-progression/${studentId}`)
+  }
+
+  const fetchEarlyWarning = async (
+    schoolId: string,
+    classId: string,
+    academicYearId: string,
+    semester: string
+  ) => {
+    return await fetcher(`/school/${schoolId}/gradebook/analytics/early-warning`, {
+      query: { class_id: classId, academic_year_id: academicYearId, semester }
+    })
+  }
+
   return {
     fetchSchemes,
     fetchSchemeByClassAndSubject,
@@ -163,6 +195,11 @@ export const useGradebook = () => {
     fetchScoreLogs,
     fetchKkm,
     upsertKkm,
-    deleteKkm
+    deleteKkm,
+    fetchClassRecapitulation,
+    fetchClassDistribution,
+    fetchStudentProgression,
+    fetchEarlyWarning
   }
 }
+
