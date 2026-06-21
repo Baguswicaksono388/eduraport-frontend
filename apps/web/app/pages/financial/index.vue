@@ -1071,7 +1071,12 @@ const formatDate = (dateStr: any) => {
             class="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl hover:border-violet-600/30 transition-all"
           >
             <div class="space-y-1">
-              <div class="font-bold text-slate-800 dark:text-zinc-200 text-xs">{{ bill.name }}</div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-bold text-slate-800 dark:text-zinc-200 text-xs">{{ bill.name }}</span>
+                <span v-if="bill.category_name" class="inline-block px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase bg-slate-150 dark:bg-zinc-800/80 text-slate-600 dark:text-zinc-300 border border-slate-200/60 dark:border-zinc-700/80">
+                  {{ bill.category_name }}
+                </span>
+              </div>
               <div class="flex items-center gap-2 text-[10px] text-slate-400">
                 <span>Tempo: {{ formatDate(bill.due_date) }}</span>
                 <span>•</span>
