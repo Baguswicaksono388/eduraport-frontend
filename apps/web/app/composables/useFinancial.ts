@@ -6,6 +6,7 @@ export const useFinancial = () => {
   const accountsList = useState<any[]>('accounts_list', () => [])
   const journalsList = useState<any[]>('journals_list', () => [])
   const categoriesList = useState<any[]>('categories_list', () => [])
+  const assetsList = useState<any[]>('assets_list', () => [])
 
   const fetchBills = async (
     schoolId: string,
@@ -120,16 +121,107 @@ export const useFinancial = () => {
     }
   }
 
+  // --- School Assets API Callers ---
+  const fetchAssets = async (schoolId: string) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/assets`)
+      if (res.success) {
+        assetsList.value = res.data
+      }
+      return res
+    } catch (error) {
+      console.error('Failed to fetch assets:', error)
+      assetsList.value = []
+      throw error
+    }
+  }
+
+  const createAsset = async (schoolId: string, payload: any) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/assets`, {
+        method: 'POST',
+        body: payload
+      })
+      if (res.success) {
+        await fetchAssets(schoolId)
+      }
+      return res
+    } catch (error) {
+      console.error('Failed to create asset:', error)
+      throw error
+    }
+  }
+
+  const deleteAsset = async (schoolId: string, assetId: string) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/assets/${assetId}`, {
+        method: 'DELETE'
+      })
+      if (res.success) {
+        await fetchAssets(schoolId)
+      }
+      return res
+    } catch (error) {
+      console.error('Failed to delete asset:', error)
+      throw error
+    }
+  }
+
+  // --- Reports API Callers ---
+  const fetchBalanceSheet = async (schoolId: string) => {
+    return fetcher(`/school/${schoolId}/financial/reports/balance-sheet`)
+  }
+
+  const fetchIncomeStatement = async (schoolId: string) => {
+    return fetcher(`/school/${schoolId}/financial/reports/income-statement`)
+  }
+
+  const fetchBOSReport = async (schoolId: string) => {
+    return fetcher(`/school/${schoolId}/financial/reports/bos`)
+  }
+
+  const fetchFoundationReport = async (schoolId: string, foundationId: string) => {
+    return fetcher(`/school/${schoolId}/financial/reports/foundation?foundation_id=${foundationId}`)
+  }
+
+  const createManualJournal = async (schoolId: string, payload: any) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/journals`, {
+        method: 'POST',
+        body: payload
+      })
+      if (res.success) {
+        await Promise.all([
+          fetchJournals(schoolId),
+          fetchAccounts(schoolId)
+        ])
+      }
+      return res
+    } catch (error) {
+      console.error('Failed to create manual journal entry:', error)
+      throw error
+    }
+  }
+
   return {
     billsList,
     accountsList,
     journalsList,
     categoriesList,
+    assetsList,
     fetchBills,
     generateBulkSPP,
     recordPayment,
     fetchAccounts,
     fetchJournals,
-    fetchCategories
+    fetchCategories,
+    fetchAssets,
+    createAsset,
+    deleteAsset,
+    fetchBalanceSheet,
+    fetchIncomeStatement,
+    fetchBOSReport,
+    fetchFoundationReport,
+    createManualJournal
   }
 }
