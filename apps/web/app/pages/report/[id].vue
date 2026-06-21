@@ -356,7 +356,7 @@ const formatDate = (dateStr: any) => {
       <div v-if="reportData.student.school_level === 'TK'" class="space-y-8 print:space-y-6">
         
         <!-- ══════ FORMAT DINAS (2-page layout) ══════ -->
-        <div v-if="selectedTKFormat === 'dinas'" class="space-y-0 text-black">
+        <div v-if="selectedTKFormat === 'dinas'" class="space-y-0 text-black dark:text-zinc-100">
 
           <!-- ── PAGE 1: Header + Intrakurikuler ── -->
           <div
@@ -365,7 +365,7 @@ const formatDate = (dateStr: any) => {
           >
             <div>
               <!-- Dinas Page Header -->
-              <div class="flex items-center justify-between border-b-2 border-slate-900 pb-3 mb-6">
+              <div class="flex items-center justify-between border-b-2 border-slate-900 dark:border-zinc-700 pb-3 mb-6">
                 <div class="flex items-center gap-3">
                   <div class="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-lg select-none">TK</div>
                   <div class="text-left">
@@ -379,49 +379,49 @@ const formatDate = (dateStr: any) => {
                 </div>
                 <div class="text-right flex flex-col items-end">
                   <div class="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center text-white font-extrabold text-xs">R</div>
-                  <span class="text-[8px] font-black text-slate-500 uppercase mt-1">{{ reportData.student.school_name?.substring(0, 8) || 'Rapor' }}</span>
+                  <span class="text-[8px] font-black text-slate-500 dark:text-zinc-400 uppercase mt-1">{{ reportData.student.school_name?.substring(0, 8) || 'Rapor' }}</span>
                 </div>
               </div>
 
               <!-- Student Info Bar -->
-              <div class="flex justify-between items-center bg-slate-50 border border-slate-200 rounded-lg p-3 mb-6 text-xs font-bold text-slate-700">
+              <div class="flex justify-between items-center bg-slate-50 dark:bg-zinc-950/40 border border-slate-200 dark:border-zinc-800 rounded-lg p-3 mb-6 text-xs font-bold text-slate-700 dark:text-zinc-300">
                 <div class="flex gap-2">
                   <span>Nama Anak Didik:</span>
-                  <span class="text-slate-950 underline decoration-slate-400 underline-offset-4">{{ reportData.student.full_name }}</span>
+                  <span class="text-slate-950 dark:text-zinc-100 underline decoration-slate-400 dark:decoration-zinc-700 underline-offset-4">{{ reportData.student.full_name }}</span>
                 </div>
                 <div class="flex gap-2">
                   <span>No. Urut:</span>
-                  <span class="text-slate-950 font-black">{{ reportData.student.student_number || '-' }}</span>
+                  <span class="text-slate-950 dark:text-zinc-100 font-black">{{ reportData.student.student_number || '-' }}</span>
                 </div>
               </div>
 
               <!-- A. Program Intrakurikuler -->
               <div class="space-y-4">
                 <h3 class="text-sm font-black uppercase tracking-wider mb-2">A. Program Intrakurikuler</h3>
-                <table class="w-full text-left border-2 border-slate-950 text-[11px] border-collapse print:bg-white print:text-black">
+                <table class="w-full text-left border-2 border-slate-950 dark:border-zinc-700 text-[11px] border-collapse print:bg-white print:text-black">
                   <thead>
-                    <tr class="bg-slate-50 border-b-2 border-slate-950 font-black">
-                      <th class="p-2 border-r border-slate-950 w-10 text-center">No.</th>
-                      <th class="p-2 border-r border-slate-950">ELEMEN CAPAIAN</th>
+                    <tr class="bg-slate-50 dark:bg-zinc-950/40 border-b-2 border-slate-950 dark:border-zinc-700 font-black">
+                      <th class="p-2 border-r border-slate-950 dark:border-zinc-700 w-10 text-center">No.</th>
+                      <th class="p-2 border-r border-slate-950 dark:border-zinc-700">ELEMEN CAPAIAN</th>
                       <th class="p-2 text-center w-20">Capaian</th>
                     </tr>
                   </thead>
                   <tbody>
                     <template v-if="intraCategories && intraCategories.length > 0">
                       <template v-for="(cat, cIdx) in intraCategories" :key="cat.id">
-                        <tr class="border-b border-slate-950 bg-slate-100/50 font-black">
-                          <td class="p-2 border-r border-slate-950 text-center font-bold">{{ cIdx + 1 }}.</td>
-                          <td class="p-2 border-r border-slate-950 font-black uppercase" colspan="2">{{ cat.title }}</td>
+                        <tr class="border-b border-slate-950 dark:border-zinc-700 bg-slate-100/50 dark:bg-zinc-900/60 font-black">
+                          <td class="p-2 border-r border-slate-950 dark:border-zinc-700 text-center font-bold">{{ cIdx + 1 }}.</td>
+                          <td class="p-2 border-r border-slate-950 dark:border-zinc-700 font-black uppercase" colspan="2">{{ cat.title }}</td>
                         </tr>
                         <template v-for="(sub, subIdx) in cat.subAssessments" :key="subIdx">
-                          <tr class="border-b border-slate-950 text-[10px]">
-                            <td class="p-2 border-r border-slate-950"></td>
-                            <td class="p-2 border-r border-slate-950 leading-snug pl-4">{{ subIdx + 1 }}. {{ sub.name }}</td>
-                            <td class="p-2 text-center font-black bg-slate-50/20">{{ sub.grade }}</td>
+                          <tr class="border-b border-slate-950 dark:border-zinc-700 text-[10px]">
+                            <td class="p-2 border-r border-slate-950 dark:border-zinc-700"></td>
+                            <td class="p-2 border-r border-slate-950 dark:border-zinc-700 leading-snug pl-4">{{ subIdx + 1 }}. {{ sub.name }}</td>
+                            <td class="p-2 text-center font-black bg-slate-50/20 dark:bg-zinc-950/20">{{ sub.grade }}</td>
                           </tr>
                         </template>
-                        <tr class="border-b-2 border-slate-950 last:border-b-0">
-                          <td colspan="3" class="p-3 text-justify leading-relaxed bg-white text-[10px]">
+                        <tr class="border-b-2 border-slate-950 dark:border-zinc-700 last:border-b-0">
+                          <td colspan="3" class="p-3 text-justify leading-relaxed bg-white dark:bg-zinc-950 text-[10px]">
                             <strong>Narasi |</strong> {{ cat.narrative }}
                           </td>
                         </tr>
@@ -452,12 +452,12 @@ const formatDate = (dateStr: any) => {
 
                 <!-- Foto Kegiatan -->
                 <div v-if="activityPhotos && activityPhotos.length > 0" class="space-y-1 mb-3">
-                  <div class="text-[9px] font-bold uppercase text-slate-500">Foto Kegiatan</div>
+                  <div class="text-[9px] font-bold uppercase text-slate-500 dark:text-zinc-400">Foto Kegiatan</div>
                   <div class="grid grid-cols-3 gap-3">
                     <div
                       v-for="(photo, idx) in activityPhotos.slice(0, 3)"
                       :key="idx"
-                      class="aspect-[16/9] max-h-[85px] border border-slate-300 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center"
+                      class="aspect-[16/9] max-h-[85px] border border-slate-300 dark:border-zinc-800 rounded-lg overflow-hidden bg-slate-100 dark:bg-zinc-950 flex items-center justify-center"
                     >
                       <img :src="photo.url || photo" :alt="photo.caption || `Foto ${idx + 1}`" class="w-full h-full object-cover" />
                     </div>
@@ -467,10 +467,10 @@ const formatDate = (dateStr: any) => {
                 <!-- P5 Narrative & Matrix -->
                 <template v-if="p5Category">
                   <div class="space-y-3">
-                    <div class="text-[9.5px] text-justify leading-relaxed text-slate-800">
+                    <div class="text-[9.5px] text-justify leading-relaxed text-slate-800 dark:text-zinc-200">
                       <strong>Narasi |</strong> {{ p5Category.narrative }}
                     </div>
-                    <div class="border-2 border-slate-950 p-2.5 bg-slate-50 text-[9px] leading-relaxed text-justify">
+                    <div class="border-2 border-slate-950 dark:border-zinc-700 p-2.5 bg-slate-50 dark:bg-zinc-950/40 text-[9px] leading-relaxed text-justify dark:text-zinc-300">
                       <strong>Projek 1 | {{ p5Category.title }} :</strong>
                       Projek ini dapat menguatkan karakter dan kemampuan anak dalam dimensi profil lulusan.
                       <span class="italic font-semibold">Dimensi Keimanan dan Ketaqwaan terhadap Tuhan YME</span> dimana murid melakukan interaksi dengan sesama dengan bimbingan orang dewasa.
@@ -480,15 +480,15 @@ const formatDate = (dateStr: any) => {
                     </div>
                     <!-- P5 Dimensions Matrix Table -->
                     <div class="space-y-2 mt-3">
-                      <table class="w-full text-left border-2 border-slate-950 text-[9px] border-collapse table-fixed">
+                      <table class="w-full text-left border-2 border-slate-950 dark:border-zinc-700 text-[9px] border-collapse table-fixed">
                         <thead>
-                          <tr class="bg-slate-100 border-b-2 border-slate-950">
-                            <th class="p-1 border-r border-slate-950 font-black text-center align-middle" rowspan="2" style="width: 20%;">Projek Kelas B2</th>
-                            <th class="p-1 border-r border-slate-950 text-center font-bold" :colspan="activeP5Dimensions.length">Dimensi Profil Pelajar Pancasila</th>
+                          <tr class="bg-slate-100 dark:bg-zinc-900/60 border-b-2 border-slate-950 dark:border-zinc-700">
+                            <th class="p-1 border-r border-slate-950 dark:border-zinc-700 font-black text-center align-middle" rowspan="2" style="width: 20%;">Projek Kelas B2</th>
+                            <th class="p-1 border-r border-slate-950 dark:border-zinc-700 text-center font-bold" :colspan="activeP5Dimensions.length">Dimensi Profil Pelajar Pancasila</th>
                           </tr>
-                          <tr class="bg-slate-50 border-b border-slate-950 text-[8px] h-[100px]">
+                          <tr class="bg-slate-50 dark:bg-zinc-950/40 border-b border-slate-950 dark:border-zinc-700 text-[8px] h-[100px]">
                             <template v-for="(dim, idx) in activeP5Dimensions" :key="dim.id">
-                              <th :class="[{ 'border-r': idx < activeP5Dimensions.length - 1 }, 'p-1 text-center font-bold align-middle']">
+                              <th :class="[{ 'border-r border-slate-950 dark:border-zinc-700': idx < activeP5Dimensions.length - 1 }, 'p-1 text-center font-bold align-middle']">
                                 <div class="vertical-text-header">{{ dim.name }}</div>
                               </th>
                             </template>
@@ -496,11 +496,11 @@ const formatDate = (dateStr: any) => {
                         </thead>
                         <tbody>
                           <tr class="border-b-0 font-black text-center">
-                            <td class="p-2 border-r border-slate-950 font-bold bg-slate-50 text-left whitespace-normal break-words text-[8.5px] leading-tight">
+                            <td class="p-2 border-r border-slate-950 dark:border-zinc-700 font-bold bg-slate-50 dark:bg-zinc-950/40 text-left whitespace-normal break-words text-[8.5px] leading-tight">
                               {{ p5Category.title }}
                             </td>
                             <template v-for="(dim, idx) in activeP5Dimensions" :key="dim.id">
-                              <td :class="[{ 'border-r': idx < activeP5Dimensions.length - 1 }, 'p-1 text-center font-black']">
+                              <td :class="[{ 'border-r border-slate-950 dark:border-zinc-700': idx < activeP5Dimensions.length - 1 }, 'p-1 text-center font-black']">
                                 {{ p5Category.p5_dimensions?.[dim.id] || '-' }}
                               </td>
                             </template>
@@ -520,8 +520,8 @@ const formatDate = (dateStr: any) => {
               <!-- Attendance, Legend, Growth Grid -->
               <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mt-4">
                 <!-- Legend -->
-                <div class="md:col-span-5 border-2 border-slate-950 p-2 rounded-lg text-[8.5px] space-y-1 bg-white">
-                  <div class="font-black border-b border-slate-300 pb-0.5 mb-0.5 uppercase text-slate-800">Kategori Perkembangan Kemampuan & Penilaian</div>
+                <div class="md:col-span-5 border-2 border-slate-950 dark:border-zinc-700 p-2 rounded-lg text-[8.5px] space-y-1 bg-white dark:bg-zinc-950 dark:text-zinc-350">
+                  <div class="font-black border-b border-slate-300 dark:border-zinc-800 pb-0.5 mb-0.5 uppercase text-slate-800 dark:text-zinc-200">Kategori Perkembangan Kemampuan & Penilaian</div>
                   <div class="flex justify-between"><span><strong>BB</strong> : Belum Berkembang</span></div>
                   <div class="flex justify-between"><span><strong>MB</strong> : Mulai Berkembang</span></div>
                   <div class="flex justify-between"><span><strong>BSH</strong> : Berkembang Sesuai Harapan</span></div>
@@ -530,38 +530,38 @@ const formatDate = (dateStr: any) => {
                 <!-- Attendance & Growth -->
                 <div class="md:col-span-7 grid grid-cols-2 gap-3 text-[8.5px]">
                   <!-- Attendance -->
-                  <div class="border-2 border-slate-950 rounded-lg overflow-hidden bg-white">
-                    <div class="bg-slate-100 p-1 font-black border-b-2 border-slate-950 uppercase text-center text-[8px]">A. Ketidakhadiran</div>
+                  <div class="border-2 border-slate-950 dark:border-zinc-700 rounded-lg overflow-hidden bg-white dark:bg-zinc-950">
+                    <div class="bg-slate-100 dark:bg-zinc-900/60 p-1 font-black border-b-2 border-slate-950 dark:border-zinc-700 uppercase text-center text-[8px] text-slate-800 dark:text-zinc-200">A. Ketidakhadiran</div>
                     <table class="w-full text-left">
                       <tbody>
-                        <tr class="border-b border-slate-950">
-                          <td class="p-1 pl-2 border-r border-slate-950">1. Sakit</td>
+                        <tr class="border-b border-slate-950 dark:border-zinc-700">
+                          <td class="p-1 pl-2 border-r border-slate-950 dark:border-zinc-700">1. Sakit</td>
                           <td class="p-1 text-center w-14 font-bold">{{ reportData.attendance?.sick ?? '-' }} (Hari)</td>
                         </tr>
-                        <tr class="border-b border-slate-950">
-                          <td class="p-1 pl-2 border-r border-slate-950">2. Izin</td>
+                        <tr class="border-b border-slate-950 dark:border-zinc-700">
+                          <td class="p-1 pl-2 border-r border-slate-950 dark:border-zinc-700">2. Izin</td>
                           <td class="p-1 text-center font-bold">{{ reportData.attendance?.leave ?? '-' }}</td>
                         </tr>
-                        <tr class="border-b border-slate-950">
-                          <td class="p-1 pl-2 border-r border-slate-950">3. Tanpa Keterangan</td>
+                        <tr class="border-b border-slate-950 dark:border-zinc-700">
+                          <td class="p-1 pl-2 border-r border-slate-950 dark:border-zinc-700">3. Tanpa Keterangan</td>
                           <td class="p-1 text-center font-bold">{{ reportData.attendance?.absent ?? '-' }}</td>
                         </tr>
                       </tbody>
                     </table>
-                    <div class="bg-slate-100 p-0.5 font-black border-b border-slate-950 uppercase text-center text-[8px]">B. Keterlambatan</div>
+                    <div class="bg-slate-100 dark:bg-zinc-900/60 p-0.5 font-black border-b border-slate-950 dark:border-zinc-700 uppercase text-center text-[8px] text-slate-800 dark:text-zinc-200">B. Keterlambatan</div>
                     <div class="p-0.5 text-center font-bold">-</div>
                   </div>
                   <!-- Physical Growth -->
-                  <div class="border-2 border-slate-950 rounded-lg overflow-hidden bg-white flex flex-col h-full">
-                    <div class="bg-slate-100 p-1 font-black border-b-2 border-slate-950 uppercase text-center text-[8px]">C. Tumbuh Kembang Anak</div>
+                  <div class="border-2 border-slate-950 dark:border-zinc-700 rounded-lg overflow-hidden bg-white dark:bg-zinc-950 flex flex-col h-full">
+                    <div class="bg-slate-100 dark:bg-zinc-900/60 p-1 font-black border-b-2 border-slate-950 dark:border-zinc-700 uppercase text-center text-[8px] text-slate-800 dark:text-zinc-200">C. Tumbuh Kembang Anak</div>
                     <table class="w-full text-left flex-1">
                       <tbody>
-                        <tr class="border-b border-slate-950">
-                          <td class="p-1 pl-2 border-r border-slate-950">1. Berat Badan</td>
+                        <tr class="border-b border-slate-950 dark:border-zinc-700">
+                          <td class="p-1 pl-2 border-r border-slate-950 dark:border-zinc-700">1. Berat Badan</td>
                           <td class="p-1 text-center w-20 font-bold">{{ reportData.student.weight || '-' }} kg</td>
                         </tr>
-                        <tr>
-                          <td class="p-1 pl-2 border-r border-slate-950">2. Tinggi Badan</td>
+                        <tr class="dark:border-zinc-700">
+                          <td class="p-1 pl-2 border-r border-slate-950 dark:border-zinc-700">2. Tinggi Badan</td>
                           <td class="p-1 text-center w-20 font-bold">{{ reportData.student.height || '-' }} cm</td>
                         </tr>
                       </tbody>
@@ -572,7 +572,7 @@ const formatDate = (dateStr: any) => {
             </div>
 
             <!-- Dinas Signatures Footer -->
-            <div class="mt-6 text-[10px] font-semibold text-slate-950 print:mt-4">
+            <div class="mt-6 text-[10px] font-semibold text-slate-950 dark:text-zinc-300 print:mt-4">
               <div class="grid grid-cols-2 gap-4 text-center">
                 <div class="flex flex-col justify-between h-[80px]">
                   <p>Orang Tua Anak Didik</p>

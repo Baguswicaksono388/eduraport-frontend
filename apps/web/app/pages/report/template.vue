@@ -413,6 +413,53 @@ const previewDinasSections = computed(() => {
   })
 })
 
+const previewIntraGroup1 = computed(() => {
+  if (!currentTemplate.value?.elements) return []
+  const g1Names = [
+    'Adaptasi dan Sosialisasi', 'Minat Belajar', 'Kesiapan Belajar', 
+    'Kemandirian', 'Rutinitas', 'Kestabilan Emosi', 
+    'Ekspresi', 'Percaya Diri', 'Respons', 'Tanggung Jawab'
+  ]
+  return currentTemplate.value.elements.filter((e: any) => g1Names.includes(e.name) && e.grade_type === 'letter')
+})
+
+const previewIntraGroup2 = computed(() => {
+  if (!currentTemplate.value?.elements) return []
+  const g2Names = [
+    'Konsentrasi', 'Kooperatif', 'Ketuntasan Tugas', 
+    'Rapi', 'Disiplin', 'Kreatif'
+  ]
+  return currentTemplate.value.elements.filter((e: any) => g2Names.includes(e.name) && e.grade_type === 'letter')
+})
+
+const previewIntraGroup3 = computed(() => {
+  if (!currentTemplate.value?.elements) return []
+  const g3Names = [
+    'Motorik Kasar', 'Motorik Halus', 'Persepsi Auditori', 
+    'Persepsi Visual', 'Keterampilan Berbicara'
+  ]
+  return currentTemplate.value.elements.filter((e: any) => g3Names.includes(e.name) && e.grade_type === 'letter')
+})
+
+const previewIntraOtherLetterElements = computed(() => {
+  if (!currentTemplate.value?.elements) return []
+  const allKnown = [
+    'Adaptasi dan Sosialisasi', 'Minat Belajar', 'Kesiapan Belajar', 
+    'Kemandirian', 'Rutinitas', 'Kestabilan Emosi', 
+    'Ekspresi', 'Percaya Diri', 'Respons', 'Tanggung Jawab',
+    'Konsentrasi', 'Kooperatif', 'Ketuntasan Tugas', 
+    'Rapi', 'Disiplin', 'Kreatif',
+    'Motorik Kasar', 'Motorik Halus', 'Persepsi Auditori', 
+    'Persepsi Visual', 'Keterampilan Berbicara'
+  ]
+  return currentTemplate.value.elements.filter((e: any) => !allKnown.includes(e.name) && e.grade_type === 'letter')
+})
+
+const previewIntraNarratives = computed(() => {
+  if (!currentTemplate.value?.elements) return []
+  return currentTemplate.value.elements.filter((e: any) => e.grade_type === 'narrative')
+})
+
 watch(() => currentTemplate.value, (newTpl) => {
   if (newTpl) {
     const sections = JSON.parse(JSON.stringify(newTpl.element_structure?.tk_sections || []))
@@ -744,7 +791,7 @@ const handleDeleteP5 = async (id: string) => {
           </div>
 
           <!-- Tab Content: Elements Table -->
-          <div v-if="activeTab === 'elements' || currentTemplate.level !== 'TK' || !currentTemplate.element_structure?.is_dinas" class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
+          <div v-if="activeTab === 'elements'" class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
             <div class="p-5 border-b border-slate-100 dark:border-zinc-800/80">
               <h4 class="font-bold text-sm text-slate-900 dark:text-zinc-100">Struktur Elemen Penilaian</h4>
               <p class="text-[10px] text-slate-400 mt-0.5">Format penilaian yang diinput oleh wali kelas/guru untuk mata pelajaran atau dimensi capaian.</p>
@@ -963,34 +1010,34 @@ const handleDeleteP5 = async (id: string) => {
             </div>
 
             <div class="border border-slate-200 dark:border-zinc-800 rounded-xl p-6 bg-slate-50 dark:bg-zinc-950/20 max-h-[60vh] overflow-y-auto space-y-8">
-              <div class="bg-white dark:bg-zinc-900 p-8 shadow-md border border-slate-200 dark:border-zinc-800 rounded-md max-w-2xl mx-auto space-y-6 text-black print:text-black">
+              <div class="bg-white dark:bg-zinc-900 p-8 shadow-md border border-slate-200 dark:border-zinc-800 rounded-md max-w-2xl mx-auto space-y-6 text-black dark:text-zinc-200 print:text-black">
                 <!-- Kop mock -->
-                <div class="text-center border-b-2 border-slate-900 pb-4 mb-4">
+                <div class="text-center border-b-2 border-slate-900 dark:border-zinc-700 pb-4 mb-4">
                   <h2 class="text-sm font-black uppercase">TAMAN KANAK-KANAK AL FATAH</h2>
-                  <p class="text-[10px] font-semibold text-slate-500">LAPORAN PERKEMBANGAN PESERTA DIDIK (TK B)</p>
+                  <p class="text-[10px] font-semibold text-slate-500 dark:text-zinc-400">LAPORAN PERKEMBANGAN PESERTA DIDIK (TK B)</p>
                 </div>
 
-                <!-- Content Mock based on categories -->
-                <div class="space-y-6 text-left">
+                <!-- Dinas Format Preview -->
+                <div v-if="currentTemplate.element_structure?.is_dinas" class="space-y-6 text-left">
                   <div v-for="sec in previewDinasSections" :key="sec.id" class="space-y-4">
-                    <h3 class="text-xs font-black uppercase border-b border-slate-900 pb-1">{{ sec.title }}</h3>
+                    <h3 class="text-xs font-black uppercase border-b border-slate-900 dark:border-zinc-700 pb-1">{{ sec.title }}</h3>
                     
                     <div v-for="cat in sec.categories" :key="cat.id" class="space-y-3">
-                      <div class="text-[11px] font-bold text-slate-800 uppercase">{{ cat.title }}</div>
+                      <div class="text-[11px] font-bold text-slate-800 dark:text-zinc-350 uppercase">{{ cat.title }}</div>
                       
                       <!-- If P5 Matrix -->
                       <div v-if="cat.is_p5_matrix" class="space-y-2">
-                        <table class="w-full text-left border-2 border-slate-950 text-[9px] border-collapse">
+                        <table class="w-full text-left border-2 border-slate-950 dark:border-zinc-700 text-[9px] border-collapse">
                           <thead>
-                            <tr class="bg-slate-100 border-b border-slate-950">
-                              <th class="p-1 border-r border-slate-950 font-bold" style="width: 30%;">Projek</th>
-                              <th v-for="dim in activeP5Dimensions" :key="dim.id" class="p-1 border-r border-slate-950 text-center font-bold text-[8px]">{{ dim.name }}</th>
+                            <tr class="bg-slate-100 dark:bg-zinc-900/60 border-b border-slate-950 dark:border-zinc-700">
+                              <th class="p-1 border-r border-slate-950 dark:border-zinc-700 font-bold" style="width: 30%;">Projek</th>
+                              <th v-for="dim in activeP5Dimensions" :key="dim.id" class="p-1 border-r border-slate-950 dark:border-zinc-700 text-center font-bold text-[8px]">{{ dim.name }}</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr class="border-b-0">
-                              <td class="p-1.5 border-r border-slate-950 font-semibold bg-slate-50">{{ cat.title }}</td>
-                              <td v-for="dim in activeP5Dimensions" :key="dim.id" class="p-1.5 border-r border-slate-950 text-center font-bold">
+                              <td class="p-1.5 border-r border-slate-950 dark:border-zinc-700 font-semibold bg-slate-50 dark:bg-zinc-950/40">{{ cat.title }}</td>
+                              <td v-for="dim in activeP5Dimensions" :key="dim.id" class="p-1.5 border-r border-slate-950 dark:border-zinc-700 text-center font-bold">
                                 {{ cat.p5_dimensions[dim.id] ? 'BSH' : '-' }}
                               </td>
                             </tr>
@@ -999,26 +1046,150 @@ const handleDeleteP5 = async (id: string) => {
                       </div>
 
                       <!-- If standard indicators -->
-                      <table v-else class="w-full text-left border border-slate-900 text-[10px] border-collapse">
+                      <table v-else class="w-full text-left border border-slate-900 dark:border-zinc-700 text-[10px] border-collapse">
                         <thead>
-                          <tr class="bg-slate-50 border-b border-slate-900 font-bold">
-                            <th class="p-1.5 border-r border-slate-900 w-8 text-center">No.</th>
-                            <th class="p-1.5 border-r border-slate-900">Elemen / Indikator</th>
+                          <tr class="bg-slate-50 dark:bg-zinc-950/40 border-b border-slate-900 dark:border-zinc-700 font-bold">
+                            <th class="p-1.5 border-r border-slate-900 dark:border-zinc-700 w-8 text-center">No.</th>
+                            <th class="p-1.5 border-r border-slate-900 dark:border-zinc-700">Elemen / Indikator</th>
                             <th class="p-1.5 text-center w-16">Capaian</th>
                           </tr>
                         </thead>
                         <tbody>
-                          <tr v-for="(sub, subIdx) in cat.subAssessments" :key="subIdx" class="border-b border-slate-900">
-                            <td class="p-1 text-center border-r border-slate-900">{{ subIdx + 1 }}.</td>
-                            <td class="p-1 border-r border-slate-900 pl-3">{{ sub.name }}</td>
+                          <tr v-for="(sub, subIdx) in cat.subAssessments" :key="subIdx" class="border-b border-slate-900 dark:border-zinc-700">
+                            <td class="p-1 text-center border-r border-slate-900 dark:border-zinc-700">{{ subIdx + 1 }}.</td>
+                            <td class="p-1 border-r border-slate-900 dark:border-zinc-700 pl-3">{{ sub.name }}</td>
                             <td class="p-1 text-center font-bold">{{ sub.grade }}</td>
                           </tr>
                         </tbody>
                       </table>
 
-                      <div class="text-[10px] text-justify leading-relaxed bg-slate-50/50 p-2 border border-slate-200 rounded">
+                      <div class="text-[10px] text-justify leading-relaxed bg-slate-50/50 dark:bg-zinc-950/20 p-2 border border-slate-200 dark:border-zinc-800 rounded">
                         <strong>Narasi |</strong> {{ cat.narrative }}
                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- School (Intra) Format Preview -->
+                <div v-else class="space-y-6 text-left">
+                  <!-- Tema & Penilaian Legend Header -->
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-50 dark:bg-zinc-950/40 p-3 rounded-lg border border-slate-200 dark:border-zinc-800 text-[10px]">
+                      <h4 class="font-extrabold text-slate-900 dark:text-zinc-100 mb-1 uppercase">Tema – Semester I:</h4>
+                      <ul class="list-decimal pl-4 space-y-0.5 text-slate-600 dark:text-zinc-400">
+                        <li>Aku Milik Allah</li>
+                        <li>Pejuang Islam Negeriku</li>
+                        <li>Eksplorasi Islam #1</li>
+                        <li>Flora Fauna Ciptaan Allah</li>
+                      </ul>
+                    </div>
+
+                    <div class="bg-slate-50 dark:bg-zinc-950/40 p-3 rounded-lg border border-slate-200 dark:border-zinc-800 text-[10px]">
+                      <h4 class="font-extrabold text-slate-900 dark:text-zinc-100 mb-1 uppercase">Kategori Penilaian:</h4>
+                      <div class="grid grid-cols-2 gap-1.5">
+                        <div><span class="font-black text-violet-650 dark:text-violet-400">BS</span> : Baik Sekali</div>
+                        <div><span class="font-black text-violet-650 dark:text-violet-400">B</span> : Baik</div>
+                        <div><span class="font-black text-violet-650 dark:text-violet-400">C</span> : Cukup</div>
+                        <div><span class="font-black text-violet-650 dark:text-violet-400">K</span> : Kurang</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Aspek Amatan Table -->
+                  <div>
+                    <h3 class="text-[11px] font-black uppercase border-b border-slate-900 dark:border-zinc-700 pb-1 mb-3">I. Kategori Perkembangan Kemampuan &amp; Penilaian</h3>
+                    <table class="w-full text-left border border-slate-900 dark:border-zinc-700 text-[10px] border-collapse">
+                      <thead>
+                        <tr class="bg-slate-50 dark:bg-zinc-950/40 border-b border-slate-900 dark:border-zinc-700 font-bold">
+                          <th class="p-1.5 border-r border-slate-900 dark:border-zinc-700 w-10 text-center">No</th>
+                          <th class="p-1.5 border-r border-slate-900 dark:border-zinc-700">ASPEK AMATAN</th>
+                          <th class="p-1.5 border-r border-slate-900 dark:border-zinc-700 text-center w-8">K</th>
+                          <th class="p-1.5 border-r border-slate-900 dark:border-zinc-700 text-center w-8">C</th>
+                          <th class="p-1.5 border-r border-slate-900 dark:border-zinc-700 text-center w-8">B</th>
+                          <th class="p-1.5 text-center w-8">BS</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <!-- Group I -->
+                        <template v-if="previewIntraGroup1.length > 0">
+                          <tr class="bg-slate-100 dark:bg-zinc-900/60 font-bold border-b border-slate-900 dark:border-zinc-700">
+                            <td colspan="6" class="p-1.5">I. Perkembangan Potensi Pribadi</td>
+                          </tr>
+                          <tr v-for="(el, index) in previewIntraGroup1" :key="el.id" class="border-b border-slate-900 dark:border-zinc-700">
+                            <td class="p-1 text-center border-r border-slate-900 dark:border-zinc-700">{{ index + 1 }}</td>
+                            <td class="p-1 border-r border-slate-900 dark:border-zinc-700 pl-2.5">{{ el.name }}</td>
+                            <td class="p-1 border-r border-slate-900 dark:border-zinc-700 text-center"></td>
+                            <td class="p-1 border-r border-slate-900 dark:border-zinc-700 text-center"></td>
+                            <td class="p-1 border-r border-slate-900 dark:border-zinc-700 text-center font-bold bg-violet-50 dark:bg-violet-950/20 text-violet-650 dark:text-violet-400">✓</td>
+                            <td class="p-1 text-center"></td>
+                          </tr>
+                        </template>
+
+                        <!-- Group II -->
+                        <template v-if="previewIntraGroup2.length > 0">
+                          <tr class="bg-slate-100 dark:bg-zinc-900/60 font-bold border-b border-slate-900 dark:border-zinc-700">
+                            <td colspan="6" class="p-1.5">II. Sikap Belajar</td>
+                          </tr>
+                          <tr v-for="(el, index) in previewIntraGroup2" :key="el.id" class="border-b border-slate-900 dark:border-zinc-700">
+                            <td class="p-1 text-center border-r border-slate-900 dark:border-zinc-700">{{ index + 1 }}</td>
+                            <td class="p-1 border-r border-slate-900 dark:border-zinc-700 pl-2.5">{{ el.name }}</td>
+                            <td class="p-1 border-r border-slate-900 dark:border-zinc-700 text-center"></td>
+                            <td class="p-1 border-r border-slate-900 dark:border-zinc-700 text-center"></td>
+                            <td class="p-1 border-r border-slate-900 dark:border-zinc-700 text-center font-bold bg-violet-50 dark:bg-violet-950/20 text-violet-655 dark:text-violet-400">✓</td>
+                            <td class="p-1 text-center"></td>
+                          </tr>
+                        </template>
+
+                        <!-- Group III -->
+                        <template v-if="previewIntraGroup3.length > 0">
+                          <tr class="bg-slate-100 dark:bg-zinc-900/60 font-bold border-b border-slate-900 dark:border-zinc-700">
+                            <td colspan="6" class="p-1.5">III. Perkembangan Potensi Kemampuan Dasar</td>
+                          </tr>
+                          <tr v-for="(el, index) in previewIntraGroup3" :key="el.id" class="border-b border-slate-900 dark:border-zinc-700">
+                            <td class="p-1 text-center border-r border-slate-900 dark:border-zinc-700">{{ index + 1 }}</td>
+                            <td class="p-1 border-r border-slate-900 dark:border-zinc-700 pl-2.5">{{ el.name }}</td>
+                            <td class="p-1 border-r border-slate-900 dark:border-zinc-700 text-center"></td>
+                            <td class="p-1 border-r border-slate-900 dark:border-zinc-700 text-center"></td>
+                            <td class="p-1 border-r border-slate-900 dark:border-zinc-700 text-center font-bold bg-violet-50 dark:bg-violet-950/20 text-violet-650 dark:text-violet-400">✓</td>
+                            <td class="p-1 text-center"></td>
+                          </tr>
+                        </template>
+
+                        <!-- Other elements if any -->
+                        <template v-if="previewIntraOtherLetterElements.length > 0">
+                          <tr class="bg-slate-100 dark:bg-zinc-900/60 font-bold border-b border-slate-900 dark:border-zinc-700">
+                            <td colspan="6" class="p-1.5">Elemen Penilaian Lainnya</td>
+                          </tr>
+                          <tr v-for="(el, index) in previewIntraOtherLetterElements" :key="el.id" class="border-b border-slate-900 dark:border-zinc-700">
+                            <td class="p-1 text-center border-r border-slate-900 dark:border-zinc-700">{{ index + 1 }}</td>
+                            <td class="p-1 border-r border-slate-900 dark:border-zinc-700 pl-2.5">{{ el.name }}</td>
+                            <td class="p-1 border-r border-slate-900 dark:border-zinc-700 text-center"></td>
+                            <td class="p-1 border-r border-slate-900 dark:border-zinc-700 text-center"></td>
+                            <td class="p-1 border-r border-slate-900 dark:border-zinc-700 text-center font-bold bg-violet-50 dark:bg-violet-950/20 text-violet-650 dark:text-violet-400">✓</td>
+                            <td class="p-1 text-center"></td>
+                          </tr>
+                        </template>
+
+                        <!-- Empty state -->
+                        <tr v-if="previewIntraGroup1.length === 0 && previewIntraGroup2.length === 0 && previewIntraGroup3.length === 0 && previewIntraOtherLetterElements.length === 0">
+                          <td colspan="6" class="p-8 text-center text-slate-400 dark:text-zinc-550">
+                            Belum ada elemen aspek amatan bertipe Huruf/Predikat.
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- Narratives -->
+                  <div class="space-y-4">
+                    <div v-for="el in previewIntraNarratives" :key="el.id" class="space-y-1.5 text-justify text-[10px]">
+                      <h4 class="font-bold border-b border-slate-200 dark:border-zinc-800 pb-0.5 text-slate-800 dark:text-zinc-200 uppercase">{{ el.name }}</h4>
+                      <p class="leading-relaxed text-slate-655 dark:text-zinc-400">
+                        [Pratinjau Narasi] Ananda menunjukkan perkembangan yang sangat baik dalam aspek ini. Aktif berpartisipasi dalam setiap kegiatan kelas, mampu bersosialisasi dengan sangat baik, serta menunjukkan kreativitas yang tinggi dalam menyelesaikan tugas.
+                      </p>
+                    </div>
+                    <div v-if="previewIntraNarratives.length === 0" class="text-center text-slate-400 dark:text-zinc-550 text-[10px] py-4 border border-dashed rounded-lg border-slate-200 dark:border-zinc-800">
+                      Belum ada elemen aspek amatan bertipe Narasi.
                     </div>
                   </div>
                 </div>
