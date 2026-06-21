@@ -17,7 +17,9 @@ import {
   Trash2,
   Printer,
   Download,
-  Scale
+  Scale,
+  Upload,
+  X
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput, BaseDateInput } from '@eduraport/ui'
 import { useSchool } from '../../composables/useSchool'
@@ -25,6 +27,7 @@ import { useClass } from '../../composables/useClass'
 import { useFinancial } from '../../composables/useFinancial'
 import { useToast } from '../../composables/useToast'
 import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ASSET_CATEGORIES, DEPRECIATION_METHODS } from '@eduraport/shared'
 
 definePageMeta({
   middleware: [
@@ -54,6 +57,8 @@ const {
   fetchAssets,
   createAsset,
   deleteAsset,
+  downloadTemplate,
+  importAssets,
   fetchBalanceSheet,
   fetchIncomeStatement,
   fetchBOSReport,
@@ -79,6 +84,56 @@ const foundationReportData = ref<any>(null)
 
 // Assets state & modal
 const showAssetModal = ref(false)
+const showAssetImportModal = ref(false)
+const assetImportFile = ref<File | null>(null)
+const assetImportLoading = ref(false)
+const assetImportResult = ref<{ success: number; failed: number; errors: string[] } | null>(null)
+const assetDownloadLoading = ref(false)
+
+const handleAssetDownloadTemplate = async () => {
+  if (!selectedSchoolId.value) return
+  assetDownloadLoading.value = true
+  try {
+    await downloadTemplate(selectedSchoolId.value)
+  } catch (e: any) {
+    toast.error(e?.message ?? 'Gagal mengunduh template', 'Gagal')
+  } finally {
+    assetDownloadLoading.value = false
+  }
+}
+
+const onAssetFileChange = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  assetImportFile.value = target.files?.[0] ?? null
+  assetImportResult.value = null
+}
+
+const handleAssetImport = async () => {
+  if (!assetImportFile.value || !selectedSchoolId.value) return
+  assetImportLoading.value = true
+  assetImportResult.value = null
+  try {
+    const res: any = await importAssets(selectedSchoolId.value, assetImportFile.value)
+    assetImportResult.value = res.data
+    toast.success('Data aset berhasil diimport', 'Sukses')
+  } catch (e: any) {
+    if (e.data?.errors) {
+      const errorList = Object.entries(e.data.errors).flatMap(([field, msgs]: any) =>
+        msgs.map((msg: string) => `${field}: ${msg}`)
+      )
+      assetImportResult.value = {
+        success: 0,
+        failed: errorList.length,
+        errors: errorList
+      }
+    } else {
+      toast.error(e?.message ?? 'Import gagal', 'Gagal')
+    }
+  } finally {
+    assetImportLoading.value = false
+  }
+}
+
 const assetForm = reactive({
   name: '',
   code: '',
@@ -473,6 +528,12 @@ const formatDate = (dateStr: any) => {
         </BaseButton>
       </div>
       <div class="flex gap-2 flex-wrap" v-if="selectedSchoolId && activeTab === 'assets'">
+        <BaseButton variant="outline" @click="handleAssetDownloadTemplate" :disabled="assetDownloadLoading" class="py-2.5 px-4 text-xs font-bold">
+          <Download class="mr-1.5" :size="14" /> {{ assetDownloadLoading ? 'Mengunduh...' : 'Unduh Template' }}
+        </BaseButton>
+        <BaseButton variant="outline" @click="showAssetImportModal = true" class="py-2.5 px-4 text-xs font-bold">
+          <Upload class="mr-1.5" :size="14" /> Import Excel
+        </BaseButton>
         <BaseButton variant="primary" @click="showAssetModal = true" class="py-2.5 px-4 text-xs font-bold shadow-lg shadow-violet-600/15">
           <Plus class="mr-1.5" :size="14" /> Tambah Aset Sekolah
         </BaseButton>
@@ -1004,7 +1065,7 @@ const formatDate = (dateStr: any) => {
                   <tr v-for="asset in assetsList" :key="asset.id" class="hover:bg-slate-50/30 dark:hover:bg-zinc-950/20 text-slate-700 dark:text-zinc-300">
                     <td class="p-4 pl-6 font-mono font-extrabold text-violet-600 dark:text-violet-400">{{ asset.code }}</td>
                     <td class="p-4 font-bold text-slate-800 dark:text-zinc-200">{{ asset.name }}</td>
-                    <td class="p-4 uppercase text-[10px] text-slate-500">{{ asset.category }}</td>
+                    <td class="p-4 text-[10px] text-slate-550">{{ ASSET_CATEGORIES.find(c => c.value === asset.category)?.label || asset.category }}</td>
                     <td class="p-4 text-slate-500">{{ formatDate(asset.purchase_date) }}</td>
                     <td class="p-4 font-mono font-semibold">{{ formatNumber(asset.purchase_cost) }}</td>
                     <td class="p-4 text-center font-bold">{{ asset.quantity }}</td>
@@ -1190,12 +1251,7 @@ const formatDate = (dateStr: any) => {
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Kategori Aset</label>
           <select v-model="assetForm.category" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
-            <option value="land">Tanah (Land)</option>
-            <option value="building">Bangunan (Building)</option>
-            <option value="furniture">Mebel & Furnitur (Furniture)</option>
-            <option value="electronic">Elektronik & IT (Electronic)</option>
-            <option value="vehicle">Kendaraan (Vehicle)</option>
-            <option value="other">Lainnya (Other)</option>
+            <option v-for="cat in ASSET_CATEGORIES" :key="cat.value" :value="cat.value">{{ cat.label }}</option>
           </select>
         </div>
 
@@ -1222,9 +1278,7 @@ const formatDate = (dateStr: any) => {
           <div class="flex flex-col gap-1.5 w-full">
             <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Metode Penyusutan</label>
             <select v-model="assetForm.depreciation_method" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
-              <option value="straight_line">Garis Lurus (Straight Line)</option>
-              <option value="double_declining">Saldo Menurun Ganda</option>
-              <option value="none">Tanpa Penyusutan</option>
+              <option v-for="method in DEPRECIATION_METHODS" :key="method.value" :value="method.value">{{ method.label }}</option>
             </select>
           </div>
           <BaseInput v-model="assetForm.useful_life_years" label="Masa Manfaat (Tahun)" type="number" />
@@ -1269,6 +1323,75 @@ const formatDate = (dateStr: any) => {
         <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
           <BaseButton variant="outline" type="button" @click="showJournalModal = false">Batal</BaseButton>
           <BaseButton variant="primary" @click="handleCreateJournal">Simpan Transaksi</BaseButton>
+        </div>
+      </div>
+    </BaseModal>
+
+    <!-- Modal: Import Aset Sekolah via Excel -->
+    <BaseModal :show="showAssetImportModal" title="Import Data Aset Sekolah via Excel" @close="showAssetImportModal = false; assetImportResult = null; assetImportFile = null">
+      <div class="space-y-5">
+        <!-- Instructions -->
+        <div class="flex items-start gap-3 p-4 bg-violet-50 dark:bg-violet-950/30 rounded-lg border border-violet-100 dark:border-violet-900/50">
+          <FileSpreadsheet class="text-violet-500 shrink-0 mt-0.5" :size="18" />
+          <div class="text-xs text-violet-700 dark:text-violet-300">
+            <p class="font-bold mb-1">Panduan Import</p>
+            <ol class="list-decimal ml-4 space-y-0.5 text-violet-600 dark:text-violet-400">
+              <li>Unduh template Excel terlebih dahulu melalui tombol <strong>Unduh Template</strong>.</li>
+              <li>Isi data sesuai format pada baris ke-9 dan seterusnya (baris 1–8 adalah header dan contoh).</li>
+              <li>Kolom <strong>Nama Barang Aset</strong>, <strong>Kode / Serial Aset</strong>, <strong>Kategori Aset</strong>, <strong>Tanggal Perolehan</strong>, <strong>Harga Perolehan</strong>, <strong>Kuantitas</strong>, dan <strong>Kondisi Fisik</strong> wajib diisi.</li>
+              <li>Kategori Aset, Kondisi Fisik, dan Metode Penyusutan harus diisi sesuai opsi yang tertera di sheet <strong>DAFTAR REFERENSI</strong>.</li>
+              <li>Upload file yang telah diisi kembali di sini.</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- File picker -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Pilih File Excel (.xlsx)</label>
+          <label class="flex items-center gap-3 cursor-pointer border-2 border-dashed border-slate-200 dark:border-zinc-700 rounded-lg px-4 py-5 hover:border-violet-400 dark:hover:border-violet-600 transition-colors group">
+            <Upload class="text-slate-400 group-hover:text-violet-500 transition-colors" :size="20" />
+            <div class="flex-1 min-w-0">
+              <p v-if="assetImportFile" class="text-sm font-semibold text-slate-800 dark:text-zinc-200 truncate">{{ assetImportFile.name }}</p>
+              <p v-else class="text-sm text-slate-400 dark:text-zinc-500">Klik untuk memilih file atau seret ke sini</p>
+            </div>
+            <input type="file" accept=".xlsx" class="hidden" @change="onAssetFileChange" />
+          </label>
+        </div>
+
+        <!-- Import result -->
+        <div v-if="assetImportResult" class="space-y-2">
+          <div class="flex gap-3">
+            <div class="flex-1 flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 rounded-lg px-4 py-3">
+              <CheckCircle class="text-emerald-500" :size="16" />
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Berhasil</p>
+                <p class="text-xl font-black text-emerald-700 dark:text-emerald-300">{{ assetImportResult.success }}</p>
+              </div>
+            </div>
+            <div class="flex-1 flex items-center gap-2 bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50 rounded-lg px-4 py-3">
+              <AlertCircle class="text-rose-500" :size="16" />
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-rose-600 dark:text-rose-400">Gagal</p>
+                <p class="text-xl font-black text-rose-700 dark:text-rose-300">{{ assetImportResult.failed }}</p>
+              </div>
+            </div>
+          </div>
+          <div v-if="assetImportResult.errors.length > 0" class="bg-rose-50 dark:bg-rose-950/20 rounded-lg border border-rose-100 dark:border-rose-900/50 p-3 max-h-40 overflow-y-auto">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-rose-600 dark:text-rose-400 mb-2">Detail Error</p>
+            <ul class="space-y-1">
+              <li v-for="(err, i) in assetImportResult.errors" :key="i" class="text-xs text-rose-700 dark:text-rose-300 flex gap-2">
+                <X :size="11" class="shrink-0 mt-0.5" /> {{ err }}
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
+          <BaseButton variant="outline" @click="showAssetImportModal = false; assetImportResult = null; assetImportFile = null">Tutup</BaseButton>
+          <BaseButton variant="primary" @click="handleAssetImport" :disabled="!assetImportFile || assetImportLoading">
+            <Upload class="mr-1.5" :size="14" />
+            {{ assetImportLoading ? 'Sedang Import...' : 'Mulai Import' }}
+          </BaseButton>
         </div>
       </div>
     </BaseModal>

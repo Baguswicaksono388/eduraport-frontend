@@ -167,6 +167,34 @@ export const useFinancial = () => {
     }
   }
 
+  const downloadTemplate = async (schoolId: string) => {
+    try {
+      const blob: any = await fetcher(`/school/${schoolId}/financial/assets/xls`, {
+        responseType: 'blob'
+      })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'template-import-aset.xlsx'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Failed to download template:', error)
+      throw error
+    }
+  }
+
+  const importAssets = async (schoolId: string, file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res: any = await fetcher(`/school/${schoolId}/financial/assets/xls`, {
+      method: 'POST',
+      body: formData
+    })
+    await fetchAssets(schoolId)
+    return res
+  }
+
   // --- Reports API Callers ---
   const fetchBalanceSheet = async (schoolId: string) => {
     return fetcher(`/school/${schoolId}/financial/reports/balance-sheet`)
@@ -218,6 +246,8 @@ export const useFinancial = () => {
     fetchAssets,
     createAsset,
     deleteAsset,
+    downloadTemplate,
+    importAssets,
     fetchBalanceSheet,
     fetchIncomeStatement,
     fetchBOSReport,
