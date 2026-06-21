@@ -1,12 +1,53 @@
 <script setup lang="ts">
-import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate } from 'lucide-vue-next'
+import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key } from 'lucide-vue-next'
+import { BaseModal, BaseButton, BaseInput } from '@eduraport/ui'
 import { useAuth } from '../composables/useAuth'
+import { useToast } from '../composables/useToast'
 import { useSchool } from '../composables/useSchool'
 import { useAcademicYear } from '../composables/useAcademicYear'
 
-const { user, logout, fetchUser } = useAuth()
+const { user, logout, fetchUser, changePassword } = useAuth()
 const { currentSchoolId } = useSchool()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
+
+const showChangePasswordModal = ref(false)
+const changePasswordForm = ref({
+  old_password: '',
+  new_password: '',
+  confirm_password: ''
+})
+const changePasswordLoading = ref(false)
+const toast = useToast()
+
+const handleChangePassword = async () => {
+  if (changePasswordForm.value.new_password !== changePasswordForm.value.confirm_password) {
+    toast.error('Password baru dan konfirmasi password tidak cocok', 'Error')
+    return
+  }
+  if (changePasswordForm.value.new_password.length < 6) {
+    toast.error('Password baru minimal 6 karakter', 'Error')
+    return
+  }
+
+  changePasswordLoading.value = true
+  const res = await changePassword({
+    old_password: changePasswordForm.value.old_password,
+    new_password: changePasswordForm.value.new_password
+  })
+  changePasswordLoading.value = false
+
+  if (res.success) {
+    toast.success('Password berhasil diubah', 'Sukses')
+    showChangePasswordModal.value = false
+    changePasswordForm.value = {
+      old_password: '',
+      new_password: '',
+      confirm_password: ''
+    }
+  } else {
+    toast.error(res.error || 'Gagal mengubah password', 'Error')
+  }
+}
 
 const activeAcademicYear = computed(() => {
   return academicYears.value.find(y => y.is_active)
@@ -160,6 +201,13 @@ watch(currentSchoolId, async (newVal) => {
           </div>
         </div>
         <button 
+          @click="showChangePasswordModal = true" 
+          class="flex w-full items-center gap-3 px-4 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors text-xs font-bold mb-1"
+        >
+          <Key :size="16" />
+          <span>Ubah Password</span>
+        </button>
+        <button 
           @click="logout" 
           class="flex w-full items-center gap-3 px-4 py-2.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors text-xs font-bold"
         >
@@ -248,6 +296,44 @@ watch(currentSchoolId, async (newVal) => {
 
     <!-- Global Toast Notifications -->
     <BaseToastContainer />
+
+    <!-- Change Password Modal -->
+    <BaseModal :show="showChangePasswordModal" title="Ubah Password Akun" @close="showChangePasswordModal = false">
+      <form @submit.prevent="handleChangePassword" class="space-y-4">
+        <BaseInput 
+          v-model="changePasswordForm.old_password" 
+          type="password" 
+          label="Password Lama" 
+          placeholder="Masukkan password lama" 
+          required 
+        />
+        
+        <BaseInput 
+          v-model="changePasswordForm.new_password" 
+          type="password" 
+          label="Password Baru" 
+          placeholder="Masukkan password baru (minimal 6 karakter)" 
+          required 
+        />
+        
+        <BaseInput 
+          v-model="changePasswordForm.confirm_password" 
+          type="password" 
+          label="Konfirmasi Password Baru" 
+          placeholder="Masukkan kembali password baru" 
+          required 
+        />
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-zinc-800">
+          <BaseButton type="button" variant="outline" @click="showChangePasswordModal = false" class="py-2 px-4 text-xs font-semibold">
+            Batal
+          </BaseButton>
+          <BaseButton type="submit" variant="primary" :disabled="changePasswordLoading" class="py-2 px-4 text-xs font-bold shadow-lg shadow-violet-600/10">
+            {{ changePasswordLoading ? 'Menyimpan...' : 'Simpan Password' }}
+          </BaseButton>
+        </div>
+      </form>
+    </BaseModal>
 
   </div>
 </template>

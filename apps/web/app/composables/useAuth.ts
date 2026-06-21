@@ -75,6 +75,21 @@ export const useAuth = () => {
     }
   }
 
+  const changePassword = async (data: any) => {
+    try {
+      const response: any = await fetcher('/auth/change-password', {
+        method: 'POST',
+        body: data
+      })
+      if (response.success) {
+        return { success: true }
+      }
+      return { success: false, error: response.message || 'Gagal mengubah password' }
+    } catch (error: any) {
+      return { success: false, error: error.data?.message || error.data?.error?.message || 'Gagal mengubah password' }
+    }
+  }
+
   return {
     user,
     token,
@@ -83,6 +98,8 @@ export const useAuth = () => {
     register,
     logout,
     fetchUser,
+    changePassword,
     isAuthenticated: computed(() => !!token.value)
   }
 }
+
