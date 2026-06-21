@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3 } from 'lucide-vue-next'
+import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3 } from 'lucide-vue-next'
 import { BaseModal, BaseButton, BaseInput } from '@eduraport/ui'
 import { useAuth } from '../composables/useAuth'
 import { useToast } from '../composables/useToast'
@@ -137,6 +137,13 @@ watch(currentSchoolId, async (newVal) => {
           active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
         >
           <ClipboardCheck :size="16" /> Rapor Wali Kelas
+        </NuxtLink>
+        <NuxtLink 
+          to="/schedule" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
+          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
+        >
+          <Clock :size="16" /> Jadwal Pelajaran
         </NuxtLink>
         <NuxtLink 
           to="/subject" 
@@ -282,6 +289,14 @@ watch(currentSchoolId, async (newVal) => {
       >
         <LayoutGrid :size="16" />
         <span class="text-[8px] font-bold">Kelas</span>
+      </NuxtLink>
+      <NuxtLink 
+        to="/schedule" 
+        class="flex flex-col items-center gap-0.5 transition-all duration-200"
+        active-class="text-violet-400 scale-110"
+      >
+        <Clock :size="16" />
+        <span class="text-[8px] font-bold">Jadwal</span>
       </NuxtLink>
       <NuxtLink 
         to="/student" 

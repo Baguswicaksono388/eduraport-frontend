@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { GraduationCap, School, Users, ArrowRight } from 'lucide-vue-next'
+import { GraduationCap, School, Users, ArrowRight, Clock } from 'lucide-vue-next'
 import { BaseCard } from '@eduraport/ui'
 import { useAuth } from '../composables/useAuth'
 import { useSchool } from '../composables/useSchool'
@@ -174,6 +174,18 @@ onMounted(async () => {
               <div class="pr-4">
                 <h4 class="font-bold text-slate-900 dark:text-zinc-100 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">Mata Pelajaran</h4>
                 <p class="text-xs text-slate-500 dark:text-zinc-400 mt-1.5 leading-relaxed">Kelola daftar mata pelajaran intrakurikuler, kokurikuler (P5), dan ekskul sekolah.</p>
+              </div>
+              <ArrowRight class="text-slate-300 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-all group-hover:translate-x-1 flex-shrink-0" :size="18" />
+            </div>
+          </BaseCard>
+        </NuxtLink>
+
+        <NuxtLink to="/schedule" class="group block">
+          <BaseCard class="hover:border-violet-500 dark:hover:border-violet-500/50 hover:shadow-lg transition-all duration-300">
+            <div class="flex items-center justify-between h-full">
+              <div class="pr-4">
+                <h4 class="font-bold text-slate-900 dark:text-zinc-100 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">Jadwal Pelajaran</h4>
+                <p class="text-xs text-slate-500 dark:text-zinc-400 mt-1.5 leading-relaxed">Konfigurasi jadwal mata pelajaran mingguan per kelas dengan deteksi bentrok.</p>
               </div>
               <ArrowRight class="text-slate-300 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-all group-hover:translate-x-1 flex-shrink-0" :size="18" />
             </div>
