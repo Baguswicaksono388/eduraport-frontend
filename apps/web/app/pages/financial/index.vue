@@ -19,7 +19,7 @@ import {
   Download,
   Scale
 } from 'lucide-vue-next'
-import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
+import { BaseCard, BaseButton, BaseModal, BaseInput, BaseDateInput } from '@eduraport/ui'
 import { useSchool } from '../../composables/useSchool'
 import { useClass } from '../../composables/useClass'
 import { useFinancial } from '../../composables/useFinancial'
@@ -1167,7 +1167,7 @@ const formatDate = (dateStr: any) => {
 
         <BaseInput v-model="sppForm.period" label="Periode Tagihan (YYYY-MM)" type="month" required />
         <BaseInput v-model="sppForm.amount" label="Nominal Tagihan (IDR)" type="number" required />
-        <BaseInput v-model="sppForm.due_date" label="Tanggal Jatuh Tempo" type="date" required />
+        <BaseDateInput v-model="sppForm.due_date" label="Tanggal Jatuh Tempo" required />
 
         <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
           <BaseButton variant="outline" type="button" @click="showSPPModal = false">Batal</BaseButton>
@@ -1195,7 +1195,7 @@ const formatDate = (dateStr: any) => {
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-          <BaseInput v-model="assetForm.purchase_date" label="Tanggal Perolehan" type="date" required />
+          <BaseDateInput v-model="assetForm.purchase_date" label="Tanggal Perolehan" required />
           <BaseInput v-model="assetForm.purchase_cost" label="Harga Perolehan (IDR)" type="number" required />
         </div>
 
@@ -1235,7 +1235,7 @@ const formatDate = (dateStr: any) => {
     <!-- Modal: Tambah Jurnal Umum -->
     <BaseModal :show="showJournalModal" title="Catat Transaksi Jurnal Umum (Double-Entry)" @close="showJournalModal = false">
       <div class="space-y-4">
-        <BaseInput v-model="journalForm.date" label="Tanggal Transaksi" type="date" required />
+        <BaseDateInput v-model="journalForm.date" label="Tanggal Transaksi" required />
         <BaseInput v-model="journalForm.description" label="Keterangan / Deskripsi Transaksi" placeholder="Contoh: Pembelian ATK Kantor / Bayar Listrik Bulanan" required />
         
         <div class="flex flex-col gap-1.5 w-full">
