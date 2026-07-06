@@ -405,6 +405,11 @@ const scheduleConflicts = computed(() => {
   return conflicts
 })
 
+const selectedTeacherName = computed(() => {
+  const teacher = teachers.value.find(t => t.id === selectedTeacherId.value)
+  return teacher ? teacher.full_name : ''
+})
+
 const filteredSchedules = computed(() => {
   let list = schedules.value
   
@@ -413,7 +418,16 @@ const filteredSchedules = computed(() => {
   }
   
   if (selectedTeacherId.value) {
-    list = list.filter(item => item.teacher_id === selectedTeacherId.value)
+    const tName = selectedTeacherName.value
+    list = list.filter(item => {
+      // Matches as Guru Pengampu
+      if (item.teacher_id === selectedTeacherId.value) return true
+      
+      // Matches as Extracurricular Penanggung Jawab
+      if (item.extracurricular_instructor && tName && item.extracurricular_instructor === tName) return true
+      
+      return false
+    })
   }
   
   return list
