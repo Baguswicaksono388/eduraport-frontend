@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ClipboardCheck, Download, Upload, Info, AlertCircle, CheckCircle, Save, History, Check, Loader2 } from 'lucide-vue-next'
+import { ClipboardCheck, Download, Upload, Info, AlertCircle, CheckCircle, Save, History, Check, Loader2, Edit2, Sparkles } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
 import { useSchool } from '../../composables/useSchool'
 import { useClass } from '../../composables/useClass'
@@ -9,6 +9,8 @@ import { useGradebook } from '../../composables/useGradebook'
 import { useToast } from '../../composables/useToast'
 import { useReport } from '../../composables/useReport'
 import { useReportTemplate } from '../../composables/useReportTemplate'
+import { useApi } from '../../composables/useApi'
+import { useAuth } from '../../composables/useAuth'
 
 definePageMeta({
   middleware: [
@@ -27,6 +29,7 @@ const { subjects, fetchSubjects } = useSubject()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
 const gradebook = useGradebook()
 const toast = useToast()
+const { user, fetchUser } = useAuth()
 
 const selectedFoundationId = ref('')
 const selectedSchoolId = ref('')
@@ -36,6 +39,13 @@ const selectedAcademicYearId = ref('')
 const selectedSemester = ref('odd') // odd or even
 
 // TK Grade Input States
+const filteredSchools = computed(() => {
+  if (user.value && user.value.role !== 'super_admin' && user.value.school_id) {
+    return schools.value.filter(s => s.id === user.value.school_id)
+  }
+  return schools.value
+})
+
 const isTKSchool = computed(() => {
   const school = schools.value.find(s => s.id === selectedSchoolId.value)
   return school?.level === 'TK'
@@ -72,12 +82,18 @@ const activeBulkComponentId = ref('')
 const bulkInputText = ref('')
 
 onMounted(async () => {
+  await fetchUser()
   await fetchFoundations()
   if (foundations.value.length > 0) {
     selectedFoundationId.value = foundations.value[0].id
     await fetchSchools(selectedFoundationId.value)
     if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
+      if (user.value && user.value.role !== 'super_admin' && user.value.school_id) {
+        const matchingSchool = schools.value.find(s => s.id === user.value.school_id)
+        selectedSchoolId.value = matchingSchool ? matchingSchool.id : schools.value[0].id
+      } else {
+        selectedSchoolId.value = schools.value[0].id
+      }
       await loadSchoolData(selectedSchoolId.value)
     }
   }
@@ -101,7 +117,12 @@ watch(selectedFoundationId, async (newVal) => {
   if (newVal) {
     await fetchSchools(newVal)
     if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
+      if (user.value && user.value.role !== 'super_admin' && user.value.school_id) {
+        const matchingSchool = schools.value.find(s => s.id === user.value.school_id)
+        selectedSchoolId.value = matchingSchool ? matchingSchool.id : schools.value[0].id
+      } else {
+        selectedSchoolId.value = schools.value[0].id
+      }
     } else {
       selectedSchoolId.value = ''
       classes.value = []
@@ -655,6 +676,82 @@ const getStatusLabel = (status: string) => {
   }
   return labels[status] || status
 }
+
+// Description Engine Inline Editor
+const expandedStudentDescId = ref<string | null>(null)
+const editingDescriptionText = ref('')
+const savingDescription = ref<Record<string, boolean>>({})
+
+const toggleExpandDesc = (studentId: string, currentDesc: string) => {
+  if (expandedStudentDescId.value === studentId) {
+    expandedStudentDescId.value = null
+  } else {
+    expandedStudentDescId.value = studentId
+    editingDescriptionText.value = currentDesc
+  }
+}
+
+const handleSaveDescription = async (studentId: string, finalGradeId: string) => {
+  if (!finalGradeId) {
+    toast.error('Nilai akhir harus difinalisasi terlebih dahulu sebelum mengedit deskripsi.', 'Perhatian')
+    return
+  }
+
+  savingDescription.value[studentId] = true
+  try {
+    const { fetcher: apiFetch } = useApi()
+    const res: any = await apiFetch(`/school/${selectedSchoolId.value}/gradebook/final-grades/${finalGradeId}/description`, {
+      method: 'PUT',
+      body: { description: editingDescriptionText.value }
+    })
+    
+    if (res.success) {
+      toast.success('Deskripsi capaian kompetensi berhasil diperbarui.', 'Berhasil')
+      const row = matrix.value.find(r => r.student.id === studentId)
+      if (row) {
+        row.calculated.description = editingDescriptionText.value
+        row.calculated.is_description_edited = true
+      }
+    }
+  } catch (error: any) {
+    toast.error(error.message || 'Gagal menyimpan deskripsi.', 'Gagal')
+  } finally {
+    savingDescription.value[studentId] = false
+  }
+}
+
+const handleRegenerateDescription = async (studentId: string, finalGradeId: string) => {
+  if (!finalGradeId) {
+    toast.error('Nilai akhir harus difinalisasi terlebih dahulu sebelum regenerasi deskripsi.', 'Perhatian')
+    return
+  }
+
+  if (!confirm('Apakah Anda yakin ingin mengatur ulang deskripsi ini sesuai formula otomatis? Catatan edit manual Anda akan tertimpa.')) return
+
+  savingDescription.value[studentId] = true
+  try {
+    const { fetcher: apiFetch } = useApi()
+    const res: any = await apiFetch(`/school/${selectedSchoolId.value}/gradebook/final-grades/${finalGradeId}/regenerate-description`, {
+      method: 'POST'
+    })
+    
+    if (res.success) {
+      toast.success('Deskripsi berhasil di-regenerate sesuai formula.', 'Berhasil')
+      const row = matrix.value.find(r => r.student.id === studentId)
+      if (row) {
+        row.calculated.description = res.data.competency_description || res.data.achievement_description
+        row.calculated.is_description_edited = false
+        if (expandedStudentDescId.value === studentId) {
+          editingDescriptionText.value = row.calculated.description
+        }
+      }
+    }
+  } catch (error: any) {
+    toast.error(error.message || 'Gagal meregenerasi deskripsi.', 'Gagal')
+  } finally {
+    savingDescription.value[studentId] = false
+  }
+}
 </script>
 
 <template>
@@ -682,7 +779,7 @@ const getStatusLabel = (status: string) => {
       <div class="flex flex-col gap-1.5" :class="isTKSchool ? 'lg:col-span-3' : 'lg:col-span-2'">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
         <select v-model="selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
-          <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
+          <option v-for="school in filteredSchools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
       </div>
 
@@ -1004,7 +1101,20 @@ const getStatusLabel = (status: string) => {
                 <!-- Student details -->
                 <td class="px-6 py-3 border-r border-slate-100 dark:border-zinc-850 font-semibold">
                   <p class="font-bold text-slate-900 dark:text-zinc-200 text-xs truncate max-w-[180px]">{{ row.student.full_name }}</p>
-                  <p class="text-[9px] text-slate-400 dark:text-zinc-505 mt-0.5">NIS: {{ row.student.student_number || '-' }}</p>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-[9px] text-slate-450 dark:text-zinc-550">NIS: {{ row.student.student_number || '-' }}</span>
+                    <button 
+                      v-if="row.calculated.final_grade_id"
+                      type="button"
+                      @click="toggleExpandDesc(row.student.id, row.calculated.description)"
+                      class="text-[9px] font-bold text-violet-600 hover:text-violet-750 flex items-center gap-0.5 underline shrink-0 cursor-pointer"
+                    >
+                      <Edit2 :size="8" /> {{ expandedStudentDescId === row.student.id ? 'Tutup Deskripsi' : 'Edit Deskripsi' }}
+                    </button>
+                    <span v-if="row.calculated.is_description_edited" class="bg-amber-500/10 text-amber-600 border border-amber-500/15 text-[8px] font-black uppercase px-1 rounded flex items-center gap-0.5 select-none" title="Diedit manual oleh guru">
+                      ✏ Diedit Manual
+                    </span>
+                  </div>
                 </td>
 
                 <!-- Components inputs -->
@@ -1087,6 +1197,48 @@ const getStatusLabel = (status: string) => {
                   </span>
                 </td>
 
+              </tr>
+
+              <!-- Expanded Description Editor Row -->
+              <tr v-if="expandedStudentDescId === row.student.id" :key="'desc_' + row.student.id" class="bg-violet-50/5 dark:bg-violet-950/5">
+                <td :colspan="components.length + 3" class="px-6 py-4 bg-slate-50/50 dark:bg-zinc-950/20 border-t border-b border-slate-200/50 dark:border-zinc-850 text-left">
+                  <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                      <span class="text-[10px] font-extrabold text-violet-700 dark:text-violet-400 uppercase tracking-widest flex items-center gap-1">
+                        <Edit2 :size="10" /> Deskripsi Capaian Kompetensi - {{ row.student.full_name }}
+                      </span>
+                      <div class="flex gap-2">
+                        <button 
+                          type="button"
+                          @click="handleRegenerateDescription(row.student.id, row.calculated.final_grade_id)"
+                          :disabled="savingDescription[row.student.id]"
+                          class="px-2.5 py-1 text-[10px] bg-slate-200 dark:bg-zinc-800 hover:bg-slate-300 rounded font-bold flex items-center gap-1 transition-colors"
+                        >
+                          <Sparkles :size="10" /> Atur Ulang Formula
+                        </button>
+                        <button 
+                          type="button"
+                          @click="handleSaveDescription(row.student.id, row.calculated.final_grade_id)"
+                          :disabled="savingDescription[row.student.id]"
+                          class="px-3 py-1 text-[10px] bg-violet-600 text-white hover:bg-violet-750 rounded font-bold flex items-center gap-1 transition-colors shadow-sm"
+                        >
+                          <Save :size="10" /> Simpan Catatan
+                        </button>
+                      </div>
+                    </div>
+
+                    <textarea 
+                      v-model="editingDescriptionText"
+                      rows="3"
+                      class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs font-semibold leading-relaxed outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600"
+                      placeholder="Masukkan deskripsi kompetensi..."
+                    ></textarea>
+                    
+                    <p class="text-[9px] text-slate-450 dark:text-zinc-500 italic">
+                      Formula otomatis menggabungkan kalimat capaian tertinggi (lulus KKM) dengan capaian terendah yang membutuhkan penguatan/bimbingan.
+                    </p>
+                  </div>
+                </td>
               </tr>
 
               <!-- Empty state -->

@@ -3,6 +3,7 @@ import { Printer, X, ShieldAlert, FileText, CheckCircle } from 'lucide-vue-next'
 import { useSchool } from '../../composables/useSchool'
 import { useReport } from '../../composables/useReport'
 import { useToast } from '../../composables/useToast'
+import { useReportTemplate } from '../../composables/useReportTemplate'
 
 // Disable Nuxt layout for printing
 definePageMeta({
@@ -21,12 +22,14 @@ const route = useRoute()
 const router = useRouter()
 const { currentSchoolId, p5Dimensions } = useSchool()
 const { fetchReportDetail } = useReport()
+const { reportTemplates, fetchReportTemplates } = useReportTemplate()
 const toast = useToast()
 
 const reportId = route.params.id as string
 const reportData = ref<any>(null)
 const loading = ref(true)
 const selectedTKFormat = ref((route.query.format as string) || 'dinas') // 'dinas' or 'intra'
+const selectedTemplateId = ref((route.query.template_id as string) || '')
 
 watch(() => route.query.format, (newFormat) => {
   if (newFormat === 'dinas' || newFormat === 'intra') {
@@ -45,24 +48,66 @@ watch(selectedTKFormat, (newFormat) => {
   }
 })
 
-onMounted(async () => {
+watch(() => route.query.template_id, (newVal) => {
+  if (newVal !== selectedTemplateId.value) {
+    selectedTemplateId.value = (newVal as string) || ''
+  }
+})
+
+const loadReportDetail = async () => {
   const schoolId = (route.query.school_id as string) || currentSchoolId.value
   if (!schoolId) {
     toast.error('Harap pilih unit sekolah terlebih dahulu di dashboard.', 'Error')
     loading.value = false
     return
   }
-  
+
+  loading.value = true
   try {
-    const res = await fetchReportDetail(schoolId, reportId)
+    const res = await fetchReportDetail(schoolId, reportId, selectedTemplateId.value)
     if (res.success) {
       reportData.value = res.data
+      
+      // Set initial selectedTemplateId if not already set
+      if (!selectedTemplateId.value && res.data?.template?.id) {
+        selectedTemplateId.value = res.data.template.id
+      }
+
+      // Auto-switch TK format toggle based on the loaded template name
+      if (res.data?.template?.name) {
+        const name = res.data.template.name.toLowerCase()
+        if (name.includes('intra')) {
+          selectedTKFormat.value = 'intra'
+        } else {
+          selectedTKFormat.value = 'dinas'
+        }
+      }
+
+      // Fetch all templates for this school and level
+      const level = res.data?.student?.school_level || 'TK'
+      await fetchReportTemplates(schoolId, level)
     }
   } catch (error: any) {
     toast.error(error.message || 'Gagal memuat detail rapor.', 'Gagal')
   } finally {
     loading.value = false
   }
+}
+
+onMounted(async () => {
+  await loadReportDetail()
+})
+
+watch(selectedTemplateId, async (newVal) => {
+  if (route.query.template_id !== newVal) {
+    router.replace({
+      query: {
+        ...route.query,
+        template_id: newVal || undefined
+      }
+    })
+  }
+  await loadReportDetail()
 })
 
 // Active P5 Dimensions – uses school-level config, falls back to defaults
@@ -250,6 +295,95 @@ const handleClose = () => {
   window.close()
 }
 
+const getGradeTableRows = (items: any[]) => {
+  if (!Array.isArray(items)) return []
+  const rows: any[] = []
+  let index = 1
+  for (const it of items) {
+    if (it.custom && it.subs && it.subs.length > 0) {
+      rows.push({ type: 'group', label: it.label })
+      for (const sub of it.subs) {
+        rows.push({ type: 'row', label: sub.label, no: index++, ref_id: sub.ref_id })
+      }
+    } else {
+      rows.push({ type: 'row', label: it.label || it.name, no: index++, ref_id: it.ref_id })
+    }
+  }
+  return rows
+}
+
+const getRealSubjectGrade = (subjectName: string) => {
+  if (!reportData.value?.finalGrades) return null
+  const normalized = subjectName.toLowerCase()
+  return reportData.value.finalGrades.find((g: any) => 
+    g.subject_name.toLowerCase() === normalized
+  ) || null
+}
+
+const getRealExtracurriculars = (configuredItems: any[]) => {
+  if (!reportData.value?.extracurriculars) return []
+  if (!configuredItems || configuredItems.length === 0) {
+    return reportData.value.extracurriculars.map((ex: any) => ({
+      name: ex.extracurricular_name,
+      grade: ex.grade,
+      description: ex.description
+    }))
+  }
+  return configuredItems.map(item => {
+    const name = typeof item === 'string' ? item : item.label || item.name
+    const realEx = reportData.value.extracurriculars.find((e: any) => e.extracurricular_name.toLowerCase() === name.toLowerCase())
+    return {
+      name,
+      grade: realEx?.grade || '-',
+      description: realEx?.description || 'Mengikuti kegiatan dengan baik.'
+    }
+  })
+}
+
+const getDescTableFlattenedRows = (items: any[]) => {
+  const rows: any[] = []
+  if (!Array.isArray(items)) return rows
+  items.forEach(it => {
+    const parentLabel = it.label || it.name
+    if (it.subs && it.subs.length > 0) {
+      it.subs.forEach((sub: any) => {
+        const subLabel = sub.label || sub.name
+        const realAsm = reportData.value?.assessments?.find((a: any) => a.element_name.toLowerCase() === subLabel.toLowerCase())
+        rows.push({
+          parentLabel,
+          subLabel,
+          grade: realAsm?.letter_grade || realAsm?.predicate || '-'
+        })
+      })
+    } else {
+      const realAsm = reportData.value?.assessments?.find((a: any) => a.element_name.toLowerCase() === parentLabel.toLowerCase())
+      rows.push({
+        parentLabel,
+        subLabel: parentLabel,
+        grade: realAsm?.letter_grade || realAsm?.predicate || '-'
+      })
+    }
+  })
+  return rows
+}
+
+const getRealDescTableAssessment = (itemName: string) => {
+  if (!reportData.value?.assessments) return null
+  const normalized = itemName.toLowerCase()
+  return reportData.value.assessments.find((a: any) => 
+    a.element_name.toLowerCase() === normalized
+  ) || null
+}
+
+const getRealP5Row = (name: string) => {
+  if (!reportData.value?.assessments) return '-'
+  const normalized = name.toLowerCase()
+  const found = reportData.value.assessments.find((a: any) => 
+    a.element_name.toLowerCase().includes(normalized) || normalized.includes(a.element_name.toLowerCase())
+  )
+  return found?.letter_grade || found?.predicate || '-'
+}
+
 const formatDate = (dateStr: any) => {
   if (!dateStr) return '-'
   return new Date(dateStr).toLocaleDateString('id-ID', {
@@ -297,6 +431,19 @@ const formatDate = (dateStr: any) => {
             Format Sekolah (Intra)
           </button>
         </div>
+
+        <!-- Template Selection Dropdown -->
+        <div v-if="reportTemplates && reportTemplates.length > 0" class="flex items-center gap-1.5 mr-2 print:hidden">
+          <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest pl-1">Template:</label>
+          <select 
+            v-model="selectedTemplateId" 
+            class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold outline-none transition-all focus:border-violet-600"
+          >
+            <option v-for="tpl in reportTemplates" :key="tpl.id" :value="tpl.id">
+              {{ tpl.name }} {{ tpl.is_active ? '(Aktif)' : '' }}
+            </option>
+          </select>
+        </div>
         <button @click="handlePrint" class="inline-flex items-center gap-1.5 px-4 py-2 bg-violet-600 text-white text-xs font-bold rounded-lg hover:bg-violet-750 transition-colors shadow-lg shadow-violet-600/10">
           <Printer :size="14" /> Cetak Rapor
         </button>
@@ -319,12 +466,438 @@ const formatDate = (dateStr: any) => {
       <button @click="handleClose" class="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg">Kembali</button>
     </div>
 
+    <!-- Dynamic Template-Driven Preview/Print Renderer -->
     <div 
-      v-else 
+      v-else-if="reportData.template?.widget_tree && Array.isArray(reportData.template.widget_tree) && reportData.template.widget_tree.length > 0"
+      class="max-w-4xl mx-auto bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 rounded-none sm:rounded-2xl p-8 sm:p-12 print:p-[20mm_20mm] print:border-none print:shadow-none print:bg-white print:text-black shadow-sm space-y-6 print-sheet-canvas"
+    >
+      <div 
+        v-for="w in reportData.template.widget_tree" 
+        :key="w.id"
+        class="text-left font-serif text-black dark:text-zinc-150 print:text-black"
+      >
+        <!-- 1. header_school -->
+        <div v-if="w.type === 'header_school'" class="text-center border-b-4 border-double border-slate-900 dark:border-zinc-700 pb-3">
+          <h2 class="text-md font-extrabold uppercase leading-tight tracking-wider">YAYASAN TURSINA SHALAWAT</h2>
+          <h1 class="text-lg font-black uppercase leading-tight mt-0.5 tracking-widest text-violet-750 dark:text-violet-400">{{ reportData.student.school_name?.toUpperCase() }}</h1>
+          <p v-if="w.props.showAddress" class="text-[9px] text-slate-600 dark:text-zinc-400 leading-normal mt-1 italic">
+            {{ reportData.student.school_address }}
+          </p>
+          <p v-if="w.props.showNpsn" class="text-[8px] font-mono text-slate-500 font-bold mt-0.5">NPSN: {{ reportData.student.school_npsn }}</p>
+        </div>
+
+        <!-- 2. student_identity -->
+        <div v-else-if="w.type === 'student_identity'" class="grid grid-cols-2 gap-x-8 gap-y-1 text-[10px]">
+          <div class="flex"><span class="w-24 shrink-0 font-bold uppercase">Nama Peserta Didik</span><span class="mr-2">:</span><span class="font-semibold">{{ reportData.student.full_name }}</span></div>
+          <div class="flex"><span class="w-24 shrink-0 font-bold uppercase">Kelas / Fase</span><span class="mr-2">:</span><span>{{ reportData.student.class_name }} / {{ reportData.student.school_level === 'TK' ? 'Fondasi' : 'Merdeka' }}</span></div>
+          <div v-if="w.props.showNisn" class="flex"><span class="w-24 shrink-0 font-bold uppercase">Nomor Induk / NISN</span><span class="mr-2">:</span><span class="font-mono">{{ reportData.student.student_number || '-' }} / {{ reportData.student.national_student_number || '-' }}</span></div>
+          <div class="flex"><span class="w-24 shrink-0 font-bold uppercase">Semester</span><span class="mr-2">:</span><span>{{ reportData.report.semester === 'odd' ? '1 (Ganjil)' : '2 (Genap)' }}</span></div>
+          <div class="flex"><span class="w-24 shrink-0 font-bold uppercase">Tahun Ajaran</span><span class="mr-2">:</span><span class="font-mono">{{ reportData.report.academic_year_name }}</span></div>
+          <div v-if="w.props.showWali" class="flex"><span class="w-24 shrink-0 font-bold uppercase">Nama Orang Tua / Wali</span><span class="mr-2">:</span><span>{{ reportData.student.guardian_name || '-' }}</span></div>
+        </div>
+
+        <!-- 3. section_block -->
+        <div v-else-if="w.type === 'section_block'" class="py-1">
+          <h3 class="text-[11px] font-black uppercase tracking-wider text-slate-900 dark:text-zinc-200">{{ w.props.title || 'SEKSI PROGRAM' }}</h3>
+        </div>
+
+        <!-- 4. page_break -->
+        <div v-else-if="w.type === 'page_break'" class="print:break-after-page page-break py-4 print:py-0 border-t border-dashed border-rose-500 print:border-none relative">
+          <span class="absolute -top-2.5 right-4 bg-white dark:bg-zinc-900 text-rose-500 text-[8px] font-black tracking-widest px-2 uppercase print:hidden">Batas Halaman Cetak</span>
+        </div>
+
+        <!-- 5. grade_table -->
+        <div v-else-if="w.type === 'grade_table'" class="space-y-3">
+          <table class="w-full text-left border-collapse border border-slate-800 dark:border-zinc-700 text-[10px]">
+            <thead>
+              <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-800 dark:border-zinc-700 font-bold text-[9px] uppercase">
+                <th v-for="col in w.props.cols.filter(c => c.visible)" :key="col.key" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center">
+                  {{ col.label }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <template v-for="(row, idx) in getGradeTableRows(w.props.items)" :key="idx">
+                <!-- Group Header Row -->
+                <tr v-if="row.type === 'group'" class="bg-slate-100/60 dark:bg-zinc-800/40 border-b border-slate-800 dark:border-zinc-700 font-bold">
+                  <td :colspan="w.props.cols.filter(c => c.visible).length" class="p-2 pl-3 uppercase tracking-wider text-[9px] text-slate-800 dark:text-zinc-200 font-black">
+                    {{ row.label }}
+                  </td>
+                </tr>
+                
+                <!-- Normal Subject Row -->
+                <tr v-else class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
+                  <td v-if="w.props.cols.some(c => c.key === 'no' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-bold">{{ row.no }}</td>
+                  <td v-if="w.props.cols.some(c => c.key === 'name' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-semibold" :class="{ 'pl-4': w.props.items.some(it => it.custom && it.subs && it.subs.length > 0) }">{{ row.label }}</td>
+                  <td v-if="w.props.cols.some(c => c.key === 'kkm' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-mono" :class="{ 'bg-amber-50/10 dark:bg-zinc-850': w.props.highlightKkm }">
+                    {{ getRealSubjectGrade(row.label)?.kkm_score || w.props.kkm || 70 }}
+                  </td>
+                  <td v-if="w.props.cols.some(c => c.key === 'val' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-mono font-bold" :class="{ 'text-rose-600 bg-rose-50/20': w.props.highlightKkm && Number(getRealSubjectGrade(row.label)?.final_score) < Number(getRealSubjectGrade(row.label)?.kkm_score || 70) }">
+                    {{ getRealSubjectGrade(row.label)?.final_score || '-' }}
+                  </td>
+                  <td v-if="w.props.cols.some(c => c.key === 'pred' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-bold">
+                    {{ getRealSubjectGrade(row.label)?.predicate || '-' }}
+                  </td>
+                  <td v-if="w.props.cols.some(c => c.key === 'desc' && c.visible)" class="p-1.5 text-[9px] text-justify italic leading-relaxed text-slate-700 dark:text-zinc-400">
+                    {{ getRealSubjectGrade(row.label)?.achievement_description || 'Belum ada deskripsi capaian kompetensi.' }}
+                  </td>
+                </tr>
+              </template>
+              <tr v-if="w.props.items.length === 0">
+                <td :colspan="w.props.cols.filter(c => c.visible).length" class="p-6 text-center text-slate-400 italic">
+                  Tidak ada mata pelajaran terpilih.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 6. desc_table -->
+        <div v-else-if="w.type === 'desc_table'" class="space-y-4">
+          <!-- Format B: List Langsung / Flattened -->
+          <table v-if="!w.props.hasSub" class="w-full text-left border-collapse border border-slate-800 dark:border-zinc-700 text-[10px]">
+            <thead>
+              <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-800 dark:border-zinc-700 font-bold text-[9px] uppercase">
+                <th v-for="col in w.props.cols.filter(c => c.visible)" :key="col.key" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center">
+                  {{ col.label }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <template v-if="w.props.items.some(it => it.subs && it.subs.length > 0)">
+                <tr v-for="(subRow, sIdx) in getDescTableFlattenedRows(w.props.items)" :key="sIdx" class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
+                  <td v-if="w.props.cols.some(c => c.key === 'no' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-bold">{{ sIdx + 1 }}.</td>
+                  <td v-if="w.props.cols.some(c => c.key === 'name' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 pl-2 leading-relaxed">
+                    {{ subRow.subLabel }}
+                    <span class="text-[8px] font-bold text-slate-450 block font-sans">Elemen: {{ subRow.parentLabel }}</span>
+                  </td>
+                  <td v-if="w.props.cols.some(c => c.key === 'val' && c.visible)" class="p-1.5 text-center font-bold text-violet-750 dark:text-violet-400">
+                    {{ subRow.grade }}
+                  </td>
+                </tr>
+              </template>
+              
+              <template v-else-if="w.props.items.length > 0">
+                <tr v-for="(it, idx) in w.props.items" :key="idx" class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
+                  <td v-if="w.props.cols.some(c => c.key === 'no' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-bold">{{ idx + 1 }}.</td>
+                  <td v-if="w.props.cols.some(c => c.key === 'name' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 pl-2 leading-relaxed font-bold">{{ it.label || it.name }}</td>
+                  <td v-if="w.props.cols.some(c => c.key === 'val' && c.visible)" class="p-1.5 text-center font-bold text-violet-750 dark:text-violet-400">
+                    {{ getRealDescTableAssessment(it.label || it.name)?.letter_grade || getRealDescTableAssessment(it.label || it.name)?.predicate || '-' }}
+                  </td>
+                </tr>
+              </template>
+              
+              <tr v-else>
+                <td :colspan="w.props.cols.filter(c => c.visible).length" class="p-6 text-center text-slate-400 italic">
+                  Belum ada aspek capaian terpilih.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Format A / Format C: Terkelompok / Grouped -->
+          <div v-else v-for="(it, index) in w.props.items" :key="index" class="space-y-2">
+            <div class="text-[10px] font-black uppercase text-slate-900 dark:text-zinc-200 flex justify-between bg-slate-50 dark:bg-zinc-800 p-1 border-b border-slate-200 dark:border-zinc-700">
+              <span>{{ it.label || it.name }}</span>
+              <span v-if="!w.props.perSub && w.props.cols.some(c => c.key === 'val' && c.visible)" class="text-violet-750 dark:text-violet-400 uppercase text-[9px] font-bold font-sans">
+                {{ getRealDescTableAssessment(it.label || it.name)?.letter_grade || getRealDescTableAssessment(it.label || it.name)?.predicate || '-' }}
+              </span>
+            </div>
+            
+            <table v-if="it.subs && it.subs.length > 0" class="w-full text-left border-collapse border border-slate-800 dark:border-zinc-700 text-[10px]">
+              <thead>
+                <tr class="bg-slate-50/50 dark:bg-zinc-800/40 border-b border-slate-800 dark:border-zinc-700 font-bold text-[8px] uppercase">
+                  <th v-for="col in w.props.cols.filter(c => c.visible)" :key="col.key" class="p-1 border-r border-slate-800 dark:border-zinc-700 text-center">
+                    {{ col.label }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(sub, sIdx) in it.subs" :key="sIdx" class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
+                  <td v-if="w.props.cols.some(c => c.key === 'no' && c.visible)" class="p-1 border-r border-slate-800 dark:border-zinc-700 text-center font-bold">{{ sIdx + 1 }}.</td>
+                  <td v-if="w.props.cols.some(c => c.key === 'name' && c.visible)" class="p-1 border-r border-slate-800 dark:border-zinc-700 pl-2 leading-relaxed text-slate-700 dark:text-zinc-400">{{ sub.label || sub.name }}</td>
+                  <td v-if="w.props.cols.some(c => c.key === 'val' && c.visible)" class="p-1 text-center font-bold text-violet-750 dark:text-violet-400" :class="{ 'text-slate-350 bg-slate-50 dark:bg-zinc-800': !w.props.perSub }">
+                    {{ w.props.perSub ? (getRealDescTableAssessment(sub.label || sub.name)?.letter_grade || getRealDescTableAssessment(sub.label || sub.name)?.predicate || '-') : '-' }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div v-if="w.props.showNarasi" class="text-[9px] text-justify leading-relaxed p-2 bg-slate-50/60 dark:bg-zinc-850 border border-slate-200 dark:border-zinc-850 rounded italic text-slate-750 dark:text-zinc-350">
+              <strong>Narasi Capaian |</strong> {{ getRealDescTableAssessment(it.label || it.name)?.narrative || 'Belum ada narasi pencapaian.' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. subject_narrative -->
+        <div v-else-if="w.type === 'subject_narrative'" class="space-y-4 text-[10px] text-justify leading-relaxed">
+          <div v-for="(it, index) in w.props.items" :key="index" class="p-3 border border-slate-800 dark:border-zinc-700 rounded bg-slate-50/20">
+            <strong class="text-[11px] uppercase block mb-1 border-b border-slate-200 dark:border-zinc-750 pb-0.5">{{ it.label || it.name }}</strong>
+            {{ getRealDescTableAssessment(it.label || it.name)?.narrative || 'Belum ada narasi pencapaian.' }}
+          </div>
+        </div>
+
+        <!-- 8. extracurricular -->
+        <div v-else-if="w.type === 'extracurricular'">
+          <table class="w-full text-left border-collapse border border-slate-800 dark:border-zinc-750 text-[10px]">
+            <thead>
+              <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-800 dark:border-zinc-700 font-bold text-[9px] uppercase">
+                <th v-for="col in w.props.cols.filter(c => c.visible)" :key="col.key" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center">
+                  {{ col.label }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(ex, exIdx) in getRealExtracurriculars(w.props.items)" :key="exIdx" class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
+                <td v-if="w.props.cols.some(c => c.key === 'no' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center">{{ exIdx + 1 }}</td>
+                <td v-if="w.props.cols.some(c => c.key === 'name' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-bold">{{ ex.name }}</td>
+                <td v-if="w.props.cols.some(c => c.key === 'val' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-bold">{{ ex.grade || '-' }}</td>
+                <td v-if="w.props.cols.some(c => c.key === 'note' && c.visible)" class="p-1.5 leading-relaxed">{{ ex.description || '-' }}</td>
+              </tr>
+              <tr v-if="getRealExtracurriculars(w.props.items).length === 0">
+                <td :colspan="w.props.cols.filter(c => c.visible).length" class="p-4 text-center text-slate-400 italic">
+                  Tidak ada ekskul yang diikuti.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 9. p5_assessment -->
+        <div v-else-if="w.type === 'p5_assessment'">
+          <table class="w-full text-left border-collapse border border-slate-800 dark:border-zinc-750 text-[10px]">
+            <thead>
+              <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-800 dark:border-zinc-700 font-bold text-[9px] uppercase">
+                <th v-for="col in w.props.cols.filter(c => c.visible)" :key="col.key" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center">
+                  {{ col.label }}
+                </th>
+                <th class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center w-10">MB</th>
+                <th class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center w-10">SB</th>
+                <th class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center w-10">BSH</th>
+                <th class="p-1.5 text-center w-10">SAB</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(it, idx) in w.props.items" :key="idx" class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
+                <td v-if="w.props.cols.some(c => c.key === 'name' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-bold">
+                  {{ typeof it === 'string' ? it : it.label || it.name }}
+                </td>
+                <td v-if="w.props.cols.some(c => c.key === 'val' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-semibold">
+                  {{ getRealP5Row(typeof it === 'string' ? it : it.label || it.name) }}
+                </td>
+                <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-bold text-violet-650">
+                  {{ getRealP5Row(typeof it === 'string' ? it : it.label || it.name) === 'MB' ? '✓' : '' }}
+                </td>
+                <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-bold text-violet-650">
+                  {{ getRealP5Row(typeof it === 'string' ? it : it.label || it.name) === 'SB' ? '✓' : '' }}
+                </td>
+                <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-bold text-violet-650">
+                  {{ getRealP5Row(typeof it === 'string' ? it : it.label || it.name) === 'BSH' ? '✓' : '' }}
+                </td>
+                <td class="p-1.5 text-center font-bold text-violet-650">
+                  {{ getRealP5Row(typeof it === 'string' ? it : it.label || it.name) === 'SAB' ? '✓' : '' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 10. attendance -->
+        <div v-else-if="w.type === 'attendance'" class="w-80">
+          <table class="w-full text-left border-collapse border border-slate-800 dark:border-zinc-750 text-[10px]">
+            <thead>
+              <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-800 dark:border-zinc-700 font-bold text-[9px] uppercase">
+                <th class="p-1.5 border-r border-slate-800 dark:border-zinc-700">Kategori Kehadiran</th>
+                <th class="p-1.5 text-center w-24">Jumlah</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-slate-800 dark:border-zinc-700">
+                <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Sakit (S)</td>
+                <td class="p-1.5 text-center font-bold">{{ reportData.attendance.sick }} hari</td>
+              </tr>
+              <tr class="border-b border-slate-800 dark:border-zinc-700">
+                <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Izin (I)</td>
+                <td class="p-1.5 text-center font-bold">{{ reportData.attendance.leave }} hari</td>
+              </tr>
+              <tr class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
+                <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Tanpa Keterangan (A)</td>
+                <td class="p-1.5 text-center font-bold">{{ reportData.attendance.absent }} hari</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 11. growth -->
+        <div v-else-if="w.type === 'growth'" class="w-80">
+          <table class="w-full text-left border-collapse border border-slate-800 dark:border-zinc-750 text-[10px]">
+            <thead>
+              <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-800 dark:border-zinc-700 font-bold text-[9px] uppercase">
+                <th class="p-1.5 border-r border-slate-800 dark:border-zinc-700">Aspek Tumbuh Kembang</th>
+                <th class="p-1.5 text-center w-24">Ukuran</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-slate-800 dark:border-zinc-700">
+                <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Tinggi Badan</td>
+                <td class="p-1.5 text-center font-bold">{{ reportData.student.height ? `${reportData.student.height} cm` : '-' }}</td>
+              </tr>
+              <tr class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
+                <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Berat Badan</td>
+                <td class="p-1.5 text-center font-bold">{{ reportData.student.weight ? `${reportData.student.weight} kg` : '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 12. student_photo -->
+        <div v-else-if="w.type === 'student_photo'" class="flex justify-start">
+          <div class="w-24 h-32 border border-slate-400 dark:border-zinc-700 flex items-center justify-center text-[9px] text-slate-400 uppercase tracking-widest font-semibold bg-slate-50 dark:bg-zinc-950">
+            Pas Foto<br>3 x 4
+          </div>
+        </div>
+
+        <!-- 15. homeroom_notes -->
+        <div v-else-if="w.type === 'homeroom_notes'" class="w-full">
+          <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-3">Catatan Wali Kelas</h3>
+          <div class="border border-slate-900 p-4 min-h-[92px] text-xs leading-relaxed text-justify text-slate-700 dark:text-zinc-300 print:text-black">
+            {{ reportData.report.homeroom_notes || 'Belum ada catatan wali kelas.' }}
+          </div>
+        </div>
+
+        <!-- 13. column_layout -->
+        <div v-else-if="w.type === 'column_layout'" class="grid gap-4" :style="{ gridTemplateColumns: `repeat(${w.props.cols || 2}, 1fr)` }">
+          <div v-for="colIdx in (w.props.cols || 2)" :key="colIdx" class="space-y-4">
+             <!-- Render nested items inside this column -->
+             <div v-for="nestedW in (w.props.columns?.[colIdx - 1] || [])" :key="nestedW.id">
+                
+                <!-- 1. header_school inside column -->
+                <div v-if="nestedW.type === 'header_school'" class="text-center border-b-4 border-double border-slate-900 dark:border-zinc-700 pb-3">
+                  <h2 class="text-md font-extrabold uppercase leading-tight tracking-wider">YAYASAN TURSINA SHALAWAT</h2>
+                  <h1 class="text-lg font-black uppercase leading-tight mt-0.5 tracking-widest text-violet-750 dark:text-violet-400">{{ reportData.student.school_name?.toUpperCase() }}</h1>
+                  <p v-if="nestedW.props.showAddress" class="text-[9px] text-slate-600 dark:text-zinc-400 leading-normal mt-1 italic">
+                    {{ reportData.student.school_address }}
+                  </p>
+                  <p v-if="nestedW.props.showNpsn" class="text-[8px] font-mono text-slate-500 font-bold mt-0.5">NPSN: {{ reportData.student.school_npsn }}</p>
+                </div>
+
+                <!-- 2. student_identity inside column -->
+                <div v-else-if="nestedW.type === 'student_identity'" class="grid grid-cols-1 gap-y-1 text-[10px]">
+                  <div class="flex"><span class="w-24 shrink-0 font-bold uppercase">Nama Siswa</span><span class="mr-2">:</span><span class="font-semibold">{{ reportData.student.full_name }}</span></div>
+                  <div class="flex"><span class="w-24 shrink-0 font-bold uppercase">Kelas</span><span class="mr-2">:</span><span>{{ reportData.student.class_name }}</span></div>
+                  <div v-if="nestedW.props.showNisn" class="flex"><span class="w-24 shrink-0 font-bold uppercase">NISN</span><span class="mr-2">:</span><span class="font-mono">{{ reportData.student.national_student_number || '-' }}</span></div>
+                </div>
+
+                <!-- 3. section_block inside column -->
+                <div v-else-if="nestedW.type === 'section_block'" class="py-1">
+                  <h3 class="text-[11px] font-black uppercase tracking-wider text-slate-900 dark:text-zinc-200">{{ nestedW.props.title || 'SEKSI PROGRAM' }}</h3>
+                </div>
+
+                <!-- 4. page_break inside column -->
+                <div v-else-if="nestedW.type === 'page_break'" class="print:break-after-page page-break py-2 print:py-0 border-t border-dashed border-rose-500 print:border-none relative">
+                  <span class="absolute -top-2.5 right-4 bg-white dark:bg-zinc-900 text-rose-500 text-[8px] font-black tracking-widest px-2 uppercase print:hidden">Batas Halaman Cetak</span>
+                </div>
+
+                <!-- 10. attendance inside column -->
+                <div v-else-if="nestedW.type === 'attendance'" class="w-full">
+                  <table class="w-full text-left border-collapse border border-slate-800 dark:border-zinc-700 text-[10px]">
+                    <thead>
+                      <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-800 dark:border-zinc-700 font-bold text-[9px] uppercase">
+                        <th class="p-1.5 border-r border-slate-800 dark:border-zinc-700">Kategori Kehadiran</th>
+                        <th class="p-1.5 text-center w-16">Jumlah</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr class="border-b border-slate-800 dark:border-zinc-700">
+                        <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Sakit (S)</td>
+                        <td class="p-1.5 text-center font-bold">{{ reportData.attendance.sick }} hari</td>
+                      </tr>
+                      <tr class="border-b border-slate-800 dark:border-zinc-700">
+                        <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Izin (I)</td>
+                        <td class="p-1.5 text-center font-bold">{{ reportData.attendance.leave }} hari</td>
+                      </tr>
+                      <tr class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
+                        <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Tanpa Keterangan (A)</td>
+                        <td class="p-1.5 text-center font-bold">{{ reportData.attendance.absent }} hari</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- 11. growth inside column -->
+                <div v-else-if="nestedW.type === 'growth'" class="w-full">
+                  <table class="w-full text-left border-collapse border border-slate-800 dark:border-zinc-700 text-[10px]">
+                    <thead>
+                      <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-800 dark:border-zinc-700 font-bold text-[9px] uppercase">
+                        <th class="p-1.5 border-r border-slate-800 dark:border-zinc-700">Aspek Tumbuh Kembang</th>
+                        <th class="p-1.5 text-center w-16">Ukuran</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr class="border-b border-slate-800 dark:border-zinc-700">
+                        <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Tinggi Badan</td>
+                        <td class="p-1.5 text-center font-bold">{{ reportData.student.height ? `${reportData.student.height} cm` : '-' }}</td>
+                      </tr>
+                      <tr class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
+                        <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Berat Badan</td>
+                        <td class="p-1.5 text-center font-bold">{{ reportData.student.weight ? `${reportData.student.weight} kg` : '-' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- 12. student_photo inside column -->
+                <div v-else-if="nestedW.type === 'student_photo'" class="flex justify-start">
+                  <div class="w-24 h-32 border border-slate-400 dark:border-zinc-700 flex items-center justify-center text-[9px] text-slate-400 uppercase tracking-widest font-semibold bg-slate-50 dark:bg-zinc-950">
+                    Pas Foto<br>3 x 4
+                  </div>
+                </div>
+
+                <!-- 15. homeroom_notes inside column -->
+                <div v-else-if="nestedW.type === 'homeroom_notes'" class="w-full">
+                  <h4 class="text-xs font-black uppercase border-b border-slate-900 pb-0.5 mb-2">Catatan Wali Kelas</h4>
+                  <div class="border border-slate-900 p-3 min-h-[70px] text-[10px] leading-relaxed text-justify text-slate-700 dark:text-zinc-300 print:text-black">
+                    {{ reportData.report.homeroom_notes || 'Belum ada catatan wali kelas.' }}
+                  </div>
+                </div>
+
+                <!-- 14. signature_block inside column -->
+                <div v-else-if="nestedW.type === 'signature_block'" class="text-[10px] gap-8 pt-4">
+                  <div class="space-y-12">
+                    <span>{{ nestedW.props.place || 'Karanganyar' }}, {{ nestedW.props.date || '20 Desember 2026' }}<br>Mengetahui, Kepala Sekolah</span>
+                    <div class="border-t border-slate-900 dark:border-zinc-700 pt-1 font-bold">{{ nestedW.props.kepsek || reportData.student.principal_name }}</div>
+                  </div>
+                </div>
+
+             </div>
+          </div>
+        </div>
+
+        <!-- 14. signature_block -->
+        <div v-else-if="w.type === 'signature_block'" class="grid grid-cols-3 text-center text-[10px] gap-8 pt-4">
+          <div class="space-y-12">
+            <span>Orang Tua / Wali Siswa</span>
+            <div class="border-t border-slate-900 dark:border-zinc-700 pt-1 font-bold">(...................................................)</div>
+          </div>
+          <div class="space-y-12">
+            <span>Guru Kelas / Wali Kelas</span>
+            <div class="border-t border-slate-900 dark:border-zinc-700 pt-1 font-bold">{{ reportData.student.homeroom_teacher_name }}</div>
+          </div>
+          <div class="space-y-12">
+            <span>{{ w.props.place || 'Karanganyar' }}, {{ w.props.date || '20 Desember 2026' }}<br>Mengetahui, Kepala Sekolah</span>
+            <div class="border-t border-slate-900 dark:border-zinc-700 pt-1 font-bold">{{ w.props.kepsek || reportData.student.principal_name }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fallback Legacy Hardcoded Renderer -->
+    <div 
+      v-else-if="reportData"
       class="print-report-container"
       :class="[
         reportData.student.school_level === 'TK' && selectedTKFormat === 'dinas' ? 'dinas-format' : 'standard-format',
-        'max-w-4xl mx-auto print:border-none print:shadow-none print:bg-white print:text-black shadow-sm',
+        'max-w-4xl mx-auto print:border-none print:shadow-none print:bg-white print:text-black shadow-sm print-sheet-canvas',
         reportData.student.school_level === 'TK' && selectedTKFormat === 'dinas' 
           ? 'bg-transparent border-none p-0 space-y-6 shadow-none' 
           : 'bg-white dark:bg-zinc-900 border border-slate-300/60 dark:border-zinc-800 rounded-none sm:rounded-2xl p-8 sm:p-12 print:p-[20mm_20mm]'
@@ -627,7 +1200,7 @@ const formatDate = (dateStr: any) => {
             <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">I. Kategori Perkembangan Kemampuan &amp; Penilaian</h3>
             <table class="w-full text-left border border-slate-900 text-xs">
               <thead>
-                <tr class="bg-slate-50 border-b border-slate-900 font-bold">
+                <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-900 dark:border-zinc-700 font-bold">
                   <th class="p-2 border-r border-slate-900 w-12 text-center">No</th>
                   <th class="p-2 border-r border-slate-900">ASPEK AMATAN</th>
                   <th class="p-2 border-r border-slate-900 text-center w-12">K</th>
@@ -736,7 +1309,7 @@ const formatDate = (dateStr: any) => {
             <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">II. Kegiatan Ekstrakurikuler</h3>
             <table class="w-full text-left border border-slate-900 text-xs">
               <thead>
-                <tr class="bg-slate-50 border-b border-slate-900 font-bold">
+                <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-900 dark:border-zinc-700 font-bold">
                   <th class="p-2 border-r border-slate-900 w-1/3">Kegiatan Ekstrakurikuler</th>
                   <th class="p-2 border-r border-slate-900 text-center w-24">Predikat</th>
                   <th class="p-2">Deskripsi / Capaian</th>
@@ -762,12 +1335,12 @@ const formatDate = (dateStr: any) => {
               <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">III. Tumbuh Kembang</h3>
               <table class="w-full text-left border border-slate-900 text-xs">
                 <tbody>
-                  <tr class="border-b border-slate-900">
-                    <td class="p-2 border-r border-slate-900 font-bold bg-slate-50 w-1/2">Tinggi Badan</td>
+                  <tr class="border-b border-slate-900 dark:border-zinc-700">
+                    <td class="p-2 border-r border-slate-900 dark:border-zinc-700 font-bold bg-slate-50 dark:bg-zinc-800/60 text-slate-800 dark:text-zinc-200 w-1/2">Tinggi Badan</td>
                     <td class="p-2">{{ reportData.student.height ? `${reportData.student.height} cm` : '-' }}</td>
                   </tr>
                   <tr>
-                    <td class="p-2 border-r border-slate-900 font-bold bg-slate-50">Berat Badan</td>
+                    <td class="p-2 border-r border-slate-900 dark:border-zinc-700 font-bold bg-slate-50 dark:bg-zinc-800/60 text-slate-800 dark:text-zinc-200">Berat Badan</td>
                     <td class="p-2">{{ reportData.student.weight ? `${reportData.student.weight} kg` : '-' }}</td>
                   </tr>
                 </tbody>
@@ -779,16 +1352,16 @@ const formatDate = (dateStr: any) => {
               <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">IV. Kehadiran (Absensi)</h3>
               <table class="w-full text-left border border-slate-900 text-xs">
                 <tbody>
-                  <tr class="border-b border-slate-900">
-                    <td class="p-2 border-r border-slate-900 font-bold bg-slate-50 w-1/2">Sakit (S)</td>
+                  <tr class="border-b border-slate-900 dark:border-zinc-700">
+                    <td class="p-2 border-r border-slate-900 dark:border-zinc-700 font-bold bg-slate-50 dark:bg-zinc-800/60 text-slate-800 dark:text-zinc-200 w-1/2">Sakit (S)</td>
                     <td class="p-2 text-center">{{ reportData.attendance.sick }} hari</td>
                   </tr>
-                  <tr class="border-b border-slate-900">
-                    <td class="p-2 border-r border-slate-900 font-bold bg-slate-50">Izin (I)</td>
+                  <tr class="border-b border-slate-900 dark:border-zinc-700">
+                    <td class="p-2 border-r border-slate-900 dark:border-zinc-700 font-bold bg-slate-50 dark:bg-zinc-800/60 text-slate-800 dark:text-zinc-200">Izin (I)</td>
                     <td class="p-2 text-center">{{ reportData.attendance.leave }} hari</td>
                   </tr>
                   <tr>
-                    <td class="p-2 border-r border-slate-900 font-bold bg-slate-50">Tanpa Keterangan (A)</td>
+                    <td class="p-2 border-r border-slate-900 dark:border-zinc-700 font-bold bg-slate-50 dark:bg-zinc-800/60 text-slate-800 dark:text-zinc-200">Tanpa Keterangan (A)</td>
                     <td class="p-2 text-center">{{ reportData.attendance.absent }} hari</td>
                   </tr>
                 </tbody>
@@ -807,7 +1380,7 @@ const formatDate = (dateStr: any) => {
           <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">I. Nilai Akademik (Intrakurikuler)</h3>
           <table class="w-full text-left border border-slate-900 text-xs">
             <thead>
-              <tr class="bg-slate-50 border-b border-slate-900 font-bold">
+              <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-900 dark:border-zinc-700 font-bold">
                 <th class="p-2 border-r border-slate-900 w-12 text-center">No</th>
                 <th class="p-2 border-r border-slate-900">Mata Pelajaran</th>
                 <th class="p-2 border-r border-slate-900 text-center w-16">KKM</th>
@@ -839,7 +1412,7 @@ const formatDate = (dateStr: any) => {
           <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">II. Kegiatan Ekstrakurikuler</h3>
           <table class="w-full text-left border border-slate-900 text-xs">
             <thead>
-              <tr class="bg-slate-50 border-b border-slate-900 font-bold">
+              <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-900 dark:border-zinc-700 font-bold">
                 <th class="p-2 border-r border-slate-900 w-1/3">Kegiatan Ekstrakurikuler</th>
                 <th class="p-2 border-r border-slate-900 text-center w-24">Predikat</th>
                 <th class="p-2">Deskripsi / Capaian</th>
@@ -866,16 +1439,16 @@ const formatDate = (dateStr: any) => {
             <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-3">III. Kehadiran</h3>
             <table class="w-full text-left border border-slate-900 text-xs">
               <tbody>
-                <tr class="border-b border-slate-900">
-                  <td class="p-2 border-r border-slate-900 font-bold bg-slate-50 w-2/3">Sakit (S)</td>
+                <tr class="border-b border-slate-900 dark:border-zinc-700">
+                  <td class="p-2 border-r border-slate-900 dark:border-zinc-700 font-bold bg-slate-50 dark:bg-zinc-800/60 text-slate-800 dark:text-zinc-200 w-2/3">Sakit (S)</td>
                   <td class="p-2 text-center">{{ reportData.attendance.sick }}</td>
                 </tr>
-                <tr class="border-b border-slate-900">
-                  <td class="p-2 border-r border-slate-900 font-bold bg-slate-50">Izin (I)</td>
+                <tr class="border-b border-slate-900 dark:border-zinc-700">
+                  <td class="p-2 border-r border-slate-900 dark:border-zinc-700 font-bold bg-slate-50 dark:bg-zinc-800/60 text-slate-800 dark:text-zinc-200">Izin (I)</td>
                   <td class="p-2 text-center">{{ reportData.attendance.leave }}</td>
                 </tr>
                 <tr>
-                  <td class="p-2 border-r border-slate-900 font-bold bg-slate-50">Tanpa Ket (A)</td>
+                  <td class="p-2 border-r border-slate-900 dark:border-zinc-700 font-bold bg-slate-50 dark:bg-zinc-800/60 text-slate-800 dark:text-zinc-200">Tanpa Ket (A)</td>
                   <td class="p-2 text-center">{{ reportData.attendance.absent }}</td>
                 </tr>
               </tbody>
@@ -1028,5 +1601,52 @@ const formatDate = (dateStr: any) => {
   height: 90px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Styling for A4 sheet in Dark Mode on screen */
+.dark .print-sheet-canvas {
+  background-color: #18181b !important; /* dark zinc-900 background */
+  color: #f4f4f5 !important; /* light zinc-100 text */
+  border-color: #3f3f46 !important; /* zinc-700 border */
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+}
+
+.dark .print-sheet-canvas * {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+
+/* Specific background restorations for dark color palettes */
+.dark .print-sheet-canvas .bg-slate-50 {
+  background-color: #27272a !important; /* zinc-800 */
+}
+.dark .print-sheet-canvas .bg-slate-100 {
+  background-color: #27272a !important; /* zinc-800 */
+}
+.dark .print-sheet-canvas .bg-slate-100\/60 {
+  background-color: rgba(39, 39, 42, 0.6) !important;
+}
+.dark .print-sheet-canvas .bg-white {
+  background-color: #18181b !important;
+}
+
+/* Colors for specific titles/emphasis */
+.dark .print-sheet-canvas h1,
+.dark .print-sheet-canvas h2,
+.dark .print-sheet-canvas h3,
+.dark .print-sheet-canvas h4 {
+  color: #ffffff !important;
+}
+.dark .print-sheet-canvas .text-violet-750 {
+  color: #c084fc !important; /* violet-400 */
+}
+.dark .print-sheet-canvas .text-rose-600 {
+  color: #fb7185 !important; /* rose-400 */
+}
+.dark .print-sheet-canvas .text-slate-400 {
+  color: #a1a1aa !important; /* zinc-400 */
+}
+.dark .print-sheet-canvas .text-slate-500 {
+  color: #a1a1aa !important; /* zinc-400 */
 }
 </style>

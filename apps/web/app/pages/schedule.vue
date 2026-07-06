@@ -1105,6 +1105,14 @@ const handleDeleteSchedule = async (id: string) => {
               <p class="text-xs text-slate-800 dark:text-zinc-200 font-extrabold mt-0.5">{{ selectedEvent.room || 'Tidak Ditentukan' }}</p>
             </div>
           </div>
+
+          <div v-if="selectedEvent.extracurricular_instructor" class="flex items-center gap-3 bg-slate-50 dark:bg-zinc-950 p-3 rounded-xl border border-slate-100 dark:border-zinc-900 col-span-1 sm:col-span-2">
+            <User class="text-emerald-600 dark:text-emerald-400" :size="15" />
+            <div>
+              <p class="text-[9px] font-bold text-slate-400 dark:text-zinc-555 uppercase tracking-widest">Penanggung Jawab / Instruktur (Ekskul)</p>
+              <p class="text-xs text-slate-800 dark:text-zinc-200 font-extrabold mt-0.5">{{ selectedEvent.extracurricular_instructor }}</p>
+            </div>
+          </div>
         </div>
 
         <!-- Action footer -->

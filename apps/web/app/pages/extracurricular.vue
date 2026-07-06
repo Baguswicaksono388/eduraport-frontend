@@ -3,6 +3,7 @@ import { Trophy, Plus, Trash2, Edit2, ShieldAlert, CheckCircle2, User, Clock } f
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
 import { useSchool } from '../composables/useSchool'
 import { useExtracurricular } from '../composables/useExtracurricular'
+import { useTeacher } from '../composables/useTeacher'
 
 definePageMeta({
   middleware: [
@@ -17,6 +18,7 @@ definePageMeta({
 
 const { foundations, schools, fetchFoundations, fetchSchools } = useSchool()
 const { extracurriculars, fetchExtracurriculars, createExtracurricular, updateExtracurricular, deleteExtracurricular } = useExtracurricular()
+const { teachers, fetchTeachers } = useTeacher()
 
 const selectedFoundationId = ref('')
 const selectedSchoolId = ref('')
@@ -47,6 +49,7 @@ onMounted(async () => {
     if (schools.value.length > 0) {
       selectedSchoolId.value = schools.value[0].id
       await fetchExtracurriculars(selectedSchoolId.value)
+      await fetchTeachers(selectedSchoolId.value)
     }
   }
 })
@@ -66,6 +69,7 @@ watch(selectedFoundationId, async (newVal) => {
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {
     await fetchExtracurriculars(newVal)
+    await fetchTeachers(newVal)
   } else {
     extracurriculars.value = []
   }
@@ -237,7 +241,18 @@ const handleDeleteEkskul = async (id: string) => {
     <BaseModal :show="showCreateModal" title="Ekstrakurikuler Baru" @close="showCreateModal = false">
       <form @submit.prevent="handleCreateEkskul" class="space-y-4">
         <BaseInput v-model="ekskulForm.name" label="Nama Ekstrakurikuler" placeholder="Contoh: Pramuka Utama" required />
-        <BaseInput v-model="ekskulForm.instructor" label="Pelatih / Instruktur" placeholder="Contoh: Kak Budi Santoso" />
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-slate-650 dark:text-zinc-400">Pelatih / Instruktur</label>
+          <select 
+            v-model="ekskulForm.instructor" 
+            class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600"
+          >
+            <option value="">-- Pilih Guru / Staf --</option>
+            <option v-for="t in teachers" :key="t.id" :value="t.full_name">
+              {{ t.full_name }}
+            </option>
+          </select>
+        </div>
         <BaseInput v-model="ekskulForm.schedule" label="Jadwal Kegiatan" placeholder="Contoh: Sabtu, 09.00 - 11.00 WIB" />
         
         <div class="flex items-center gap-2 px-1 py-1">
@@ -256,7 +271,18 @@ const handleDeleteEkskul = async (id: string) => {
     <BaseModal :show="showEditModal" title="Ubah Ekstrakurikuler" @close="showEditModal = false">
       <form @submit.prevent="handleUpdateEkskul" class="space-y-4">
         <BaseInput v-model="editForm.name" label="Nama Ekstrakurikuler" placeholder="Contoh: Pramuka Utama" required />
-        <BaseInput v-model="editForm.instructor" label="Pelatih / Instruktur" placeholder="Contoh: Kak Budi Santoso" />
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-slate-650 dark:text-zinc-400">Pelatih / Instruktur</label>
+          <select 
+            v-model="editForm.instructor" 
+            class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600"
+          >
+            <option value="">-- Pilih Guru / Staf --</option>
+            <option v-for="t in teachers" :key="t.id" :value="t.full_name">
+              {{ t.full_name }}
+            </option>
+          </select>
+        </div>
         <BaseInput v-model="editForm.schedule" label="Jadwal Kegiatan" placeholder="Contoh: Sabtu, 09.00 - 11.00 WIB" />
         
         <div class="flex items-center gap-2 px-1 py-1">
