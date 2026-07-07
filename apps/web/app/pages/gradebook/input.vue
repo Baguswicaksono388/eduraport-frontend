@@ -1091,155 +1091,152 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                 <th class="px-4 py-2 text-center bg-violet-50/40 dark:bg-violet-950/10 text-[10px] font-bold text-violet-700 dark:text-violet-400">Predikat</th>
               </tr>
             </thead>
-            
-            <tbody class="divide-y divide-slate-100 dark:divide-zinc-850">
-              <tr 
-                v-for="row in matrix" 
-                :key="row.student.id"
-                class="hover:bg-slate-50/20 dark:hover:bg-zinc-900/10 transition-colors"
-              >
-                <!-- Student details -->
-                <td class="px-6 py-3 border-r border-slate-100 dark:border-zinc-850 font-semibold">
-                  <p class="font-bold text-slate-900 dark:text-zinc-200 text-xs truncate max-w-[180px]">{{ row.student.full_name }}</p>
-                  <div class="flex items-center gap-2 mt-0.5">
-                    <span class="text-[9px] text-slate-450 dark:text-zinc-550">NIS: {{ row.student.student_number || '-' }}</span>
-                    <button 
-                      v-if="row.calculated.final_grade_id"
-                      type="button"
-                      @click="toggleExpandDesc(row.student.id, row.calculated.description)"
-                      class="text-[9px] font-bold text-violet-600 hover:text-violet-750 flex items-center gap-0.5 underline shrink-0 cursor-pointer"
-                    >
-                      <Edit2 :size="8" /> {{ expandedStudentDescId === row.student.id ? 'Tutup Deskripsi' : 'Edit Deskripsi' }}
-                    </button>
-                    <span v-if="row.calculated.is_description_edited" class="bg-amber-500/10 text-amber-600 border border-amber-500/15 text-[8px] font-black uppercase px-1 rounded flex items-center gap-0.5 select-none" title="Diedit manual oleh guru">
-                      ✏ Diedit Manual
-                    </span>
-                  </div>
-                </td>
-
-                <!-- Components inputs -->
-                <td 
-                  v-for="comp in components" 
-                  :key="comp.id"
-                  class="p-1.5 border-r border-slate-100 dark:border-zinc-855 text-center relative group"
-                >
-                  <div class="flex items-center justify-center gap-1.5">
-                    <!-- Numeric input or Letter select based on TK level or component type -->
-                    <input 
-                      v-if="comp.type !== 'observasi' && comp.type !== 'sikap'"
-                      v-model="row.scores[comp.id].score"
-                      @blur="handleCellSave(row.student.id, comp.id)"
-                      :disabled="row.scores[comp.id].status === 'final'"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      :max="Number(comp.max_score)"
-                      placeholder="-"
-                      class="w-14 bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded px-1.5 py-1 text-xs font-bold text-center outline-none focus:border-violet-600 disabled:bg-slate-100/70 dark:disabled:bg-zinc-900/70 disabled:text-slate-400"
-                      :class="{
-                        'text-rose-600 bg-rose-500/5 border-rose-200 dark:border-rose-900': kkm !== null && row.scores[comp.id].score !== null && Number(row.scores[comp.id].score) < kkm
-                      }"
-                    />
-                    <!-- Grade select dropdown (for narative observations/TK fallback) -->
-                    <select
-                      v-else
-                      v-model="row.scores[comp.id].grade_letter"
-                      @change="handleCellSave(row.student.id, comp.id)"
-                      :disabled="row.scores[comp.id].status === 'final'"
-                      class="w-16 bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded px-1 py-1 text-[10px] font-bold text-center outline-none focus:border-violet-600 disabled:opacity-75"
-                    >
-                      <option :value="null">-</option>
-                      <option value="BB">BB</option>
-                      <option value="MB">MB</option>
-                      <option value="BSH">BSH</option>
-                      <option value="BSB">BSB</option>
-                    </select>
-
-                    <!-- Save states and Audit Log icon -->
-                    <div class="flex flex-col items-center justify-center">
-                      <Loader2 v-if="savingState[`${row.student.id}-${comp.id}`] === 'saving'" class="text-violet-500 animate-spin" :size="10" />
-                      <Check v-else-if="savingState[`${row.student.id}-${comp.id}`] === 'saved'" class="text-emerald-500" :size="10" />
+                       <tbody class="divide-y divide-slate-100 dark:divide-zinc-850">
+              <template v-for="row in matrix" :key="row.student.id">
+                <tr class="hover:bg-slate-50/20 dark:hover:bg-zinc-900/10 transition-colors">
+                  <!-- Student details -->
+                  <td class="px-6 py-3 border-r border-slate-100 dark:border-zinc-855 font-semibold">
+                    <p class="font-bold text-slate-900 dark:text-zinc-200 text-xs truncate max-w-[180px]">{{ row.student.full_name }}</p>
+                    <div class="flex items-center gap-2 mt-0.5">
+                      <span class="text-[9px] text-slate-450 dark:text-zinc-550">NIS: {{ row.student.student_number || '-' }}</span>
                       <button 
-                        v-else-if="row.scores[comp.id].id" 
-                        @click="openLogsModal(row.student.id, comp.id)"
-                        class="text-slate-300 hover:text-slate-500 dark:text-zinc-700 dark:hover:text-zinc-505 opacity-0 group-hover:opacity-100 transition-opacity" 
-                        title="Riwayat Perubahan"
+                        v-if="row.calculated.final_grade_id"
+                        type="button"
+                        @click="toggleExpandDesc(row.student.id, row.calculated.description)"
+                        class="text-[9px] font-bold text-violet-600 hover:text-violet-750 flex items-center gap-0.5 underline shrink-0 cursor-pointer"
                       >
-                        <History :size="10" />
+                        <Edit2 :size="8" /> {{ expandedStudentDescId === row.student.id ? 'Tutup Deskripsi' : 'Edit Deskripsi' }}
                       </button>
-                    </div>
-                  </div>
-                </td>
-
-                <!-- Calculated Final Grade preview -->
-                <td class="px-4 py-3 text-center bg-violet-50/40 dark:bg-violet-950/10 font-bold border-r border-slate-100 dark:border-zinc-850 text-xs">
-                  <span 
-                    :class="[
-                      row.calculated.final_score !== null 
-                        ? (kkm !== null && row.calculated.final_score < kkm ? 'text-rose-600' : 'text-slate-900 dark:text-zinc-200')
-                        : 'text-slate-400'
-                    ]"
-                  >
-                    {{ row.calculated.final_score ?? row.calculated.grade_letter ?? '-' }}
-                  </span>
-                </td>
-                <td class="px-4 py-3 text-center bg-violet-50/40 dark:bg-violet-950/10 text-xs font-black">
-                  <span 
-                    class="px-2 py-0.5 rounded text-[10px] font-bold"
-                    :class="{
-                      'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/10': row.calculated.predicate === 'A' || row.calculated.predicate === 'BSB' || row.calculated.predicate === 'BSH',
-                      'bg-violet-500/15 text-violet-600 dark:text-violet-400 border border-violet-500/10': row.calculated.predicate === 'B' || row.calculated.predicate === 'MB',
-                      'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/10': row.calculated.predicate === 'C',
-                      'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/10': row.calculated.predicate === 'D' || row.calculated.predicate === 'BB'
-                    }"
-                  >
-                    {{ row.calculated.predicate || '-' }}
-                  </span>
-                </td>
-
-              </tr>
-
-              <!-- Expanded Description Editor Row -->
-              <tr v-if="expandedStudentDescId === row.student.id" :key="'desc_' + row.student.id" class="bg-violet-50/5 dark:bg-violet-950/5">
-                <td :colspan="components.length + 3" class="px-6 py-4 bg-slate-50/50 dark:bg-zinc-950/20 border-t border-b border-slate-200/50 dark:border-zinc-850 text-left">
-                  <div class="space-y-3">
-                    <div class="flex items-center justify-between">
-                      <span class="text-[10px] font-extrabold text-violet-700 dark:text-violet-400 uppercase tracking-widest flex items-center gap-1">
-                        <Edit2 :size="10" /> Deskripsi Capaian Kompetensi - {{ row.student.full_name }}
+                      <span v-if="row.calculated.is_description_edited" class="bg-amber-500/10 text-amber-600 border border-amber-500/15 text-[8px] font-black uppercase px-1 rounded flex items-center gap-0.5 select-none" title="Diedit manual oleh guru">
+                        ✏ Diedit Manual
                       </span>
-                      <div class="flex gap-2">
+                    </div>
+                  </td>
+
+                  <!-- Components inputs -->
+                  <td 
+                    v-for="comp in components" 
+                    :key="comp.id"
+                    class="p-1.5 border-r border-slate-100 dark:border-zinc-855 text-center relative group"
+                  >
+                    <div class="flex items-center justify-center gap-1.5" v-if="row.scores && row.scores[comp.id]">
+                      <!-- Numeric input or Letter select based on TK level or component type -->
+                      <input 
+                        v-if="comp.type !== 'observasi' && comp.type !== 'sikap'"
+                        v-model="row.scores[comp.id].score"
+                        @blur="handleCellSave(row.student.id, comp.id)"
+                        :disabled="row.scores[comp.id].status === 'final'"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        :max="Number(comp.max_score)"
+                        placeholder="-"
+                        class="w-14 bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded px-1.5 py-1 text-xs font-bold text-center outline-none focus:border-violet-600 disabled:bg-slate-100/70 dark:disabled:bg-zinc-900/70 disabled:text-slate-400"
+                        :class="{
+                          'text-rose-600 bg-rose-500/5 border-rose-200 dark:border-rose-900': kkm !== null && row.scores[comp.id].score !== null && Number(row.scores[comp.id].score) < kkm
+                        }"
+                      />
+                      <!-- Grade select dropdown (for narative observations/TK fallback) -->
+                      <select
+                        v-else
+                        v-model="row.scores[comp.id].grade_letter"
+                        @change="handleCellSave(row.student.id, comp.id)"
+                        :disabled="row.scores[comp.id].status === 'final'"
+                        class="w-16 bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded px-1 py-1 text-[10px] font-bold text-center outline-none focus:border-violet-600 disabled:opacity-75"
+                      >
+                        <option :value="null">-</option>
+                        <option value="BB">BB</option>
+                        <option value="MB">MB</option>
+                        <option value="BSH">BSH</option>
+                        <option value="BSB">BSB</option>
+                      </select>
+
+                      <!-- Save states and Audit Log icon -->
+                      <div class="flex flex-col items-center justify-center">
+                        <Loader2 v-if="savingState[`${row.student.id}-${comp.id}`] === 'saving'" class="text-violet-500 animate-spin" :size="10" />
+                        <Check v-else-if="savingState[`${row.student.id}-${comp.id}`] === 'saved'" class="text-emerald-500" :size="10" />
                         <button 
-                          type="button"
-                          @click="handleRegenerateDescription(row.student.id, row.calculated.final_grade_id)"
-                          :disabled="savingDescription[row.student.id]"
-                          class="px-2.5 py-1 text-[10px] bg-slate-200 dark:bg-zinc-800 hover:bg-slate-300 rounded font-bold flex items-center gap-1 transition-colors"
+                          v-else-if="row.scores[comp.id].id" 
+                          @click="openLogsModal(row.student.id, comp.id)"
+                          class="text-slate-300 hover:text-slate-500 dark:text-zinc-700 dark:hover:text-zinc-505 opacity-0 group-hover:opacity-100 transition-opacity" 
+                          title="Riwayat Perubahan"
                         >
-                          <Sparkles :size="10" /> Atur Ulang Formula
-                        </button>
-                        <button 
-                          type="button"
-                          @click="handleSaveDescription(row.student.id, row.calculated.final_grade_id)"
-                          :disabled="savingDescription[row.student.id]"
-                          class="px-3 py-1 text-[10px] bg-violet-600 text-white hover:bg-violet-750 rounded font-bold flex items-center gap-1 transition-colors shadow-sm"
-                        >
-                          <Save :size="10" /> Simpan Catatan
+                          <History :size="10" />
                         </button>
                       </div>
                     </div>
+                  </td>
 
-                    <textarea 
-                      v-model="editingDescriptionText"
-                      rows="3"
-                      class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs font-semibold leading-relaxed outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600"
-                      placeholder="Masukkan deskripsi kompetensi..."
-                    ></textarea>
-                    
-                    <p class="text-[9px] text-slate-450 dark:text-zinc-500 italic">
-                      Formula otomatis menggabungkan kalimat capaian tertinggi (lulus KKM) dengan capaian terendah yang membutuhkan penguatan/bimbingan.
-                    </p>
-                  </div>
-                </td>
-              </tr>
+                  <!-- Calculated Final Grade preview -->
+                  <td class="px-4 py-3 text-center bg-violet-50/40 dark:bg-violet-950/10 font-bold border-r border-slate-100 dark:border-zinc-850 text-xs">
+                    <span 
+                      :class="[
+                        row.calculated.final_score !== null 
+                          ? (kkm !== null && row.calculated.final_score < kkm ? 'text-rose-600' : 'text-slate-900 dark:text-zinc-200')
+                          : 'text-slate-400'
+                      ]"
+                    >
+                      {{ row.calculated.final_score ?? row.calculated.grade_letter ?? '-' }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-center bg-violet-50/40 dark:bg-violet-950/10 text-xs font-black">
+                    <span 
+                      class="px-2 py-0.5 rounded text-[10px] font-bold"
+                      :class="{
+                        'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/10': row.calculated.predicate === 'A' || row.calculated.predicate === 'BSB' || row.calculated.predicate === 'BSH',
+                        'bg-violet-500/15 text-violet-600 dark:text-violet-400 border border-violet-500/10': row.calculated.predicate === 'B' || row.calculated.predicate === 'MB',
+                        'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/10': row.calculated.predicate === 'C',
+                        'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/10': row.calculated.predicate === 'D' || row.calculated.predicate === 'BB'
+                      }"
+                    >
+                      {{ row.calculated.predicate || '-' }}
+                    </span>
+                  </td>
+
+                </tr>
+
+                <!-- Expanded Description Editor Row -->
+                <tr v-if="expandedStudentDescId === row.student.id" :key="'desc_' + row.student.id" class="bg-violet-50/5 dark:bg-violet-950/5">
+                  <td :colspan="components.length + 3" class="px-6 py-4 bg-slate-50/50 dark:bg-zinc-950/20 border-t border-b border-slate-200/50 dark:border-zinc-850 text-left">
+                    <div class="space-y-3">
+                      <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-extrabold text-violet-700 dark:text-violet-400 uppercase tracking-widest flex items-center gap-1">
+                          <Edit2 :size="10" /> Deskripsi Capaian Kompetensi - {{ row.student.full_name }}
+                        </span>
+                        <div class="flex gap-2">
+                          <button 
+                            type="button"
+                            @click="handleRegenerateDescription(row.student.id, row.calculated.final_grade_id)"
+                            :disabled="savingDescription[row.student.id]"
+                            class="px-2.5 py-1 text-[10px] bg-slate-200 dark:bg-zinc-800 hover:bg-slate-300 rounded font-bold flex items-center gap-1 transition-colors"
+                          >
+                            <Sparkles :size="10" /> Atur Ulang Formula
+                          </button>
+                          <button 
+                            type="button"
+                            @click="handleSaveDescription(row.student.id, row.calculated.final_grade_id)"
+                            :disabled="savingDescription[row.student.id]"
+                            class="px-3 py-1 text-[10px] bg-violet-600 text-white hover:bg-violet-750 rounded font-bold flex items-center gap-1 transition-colors shadow-sm"
+                          >
+                            <Save :size="10" /> Simpan Catatan
+                          </button>
+                        </div>
+                      </div>
+
+                      <textarea 
+                        v-model="editingDescriptionText"
+                        rows="3"
+                        class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs font-semibold leading-relaxed outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600"
+                        placeholder="Masukkan deskripsi kompetensi..."
+                      ></textarea>
+                      
+                      <p class="text-[9px] text-slate-450 dark:text-zinc-500 italic">
+                        Formula otomatis menggabungkan kalimat capaian tertinggi (lulus KKM) dengan capaian terendah yang membutuhkan penguatan/bimbingan.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              </template>
 
               <!-- Empty state -->
               <tr v-if="matrix.length === 0">

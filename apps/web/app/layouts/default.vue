@@ -146,6 +146,13 @@ watch(currentSchoolId, async (newVal) => {
           <Clock :size="16" /> Jadwal Pelajaran
         </NuxtLink>
         <NuxtLink 
+          to="/leave" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
+          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
+        >
+          <CalendarRange :size="16" /> Cuti & Izin Guru
+        </NuxtLink>
+        <NuxtLink 
           to="/subject" 
           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
           active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"

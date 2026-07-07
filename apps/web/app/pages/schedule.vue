@@ -24,6 +24,8 @@ import { useClass } from '../composables/useClass'
 import { useSubject } from '../composables/useSubject'
 import { useTeacher } from '../composables/useTeacher'
 import { useSchedule } from '../composables/useSchedule'
+import { useApi } from '../composables/useApi'
+import { useAuth } from '../composables/useAuth'
 
 definePageMeta({
   middleware: [
@@ -44,11 +46,27 @@ const { classes, fetchClasses } = useClass()
 const { subjects, fetchSubjects } = useSubject()
 const { teachers, fetchTeachers } = useTeacher()
 const { schedules, fetchSchedules, createSchedule, updateSchedule, deleteSchedule } = useSchedule()
+const { user } = useAuth()
+
+// Leave composable for Modul 7.1e
+import { useLeave } from '../composables/useLeave'
+const { vacancies, candidates, fetchVacancies, fetchCandidates, createSubstitution, markPlannedEmpty, unmarkPlannedEmpty, cancelSubstitution, confirmSubstitution, declineSubstitution } = useLeave()
 
 const selectedFoundationId = ref('')
 const selectedSchoolId = ref('')
 const selectedClassId = ref('')
 const selectedTeacherId = ref('')
+
+// Substitution and Vacancy states
+const substitutionMode = ref(false)
+const selectOnlyProblems = ref(false)
+const currentDate = ref(new Date())
+const showCandidateModal = ref(false)
+const selectedVacancySlot = ref<any>(null)
+const plannedNote = ref('')
+const selectedSubTeacherId = ref('')
+const declineReason = ref('')
+const isDirectAssignment = ref(false)
 
 // View Modes: day (1 day), work-week (Mon-Fri), week (Mon-Sat), list (table list)
 const viewMode = ref<'day' | 'work-week' | 'week' | 'list'>('week')
@@ -426,6 +444,16 @@ const filteredSchedules = computed(() => {
       // Matches as Extracurricular Penanggung Jawab
       if (item.extracurricular_instructor && tName && item.extracurricular_instructor === tName) return true
       
+      // Matches as Substitute Teacher (Modul 7.1e)
+      if (substitutionMode.value) {
+        const hasSub = (vacancies.value || []).some(v => 
+          v.class_schedule_id === item.id && 
+          v.substitute_teacher_id === selectedTeacherId.value &&
+          (v.status === 'covered' || v.status === 'assigned')
+        )
+        if (hasSub) return true
+      }
+      
       return false
     })
   }
@@ -497,7 +525,34 @@ const processedSchedulesByDay = computed(() => {
       })
     })
     
-    result[day] = events
+    // Inject leave & substitution states (Modul 7.1e)
+    const dateStr = getDayDateStr(day)
+    const decoratedEvents = events.map(event => {
+      const decorated = {
+        ...event,
+        vacancyStatus: null as string | null,
+        substituteName: null as string | null,
+        plannedNote: null as string | null,
+        substitutionId: null as string | null,
+        leave_request_id: null as string | null,
+        date: dateStr,
+        slotKey: `${event.id}:${dateStr}`
+      }
+      
+      if (substitutionMode.value) {
+        const vac = (vacancies.value || []).find(v => v.slotKey === decorated.slotKey)
+        if (vac) {
+          decorated.vacancyStatus = vac.status
+          decorated.substituteName = vac.substitute_teacher_name
+          decorated.plannedNote = vac.note
+          decorated.substitutionId = vac.substitution_id
+          decorated.leave_request_id = vac.leave_request_id
+        }
+      }
+      return decorated
+    })
+    
+    result[day] = decoratedEvents
   })
   
   return result
@@ -577,6 +632,8 @@ const handleCreateSchedule = async () => {
 const openDetailsModal = (event: any) => {
   selectedEvent.value = event
   showDetailsModal.value = true
+  isDeclining.value = false
+  declineReason.value = ''
 }
 
 const triggerDeleteFromDetails = async () => {
@@ -642,6 +699,245 @@ const handleDeleteSchedule = async (id: string) => {
     }
   }
 }
+
+// ==========================================
+// LEAVE & SUBSTITUTION METHODS (Modul 7.1e)
+// ==========================================
+const startOfWeekDate = computed(() => {
+  const d = new Date(currentDate.value)
+  const day = d.getDay()
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1) // Monday is start
+  const monday = new Date(d.setDate(diff))
+  monday.setHours(0, 0, 0, 0)
+  return monday
+})
+
+const endOfWeekDate = computed(() => {
+  const mon = new Date(startOfWeekDate.value)
+  const sat = new Date(mon.setDate(mon.getDate() + 5)) // Monday to Saturday
+  sat.setHours(23, 59, 59, 999)
+  return sat
+})
+
+const weekRangeDisplay = computed(() => {
+  const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' }
+  return `${startOfWeekDate.value.toLocaleDateString('id-ID', options)} - ${endOfWeekDate.value.toLocaleDateString('id-ID', options)}`
+})
+
+const getDayDateStr = (dayName: string) => {
+  const dayOffsetMap: Record<string, number> = {
+    'Senin': 0, 'Selasa': 1, 'Rabu': 2, 'Kamis': 3, 'Jumat': 4, 'Sabtu': 5, 'Minggu': 6
+  }
+  const offset = dayOffsetMap[dayName] || 0
+  const d = new Date(startOfWeekDate.value)
+  d.setDate(d.getDate() + offset)
+  
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const loadVacanciesData = async () => {
+  if (!selectedSchoolId.value || !substitutionMode.value) return
+  const formatDate = (d: Date) => {
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+  const from = formatDate(startOfWeekDate.value)
+  const to = formatDate(endOfWeekDate.value)
+  await fetchVacancies(selectedSchoolId.value, from, to)
+}
+
+const prevWeek = () => {
+  const d = new Date(currentDate.value)
+  d.setDate(d.getDate() - 7)
+  currentDate.value = d
+}
+
+const nextWeek = () => {
+  const d = new Date(currentDate.value)
+  d.setDate(d.getDate() + 7)
+  currentDate.value = d
+}
+
+const goToCurrentWeek = () => {
+  currentDate.value = new Date()
+}
+
+// Watchers to trigger loading vacancies when date, school, or mode changes
+watch([currentDate, substitutionMode, selectedSchoolId], async () => {
+  if (substitutionMode.value && selectedSchoolId.value) {
+    await loadVacanciesData()
+  }
+})
+
+const teacherLeaves = ref<any[]>([])
+
+const fetchTeacherLeaves = async () => {
+  if (!selectedSchoolId.value || !selectedTeacherId.value) {
+    teacherLeaves.value = []
+    return
+  }
+  
+  const formatDate = (d: Date) => {
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+  const from = formatDate(startOfWeekDate.value)
+  const to = formatDate(endOfWeekDate.value)
+  
+  try {
+    const { fetcher } = useApi()
+    const res: any = await fetcher(`/school/${selectedSchoolId.value}/leave/requests?employee_id=${selectedTeacherId.value}&status=approved&from=${from}&to=${to}`)
+    if (res.success) {
+      teacherLeaves.value = res.data
+    } else {
+      teacherLeaves.value = []
+    }
+  } catch (e) {
+    console.error('Failed to fetch teacher leaves:', e)
+    teacherLeaves.value = []
+  }
+}
+
+watch([selectedTeacherId, currentDate, selectedSchoolId], async () => {
+  await fetchTeacherLeaves()
+})
+
+const getTeacherLeaveShortSummary = () => {
+  if (teacherLeaves.value.length === 0) return ''
+  return teacherLeaves.value.map(leave => {
+    const startStr = leave.start_date.split('T')[0]
+    const endStr = leave.end_date.split('T')[0]
+    const startFmt = startStr.split('-').slice(1).reverse().join('/')
+    if (startStr === endStr) {
+      return `${leave.leave_type_name} (${startFmt})`
+    }
+    const endFmt = endStr.split('-').slice(1).reverse().join('/')
+    return `${leave.leave_type_name} (${startFmt} s/d ${endFmt})`
+  }).join(', ')
+}
+
+const openCandidateFinder = async (event: any, dateStr: string) => {
+  selectedVacancySlot.value = {
+    ...event,
+    date: dateStr,
+    slotKey: `${event.id}:${dateStr}`
+  }
+  plannedNote.value = ''
+  selectedSubTeacherId.value = ''
+  isDirectAssignment.value = false
+  errorMessage.value = ''
+  
+  showCandidateModal.value = true
+  await fetchCandidates(selectedSchoolId.value, selectedVacancySlot.value.slotKey)
+}
+
+const assignReplacement = async (candidateId: string) => {
+  if (!selectedVacancySlot.value) return
+  try {
+    const res = await createSubstitution(selectedSchoolId.value, {
+      class_schedule_id: selectedVacancySlot.value.id,
+      date: selectedVacancySlot.value.date,
+      leave_request_id: selectedVacancySlot.value.leave_request_id,
+      original_teacher_id: selectedVacancySlot.value.teacher_id,
+      substitute_teacher_id: candidateId,
+      assignment_mode: isDirectAssignment.value ? 'direct' : 'normal'
+    })
+    
+    if (res.success) {
+      showCandidateModal.value = false
+      showToast('success', isDirectAssignment.value ? 'Guru pengganti berhasil ditugaskan langsung!' : 'Penugasan diajukan, menunggu konfirmasi guru.')
+      await loadVacanciesData()
+    } else {
+      errorMessage.value = res.message || 'Gagal menugaskan guru pengganti'
+    }
+  } catch (e: any) {
+    errorMessage.value = e.data?.message || e.message || 'Gagal menugaskan guru pengganti'
+  }
+}
+
+const handleMarkPlannedEmpty = async () => {
+  if (!selectedVacancySlot.value) return
+  try {
+    const res = await markPlannedEmpty(selectedSchoolId.value, selectedVacancySlot.value.slotKey, plannedNote.value || 'Tugas Mandiri')
+    if (res.success) {
+      showCandidateModal.value = false
+      showToast('success', 'Slot ditandai sebagai Kosong Terencana.')
+      await loadVacanciesData()
+    }
+  } catch (e: any) {
+    errorMessage.value = e.message || 'Gagal menandai kosong terencana'
+  }
+}
+
+const handleUnmarkPlannedEmpty = async (slotKey: string) => {
+  if (confirm('Apakah Anda yakin ingin membatalkan tanda Kosong Terencana ini?')) {
+    try {
+      const res = await unmarkPlannedEmpty(selectedSchoolId.value, slotKey)
+      if (res.success) {
+        showToast('success', 'Tanda Kosong Terencana dibatalkan.')
+        await loadVacanciesData()
+      }
+    } catch (e: any) {
+      alert(e.message || 'Gagal membatalkan')
+    }
+  }
+}
+
+const handleCancelSubstitution = async (substitutionId: string) => {
+  if (confirm('Apakah Anda yakin ingin membatalkan penugasan guru pengganti ini?')) {
+    try {
+      const res = await cancelSubstitution(selectedSchoolId.value, substitutionId)
+      if (res.success) {
+        showToast('success', 'Penugasan guru pengganti dibatalkan.')
+        await loadVacanciesData()
+        showDetailsModal.value = false
+      }
+    } catch (e: any) {
+      alert(e.message || 'Gagal membatalkan penugasan')
+    }
+  }
+}
+
+const isDeclining = ref(false)
+
+const handleConfirmSubstitution = async (substitutionId: string) => {
+  try {
+    const res = await confirmSubstitution(selectedSchoolId.value, substitutionId)
+    if (res.success) {
+      showToast('success', 'Penugasan pengganti diterima.')
+      await loadVacanciesData()
+      showDetailsModal.value = false
+    }
+  } catch (e: any) {
+    alert(e.message || 'Gagal menerima penugasan')
+  }
+}
+
+const handleDeclineSubstitution = async (substitutionId: string) => {
+  if (!declineReason.value.trim()) {
+    alert('Alasan penolakan wajib diisi.')
+    return
+  }
+  try {
+    const res = await declineSubstitution(selectedSchoolId.value, substitutionId, declineReason.value)
+    if (res.success) {
+      showToast('success', 'Penugasan pengganti ditolak.')
+      await loadVacanciesData()
+      showDetailsModal.value = false
+      isDeclining.value = false
+      declineReason.value = ''
+    }
+  } catch (e: any) {
+    alert(e.message || 'Gagal menolak penugasan')
+  }
+}
 </script>
 
 <template>
@@ -658,8 +954,45 @@ const handleDeleteSchedule = async (id: string) => {
       </div>
 
       <div class="flex flex-wrap items-center gap-2.5">
-        <!-- Day Navigation controls (visible only in Day view mode) -->
-        <div v-if="viewMode === 'day'" class="flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800 p-0.5 rounded-lg border border-slate-200/50 dark:border-zinc-700">
+        <!-- Substitution / Vacancy Mode Toggle Button -->
+        <button
+          type="button"
+          @click="substitutionMode = !substitutionMode"
+          :disabled="!selectedSchoolId"
+          :class="[
+            'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 border shadow-sm',
+            substitutionMode
+              ? 'bg-rose-500 hover:bg-rose-600 text-white border-rose-405 shadow-rose-500/10'
+              : 'bg-white hover:bg-slate-50 dark:bg-zinc-800 dark:hover:bg-zinc-750 border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-250'
+          ]"
+        >
+          <CalendarRange class="inline mr-1" :size="14" />
+          {{ substitutionMode ? 'Mode Perizinan: AKTIF' : 'Mode Perizinan & Substitusi' }}
+        </button>
+
+        <!-- Week Navigation controls (visible only in Substitution Mode) -->
+        <div v-if="substitutionMode" class="flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-850 p-0.5 rounded-lg border border-slate-200/50 dark:border-zinc-700">
+          <button @click="prevWeek" class="p-1.5 hover:bg-white dark:hover:bg-zinc-700 rounded text-slate-500 hover:text-slate-800 dark:hover:text-zinc-250 transition-colors" title="Minggu Sebelumnya">
+            <ChevronLeft :size="15" />
+          </button>
+          <span class="text-xs font-extrabold px-2.5 min-w-[210px] text-center text-slate-850 dark:text-zinc-200">
+            {{ weekRangeDisplay }}
+          </span>
+          <button @click="nextWeek" class="p-1.5 hover:bg-white dark:hover:bg-zinc-700 rounded text-slate-500 hover:text-slate-800 dark:hover:text-zinc-250 transition-colors" title="Minggu Berikutnya">
+            <ChevronRight :size="15" />
+          </button>
+        </div>
+
+        <button 
+          v-if="substitutionMode"
+          @click="goToCurrentWeek" 
+          class="px-3 py-1.5 bg-white hover:bg-slate-50 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-[11px] font-bold rounded-lg border border-slate-200 dark:border-zinc-700 text-slate-650 dark:text-zinc-200 transition-colors"
+        >
+          Minggu Ini
+        </button>
+
+        <!-- Day Navigation controls (visible only in Day view mode and Substitution Mode is inactive) -->
+        <div v-if="viewMode === 'day' && !substitutionMode" class="flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800 p-0.5 rounded-lg border border-slate-200/50 dark:border-zinc-700">
           <button @click="prevDay" class="p-1.5 hover:bg-white dark:hover:bg-zinc-700 rounded text-slate-500 hover:text-slate-800 dark:hover:text-zinc-200 transition-colors" title="Hari Sebelumnya">
             <ChevronLeft :size="15" />
           </button>
@@ -672,7 +1005,7 @@ const handleDeleteSchedule = async (id: string) => {
         </div>
 
         <button 
-          v-if="viewMode === 'day'"
+          v-if="viewMode === 'day' && !substitutionMode"
           @click="goToToday" 
           class="px-3 py-1.5 bg-white hover:bg-slate-50 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-[11px] font-bold rounded-lg border border-slate-200 dark:border-zinc-700 text-slate-650 dark:text-zinc-200 transition-colors"
         >
@@ -701,8 +1034,8 @@ const handleDeleteSchedule = async (id: string) => {
           </button>
         </div>
 
-        <!-- Add Schedule Button -->
-        <BaseButton variant="primary" @click="openCreateModal" :disabled="!selectedSchoolId" class="py-2 px-4 text-xs font-bold shadow-lg shadow-violet-600/10 transition-transform active:scale-[0.98]">
+        <!-- Add Schedule Button (disabled in substitution mode) -->
+        <BaseButton v-if="!substitutionMode" variant="primary" @click="openCreateModal" :disabled="!selectedSchoolId" class="py-2 px-4 text-xs font-bold shadow-lg shadow-violet-600/10 transition-transform active:scale-[0.98]">
           <Plus class="mr-1.5" :size="15" /> Tambah Jadwal
         </BaseButton>
       </div>
@@ -724,7 +1057,7 @@ const handleDeleteSchedule = async (id: string) => {
     </div>
 
     <!-- Filters & Selection with Glassmorphism styling -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white/70 dark:bg-zinc-900/60 backdrop-blur-md border border-slate-200/70 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm">
+    <div :class="['grid grid-cols-1 gap-4 bg-white/70 dark:bg-zinc-900/60 backdrop-blur-md border border-slate-200/70 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm', substitutionMode ? 'md:grid-cols-5' : 'md:grid-cols-4']">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
         <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 dark:focus:ring-violet-500/5">
@@ -756,6 +1089,39 @@ const handleDeleteSchedule = async (id: string) => {
           <option v-for="tch in teachers" :key="tch.id" :value="tch.id">{{ tch.full_name }}</option>
         </select>
       </div>
+
+      <div v-if="substitutionMode" class="flex items-center gap-2 mt-4 md:mt-6 pl-2">
+        <input 
+          id="toggleProblems" 
+          type="checkbox" 
+          v-model="selectOnlyProblems"
+          class="rounded text-violet-650 focus:ring-violet-500 h-4 w-4 border-slate-350 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-950"
+        />
+        <label for="toggleProblems" class="text-xs font-extrabold text-slate-700 dark:text-zinc-300 select-none cursor-pointer">
+          Hanya Slot Bermasalah
+        </label>
+      </div>
+    </div>
+
+    <!-- Teacher Leave Warning Banner -->
+    <div 
+      v-if="selectedTeacherId && teacherLeaves.length > 0 && selectedSchoolId" 
+      class="bg-rose-500/10 border border-rose-500/20 dark:border-rose-500/30 text-rose-600 dark:text-rose-400 rounded-xl px-4 py-2.5 flex items-center justify-between gap-3 text-xs shadow-sm animate-in slide-in-from-top duration-300"
+    >
+      <div class="flex items-center gap-2 font-medium">
+        <AlertTriangle :size="14" class="text-rose-500 flex-shrink-0 animate-pulse" />
+        <span>
+          Guru yang dipilih (<strong>{{ selectedTeacherName }}</strong>) sedang mengambil cuti/izin pada minggu ini: 
+          <strong class="text-rose-700 dark:text-rose-455 ml-1">{{ getTeacherLeaveShortSummary() }}</strong>.
+        </span>
+      </div>
+      <button 
+        v-if="!substitutionMode" 
+        @click="substitutionMode = true" 
+        class="text-[10px] font-extrabold uppercase tracking-wider text-rose-700 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-350 underline flex-shrink-0"
+      >
+        Aktifkan Mode Substitusi
+      </button>
     </div>
 
     <!-- Conflict Alert Banner (Global) -->
@@ -877,21 +1243,33 @@ const handleDeleteSchedule = async (id: string) => {
                   <div 
                     v-for="event in processedSchedulesByDay[day]" 
                     :key="event.id"
-                    @click="openDetailsModal(event)"
+                    @click="substitutionMode ? (event.vacancyStatus === 'vacant' ? openCandidateFinder(event, getDayDateStr(day)) : openDetailsModal(event)) : openDetailsModal(event)"
                     class="group absolute rounded-xl border p-2.5 transition-all duration-200 cursor-pointer hover:shadow-md hover:scale-[1.015] hover:z-25 flex flex-col justify-between overflow-hidden shadow-sm"
                     :class="[
+                      substitutionMode && event.vacancyStatus === 'vacant' ? 'bg-rose-50/95 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-900/40 shadow-rose-500/5' :
+                      substitutionMode && event.vacancyStatus === 'assigned' ? 'bg-amber-50/95 dark:bg-amber-950/45 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-900/40 shadow-amber-500/5' :
+                      substitutionMode && event.vacancyStatus === 'covered' ? 'bg-emerald-50/95 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-900/40 shadow-emerald-500/5' :
+                      substitutionMode && event.vacancyStatus === 'planned_empty' ? 'bg-slate-100/90 dark:bg-zinc-800/80 text-slate-500 dark:text-zinc-400 border-slate-300 dark:border-zinc-700 shadow-inner' :
                       getSubjectTheme(event.subject_code).bg,
-                      getSubjectTheme(event.subject_code).text,
+                      
+                      substitutionMode && event.vacancyStatus === 'vacant' ? 'border-rose-300' :
+                      substitutionMode && event.vacancyStatus === 'assigned' ? 'border-amber-300' :
+                      substitutionMode && event.vacancyStatus === 'covered' ? 'border-emerald-300' :
+                      substitutionMode && event.vacancyStatus === 'planned_empty' ? 'border-slate-300' :
                       scheduleConflicts[event.id] 
                         ? '!border-amber-500 dark:!border-amber-500/80 ring-2 ring-amber-500/10 dark:ring-amber-500/5 shadow-amber-500/5' 
                         : getSubjectTheme(event.subject_code).border
                     ]"
                     :style="getEventStyles(event)"
                   >
-                    <!-- Microsoft Teams style left visual marker -->
+                    <!-- Left visual marker color based on coverage state -->
                     <div 
                       class="absolute left-0 top-0 bottom-0 w-[4.5px] transition-colors" 
                       :class="[
+                        substitutionMode && event.vacancyStatus === 'vacant' ? 'bg-rose-500' :
+                        substitutionMode && event.vacancyStatus === 'assigned' ? 'bg-amber-500' :
+                        substitutionMode && event.vacancyStatus === 'covered' ? 'bg-emerald-500' :
+                        substitutionMode && event.vacancyStatus === 'planned_empty' ? 'bg-slate-450' :
                         scheduleConflicts[event.id] ? 'bg-amber-500' : getSubjectTheme(event.subject_code).solid
                       ]"
                     ></div>
@@ -903,14 +1281,27 @@ const handleDeleteSchedule = async (id: string) => {
                         <h4 class="font-bold text-[11px] leading-tight line-clamp-2 pr-2">
                           {{ event.subject_name }}
                         </h4>
-                        <!-- Class badge & conflict notification -->
+                        <!-- Class badge & status notifications -->
                         <div class="flex items-center flex-wrap gap-1">
                           <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.2 bg-white/70 dark:bg-zinc-900/50 rounded border border-current/10">
                             {{ event.class_name }}
                           </span>
-                          <span v-if="scheduleConflicts[event.id]" class="inline-flex items-center gap-0.5 text-[8px] font-bold text-amber-600 bg-amber-500/10 px-1 py-0.2 rounded border border-amber-500/20">
-                            <AlertTriangle :size="9" class="animate-pulse" />
-                            Bentrok
+                          
+                          <span v-if="substitutionMode && event.vacancyStatus === 'vacant'" class="inline-flex items-center gap-0.5 text-[8px] font-bold text-rose-600 bg-rose-500/10 px-1 py-0.2 rounded border border-rose-500/20">
+                            <AlertTriangle :size="9" class="animate-pulse" /> Izin / Kosong
+                          </span>
+                          <span v-if="substitutionMode && event.vacancyStatus === 'assigned'" class="inline-flex items-center gap-0.5 text-[8px] font-bold text-amber-600 bg-amber-500/10 px-1 py-0.2 rounded border border-amber-500/20">
+                            Menunggu Konfirmasi
+                          </span>
+                          <span v-if="substitutionMode && event.vacancyStatus === 'covered'" class="inline-flex items-center gap-0.5 text-[8px] font-bold text-emerald-600 bg-emerald-500/10 px-1 py-0.2 rounded border border-emerald-500/20">
+                            Ada Pengganti
+                          </span>
+                          <span v-if="substitutionMode && event.vacancyStatus === 'planned_empty'" class="inline-flex items-center gap-0.5 text-[8px] font-bold text-slate-600 bg-slate-500/10 px-1 py-0.2 rounded border border-slate-500/20">
+                            Tugas Mandiri
+                          </span>
+
+                          <span v-if="!substitutionMode && scheduleConflicts[event.id]" class="inline-flex items-center gap-0.5 text-[8px] font-bold text-amber-600 bg-amber-500/10 px-1 py-0.2 rounded border border-amber-500/20">
+                            <AlertTriangle :size="9" class="animate-pulse" /> Bentrok
                           </span>
                         </div>
                       </div>
@@ -923,17 +1314,33 @@ const handleDeleteSchedule = async (id: string) => {
                         </div>
                         <div class="flex items-center gap-1 font-semibold truncate">
                           <User :size="10" class="opacity-80" />
-                          <span class="truncate">{{ event.teacher_name }}</span>
+                          <span class="truncate">
+                            <template v-if="substitutionMode && event.vacancyStatus === 'covered'">
+                              <s>{{ event.teacher_name }}</s> &rarr; <strong>{{ event.substituteName }}</strong> (Ganti)
+                            </template>
+                            <template v-else-if="substitutionMode && event.vacancyStatus === 'assigned'">
+                              <s>{{ event.teacher_name }}</s> &rarr; <em>{{ event.substituteName }}</em>
+                            </template>
+                            <template v-else-if="substitutionMode && event.vacancyStatus === 'planned_empty'">
+                              <s>{{ event.teacher_name }}</s> (Mandiri)
+                            </template>
+                            <template v-else>
+                              {{ event.teacher_name }}
+                            </template>
+                          </span>
                         </div>
                         <div v-if="event.room" class="flex items-center gap-1 font-semibold truncate">
                           <MapPin :size="10" class="opacity-80" />
                           <span class="truncate">{{ event.room }}</span>
                         </div>
+                        <div v-if="substitutionMode && event.plannedNote" class="text-[8px] font-bold italic truncate text-slate-500">
+                          Ket: {{ event.plannedNote }}
+                        </div>
                       </div>
                     </div>
 
-                    <!-- Action controls visible on hover -->
-                    <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 flex items-center gap-0.5 bg-white/95 dark:bg-zinc-900/95 p-0.5 rounded-lg border border-slate-200/80 dark:border-zinc-800 transition-opacity z-20">
+                    <!-- Action controls visible on hover (hidden in substitutionMode) -->
+                    <div v-if="!substitutionMode" class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 flex items-center gap-0.5 bg-white/95 dark:bg-zinc-900/95 p-0.5 rounded-lg border border-slate-200/80 dark:border-zinc-800 transition-opacity z-20">
                       <button @click.stop="openEditModal(event)" class="p-1 text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded transition-all" title="Ubah">
                         <Edit2 :size="11" />
                       </button>
@@ -1092,7 +1499,11 @@ const handleDeleteSchedule = async (id: string) => {
             <Clock class="text-violet-600 dark:text-violet-400" :size="15" />
             <div>
               <p class="text-[9px] font-bold text-slate-400 dark:text-zinc-550 uppercase tracking-widest">Hari & Waktu</p>
-              <p class="text-xs text-slate-800 dark:text-zinc-200 font-extrabold mt-0.5">{{ selectedEvent.day_of_week }}, {{ formatTimeDisplay(selectedEvent.start_time) }} - {{ formatTimeDisplay(selectedEvent.end_time) }}</p>
+              <p class="text-xs text-slate-800 dark:text-zinc-200 font-extrabold mt-0.5">
+                <span v-if="substitutionMode">{{ selectedEvent.date }} ({{ selectedEvent.day_of_week }})</span>
+                <span v-else>{{ selectedEvent.day_of_week }}</span>, 
+                {{ formatTimeDisplay(selectedEvent.start_time) }} - {{ formatTimeDisplay(selectedEvent.end_time) }}
+              </p>
             </div>
           </div>
 
@@ -1108,7 +1519,15 @@ const handleDeleteSchedule = async (id: string) => {
             <User class="text-violet-600 dark:text-violet-400" :size="15" />
             <div>
               <p class="text-[9px] font-bold text-slate-400 dark:text-zinc-555 uppercase tracking-widest">Guru Pengampu</p>
-              <p class="text-xs text-slate-800 dark:text-zinc-200 font-extrabold mt-0.5">{{ selectedEvent.teacher_name }}</p>
+              <p class="text-xs text-slate-800 dark:text-zinc-200 font-extrabold mt-0.5">
+                <span v-if="substitutionMode && selectedEvent.vacancyStatus === 'covered'">
+                  <s>{{ selectedEvent.teacher_name }}</s> &rarr; <strong>{{ selectedEvent.substituteName }}</strong> (Ganti)
+                </span>
+                <span v-else-if="substitutionMode && selectedEvent.vacancyStatus === 'assigned'">
+                  <s>{{ selectedEvent.teacher_name }}</s> &rarr; <em>{{ selectedEvent.substituteName }}</em>
+                </span>
+                <span v-else>{{ selectedEvent.teacher_name }}</span>
+              </p>
             </div>
           </div>
 
@@ -1129,15 +1548,110 @@ const handleDeleteSchedule = async (id: string) => {
           </div>
         </div>
 
+        <!-- Modul 7.1e Substitution Leave Details Card -->
+        <div v-if="substitutionMode && selectedEvent.vacancyStatus" class="bg-rose-500/5 dark:bg-rose-950/10 border border-rose-500/10 dark:border-rose-900/35 rounded-xl p-3.5 space-y-2 text-xs">
+          <h4 class="font-bold text-rose-700 dark:text-rose-400 flex items-center gap-1.5">
+            <AlertTriangle :size="14" />
+            Detail Perizinan Guru Pengampu
+          </h4>
+          <p class="font-medium text-slate-700 dark:text-zinc-350">
+            Guru pengampu utama (<strong>{{ selectedEvent.teacher_name }}</strong>) berhalangan hadir pada tanggal {{ selectedEvent.date }} karena izin.
+          </p>
+          
+          <div class="mt-2 pt-2 border-t border-slate-100 dark:border-zinc-800 text-[10px] font-bold flex flex-wrap gap-2 items-center">
+            <span class="text-slate-400 uppercase">Status Slot:</span>
+            <span v-if="selectedEvent.vacancyStatus === 'vacant'" class="px-2 py-0.5 rounded bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 uppercase">KOSONG</span>
+            <span v-if="selectedEvent.vacancyStatus === 'assigned'" class="px-2 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400 uppercase">MENUNGGU KONFIRMASI GURU</span>
+            <span v-if="selectedEvent.vacancyStatus === 'covered'" class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 uppercase">TERTUTUP (PENGGANTI)</span>
+            <span v-if="selectedEvent.vacancyStatus === 'planned_empty'" class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 uppercase">KOSONG TERENCANA</span>
+          </div>
+
+          <div v-if="selectedEvent.plannedNote" class="mt-1.5 text-[10px] text-slate-500 dark:text-zinc-400">
+            <strong>Catatan Tugas Mandiri:</strong> {{ selectedEvent.plannedNote }}
+          </div>
+        </div>
+
+        <!-- Decline Reason input if in declining state -->
+        <div v-if="isDeclining" class="space-y-2 mt-4 p-3.5 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-350">
+          <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest block">Alasan Penolakan</label>
+          <input 
+            type="text" 
+            v-model="declineReason" 
+            class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-rose-500"
+            placeholder="Masukkan alasan menolak tugas..."
+          />
+        </div>
+
         <!-- Action footer -->
         <div class="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-zinc-800">
           <div class="flex gap-2">
-            <BaseButton variant="outline" class="py-1.5 px-3 text-xs text-rose-600 dark:text-rose-400 border-rose-500/20 hover:bg-rose-550/10 rounded-xl" @click="triggerDeleteFromDetails">
-              <Trash2 class="mr-1.5" :size="13" /> Hapus
-            </BaseButton>
-            <BaseButton variant="outline" class="py-1.5 px-3 text-xs rounded-xl" @click="triggerEditFromDetails">
-              <Edit2 class="mr-1.5" :size="13" /> Ubah
-            </BaseButton>
+            <!-- Substitution cancellation buttons -->
+            <template v-if="substitutionMode">
+              <!-- Admin / Principal / TU specific buttons -->
+              <template v-if="['super_admin', 'principal', 'tu'].includes(user?.role)">
+                <BaseButton 
+                  v-if="selectedEvent.vacancyStatus === 'covered' || selectedEvent.vacancyStatus === 'assigned'"
+                  variant="outline" 
+                  class="py-1.5 px-3 text-xs text-rose-600 dark:text-rose-400 border-rose-500/20 hover:bg-rose-500/10 rounded-xl"
+                  @click="handleCancelSubstitution(selectedEvent.substitutionId)"
+                >
+                  Batalkan Penugasan Ganti
+                </BaseButton>
+                <BaseButton 
+                  v-if="selectedEvent.vacancyStatus === 'planned_empty'"
+                  variant="outline" 
+                  class="py-1.5 px-3 text-xs text-slate-650 dark:text-zinc-350 border-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl"
+                  @click="handleUnmarkPlannedEmpty(selectedEvent.slotKey)"
+                >
+                  Batalkan Tugas Mandiri
+                </BaseButton>
+              </template>
+
+              <!-- Substitute teacher specific buttons -->
+              <template v-if="selectedEvent.substituteTeacherId === user?.id && selectedEvent.vacancyStatus === 'assigned'">
+                <template v-if="!isDeclining">
+                  <BaseButton 
+                    variant="primary" 
+                    class="py-1.5 px-3 text-xs bg-emerald-500 hover:bg-emerald-600 border-none text-white rounded-xl shadow-lg shadow-emerald-500/10"
+                    @click="handleConfirmSubstitution(selectedEvent.substitutionId)"
+                  >
+                    Terima Tugas
+                  </BaseButton>
+                  <BaseButton 
+                    variant="outline" 
+                    class="py-1.5 px-3 text-xs text-rose-650 dark:text-rose-455 border-rose-500/20 hover:bg-rose-500/10 rounded-xl"
+                    @click="isDeclining = true"
+                  >
+                    Tolak Tugas
+                  </BaseButton>
+                </template>
+                <template v-else>
+                  <BaseButton 
+                    variant="primary" 
+                    class="py-1.5 px-3 text-xs bg-rose-500 hover:bg-rose-600 border-none text-white rounded-xl shadow-lg shadow-rose-500/10"
+                    @click="handleDeclineSubstitution(selectedEvent.substitutionId)"
+                  >
+                    Kirim Penolakan
+                  </BaseButton>
+                  <BaseButton 
+                    variant="outline" 
+                    class="py-1.5 px-3 text-xs text-slate-650 dark:text-zinc-350 border-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl"
+                    @click="isDeclining = false"
+                  >
+                    Batal
+                  </BaseButton>
+                </template>
+              </template>
+            </template>
+            <!-- Classic schedule edit/delete buttons -->
+            <template v-else>
+              <BaseButton variant="outline" class="py-1.5 px-3 text-xs text-rose-600 dark:text-rose-400 border-rose-500/20 hover:bg-rose-550/10 rounded-xl" @click="triggerDeleteFromDetails">
+                <Trash2 class="mr-1.5" :size="13" /> Hapus
+              </BaseButton>
+              <BaseButton variant="outline" class="py-1.5 px-3 text-xs rounded-xl" @click="triggerEditFromDetails">
+                <Edit2 class="mr-1.5" :size="13" /> Ubah
+              </BaseButton>
+            </template>
           </div>
           <BaseButton variant="primary" class="py-1.5 px-4 text-xs font-bold rounded-xl" @click="showDetailsModal = false">
             Tutup
@@ -1300,6 +1814,130 @@ const handleDeleteSchedule = async (id: string) => {
           <BaseButton variant="primary" type="submit" class="rounded-xl py-2 px-4 text-xs font-bold">Simpan Perubahan</BaseButton>
         </div>
       </form>
+    </BaseModal>
+
+    <!-- Candidate Finder / Pencarian Guru Pengganti Modal (Modul 7.1e) -->
+    <BaseModal :show="showCandidateModal" title="Pencarian Guru Pengganti (Substitute Finder)" @close="showCandidateModal = false">
+      <div v-if="selectedVacancySlot" class="space-y-5">
+        <!-- Slot Summary Header -->
+        <div class="p-4 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-500/5 dark:bg-rose-950/20 text-slate-800 dark:text-zinc-200">
+          <p class="text-[9px] font-bold text-rose-500 uppercase tracking-widest">SLOT KOSONG TERDETEKSI</p>
+          <h3 class="text-sm font-extrabold leading-snug tracking-tight mt-1">
+            {{ selectedVacancySlot.subject_name }} &bull; {{ selectedVacancySlot.class_name }}
+          </h3>
+          <div class="mt-2 text-xs grid grid-cols-2 gap-2 text-slate-500 dark:text-zinc-400 font-semibold leading-relaxed">
+            <div>Tanggal: <span class="text-slate-800 dark:text-zinc-250 font-bold">{{ selectedVacancySlot.date }}</span></div>
+            <div>Waktu: <span class="text-slate-800 dark:text-zinc-250 font-bold">{{ formatTimeDisplay(selectedVacancySlot.start_time) }} - {{ formatTimeDisplay(selectedVacancySlot.end_time) }}</span></div>
+            <div>Guru Izin: <span class="text-slate-800 dark:text-zinc-250 font-bold">{{ selectedVacancySlot.teacher_name }}</span></div>
+            <div>Ruang: <span class="text-slate-800 dark:text-zinc-250 font-bold">{{ selectedVacancySlot.room || '-' }}</span></div>
+          </div>
+        </div>
+
+        <!-- Mode Assignment Toggle -->
+        <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl">
+          <div>
+            <h4 class="text-xs font-bold text-slate-800 dark:text-zinc-200">Penugasan Langsung (Direct Assignment)</h4>
+            <p class="text-[10px] text-slate-500 dark:text-zinc-400 mt-0.5">Guru pengganti langsung bertugas tanpa memerlukan konfirmasi terlebih dahulu.</p>
+          </div>
+          <button 
+            type="button" 
+            @click="isDirectAssignment = !isDirectAssignment"
+            :class="[
+              'w-11 h-6 flex items-center rounded-full p-1 transition-all duration-300 outline-none',
+              isDirectAssignment ? 'bg-violet-600 justify-end' : 'bg-slate-300 dark:bg-zinc-700 justify-start'
+            ]"
+          >
+            <div class="w-4 h-4 rounded-full bg-white shadow-sm"></div>
+          </button>
+        </div>
+
+        <!-- Candidates Recommendation List -->
+        <div class="space-y-2.5">
+          <h4 class="text-xs font-extrabold text-slate-800 dark:text-zinc-200 flex items-center justify-between">
+            <span>Rekomendasi Guru Pengganti (Ranked Candidates)</span>
+            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Urutan Kecocokan</span>
+          </h4>
+
+          <!-- Error Message inside Modal -->
+          <div v-if="errorMessage" class="bg-rose-500/10 border border-rose-500/20 text-rose-600 rounded-xl p-3 text-xs flex items-start gap-2">
+            <AlertTriangle :size="16" class="flex-shrink-0 mt-0.5" />
+            <p class="font-semibold">{{ errorMessage }}</p>
+          </div>
+
+          <!-- Scrollable candidates container -->
+          <div class="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+            <div v-if="candidates.length === 0" class="py-6 text-center text-slate-400 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl">
+              <User class="mx-auto mb-1.5 opacity-40 animate-pulse" :size="24" />
+              <p class="text-xs font-bold">Tidak ada rekomendasi guru pengganti.</p>
+              <p class="text-[9px] mt-0.5">Semua guru memiliki bentrok jadwal atau sedang berhalangan.</p>
+            </div>
+
+            <div 
+              v-for="(cand, idx) in candidates" 
+              :key="cand.id" 
+              class="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-850 hover:border-violet-300 dark:hover:border-violet-900/50 rounded-xl hover:shadow-sm transition-all"
+            >
+              <div class="space-y-1 pr-4 min-w-0">
+                <div class="flex items-center gap-1.5 min-w-0">
+                  <span class="text-xs font-bold text-slate-850 dark:text-zinc-200 truncate">{{ cand.full_name }}</span>
+                  <span class="px-1.5 py-0.2 text-[8px] font-extrabold rounded bg-violet-650 text-white flex-shrink-0">
+                    Skor: {{ cand.score }}
+                  </span>
+                </div>
+                <div class="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500 dark:text-zinc-400 font-semibold">
+                  <div>Beban Jam: <span class="text-slate-700 dark:text-zinc-300">{{ cand.weekly_load_hours }} jam/minggu</span></div>
+                  <div v-if="cand.daily_substitutions_count > 0">
+                    Substitusi Hari Ini: <span class="text-amber-600 dark:text-amber-400 font-bold">{{ cand.daily_substitutions_count }}x</span>
+                  </div>
+                  <div>Status Mengajar: 
+                    <span :class="[cand.current_status === 'teaching' ? 'text-rose-600' : 'text-emerald-600']">
+                      {{ cand.current_status === 'teaching' ? 'Sedang Mengajar' : 'Tenggang' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <BaseButton 
+                variant="primary" 
+                class="py-1.5 px-3.5 text-[10px] font-bold rounded-xl flex-shrink-0"
+                @click="assignReplacement(cand.id)"
+              >
+                Tugaskan
+              </BaseButton>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-100 dark:border-zinc-800 my-4 pt-4 space-y-3">
+          <div>
+            <h4 class="text-xs font-bold text-slate-800 dark:text-zinc-200">Penanganan Alternatif: Tandai Tugas Mandiri</h4>
+            <p class="text-[10px] text-slate-500 dark:text-zinc-400 mt-0.5">Jika tidak ada guru pengganti, tandai slot ini untuk pembelajaran mandiri / tugas terstruktur.</p>
+          </div>
+
+          <div class="flex gap-2">
+            <BaseInput 
+              v-model="plannedNote"
+              type="text"
+              placeholder="Contoh: Mengerjakan LKS Bab 4 Halaman 85"
+              class="flex-1 text-xs"
+            />
+            <BaseButton 
+              variant="outline" 
+              class="py-2.5 px-4 text-xs font-bold rounded-xl border-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-250 self-end"
+              @click="handleMarkPlannedEmpty"
+            >
+              Tandai Mandiri
+            </BaseButton>
+          </div>
+        </div>
+
+        <!-- Action footer -->
+        <div class="flex justify-end pt-2 border-t border-slate-100 dark:border-zinc-800">
+          <BaseButton variant="outline" class="py-1.5 px-4 text-xs font-bold rounded-xl" @click="showCandidateModal = false">
+            Batal
+          </BaseButton>
+        </div>
+      </div>
     </BaseModal>
 
   </div>
