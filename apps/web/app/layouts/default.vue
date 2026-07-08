@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3 } from 'lucide-vue-next'
+import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus } from 'lucide-vue-next'
 import { BaseModal, BaseButton, BaseInput } from '@eduraport/ui'
 import { useAuth } from '../composables/useAuth'
 import { useToast } from '../composables/useToast'
@@ -207,6 +207,13 @@ watch(currentSchoolId, async (newVal) => {
           active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
         >
           <DollarSign :size="16" /> Keuangan & SPP
+        </NuxtLink>
+        <NuxtLink 
+          to="/ppdb" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
+          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
+        >
+          <UserPlus :size="16" /> PPDB Online
         </NuxtLink>
       </nav>
 
