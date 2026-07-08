@@ -10,6 +10,7 @@ definePageMeta({
 const route = useRoute()
 const schoolId = route.params.schoolId as string
 const slug = route.params.slug as string
+const config = useRuntimeConfig()
 
 const loading = ref(true)
 const submitting = ref(false)
@@ -34,7 +35,7 @@ const copied = ref(false)
 const fetchBatchDetails = async () => {
   try {
     loading.value = true
-    const response = await fetch(`http://localhost:3000/api/v1/school/${schoolId}/ppdb/public/batches/${slug}`)
+    const response = await fetch(`${config.public.apiBase}/school/${schoolId}/ppdb/public/batches/${slug}`)
     const res = await response.json()
     if (res.success) {
       batch.value = res.data.batch
@@ -61,7 +62,7 @@ onMounted(() => {
 const handleSubmit = async () => {
   try {
     submitting.value = true
-    const response = await fetch(`http://localhost:3000/api/v1/school/${schoolId}/ppdb/public/batches/${slug}/register`, {
+    const response = await fetch(`${config.public.apiBase}/school/${schoolId}/ppdb/public/batches/${slug}/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

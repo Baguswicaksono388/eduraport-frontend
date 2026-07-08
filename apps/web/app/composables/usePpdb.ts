@@ -2,6 +2,7 @@ import { useApi } from './useApi'
 
 export const usePpdb = () => {
   const { fetcher } = useApi()
+  const config = useRuntimeConfig()
   const ppdbBatches = useState<any[]>('ppdb_batches', () => [])
 
   const fetchPpdbBatches = async (schoolId: string) => {
@@ -168,7 +169,7 @@ export const usePpdb = () => {
 
   const fetchPublicAnnouncement = async (schoolId: string, slug: string) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/public/ppdb/${schoolId}/${slug}/announcement`)
+      const response = await fetch(`${config.public.apiBase}/public/ppdb/${schoolId}/${slug}/announcement`)
       return await response.json()
     } catch (error) {
       console.error('Failed to fetch public PPDB announcement:', error)
@@ -178,7 +179,7 @@ export const usePpdb = () => {
 
   const uploadAcceptedDocument = async (regNumber: string, doc: { document_type: string, document_label: string, file_url: string, file_name: string }) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/public/ppdb/status/${regNumber}/documents`, {
+      const response = await fetch(`${config.public.apiBase}/public/ppdb/status/${regNumber}/documents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(doc)
@@ -192,7 +193,7 @@ export const usePpdb = () => {
 
   const fetchApplicantDocuments = async (regNumber: string) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/public/ppdb/status/${regNumber}/documents`)
+      const response = await fetch(`${config.public.apiBase}/public/ppdb/status/${regNumber}/documents`)
       return await response.json()
     } catch (error) {
       console.error('Failed to fetch applicant documents:', error)

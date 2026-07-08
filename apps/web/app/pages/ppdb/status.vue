@@ -10,6 +10,7 @@ definePageMeta({
 
 const route = useRoute()
 const searchInput = ref((route.query.reg as string) || '')
+const config = useRuntimeConfig()
 const loading = ref(false)
 const uploading = ref(false)
 const applicant = ref<any>(null)
@@ -159,7 +160,7 @@ const handleSearch = async () => {
     error.value = null
     successMsg.value = null
     
-    const response = await fetch(`http://localhost:3000/api/v1/public/ppdb/status/${searchInput.value.trim()}`)
+    const response = await fetch(`${config.public.apiBase}/public/ppdb/status/${searchInput.value.trim()}`)
     const res = await response.json()
     
     if (res.success) {
@@ -193,7 +194,7 @@ const handleUploadPayment = async () => {
     successMsg.value = null
     error.value = null
     
-    const response = await fetch(`http://localhost:3000/api/v1/school/${applicant.value.school_id}/ppdb/public/status/${applicant.value.registration_number}/payment`, {
+    const response = await fetch(`${config.public.apiBase}/school/${applicant.value.school_id}/ppdb/public/status/${applicant.value.registration_number}/payment`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
