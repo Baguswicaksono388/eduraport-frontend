@@ -217,8 +217,35 @@ const handleUploadPayment = async () => {
   }
 }
 
+const copyToClipboard = (text: string) => {
+  if (!process.client) return false
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+    return true
+  } else {
+    const textArea = document.createElement('textarea')
+    textArea.value = text
+    textArea.style.position = 'fixed'
+    textArea.style.top = '0'
+    textArea.style.left = '0'
+    textArea.style.opacity = '0'
+    document.body.appendChild(textArea)
+    textArea.focus()
+    textArea.select()
+    try {
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      return true
+    } catch (err) {
+      console.error('Fallback copy failed', err)
+      document.body.removeChild(textArea)
+      return false
+    }
+  }
+}
+
 const copyRegNumber = () => {
-  navigator.clipboard.writeText(applicant.value.registration_number)
+  copyToClipboard(applicant.value.registration_number)
   copied.value = true
   setTimeout(() => {
     copied.value = false

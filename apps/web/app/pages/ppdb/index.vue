@@ -689,11 +689,38 @@ const handleSaveFields = async () => {
   }
 }
 
+const copyToClipboard = (text: string) => {
+  if (!process.client) return false
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+    return true
+  } else {
+    const textArea = document.createElement('textarea')
+    textArea.value = text
+    textArea.style.position = 'fixed'
+    textArea.style.top = '0'
+    textArea.style.left = '0'
+    textArea.style.opacity = '0'
+    document.body.appendChild(textArea)
+    textArea.focus()
+    textArea.select()
+    try {
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      return true
+    } catch (err) {
+      console.error('Fallback copy failed', err)
+      document.body.removeChild(textArea)
+      return false
+    }
+  }
+}
+
 const copiedBatchId = ref('')
 const copyBatchLink = (batch: any) => {
   if (!process.client) return
   const link = `${window.location.origin}/ppdb/${selectedSchoolId.value}/${batch.slug}`
-  navigator.clipboard.writeText(link)
+  copyToClipboard(link)
   copiedBatchId.value = batch.id
   setTimeout(() => {
     copiedBatchId.value = ''
@@ -704,7 +731,7 @@ const copiedAnnId = ref('')
 const copyAnnouncementLink = (batch: any) => {
   if (!process.client) return
   const link = `${window.location.origin}/ppdb/${selectedSchoolId.value}/${batch.slug}/pengumuman`
-  navigator.clipboard.writeText(link)
+  copyToClipboard(link)
   copiedAnnId.value = batch.id
   setTimeout(() => {
     copiedAnnId.value = ''
