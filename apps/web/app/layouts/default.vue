@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus } from 'lucide-vue-next'
+import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark } from 'lucide-vue-next'
 import { BaseModal, BaseButton, BaseInput } from '@eduraport/ui'
 import { useAuth } from '../composables/useAuth'
 import { useToast } from '../composables/useToast'
@@ -97,6 +97,14 @@ watch(currentSchoolId, async (newVal) => {
           <LayoutDashboard :size="16" /> Dashboard
         </NuxtLink>
         <NuxtLink 
+          v-if="user && ['principal', 'treasurer', 'super_admin', 'vice_principal_curriculum'].includes(user.role)"
+          to="/dashboard" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
+          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
+        >
+          <BarChart3 :size="16" /> Dashboard Eksekutif
+        </NuxtLink>
+        <NuxtLink 
           to="/school" 
           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
           active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
@@ -125,11 +133,25 @@ watch(currentSchoolId, async (newVal) => {
           <Users :size="16" /> Data Siswa
         </NuxtLink>
         <NuxtLink 
+          to="/student/attendance" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
+          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
+        >
+          <ClipboardCheck :size="16" /> Absensi Siswa
+        </NuxtLink>
+        <NuxtLink 
           to="/teacher" 
           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
           active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
         >
           <UserCheck :size="16" /> Guru & Staf
+        </NuxtLink>
+        <NuxtLink 
+          to="/teacher/attendance" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
+          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
+        >
+          <ClipboardCheck :size="16" /> Absensi Guru & Staf
         </NuxtLink>
         <NuxtLink 
           to="/homeroom" 
@@ -208,6 +230,7 @@ watch(currentSchoolId, async (newVal) => {
         >
           <DollarSign :size="16" /> Keuangan & SPP
         </NuxtLink>
+
         <NuxtLink 
           to="/ppdb" 
           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
@@ -279,6 +302,15 @@ watch(currentSchoolId, async (newVal) => {
       >
         <LayoutDashboard :size="16" />
         <span class="text-[8px] font-bold">Dashboard</span>
+      </NuxtLink>
+      <NuxtLink 
+        v-if="user && ['principal', 'treasurer', 'super_admin', 'vice_principal_curriculum'].includes(user.role)"
+        to="/dashboard" 
+        class="flex flex-col items-center gap-0.5 transition-all duration-200"
+        active-class="text-violet-400 scale-110"
+      >
+        <BarChart3 :size="16" />
+        <span class="text-[8px] font-bold">Eksekutif</span>
       </NuxtLink>
       <NuxtLink 
         to="/school" 

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Users, Plus, Trash2, Edit2, ShieldAlert, CheckCircle2, User, Key, Download, Upload, FileSpreadsheet, X, CheckCircle, AlertCircle } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
-import { useSchool } from '../composables/useSchool'
-import { useTeacher } from '../composables/useTeacher'
-import { useAuth } from '../composables/useAuth'
-import { useToast } from '../composables/useToast'
+import { useSchool } from '../../composables/useSchool'
+import { useTeacher } from '../../composables/useTeacher'
+import { useAuth } from '../../composables/useAuth'
+import { useToast } from '../../composables/useToast'
 
 definePageMeta({
   middleware: [

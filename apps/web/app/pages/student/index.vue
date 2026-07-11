@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Users, Plus, Trash2, Edit2, School, Search, Download, Upload, FileSpreadsheet, X, CheckCircle, AlertCircle, LayoutGrid } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput, BaseDateInput } from '@eduraport/ui'
-import { useSchool } from '../composables/useSchool'
-import { useStudent } from '../composables/useStudent'
-import { useClass } from '../composables/useClass'
-import { useAcademicYear } from '../composables/useAcademicYear'
-import { useToast } from '../composables/useToast'
+import { useSchool } from '../../composables/useSchool'
+import { useStudent } from '../../composables/useStudent'
+import { useClass } from '../../composables/useClass'
+import { useAcademicYear } from '../../composables/useAcademicYear'
+import { useToast } from '../../composables/useToast'
 
 definePageMeta({
   middleware: [
