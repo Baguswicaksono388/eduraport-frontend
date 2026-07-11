@@ -1,7 +1,17 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
+import { useAuth } from '../composables/useAuth'
+
 definePageMeta({ layout: false })
 
 const mobileMenuOpen = ref(false)
+const { user, isAuthenticated, fetchUser } = useAuth()
+
+onMounted(async () => {
+  if (isAuthenticated.value && !user.value) {
+    await fetchUser()
+  }
+})
 
 const features = [
   {
@@ -118,8 +128,13 @@ const chartHeights = [65,80,55,90,70,85,60,95]
           <a href="#harga">Harga</a>
         </nav>
         <div class="nav-cta">
-          <a href="/login" class="btn-ghost">Masuk</a>
-          <a href="/login" class="btn-primary-sm">Coba Gratis →</a>
+          <template v-if="isAuthenticated">
+            <NuxtLink to="/" class="btn-primary-sm">{{ user?.full_name || 'Dashboard' }} →</NuxtLink>
+          </template>
+          <template v-else>
+            <a href="/login" class="btn-ghost">Masuk</a>
+            <a href="/login" class="btn-primary-sm">Coba Gratis →</a>
+          </template>
         </div>
         <button class="mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen">
           <span /><span /><span />
@@ -130,7 +145,12 @@ const chartHeights = [65,80,55,90,70,85,60,95]
         <a href="#jenjang" @click="mobileMenuOpen=false">Jenjang</a>
         <a href="#kenapa" @click="mobileMenuOpen=false">Keunggulan</a>
         <a href="#harga" @click="mobileMenuOpen=false">Harga</a>
-        <a href="/login" class="btn-primary-sm" style="text-align:center">Masuk / Daftar →</a>
+        <template v-if="isAuthenticated">
+          <NuxtLink to="/" class="btn-primary-sm" style="text-align:center" @click="mobileMenuOpen=false">{{ user?.full_name || 'Dashboard' }} →</NuxtLink>
+        </template>
+        <template v-else>
+          <a href="/login" class="btn-primary-sm" style="text-align:center">Masuk / Daftar →</a>
+        </template>
       </div>
     </header>
 
