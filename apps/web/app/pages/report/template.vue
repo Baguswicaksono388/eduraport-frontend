@@ -2205,61 +2205,63 @@ const getGradeTableRows = (items: any[]) => {
               <p class="text-[10px] text-slate-400 mt-0.5">Format penilaian yang diinput oleh wali kelas/guru untuk mata pelajaran atau dimensi capaian.</p>
             </div>
 
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/30 dark:bg-zinc-900/20 text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                  <th class="p-4 pl-6 w-12 text-center">Urutan</th>
-                  <th class="p-4">Nama Elemen / Capaian</th>
-                  <th class="p-4">Mata Pelajaran</th>
-                  <th class="p-4 text-center">Tipe Nilai</th>
-                  <th class="p-4 text-center">Skala</th>
-                  <th v-if="currentTemplate.level !== 'TK'" class="p-4 text-right pr-6">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="el in currentTemplate.elements" :key="el.id" class="border-b border-slate-100 dark:border-zinc-800/80 last:border-0 hover:bg-slate-50/20 dark:hover:bg-zinc-900/20 transition-colors">
-                  <td class="p-4 pl-6 text-center text-xs font-semibold text-slate-500">{{ el.sort_order || '-' }}</td>
-                  <td class="p-4">
-                    <div class="flex items-center gap-2">
-                      <span class="font-bold text-slate-800 dark:text-zinc-200 text-xs">{{ el.name }}</span>
-                    </div>
-                  </td>
-                  <td class="p-4 text-xs font-semibold text-slate-600 dark:text-zinc-400">
-                    {{ el.subject_name ? `${el.subject_name} (${el.subject_code})` : 'Capaian Umum' }}
-                  </td>
-                  <td class="p-4 text-center">
-                    <span class="inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold border"
-                      :class="{
-                        'bg-violet-500/10 text-violet-600 border-violet-500/20': el.grade_type === 'letter',
-                        'bg-emerald-500/10 text-emerald-600 border-emerald-500/20': el.grade_type === 'numeric',
-                        'bg-amber-500/10 text-amber-600 border-amber-500/20': el.grade_type === 'narrative',
-                        'bg-blue-500/10 text-blue-600 border-blue-500/20': el.grade_type === 'predicate'
-                      }"
-                    >
-                      {{ el.grade_type }}
-                    </span>
-                  </td>
-                  <td class="p-4 text-center text-xs font-medium text-slate-500">{{ el.scale || '-' }}</td>
-                  <td v-if="currentTemplate.level !== 'TK'" class="p-4 pr-6 text-right">
-                    <div class="flex justify-end items-center gap-1">
-                      <button @click="openEditElementModal(el)" class="p-1.5 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
-                        <Edit2 :size="12" />
-                      </button>
-                      <button @click="handleDeleteElement(el.id)" class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-450 transition-colors">
-                        <Trash2 :size="12" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-if="!currentTemplate.elements || currentTemplate.elements.length === 0">
-                  <td :colspan="currentTemplate.level === 'TK' ? 5 : 6" class="p-12 text-center text-slate-400 dark:text-zinc-500 border-t border-slate-100 dark:border-zinc-800">
-                    <Bookmark class="mx-auto mb-2 opacity-50 text-violet-600" :size="32" />
-                    <p class="text-xs font-semibold">Belum Ada Elemen Aspek Penilaian</p>
-                    <p class="text-[10px] mt-0.5">Silakan rancang tabel penilaian Anda di dalam Desainer Visual v1.2 untuk menyinkronkan elemen secara otomatis.</p>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse min-w-[700px]">
+                <thead>
+                  <tr class="border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/30 dark:bg-zinc-900/20 text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
+                    <th class="p-4 pl-6 w-12 text-center">Urutan</th>
+                    <th class="p-4">Nama Elemen / Capaian</th>
+                    <th class="p-4">Mata Pelajaran</th>
+                    <th class="p-4 text-center">Tipe Nilai</th>
+                    <th class="p-4 text-center">Skala</th>
+                    <th v-if="currentTemplate.level !== 'TK'" class="p-4 text-right pr-6">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="el in currentTemplate.elements" :key="el.id" class="border-b border-slate-100 dark:border-zinc-800/80 last:border-0 hover:bg-slate-50/20 dark:hover:bg-zinc-900/20 transition-colors">
+                    <td class="p-4 pl-6 text-center text-xs font-semibold text-slate-500">{{ el.sort_order || '-' }}</td>
+                    <td class="p-4">
+                      <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-800 dark:text-zinc-200 text-xs">{{ el.name }}</span>
+                      </div>
+                    </td>
+                    <td class="p-4 text-xs font-semibold text-slate-600 dark:text-zinc-400">
+                      {{ el.subject_name ? `${el.subject_name} (${el.subject_code})` : 'Capaian Umum' }}
+                    </td>
+                    <td class="p-4 text-center">
+                      <span class="inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold border"
+                        :class="{
+                          'bg-violet-500/10 text-violet-600 border-violet-500/20': el.grade_type === 'letter',
+                          'bg-emerald-500/10 text-emerald-600 border-emerald-500/20': el.grade_type === 'numeric',
+                          'bg-amber-500/10 text-amber-600 border-amber-500/20': el.grade_type === 'narrative',
+                          'bg-blue-500/10 text-blue-600 border-blue-500/20': el.grade_type === 'predicate'
+                        }"
+                      >
+                        {{ el.grade_type }}
+                      </span>
+                    </td>
+                    <td class="p-4 text-center text-xs font-medium text-slate-500">{{ el.scale || '-' }}</td>
+                    <td v-if="currentTemplate.level !== 'TK'" class="p-4 pr-6 text-right">
+                      <div class="flex justify-end items-center gap-1">
+                        <button @click="openEditElementModal(el)" class="p-1.5 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+                          <Edit2 :size="12" />
+                        </button>
+                        <button @click="handleDeleteElement(el.id)" class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-450 transition-colors">
+                          <Trash2 :size="12" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-if="!currentTemplate.elements || currentTemplate.elements.length === 0">
+                    <td :colspan="currentTemplate.level === 'TK' ? 5 : 6" class="p-12 text-center text-slate-400 dark:text-zinc-500 border-t border-slate-100 dark:border-zinc-800">
+                      <Bookmark class="mx-auto mb-2 opacity-50 text-violet-600" :size="32" />
+                      <p class="text-xs font-semibold">Belum Ada Elemen Aspek Penilaian</p>
+                      <p class="text-[10px] mt-0.5">Silakan rancang tabel penilaian Anda di dalam Desainer Visual v1.2 untuk menyinkronkan elemen secara otomatis.</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <!-- Tab Content: Dinas Layout Mapping -->
