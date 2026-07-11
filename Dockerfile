@@ -22,6 +22,7 @@ COPY packages/ui ./packages/ui
 COPY apps/web ./apps/web
 
 # Build frontend packages and the Nuxt app
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN pnpm run build
 
 # Runner stage
