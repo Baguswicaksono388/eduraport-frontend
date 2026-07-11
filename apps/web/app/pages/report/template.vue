@@ -2160,7 +2160,7 @@ const getGradeTableRows = (items: any[]) => {
               <BaseButton variant="outline" @click="openVisualBuilder" class="py-2 px-3 text-xs font-bold border-slate-250 hover:bg-slate-50 dark:hover:bg-zinc-850">
                 <Sliders class="mr-1" :size="13" /> Desainer Visual v1.2
               </BaseButton>
-              <BaseButton variant="primary" @click="showCreateElementModal = true" class="py-2 px-3 text-xs font-bold shadow-lg shadow-violet-600/10">
+              <BaseButton v-if="currentTemplate.level !== 'TK'" variant="primary" @click="showCreateElementModal = true" class="py-2 px-3 text-xs font-bold shadow-lg shadow-violet-600/10">
                 <Plus class="mr-1" :size="13" /> Tambah Elemen
               </BaseButton>
             </div>
@@ -2177,7 +2177,7 @@ const getGradeTableRows = (items: any[]) => {
               Daftar Elemen Penilaian
             </button>
             <button 
-              v-if="currentTemplate.level === 'TK' && currentTemplate.element_structure?.is_dinas"
+              v-if="currentTemplate.level === 'TK' && currentTemplate.element_structure?.is_dinas && !currentTemplate.widget_tree"
               type="button"
               @click="activeTab = 'dinas-mapping'"
               class="px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5"
@@ -2197,6 +2197,9 @@ const getGradeTableRows = (items: any[]) => {
 
           <!-- Tab Content: Elements Table -->
           <div v-if="activeTab === 'elements'" class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
+            <div v-if="currentTemplate.level === 'TK'" class="p-4 bg-violet-500/5 border-b border-violet-500/10 text-[11px] text-violet-600 dark:text-violet-400 flex items-center gap-2 font-medium">
+              <Info :size="14" /> Elemen penilaian di bawah ini disinkronkan secara otomatis dari struktur tabel pada <strong>Desainer Visual v1.2</strong>.
+            </div>
             <div class="p-5 border-b border-slate-100 dark:border-zinc-800/80">
               <h4 class="font-bold text-sm text-slate-900 dark:text-zinc-100">Struktur Elemen Penilaian</h4>
               <p class="text-[10px] text-slate-400 mt-0.5">Format penilaian yang diinput oleh wali kelas/guru untuk mata pelajaran atau dimensi capaian.</p>
@@ -2210,7 +2213,7 @@ const getGradeTableRows = (items: any[]) => {
                   <th class="p-4">Mata Pelajaran</th>
                   <th class="p-4 text-center">Tipe Nilai</th>
                   <th class="p-4 text-center">Skala</th>
-                  <th class="p-4 text-right pr-6">Aksi</th>
+                  <th v-if="currentTemplate.level !== 'TK'" class="p-4 text-right pr-6">Aksi</th>
                 </tr>
               </thead>
               <tbody>
@@ -2237,7 +2240,7 @@ const getGradeTableRows = (items: any[]) => {
                     </span>
                   </td>
                   <td class="p-4 text-center text-xs font-medium text-slate-500">{{ el.scale || '-' }}</td>
-                  <td class="p-4 pr-6 text-right">
+                  <td v-if="currentTemplate.level !== 'TK'" class="p-4 pr-6 text-right">
                     <div class="flex justify-end items-center gap-1">
                       <button @click="openEditElementModal(el)" class="p-1.5 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
                         <Edit2 :size="12" />
@@ -2249,10 +2252,10 @@ const getGradeTableRows = (items: any[]) => {
                   </td>
                 </tr>
                 <tr v-if="!currentTemplate.elements || currentTemplate.elements.length === 0">
-                  <td colspan="6" class="p-12 text-center text-slate-400 dark:text-zinc-500 border-t border-slate-100 dark:border-zinc-800">
+                  <td :colspan="currentTemplate.level === 'TK' ? 5 : 6" class="p-12 text-center text-slate-400 dark:text-zinc-500 border-t border-slate-100 dark:border-zinc-800">
                     <Bookmark class="mx-auto mb-2 opacity-50 text-violet-600" :size="32" />
                     <p class="text-xs font-semibold">Belum Ada Elemen Aspek Penilaian</p>
-                    <p class="text-[10px] mt-0.5">Klik tombol 'Tambah Elemen' untuk mengisi aspek penilaian pada template ini.</p>
+                    <p class="text-[10px] mt-0.5">Silakan rancang tabel penilaian Anda di dalam Desainer Visual v1.2 untuk menyinkronkan elemen secara otomatis.</p>
                   </td>
                 </tr>
               </tbody>
