@@ -290,6 +290,21 @@ export const useWaDevices = () => {
     }
   };
 
+  const bypassWarmup = async (schoolId: string, deviceId: string) => {
+    loading.value = true;
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/wa/devices/${deviceId}/bypass-warmup`, {
+        method: 'POST',
+      });
+      return res;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     loading,
     devices,
@@ -310,5 +325,6 @@ export const useWaDevices = () => {
     fetchGroupsFromDevice,
     fetchMessages,
     resendMessage,
+    bypassWarmup,
   };
 };

@@ -39,6 +39,7 @@ const emit = defineEmits<{
   (e: 'pause', id: string): void;
   (e: 'resume', id: string): void;
   (e: 'repair', id: string): void;
+  (e: 'bypass-warmup', id: string): void;
 }>()
 
 const statusConfig = computed(() => {
@@ -165,7 +166,18 @@ const formatDate = (dateStr: string | null) => {
               <Flame :size="14" class="text-amber-500" />
               Stage Pemanasan
             </span>
-            <span class="text-slate-900 dark:text-zinc-200">{{ warmupConfig.label }}</span>
+            <span class="flex items-center gap-1.5">
+              <span class="text-slate-900 dark:text-zinc-200">{{ warmupConfig.label }}</span>
+              <button 
+                v-if="props.device.warmup_stage !== 'mature'"
+                type="button" 
+                class="text-[10px] font-bold text-violet-600 dark:text-violet-400 hover:underline"
+                title="Lewati Pemanasan (Bypass)"
+                @click="emit('bypass-warmup', props.device.id)"
+              >
+                (Bypass)
+              </button>
+            </span>
           </div>
           <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
             <div 

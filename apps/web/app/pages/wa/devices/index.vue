@@ -41,7 +41,8 @@ const {
   saveTemplate,
   fetchGroupMappings,
   saveGroupMapping,
-  fetchGroupsFromDevice
+  fetchGroupsFromDevice,
+  bypassWarmup
 } = useWaDevices()
 
 const toast = useToast()
@@ -232,6 +233,39 @@ const handleDelete = async (id: string) => {
   }
 }
 
+// Bypass Warmup Stage State & Handlers
+const showBypassModal = ref(false)
+const bypassDeviceId = ref('')
+const bypassRiskAccepted = ref(false)
+const resendingBypass = ref(false)
+
+const handleBypassWarmupClick = (deviceId: string) => {
+  bypassDeviceId.value = deviceId
+  bypassRiskAccepted.value = false
+  showBypassModal.value = true
+}
+
+const handleConfirmBypass = async () => {
+  if (!bypassRiskAccepted.value) {
+    toast.error('Anda harus mencentang persetujuan disclaimer risiko.')
+    return
+  }
+  
+  resendingBypass.value = true
+  try {
+    const res = await bypassWarmup(selectedSchoolId.value, bypassDeviceId.value)
+    if (res.success) {
+      toast.success('Bypass pemanasan sukses. Perangkat kini berstatus Mature.')
+      showBypassModal.value = false
+      await loadData()
+    }
+  } catch (err: any) {
+    toast.error(err.message || 'Gagal mengaktifkan bypass pemanasan.')
+  } finally {
+    resendingBypass.value = false
+  }
+}
+
 import { useClass } from '../../../composables/useClass'
 
 const { classes, fetchClasses } = useClass()
@@ -317,7 +351,8 @@ const startEditRule = (typeId: string) => {
     priority: existing?.priority || 'normal',
     fallback_enabled: existing?.fallback_enabled !== false,
     fallback_sla_minutes: existing?.fallback_sla_minutes || 60,
-    pinned_device_id: existing?.pinned_device_id || ''
+    pinned_device_id: existing?.pinned_device_id || '',
+    pinned_group_mapping_id: existing?.pinned_group_mapping_id || ''
   }
 }
 
@@ -580,6 +615,7 @@ watch(activeTab, async (newTab) => {
           @resume="handleResume"
           @repair="handleRepair"
           @delete="handleDelete"
+          @bypass-warmup="handleBypassWarmupClick"
         />
       </div>
     </div>
@@ -612,6 +648,9 @@ watch(activeTab, async (newTab) => {
                 </span>
                 <span v-if="routingRules.find(r => r.notification_type === type.id)?.pinned_device_id" class="text-[9px] font-bold px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400">
                   Pinned Device
+                </span>
+                <span v-if="routingRules.find(r => r.notification_type === type.id)?.pinned_group_mapping_id" class="text-[9px] font-bold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400">
+                  Pinned Group: {{ groupMappings.find(g => g.id === routingRules.find(r => r.notification_type === type.id)?.pinned_group_mapping_id)?.group_name || 'Spesifik' }}
                 </span>
               </div>
             </div>
@@ -672,6 +711,16 @@ watch(activeTab, async (newTab) => {
             <select v-model="editingRule.pinned_device_id" class="w-full text-xs rounded-lg border border-slate-200 dark:border-slate-800 p-2 bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200">
               <option value="">Auto (Gunakan perangkat yang aktif secara acak)</option>
               <option v-for="d in devices" :key="d.id" :value="d.id">{{ d.display_name }} ({{ d.phone_number || d.driver }})</option>
+            </select>
+          </div>
+
+          <div v-if="editingRule.target === 'group' || editingRule.target === 'both'" class="space-y-1">
+            <label class="text-xs font-bold text-slate-500">Kunci Grup WhatsApp Tujuan (Pinned Group)</label>
+            <select v-model="editingRule.pinned_group_mapping_id" class="w-full text-xs rounded-lg border border-slate-200 dark:border-slate-800 p-2 bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200">
+              <option value="">Kirim ke Semua Grup (Default/Sistem)</option>
+              <option v-for="g in groupMappings" :key="g.id" :value="g.id">
+                {{ g.group_name }} ({{ g.map_type === 'role' ? 'Peran: ' + g.role : 'Kelas ID: ' + g.class_id }})
+              </option>
             </select>
           </div>
 
@@ -999,6 +1048,57 @@ watch(activeTab, async (newTab) => {
           </BaseButton>
           <BaseButton variant="primary" :disabled="!disclaimerAccepted" @click="confirmDisclaimer">
             Setujui & Lanjutkan
+          </BaseButton>
+        </div>
+      </div>
+    </BaseModal>
+
+    <!-- Bypass Warmup Warning Modal -->
+    <BaseModal :show="showBypassModal" title="⚠️ Peringatan Kritis: Bypass Pemanasan Perangkat" size="md" @close="showBypassModal = false">
+      <div class="space-y-5 py-2">
+        <div class="flex items-start gap-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-4 rounded-xl text-amber-800 dark:text-amber-300">
+          <AlertTriangle class="flex-shrink-0 mt-0.5" :size="20" />
+          <div class="text-xs space-y-1">
+            <h4 class="font-bold">Melompati Masa Pemanasan Sangat Berisiko!</h4>
+            <p class="leading-normal">
+              WhatsApp (Meta) memantau secara ketat nomor baru yang langsung mengirim pesan massal tanpa pemanasan. Tindakan mem-bypass batas ini meningkatkan risiko nomor sekolah Anda diblokir secara permanen oleh Meta.
+            </p>
+          </div>
+        </div>
+
+        <div class="text-xs text-slate-600 dark:text-zinc-400 space-y-2">
+          <p class="font-bold text-slate-800 dark:text-zinc-200">Dengan melanjutkan, Anda memahami konsekuensi berikut:</p>
+          <ul class="list-disc pl-5 space-y-1.5 font-medium leading-normal">
+            <li>Nomor WhatsApp Anda dapat terdeteksi sebagai akun spam dan dibanned seketika.</li>
+            <li>Sistem EduRaport akan menonaktifkan pembatasan kuota bertahap harian untuk perangkat ini.</li>
+            <li>Kerugian akibat nomor diblokir (kehilangan chat history, nomor tidak dapat digunakan lagi) sepenuhnya menjadi tanggung jawab pihak sekolah.</li>
+          </ul>
+        </div>
+
+        <div class="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <input 
+            id="bypass-risk"
+            v-model="bypassRiskAccepted"
+            type="checkbox"
+            class="w-4 h-4 rounded text-violet-600 border-slate-300 focus:ring-violet-500"
+          />
+          <label for="bypass-risk" class="text-xs font-bold text-slate-700 dark:text-zinc-300 cursor-pointer select-none">
+            Saya setuju untuk menanggung risiko pemblokiran nomor secara penuh.
+          </label>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <BaseButton variant="outline" @click="showBypassModal = false">
+            Batalkan
+          </BaseButton>
+          <BaseButton 
+            variant="danger" 
+            class="bg-rose-600 hover:bg-rose-700 text-white font-bold"
+            :disabled="!bypassRiskAccepted || resendingBypass" 
+            @click="handleConfirmBypass"
+          >
+            <Loader2 v-if="resendingBypass" class="animate-spin inline mr-1" :size="14" />
+            Saya Paham Risiko, Aktifkan Bypass
           </BaseButton>
         </div>
       </div>
