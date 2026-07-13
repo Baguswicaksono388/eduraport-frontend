@@ -255,6 +255,41 @@ export const useWaDevices = () => {
     }
   };
 
+  const fetchMessages = async (
+    schoolId: string,
+    params: { page: number; limit: number; status?: string; search?: string }
+  ) => {
+    loading.value = true;
+    try {
+      let url = `/school/${schoolId}/wa/messages?page=${params.page}&limit=${params.limit}`;
+      if (params.status) url += `&status=${params.status}`;
+      if (params.search) url += `&search=${encodeURIComponent(params.search)}`;
+
+      const res: any = await fetcher(url);
+      return res;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const resendMessage = async (schoolId: string, messageId: string) => {
+    loading.value = true;
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/wa/messages/${messageId}/resend`, {
+        method: 'POST',
+      });
+      return res;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     loading,
     devices,
@@ -273,5 +308,7 @@ export const useWaDevices = () => {
     fetchGroupMappings,
     saveGroupMapping,
     fetchGroupsFromDevice,
+    fetchMessages,
+    resendMessage,
   };
 };

@@ -242,7 +242,8 @@ const tabs = [
   { id: 'devices', name: 'Perangkat' },
   { id: 'routing', name: 'Aturan Routing' },
   { id: 'groups', name: 'Grup WhatsApp' },
-  { id: 'templates', name: 'Template Pesan' }
+  { id: 'templates', name: 'Template Pesan' },
+  { id: 'logs', name: 'Log Pengiriman' }
 ]
 
 // Data states
@@ -851,6 +852,11 @@ watch(activeTab, async (newTab) => {
           </div>
         </div>
       </BaseModal>
+    </div>
+
+    <!-- Log Pengiriman Tab content -->
+    <div v-else-if="selectedSchoolId && activeTab === 'logs'" class="space-y-6">
+      <WaLogs :school-id="selectedSchoolId" />
     </div>
 
     <!-- No School Selected Warning -->
