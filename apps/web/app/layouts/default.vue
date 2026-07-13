@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange } from 'lucide-vue-next'
+import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange, Smartphone } from 'lucide-vue-next'
 import { BaseModal, BaseButton, BaseInput } from '@eduraport/ui'
 import { useAuth } from '../composables/useAuth'
 import { useToast } from '../composables/useToast'
@@ -275,6 +275,15 @@ watch(currentSchoolId, async (newVal) => {
           >
             <UserPlus :size="16" /> PPDB Online
           </NuxtLink>
+          <NuxtLink 
+            v-if="currentSchoolId && user && ['super_admin', 'principal', 'tu'].includes(user.role)"
+            to="/wa/devices" 
+            @click="isMobileMenuOpen = false"
+            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
+            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
+          >
+            <Smartphone :size="16" /> WA Gateway
+          </NuxtLink>
         </nav>
 
         <!-- Sidebar Footer -->
@@ -469,6 +478,14 @@ watch(currentSchoolId, async (newVal) => {
           active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
         >
           <UserPlus :size="16" /> PPDB Online
+        </NuxtLink>
+        <NuxtLink 
+          v-if="currentSchoolId && user && ['super_admin', 'principal', 'tu'].includes(user.role)"
+          to="/wa/devices" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
+          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
+        >
+          <Smartphone :size="16" /> WA Gateway
         </NuxtLink>
       </nav>
 
