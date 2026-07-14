@@ -6,6 +6,7 @@ export const useLeave = () => {
   const leaveTypes = useState<any[]>('leaveTypes', () => [])
   const leaveQuotas = useState<any[]>('leaveQuotas', () => [])
   const leaveRequests = useState<any[]>('leaveRequests', () => [])
+  const leaveRequestsMeta = useState<any>('leaveRequestsMeta', () => null)
   const vacancies = useState<any[]>('vacancies', () => [])
   const candidates = useState<any[]>('candidates', () => [])
 
@@ -97,19 +98,27 @@ export const useLeave = () => {
     return res
   }
 
-  const fetchLeaveRequests = async (schoolId: string, filters: any = {}) => {
+  const fetchLeaveRequests = async (schoolId: string, page = 1, itemPerPage = 10, filters: any = {}) => {
     try {
-      let query = ''
       const params = new URLSearchParams()
+      params.append('page', String(page))
+      params.append('item_per_page', String(itemPerPage))
       if (filters.status) params.append('status', filters.status)
       if (filters.employee_id) params.append('employee_id', filters.employee_id)
       if (filters.from) params.append('from', filters.from)
       if (filters.to) params.append('to', filters.to)
-      if (params.toString()) query = `?${params.toString()}`
+      const query = `?${params.toString()}`
 
       const res: any = await fetcher(`/school/${schoolId}/leave/requests${query}`)
       if (res.success) {
-        leaveRequests.value = res.data
+        leaveRequests.value = res.data.data
+        leaveRequestsMeta.value = {
+          page: res.data.page,
+          item_per_page: res.data.item_per_page,
+          total_item: res.data.total_item,
+          total_page: res.data.total_page,
+          list_pagination: res.data.list_pagination
+        }
       }
     } catch (error) {
       console.error('Failed to fetch leave requests:', error)
@@ -121,7 +130,7 @@ export const useLeave = () => {
       method: 'POST',
       body: data
     })
-    await fetchLeaveRequests(schoolId)
+    await fetchLeaveRequests(schoolId, leaveRequestsMeta.value?.page || 1, leaveRequestsMeta.value?.item_per_page || 10)
     return res
   }
 
@@ -130,7 +139,7 @@ export const useLeave = () => {
       method: 'PUT',
       body: data
     })
-    await fetchLeaveRequests(schoolId)
+    await fetchLeaveRequests(schoolId, leaveRequestsMeta.value?.page || 1, leaveRequestsMeta.value?.item_per_page || 10)
     return res
   }
 
@@ -141,7 +150,7 @@ export const useLeave = () => {
       method: 'POST',
       body: { status, decision_note: decisionNote }
     })
-    await fetchLeaveRequests(schoolId)
+    await fetchLeaveRequests(schoolId, leaveRequestsMeta.value?.page || 1, leaveRequestsMeta.value?.item_per_page || 10)
     return res
   }
 
@@ -150,7 +159,7 @@ export const useLeave = () => {
       method: 'POST',
       body: { new_end_date: newEndDate }
     })
-    await fetchLeaveRequests(schoolId)
+    await fetchLeaveRequests(schoolId, leaveRequestsMeta.value?.page || 1, leaveRequestsMeta.value?.item_per_page || 10)
     return res
   }
 
@@ -236,6 +245,7 @@ export const useLeave = () => {
     leaveTypes,
     leaveQuotas,
     leaveRequests,
+    leaveRequestsMeta,
     vacancies,
     candidates,
     fetchLeaveTypes,

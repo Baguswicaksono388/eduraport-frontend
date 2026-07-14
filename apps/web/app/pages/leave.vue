@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { 
   Calendar, 
   Clock, 
@@ -22,11 +22,11 @@ import {
   ChevronRight
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
-import { useSchool } from '../composables/useSchool'
 import { useTeacher } from '../composables/useTeacher'
 import { useAcademicYear } from '../composables/useAcademicYear'
 import { useLeave } from '../composables/useLeave'
 import { useAuth } from '../composables/useAuth'
+import { useApi } from '../composables/useApi'
 
 definePageMeta({
   middleware: [
@@ -42,13 +42,14 @@ definePageMeta({
   ]
 })
 
-const { foundations, schools, fetchFoundations, fetchSchools } = useSchool()
+const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
 const { teachers, fetchTeachers } = useTeacher()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
 const { 
   leaveTypes, 
   leaveQuotas, 
   leaveRequests, 
+  leaveRequestsMeta,
   vacancies,
   fetchLeaveTypes, 
   createLeaveType, 
@@ -67,11 +68,89 @@ const {
   confirmSubstitution,
   declineSubstitution
 } = useLeave()
+const { page, itemPerPage } = usePagination(10)
+const { page: replacementsPage, itemPerPage: replacementsItemPerPage } = usePagination(10)
+const { fetcher } = useApi()
+
+const quotaTeachers = ref<any[]>([])
+const quotaTeachersPage = ref(1)
+const quotaTeachersLoading = ref(false)
+const quotaTeachersHasMore = ref(true)
+const teacherListContainer = ref<HTMLElement | null>(null)
+
+const checkAndLoadMore = async () => {
+  await nextTick()
+  const container = teacherListContainer.value
+  if (container) {
+    if (container.scrollHeight <= container.clientHeight && quotaTeachersHasMore.value && !quotaTeachersLoading.value) {
+      await loadQuotaTeachers(false)
+      await checkAndLoadMore()
+    }
+  }
+}
+
+const loadQuotaTeachers = async (reset = false) => {
+  if (!selectedSchoolId.value) return
+  if (quotaTeachersLoading.value) return
+  if (!reset && !quotaTeachersHasMore.value) return
+
+  quotaTeachersLoading.value = true
+  if (reset) {
+    quotaTeachersPage.value = 1
+    quotaTeachers.value = []
+    quotaTeachersHasMore.value = true
+  }
+
+  try {
+    const url = `/school/${selectedSchoolId.value}/teacher`
+    const query = {
+      page: quotaTeachersPage.value,
+      item_per_page: 10
+    }
+    const res: any = await fetcher(url, { query })
+    if (res.success) {
+      const data = res.data?.data || res.data || []
+      if (reset) {
+        quotaTeachers.value = data
+      } else {
+        quotaTeachers.value = [...quotaTeachers.value, ...data]
+      }
+      
+      const totalItem = res.data?.total_item || data.length || 0
+      if (data.length < 10 || quotaTeachers.value.length >= totalItem) {
+        quotaTeachersHasMore.value = false
+      } else {
+        quotaTeachersHasMore.value = true
+      }
+      
+      if (!selectedQuotaTeacherId.value && quotaTeachers.value.length > 0) {
+        selectedQuotaTeacherId.value = quotaTeachers.value[0].id
+      }
+      
+      quotaTeachersPage.value++
+      
+      if (reset) {
+        checkAndLoadMore()
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load quota teachers:', error)
+  } finally {
+    quotaTeachersLoading.value = false
+  }
+}
+
+const handleScroll = (event: Event) => {
+  const container = event.target as HTMLElement
+  if (container.scrollHeight - container.scrollTop <= container.clientHeight + 10) {
+    if (!quotaTeachersLoading.value && quotaTeachersHasMore.value) {
+      loadQuotaTeachers(false)
+    }
+  }
+}
 
 const { user } = useAuth()
 
-const selectedFoundationId = ref('')
-const selectedSchoolId = ref('')
 const selectedAcademicYearId = ref('')
 const activeTab = ref<'requests' | 'quotas' | 'types' | 'recap'>('requests')
 
@@ -180,29 +259,14 @@ const showToast = (type: 'success' | 'error', message: string) => {
 
 // Lifecycle
 onMounted(async () => {
-  await fetchFoundations()
-  if (foundations.value.length > 0) {
-    selectedFoundationId.value = foundations.value[0].id
-    await fetchSchools(selectedFoundationId.value)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-      await loadSchoolData(selectedSchoolId.value)
-    }
+  const schoolId = await initContext()
+  if (schoolId) {
+    await loadSchoolData(schoolId)
   }
 })
 
 // Watchers
-watch(selectedFoundationId, async (newVal) => {
-  if (newVal) {
-    await fetchSchools(newVal)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-    } else {
-      selectedSchoolId.value = ''
-      clearData()
-    }
-  }
-})
+watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {
@@ -226,7 +290,7 @@ watch(selectedRecapMonth, async () => {
 
 const loadSchoolData = async (schoolId: string) => {
   await Promise.all([
-    fetchTeachers(schoolId),
+    fetchTeachers(schoolId, 1, 1000),
     fetchAcademicYears(schoolId),
     fetchLeaveTypes(schoolId)
   ])
@@ -240,21 +304,25 @@ const loadSchoolData = async (schoolId: string) => {
 const loadTabSpecificData = async () => {
   if (!selectedSchoolId.value) return
   if (activeTab.value === 'requests') {
-    await fetchLeaveRequests(selectedSchoolId.value, {
+    await fetchLeaveRequests(selectedSchoolId.value, page.value, itemPerPage.value, {
       status: filterRequestStatus.value || undefined,
       employee_id: filterRequestTeacherId.value || undefined
     })
   } else if (activeTab.value === 'quotas') {
-    if (teachers.value.length > 0 && selectedAcademicYearId.value) {
-      // Load quota list for the first teacher initially, or load all
-      await fetchLeaveQuotas(selectedSchoolId.value, teachers.value[0].id, selectedAcademicYearId.value)
-    }
+    await loadQuotaTeachers(true)
   } else if (activeTab.value === 'recap') {
     await loadRecapData()
   } else if (activeTab.value === 'replacements') {
+    replacementsPage.value = 1
     await loadReplacementsData()
   }
 }
+
+watch([page, itemPerPage], () => {
+  if (selectedSchoolId.value && activeTab.value === 'requests') {
+    loadTabSpecificData()
+  }
+})
 
 const loadRecapData = async () => {
   if (!selectedSchoolId.value) return
@@ -367,7 +435,8 @@ watch(() => [requestForm.employee_id, requestForm.leave_type_id], async ([empId,
 
 // Trigger requests filters
 const handleFilterRequests = async () => {
-  await fetchLeaveRequests(selectedSchoolId.value, {
+  page.value = 1
+  await fetchLeaveRequests(selectedSchoolId.value, page.value, itemPerPage.value, {
     status: filterRequestStatus.value || undefined,
     employee_id: filterRequestTeacherId.value || undefined
   })
@@ -743,9 +812,15 @@ const totalRecapCount = computed(() => {
   return substitutionRecapList.value.reduce((sum, item) => sum + item.substitution_count, 0)
 })
 
+const paginatedReplacements = computed(() => {
+  const start = (replacementsPage.value - 1) * replacementsItemPerPage.value
+  const end = start + replacementsItemPerPage.value
+  return myReplacements.value.slice(start, end)
+})
+
 const filteredTeachersForQuota = computed(() => {
-  if (!quotaSearchQuery.value) return teachers.value
-  return teachers.value.filter(t => t.full_name.toLowerCase().includes(quotaSearchQuery.value.toLowerCase()))
+  if (!quotaSearchQuery.value) return quotaTeachers.value
+  return quotaTeachers.value.filter(t => t.full_name.toLowerCase().includes(quotaSearchQuery.value.toLowerCase()))
 })
 </script>
 
@@ -801,7 +876,7 @@ const filteredTeachersForQuota = computed(() => {
     </div>
 
     <!-- Top School Selectors -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white/70 dark:bg-zinc-900/60 backdrop-blur-md border border-slate-200/70 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm">
+    <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white/70 dark:bg-zinc-900/60 backdrop-blur-md border border-slate-200/70 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
         <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-500/5">
@@ -953,6 +1028,16 @@ const filteredTeachersForQuota = computed(() => {
             <p class="text-[10px] mt-1 text-slate-500">Sesuaikan filter atau tambahkan pengajuan izin baru.</p>
           </div>
         </div>
+        
+        <AppPagination
+          v-if="leaveRequestsMeta && activeTab === 'requests'"
+          v-model:page="page"
+          v-model:itemPerPage="itemPerPage"
+          :totalItem="leaveRequestsMeta.total_item"
+          :totalPage="leaveRequestsMeta.total_page"
+          :listPagination="leaveRequestsMeta.list_pagination"
+          class="mt-4"
+        />
       </div>
 
       <!-- Tab 2: Leave Quotas -->
@@ -970,7 +1055,7 @@ const filteredTeachersForQuota = computed(() => {
             />
           </div>
 
-          <div class="space-y-1 max-h-[50vh] overflow-y-auto pr-1">
+          <div ref="teacherListContainer" class="space-y-1 max-h-[50vh] overflow-y-auto pr-1" @scroll="handleScroll">
             <button 
               v-for="t in filteredTeachersForQuota" 
               :key="t.id"
@@ -985,6 +1070,12 @@ const filteredTeachersForQuota = computed(() => {
               <User :size="13" />
               <span>{{ t.full_name }}</span>
             </button>
+            <div v-if="quotaTeachersLoading" class="text-center py-2 text-[10px] text-slate-400">
+              Memuat...
+            </div>
+            <div v-else-if="!quotaTeachersHasMore && quotaTeachers.length > 0" class="text-center py-2 text-[9px] text-slate-450 dark:text-zinc-550">
+              Semua guru telah dimuat
+            </div>
           </div>
         </div>
 
@@ -1217,7 +1308,7 @@ const filteredTeachersForQuota = computed(() => {
             </thead>
             <tbody>
               <tr 
-                v-for="item in myReplacements" 
+                v-for="item in paginatedReplacements" 
                 :key="item.slotKey" 
                 class="border-b border-slate-100 dark:border-zinc-800/60 last:border-0 hover:bg-slate-50/30 dark:hover:bg-zinc-900/30 transition-colors text-xs font-semibold"
               >
@@ -1286,6 +1377,15 @@ const filteredTeachersForQuota = computed(() => {
             </tbody>
           </table>
         </div>
+        <AppPagination
+          v-if="myReplacements.length > 0"
+          v-model:page="replacementsPage"
+          v-model:itemPerPage="replacementsItemPerPage"
+          :totalItem="myReplacements.length"
+          :totalPage="Math.ceil(myReplacements.length / replacementsItemPerPage)"
+          :listPagination="[10, 25, 50, 100]"
+          class="mt-4"
+        />
       </div>
     </div>
 

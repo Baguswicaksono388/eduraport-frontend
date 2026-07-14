@@ -1,10 +1,9 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { 
   Layers, Plus, Trash2, Edit2, Settings, UserPlus, Clipboard, 
   CheckSquare, Check, X, ArrowUp, ArrowDown, ChevronRight, HelpCircle, Save, Link, Copy, Megaphone, FileText, Search, TrendingUp
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput, BaseDateInput } from '@eduraport/ui'
-import { useSchool } from '../../composables/useSchool'
 import { useAcademicYear } from '../../composables/useAcademicYear'
 import { usePpdb } from '../../composables/usePpdb'
 
@@ -19,7 +18,7 @@ definePageMeta({
   ]
 })
 
-const { foundations, schools, fetchFoundations, fetchSchools } = useSchool()
+const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
 const { 
   ppdbBatches, fetchPpdbBatches, createPpdbBatch, updatePpdbBatch, deletePpdbBatch,
@@ -30,8 +29,6 @@ const {
   convertToStudentAdmin, bulkConvertToStudentsAdmin, fetchBatchStatsAdmin
 } = usePpdb()
 
-const selectedFoundationId = ref('')
-const selectedSchoolId = ref('')
 const activeTab = ref('batches') // 'batches' | 'applicants' | 'admissions' | 'announcements' | 'stats'
 
 const selectedBatchId = ref('')
@@ -60,10 +57,10 @@ const announcementForm = reactive({
 
 // Search & Pagination states for Tab 2 (Daftar Pendaftar)
 const applicantSearchQuery = ref('')
-const applicantCurrentPage = ref(1)
-const applicantPageSize = ref(10)
+const { page, itemPerPage } = usePagination(10)
+const applicantsMeta = ref<any>(null)
 
-const filteredApplicants = computed(() => {
+const paginatedApplicants = computed(() => {
   const query = applicantSearchQuery.value.trim().toLowerCase()
   if (!query) return applicants.value
   return applicants.value.filter(app => 
@@ -71,16 +68,6 @@ const filteredApplicants = computed(() => {
     (app.registration_number && app.registration_number.toLowerCase().includes(query)) ||
     (app.parent_name && app.parent_name.toLowerCase().includes(query))
   )
-})
-
-const totalApplicantPages = computed(() => {
-  return Math.ceil(filteredApplicants.value.length / applicantPageSize.value) || 1
-})
-
-const paginatedApplicants = computed(() => {
-  const start = (applicantCurrentPage.value - 1) * applicantPageSize.value
-  const end = start + applicantPageSize.value
-  return filteredApplicants.value.slice(start, end)
 })
 
 // Document Review states
@@ -127,29 +114,14 @@ const selectedBatchForFields = ref<any>(null)
 const customFields = ref<any[]>([])
 
 onMounted(async () => {
-  await fetchFoundations()
-  if (foundations.value.length > 0) {
-    selectedFoundationId.value = foundations.value[0].id
-    await fetchSchools(selectedFoundationId.value)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-      await fetchAcademicYears(selectedSchoolId.value)
-      await fetchPpdbBatches(selectedSchoolId.value)
-    }
+  const schoolId = await initContext()
+  if (schoolId) {
+    await fetchAcademicYears(schoolId)
+      await fetchPpdbBatches(schoolId)
   }
 })
 
-watch(selectedFoundationId, async (newVal) => {
-  if (newVal) {
-    await fetchSchools(newVal)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-    } else {
-      selectedSchoolId.value = ''
-      ppdbBatches.value = []
-    }
-  }
-})
+watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {
@@ -239,7 +211,7 @@ const handleBulkConvert = async () => {
 }
 
 watch([selectedBatchId, selectedStatusFilter], () => {
-  applicantCurrentPage.value = 1
+  page.value = 1
   if (['applicants', 'admissions'].includes(activeTab.value)) {
     loadApplicants()
   } else if (activeTab.value === 'announcements') {
@@ -250,7 +222,7 @@ watch([selectedBatchId, selectedStatusFilter], () => {
 })
 
 watch(activeTab, (newTab) => {
-  applicantCurrentPage.value = 1
+  page.value = 1
   if (['applicants', 'admissions'].includes(newTab)) {
     loadApplicants()
   } else if (newTab === 'announcements') {
@@ -260,8 +232,14 @@ watch(activeTab, (newTab) => {
   }
 })
 
+watch([page, itemPerPage], () => {
+  if (selectedSchoolId.value && selectedBatchId.value && ['applicants', 'admissions'].includes(activeTab.value)) {
+    loadApplicants()
+  }
+})
+
 watch(applicantSearchQuery, () => {
-  applicantCurrentPage.value = 1
+  page.value = 1
 })
 
 const loadAnnouncements = async () => {
@@ -365,13 +343,21 @@ const handleVerifyDocModal = async (applicantId: string, docId: string, status: 
 const loadApplicants = async () => {
   if (!selectedSchoolId.value || !selectedBatchId.value) {
     applicants.value = []
+    applicantsMeta.value = null
     return
   }
   try {
     applicantsLoading.value = true
-    const res = await fetchApplicants(selectedSchoolId.value, selectedBatchId.value, selectedStatusFilter.value || undefined)
+    const res = await fetchApplicants(selectedSchoolId.value, selectedBatchId.value, page.value, itemPerPage.value, selectedStatusFilter.value || undefined)
     if (res.success) {
-      applicants.value = res.data
+      applicants.value = res.data.data
+      applicantsMeta.value = {
+        page: res.data.page,
+        item_per_page: res.data.item_per_page,
+        total_item: res.data.total_item,
+        total_page: res.data.total_page,
+        list_pagination: res.data.list_pagination
+      }
     }
   } catch (e) {
     console.error(e)
@@ -764,7 +750,7 @@ const copyActiveAnnouncementLink = () => {
     </div>
 
     <!-- Selection Units -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
+    <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
         <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10">
@@ -1063,32 +1049,15 @@ const copyActiveAnnouncementLink = () => {
         </div>
         
         <!-- Pagination Controls -->
-        <div v-if="filteredApplicants.length > applicantPageSize" class="flex items-center justify-between p-4 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl shadow-sm text-xs">
-          <span class="text-slate-400 font-semibold">
-            Menampilkan {{ (applicantCurrentPage - 1) * applicantPageSize + 1 }} - {{ Math.min(applicantCurrentPage * applicantPageSize, filteredApplicants.length) }} dari {{ filteredApplicants.length }} pendaftar
-          </span>
-          <div class="flex items-center gap-2">
-            <BaseButton 
-              variant="outline" 
-              class="py-1 px-3 text-[10px] font-bold" 
-              :disabled="applicantCurrentPage === 1" 
-              @click="applicantCurrentPage--"
-            >
-              Sebelumnya
-            </BaseButton>
-            <span class="px-3 py-1 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded font-bold">
-              {{ applicantCurrentPage }} / {{ totalApplicantPages }}
-            </span>
-            <BaseButton 
-              variant="outline" 
-              class="py-1 px-3 text-[10px] font-bold" 
-              :disabled="applicantCurrentPage >= totalApplicantPages" 
-              @click="applicantCurrentPage++"
-            >
-              Selanjutnya
-            </BaseButton>
-          </div>
-        </div>
+        <AppPagination
+          v-if="applicantsMeta"
+          v-model:page="page"
+          v-model:itemPerPage="itemPerPage"
+          :totalItem="applicantsMeta.total_item"
+          :totalPage="applicantsMeta.total_page"
+          :listPagination="applicantsMeta.list_pagination"
+          class="mt-4"
+        />
       </div>
     </div>
 

@@ -1,7 +1,6 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useAuth } from '../composables/useAuth'
-import { useSchool } from '../composables/useSchool'
 import { useToast } from '../composables/useToast'
 import { useDashboard } from '../composables/useDashboard'
 
@@ -23,7 +22,7 @@ definePageMeta({
 })
 
 const { user } = useAuth()
-const { foundations, schools, fetchFoundations, fetchSchools, currentSchoolId } = useSchool()
+const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
 const toast = useToast()
 const {
   fetchCatalog,
@@ -41,8 +40,6 @@ const {
 } = useDashboard()
 
 // States
-const selectedFoundationId = ref('')
-const selectedSchoolId = ref('')
 
 // PDF Export state
 const exportingPdf = ref(false)
@@ -314,29 +311,8 @@ onMounted(async () => {
     currentRole.value = 'vice_principal_curriculum'
   }
   
-  if (user.value?.role === 'super_admin') {
-    await fetchFoundations()
-    if (foundations.value.length > 0) {
-      selectedFoundationId.value = foundations.value[0].id
-      await fetchSchools(selectedFoundationId.value)
-      
-      const exists = schools.value.some(s => s.id === currentSchoolId.value)
-      if (currentSchoolId.value && exists) {
-        selectedSchoolId.value = currentSchoolId.value
-      } else if (schools.value.length > 0) {
-        selectedSchoolId.value = schools.value[0].id
-      }
-    }
-  } else {
-    selectedSchoolId.value = currentSchoolId.value || ''
-    // Try to pre-populate selectedFoundationId
-    if (user.value?.school_id) {
-      await fetchFoundations()
-      if (foundations.value.length > 0) {
-        selectedFoundationId.value = foundations.value[0].id
-      }
-    }
-  }
+  const schoolId = await initContext()
+  if (schoolId) selectedSchoolId.value = schoolId
   
   // Try to load user preference if school is set
   if (selectedSchoolId.value) {
@@ -366,21 +342,7 @@ watch(selectedSchoolId, (newVal) => {
   }
 })
 
-watch(selectedFoundationId, async (newVal) => {
-  if (newVal) {
-    if (user.value?.role === 'super_admin') {
-      await fetchSchools(newVal)
-      if (schools.value.length > 0) {
-        selectedSchoolId.value = schools.value[0].id
-      } else {
-        selectedSchoolId.value = ''
-      }
-    }
-    if (currentRole.value === 'foundation') {
-      loadDashboard()
-    }
-  }
-})
+watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 </script>
 
 <template>

@@ -1,14 +1,26 @@
 import { useApi } from './useApi'
+import { computed } from 'vue'
 
 export const useTeacher = () => {
   const { fetcher } = useApi()
   const teachers = useState<any[]>('teachers', () => [])
+  const teachersMeta = useState<any>('teachers_meta', () => null)
+  const totalTeachers = computed(() => teachersMeta.value?.total_item || 0)
 
-  const fetchTeachers = async (schoolId: string) => {
+  const fetchTeachers = async (schoolId: string, page = 1, itemPerPage = 10) => {
     try {
-      const res: any = await fetcher(`/school/${schoolId}/teacher`)
+      const res: any = await fetcher(`/school/${schoolId}/teacher`, {
+        query: { page, item_per_page: itemPerPage }
+      })
       if (res.success) {
-        teachers.value = res.data
+        teachers.value = res.data.data
+        teachersMeta.value = {
+          page: res.data.page,
+          item_per_page: res.data.item_per_page,
+          total_item: res.data.total_item,
+          total_page: res.data.total_page,
+          list_pagination: res.data.list_pagination
+        }
       }
     } catch (error) {
       console.error('Failed to fetch teachers:', error)
@@ -20,7 +32,7 @@ export const useTeacher = () => {
       method: 'POST',
       body: data
     })
-    await fetchTeachers(schoolId)
+    await fetchTeachers(schoolId, teachersMeta.value?.page || 1, teachersMeta.value?.item_per_page || 10)
     return res
   }
 
@@ -29,7 +41,7 @@ export const useTeacher = () => {
       method: 'PUT',
       body: data
     })
-    await fetchTeachers(schoolId)
+    await fetchTeachers(schoolId, teachersMeta.value?.page || 1, teachersMeta.value?.item_per_page || 10)
     return res
   }
 
@@ -37,7 +49,7 @@ export const useTeacher = () => {
     const res = await fetcher(`/school/${schoolId}/teacher/${id}`, {
       method: 'DELETE'
     })
-    await fetchTeachers(schoolId)
+    await fetchTeachers(schoolId, teachersMeta.value?.page || 1, teachersMeta.value?.item_per_page || 10)
     return res
   }
 
@@ -65,12 +77,14 @@ export const useTeacher = () => {
       method: 'POST',
       body: formData
     })
-    await fetchTeachers(schoolId)
+    await fetchTeachers(schoolId, teachersMeta.value?.page || 1, teachersMeta.value?.item_per_page || 10)
     return res
   }
 
   return {
     teachers,
+    teachersMeta,
+    totalTeachers,
     fetchTeachers,
     createTeacher,
     updateTeacher,

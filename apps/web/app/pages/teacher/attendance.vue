@@ -1,7 +1,6 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ClipboardCheck, Users, Check, AlertCircle, Save, CheckCircle2, RefreshCw } from 'lucide-vue-next'
 import { BaseCard, BaseButton } from '@eduraport/ui'
-import { useSchool } from '../../composables/useSchool'
 import { useTeacher } from '../../composables/useTeacher'
 import { useDashboard } from '../../composables/useDashboard'
 import { useToast } from '../../composables/useToast'
@@ -19,14 +18,12 @@ definePageMeta({
 })
 
 const { user } = useAuth()
-const { foundations, schools, fetchFoundations, fetchSchools, currentSchoolId } = useSchool()
+const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
 const { teachers, fetchTeachers } = useTeacher()
 const { fetchTeacherAttendances, recordTeacherAttendancesBulk } = useDashboard()
 const toast = useToast()
 
 // Filters
-const selectedFoundationId = ref('')
-const selectedSchoolId = ref('')
 const selectedDate = ref(new Date().toISOString().split('T')[0])
 const loading = ref(false)
 const saving = ref(false)
@@ -60,22 +57,8 @@ const attendanceMap = ref<Record<string, AttendanceState>>({})
 
 // Load initial selections
 onMounted(async () => {
-  if (user.value?.role === 'super_admin') {
-    await fetchFoundations()
-    if (foundations.value.length > 0) {
-      selectedFoundationId.value = foundations.value[0].id
-      await fetchSchools(selectedFoundationId.value)
-      
-      const exists = schools.value.some(s => s.id === currentSchoolId.value)
-      if (currentSchoolId.value && exists) {
-        selectedSchoolId.value = currentSchoolId.value
-      } else if (schools.value.length > 0) {
-        selectedSchoolId.value = schools.value[0].id
-      }
-    }
-  } else {
-    selectedSchoolId.value = currentSchoolId.value || ''
-  }
+  const schoolId = await initContext()
+  if (schoolId) selectedSchoolId.value = schoolId
 })
 
 // Load teachers and attendance records
@@ -130,16 +113,7 @@ watch(selectedSchoolId, async (newVal) => {
   }
 })
 
-watch(selectedFoundationId, async (newVal) => {
-  if (newVal && user.value?.role === 'super_admin') {
-    await fetchSchools(newVal)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-    } else {
-      selectedSchoolId.value = ''
-    }
-  }
-})
+watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
 watch(selectedDate, () => {
   loadData()

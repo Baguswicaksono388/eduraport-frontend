@@ -1,7 +1,6 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { Users, Plus, Trash2, Edit2, ShieldAlert, CheckCircle2, User, Key, Download, Upload, FileSpreadsheet, X, CheckCircle, AlertCircle } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
-import { useSchool } from '../../composables/useSchool'
 import { useTeacher } from '../../composables/useTeacher'
 import { useAuth } from '../../composables/useAuth'
 import { useToast } from '../../composables/useToast'
@@ -17,13 +16,12 @@ definePageMeta({
   ]
 })
 
-const { foundations, schools, fetchFoundations, fetchSchools } = useSchool()
-const { teachers, fetchTeachers, createTeacher, updateTeacher, deleteTeacher, downloadTemplate, importTeachers } = useTeacher()
+const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
+const { teachers, teachersMeta, fetchTeachers, createTeacher, updateTeacher, deleteTeacher, downloadTemplate, importTeachers } = useTeacher()
+const { page, itemPerPage } = usePagination(10)
 const { user: currentUser } = useAuth()
 const toast = useToast()
 
-const selectedFoundationId = ref('')
-const selectedSchoolId = ref('')
 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
@@ -96,34 +94,25 @@ const editForm = reactive({
 })
 
 onMounted(async () => {
-  await fetchFoundations()
-  if (foundations.value.length > 0) {
-    selectedFoundationId.value = foundations.value[0].id
-    await fetchSchools(selectedFoundationId.value)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-      await fetchTeachers(selectedSchoolId.value)
-    }
+  const schoolId = await initContext()
+  if (schoolId) {
+    await fetchTeachers(schoolId, page.value, itemPerPage.value)
   }
 })
 
-watch(selectedFoundationId, async (newVal) => {
-  if (newVal) {
-    await fetchSchools(newVal)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-    } else {
-      selectedSchoolId.value = ''
-      teachers.value = []
-    }
-  }
-})
+watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {
-    await fetchTeachers(newVal)
+    await fetchTeachers(newVal, page.value, itemPerPage.value)
   } else {
     teachers.value = []
+  }
+})
+
+watch([page, itemPerPage], () => {
+  if (selectedSchoolId.value) {
+    fetchTeachers(selectedSchoolId.value, page.value, itemPerPage.value)
   }
 })
 
@@ -235,7 +224,7 @@ const getRoleLabel = (role: string) => {
     </div>
 
     <!-- Filters and Selection -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
+    <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
         <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10">
@@ -325,6 +314,14 @@ const getRoleLabel = (role: string) => {
           </tr>
         </tbody>
       </table>
+      <AppPagination
+        v-if="teachersMeta"
+        v-model:page="page"
+        v-model:itemPerPage="itemPerPage"
+        :totalItem="teachersMeta.total_item"
+        :totalPage="teachersMeta.total_page"
+        :listPagination="teachersMeta.list_pagination"
+      />
     </div>
 
     <!-- Create Modal -->

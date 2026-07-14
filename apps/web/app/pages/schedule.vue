@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useSchoolContext } from '../composables/useSchoolContext'
 import { 
   Calendar, 
   Clock, 
@@ -19,7 +20,6 @@ import {
   CalendarRange
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
-import { useSchool } from '../composables/useSchool'
 import { useClass } from '../composables/useClass'
 import { useSubject } from '../composables/useSubject'
 import { useTeacher } from '../composables/useTeacher'
@@ -41,7 +41,7 @@ definePageMeta({
   ]
 })
 
-const { foundations, schools, fetchFoundations, fetchSchools } = useSchool()
+const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
 const { classes, fetchClasses } = useClass()
 const { subjects, fetchSubjects } = useSubject()
 const { teachers, fetchTeachers } = useTeacher()
@@ -52,8 +52,6 @@ const { user } = useAuth()
 import { useLeave } from '../composables/useLeave'
 const { vacancies, candidates, fetchVacancies, fetchCandidates, createSubstitution, markPlannedEmpty, unmarkPlannedEmpty, cancelSubstitution, confirmSubstitution, declineSubstitution } = useLeave()
 
-const selectedFoundationId = ref('')
-const selectedSchoolId = ref('')
 const selectedClassId = ref('')
 const selectedTeacherId = ref('')
 
@@ -122,14 +120,9 @@ const showToast = (type: 'success' | 'error', message: string) => {
 
 // Lifecycle
 onMounted(async () => {
-  await fetchFoundations()
-  if (foundations.value.length > 0) {
-    selectedFoundationId.value = foundations.value[0].id
-    await fetchSchools(selectedFoundationId.value)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-      await loadSchoolData(selectedSchoolId.value)
-    }
+  const schoolId = await initContext()
+  if (schoolId) {
+    await loadSchoolData(schoolId)
   }
   goToToday()
   updateCurrentTimeIndicator()
@@ -141,17 +134,7 @@ onUnmounted(() => {
 })
 
 // Watchers
-watch(selectedFoundationId, async (newVal) => {
-  if (newVal) {
-    await fetchSchools(newVal)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-    } else {
-      selectedSchoolId.value = ''
-      clearData()
-    }
-  }
-})
+watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {

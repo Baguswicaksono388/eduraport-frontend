@@ -83,10 +83,17 @@ export const useSchool = () => {
       const res: any = await fetcher(`/management/school/foundation/${foundationId}`)
       schools.value = res.data
       
-      // Auto-set first school if current is invalid
-      const exists = schools.value.some(s => s.id === currentSchoolId.value)
-      if (schools.value.length > 0 && (!currentSchoolId.value || !exists)) {
-        currentSchoolId.value = schools.value[0].id
+      // If user has an assigned school_id, always lock to that school
+      const { user } = useAuth()
+      if (user.value?.school_id) {
+        // Lock to assigned school regardless
+        currentSchoolId.value = user.value.school_id
+      } else {
+        // Foundation-level users: auto-set first school if current is invalid
+        const exists = schools.value.some(s => s.id === currentSchoolId.value)
+        if (schools.value.length > 0 && (!currentSchoolId.value || !exists)) {
+          currentSchoolId.value = schools.value[0].id
+        }
       }
     } catch (error) {
       console.error('Failed to fetch schools:', error)

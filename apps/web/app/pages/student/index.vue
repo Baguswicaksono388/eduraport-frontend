@@ -1,7 +1,6 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { Users, Plus, Trash2, Edit2, School, Search, Download, Upload, FileSpreadsheet, X, CheckCircle, AlertCircle, LayoutGrid } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput, BaseDateInput } from '@eduraport/ui'
-import { useSchool } from '../../composables/useSchool'
 import { useStudent } from '../../composables/useStudent'
 import { useClass } from '../../composables/useClass'
 import { useAcademicYear } from '../../composables/useAcademicYear'
@@ -18,14 +17,13 @@ definePageMeta({
   ]
 })
 
-const { foundations, schools, fetchFoundations, fetchSchools } = useSchool()
-const { students, totalStudents, fetchStudents, createStudent, updateStudent, deleteStudent, downloadTemplate, importStudents } = useStudent()
+const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
+const { students, totalStudents, studentsMeta, fetchStudents, createStudent, updateStudent, deleteStudent, downloadTemplate, importStudents } = useStudent()
 const { classes, fetchClasses } = useClass()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
+const { page, itemPerPage } = usePagination(10)
 const toast = useToast()
 
-const selectedFoundationId = ref('')
-const selectedSchoolId = ref('')
 const selectedAcademicYearId = ref('')
 const selectedClassFilter = ref('') // for table filter
 const showCreateModal = ref(false)
@@ -74,20 +72,15 @@ const filteredClasses = computed(() => {
 })
 
 onMounted(async () => {
-  await fetchFoundations()
-  if (foundations.value.length > 0) {
-    selectedFoundationId.value = foundations.value[0].id
-    await fetchSchools(selectedFoundationId.value)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-      await loadSchoolData(selectedSchoolId.value)
-    }
+  const schoolId = await initContext()
+  if (schoolId) {
+    await loadSchoolData(schoolId)
   }
 })
 
 const loadSchoolData = async (schoolId: string) => {
   await Promise.all([
-    fetchStudents(schoolId),
+    fetchStudents(schoolId, page.value, itemPerPage.value),
     fetchAcademicYears(schoolId),
     fetchClasses(schoolId)
   ])
@@ -100,17 +93,13 @@ const loadSchoolData = async (schoolId: string) => {
   }
 }
 
-watch(selectedFoundationId, async (newVal) => {
-  if (newVal) {
-    await fetchSchools(newVal)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-    } else {
-      selectedSchoolId.value = ''
-      students.value = []
-    }
+watch([page, itemPerPage], () => {
+  if (selectedSchoolId.value) {
+    fetchStudents(selectedSchoolId.value, page.value, itemPerPage.value)
   }
 })
+
+watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {
@@ -460,6 +449,14 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
           </tbody>
         </table>
       </div>
+      <AppPagination
+        v-if="studentsMeta"
+        v-model:page="page"
+        v-model:itemPerPage="itemPerPage"
+        :totalItem="studentsMeta.total_item"
+        :totalPage="studentsMeta.total_page"
+        :listPagination="studentsMeta.list_pagination"
+      />
     </div>
 
     <!-- Create Student Modal -->

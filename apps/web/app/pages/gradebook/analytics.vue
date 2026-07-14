@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useSchoolContext } from '../../composables/useSchoolContext'
 import { 
   BarChart3, 
   LineChart, 
@@ -16,7 +17,6 @@ import {
   Eye
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton } from '@eduraport/ui'
-import { useSchool } from '../../composables/useSchool'
 import { useClass } from '../../composables/useClass'
 import { useAcademicYear } from '../../composables/useAcademicYear'
 import { useGradebook } from '../../composables/useGradebook'
@@ -33,14 +33,12 @@ definePageMeta({
   ]
 })
 
-const { foundations, schools, fetchFoundations, fetchSchools } = useSchool()
+const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
 const { classes, fetchClasses } = useClass()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
 const gradebook = useGradebook()
 const toast = useToast()
 
-const selectedFoundationId = ref('')
-const selectedSchoolId = ref('')
 const selectedClassId = ref('')
 const selectedAcademicYearId = ref('')
 const selectedSemester = ref('odd') // odd or even
@@ -62,14 +60,9 @@ const searchQuery = ref('')
 const selectedDistributionPredicate = ref('all')
 
 onMounted(async () => {
-  await fetchFoundations()
-  if (foundations.value.length > 0) {
-    selectedFoundationId.value = foundations.value[0].id
-    await fetchSchools(selectedFoundationId.value)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-      await loadSchoolData(selectedSchoolId.value)
-    }
+  const schoolId = await initContext()
+  if (schoolId) {
+    await loadSchoolData(schoolId)
   }
 })
 
@@ -86,18 +79,7 @@ const loadSchoolData = async (schoolId: string) => {
   }
 }
 
-watch(selectedFoundationId, async (newVal) => {
-  if (newVal) {
-    await fetchSchools(newVal)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-    } else {
-      selectedSchoolId.value = ''
-      classes.value = []
-      academicYears.value = []
-    }
-  }
-})
+watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {

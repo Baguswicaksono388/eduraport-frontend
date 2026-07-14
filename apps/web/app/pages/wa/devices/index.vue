@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { 
   Plus, 
   Smartphone, 
@@ -10,7 +10,6 @@ import {
   FileText
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
-import { useSchool } from '../../../composables/useSchool'
 import { useWaDevices } from '../../../composables/useWaDevices'
 import { useToast } from '../../../composables/useToast'
 
@@ -25,7 +24,7 @@ definePageMeta({
   ]
 })
 
-const { foundations, schools, fetchFoundations, fetchSchools } = useSchool()
+const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
 const { 
   loading, 
   devices, 
@@ -47,8 +46,6 @@ const {
 
 const toast = useToast()
 
-const selectedFoundationId = ref('')
-const selectedSchoolId = ref('')
 
 // UI state
 const showAddModal = ref(false)
@@ -72,28 +69,13 @@ const stats = computed(() => {
 })
 
 onMounted(async () => {
-  await fetchFoundations()
-  if (foundations.value.length > 0) {
-    selectedFoundationId.value = foundations.value[0].id
-    await fetchSchools(selectedFoundationId.value)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-      await loadData()
-    }
+  const schoolId = await initContext()
+  if (schoolId) {
+    await loadData()
   }
 })
 
-watch(selectedFoundationId, async (newVal) => {
-  if (newVal) {
-    await fetchSchools(newVal)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-    } else {
-      selectedSchoolId.value = ''
-      devices.value = []
-    }
-  }
-})
+watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {

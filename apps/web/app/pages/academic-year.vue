@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Calendar, Plus, Trash2, Edit2, CheckCircle2, AlertCircle, Play } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput, BaseDateInput } from '@eduraport/ui'
-import { useSchool } from '../composables/useSchool'
+import { useSchoolContext } from '../composables/useSchoolContext'
 import { useAcademicYear } from '../composables/useAcademicYear'
 
 definePageMeta({
@@ -15,11 +15,9 @@ definePageMeta({
   ]
 })
 
-const { foundations, schools, fetchFoundations, fetchSchools } = useSchool()
+const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
 const { academicYears, fetchAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear, activateAcademicYear } = useAcademicYear()
 
-const selectedFoundationId = ref('')
-const selectedSchoolId = ref('')
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 
@@ -39,28 +37,11 @@ const editForm = reactive({
 })
 
 onMounted(async () => {
-  await fetchFoundations()
-  if (foundations.value.length > 0) {
-    selectedFoundationId.value = foundations.value[0].id
-    await fetchSchools(selectedFoundationId.value)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-      await fetchAcademicYears(selectedSchoolId.value)
-    }
-  }
+  const schoolId = await initContext()
+  if (schoolId) await fetchAcademicYears(schoolId)
 })
 
-watch(selectedFoundationId, async (newVal) => {
-  if (newVal) {
-    await fetchSchools(newVal)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-    } else {
-      selectedSchoolId.value = ''
-      academicYears.value = []
-    }
-  }
-})
+watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {
@@ -161,8 +142,8 @@ const handleActivateYear = async (id: string) => {
       </div>
     </div>
 
-    <!-- Filters and Selection -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
+    <!-- Filters and Selection (only for foundation-level users) -->
+    <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
         <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10">

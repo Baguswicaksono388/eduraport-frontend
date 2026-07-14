@@ -1,16 +1,29 @@
 import { useApi } from './useApi'
+import { computed } from 'vue'
 
 export const useSubject = () => {
   const { fetcher } = useApi()
   const subjects = useState<any[]>('subjects', () => [])
+  const subjectsMeta = useState<any>('subjects_meta', () => null)
+  const totalSubjects = computed(() => subjectsMeta.value?.total_item || 0)
 
-  const fetchSubjects = async (schoolId: string, type?: string) => {
+  const fetchSubjects = async (schoolId: string, page = 1, itemPerPage = 10, type?: string) => {
     try {
+      const queryParams: any = { page, item_per_page: itemPerPage }
+      if (type) queryParams.type = type
+
       const res: any = await fetcher(`/school/${schoolId}/subject`, {
-        query: type ? { type } : {}
+        query: queryParams
       })
       if (res.success) {
-        subjects.value = res.data
+        subjects.value = res.data.data
+        subjectsMeta.value = {
+          page: res.data.page,
+          item_per_page: res.data.item_per_page,
+          total_item: res.data.total_item,
+          total_page: res.data.total_page,
+          list_pagination: res.data.list_pagination
+        }
       }
     } catch (error) {
       console.error('Failed to fetch subjects:', error)
@@ -22,7 +35,7 @@ export const useSubject = () => {
       method: 'POST',
       body: data
     })
-    await fetchSubjects(schoolId)
+    await fetchSubjects(schoolId, subjectsMeta.value?.page || 1, subjectsMeta.value?.item_per_page || 10)
     return res
   }
 
@@ -31,7 +44,7 @@ export const useSubject = () => {
       method: 'PUT',
       body: data
     })
-    await fetchSubjects(schoolId)
+    await fetchSubjects(schoolId, subjectsMeta.value?.page || 1, subjectsMeta.value?.item_per_page || 10)
     return res
   }
 
@@ -39,12 +52,14 @@ export const useSubject = () => {
     const res = await fetcher(`/school/${schoolId}/subject/${id}`, {
       method: 'DELETE'
     })
-    await fetchSubjects(schoolId)
+    await fetchSubjects(schoolId, subjectsMeta.value?.page || 1, subjectsMeta.value?.item_per_page || 10)
     return res
   }
 
   return {
     subjects,
+    subjectsMeta,
+    totalSubjects,
     fetchSubjects,
     createSubject,
     updateSubject,

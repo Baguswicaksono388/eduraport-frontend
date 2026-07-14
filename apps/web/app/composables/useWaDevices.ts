@@ -257,11 +257,11 @@ export const useWaDevices = () => {
 
   const fetchMessages = async (
     schoolId: string,
-    params: { page: number; limit: number; status?: string; search?: string }
+    params: { page: number; itemPerPage: number; status?: string; search?: string }
   ) => {
     loading.value = true;
     try {
-      let url = `/school/${schoolId}/wa/messages?page=${params.page}&limit=${params.limit}`;
+      let url = `/school/${schoolId}/wa/messages?page=${params.page}&item_per_page=${params.itemPerPage}`;
       if (params.status) url += `&status=${params.status}`;
       if (params.search) url += `&search=${encodeURIComponent(params.search)}`;
 

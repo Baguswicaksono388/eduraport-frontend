@@ -5,16 +5,23 @@ export const useStudent = () => {
   const config = useRuntimeConfig()
   const token = useCookie('auth_token')
   const students = useState<any[]>('students', () => [])
-  const totalStudents = useState<number>('total_students', () => 0)
+  const studentsMeta = useState<any>('students_meta', () => null)
+  const totalStudents = computed(() => studentsMeta.value?.total_item || 0)
 
-  const fetchStudents = async (schoolId: string, page = 1, limit = 20) => {
+  const fetchStudents = async (schoolId: string, page = 1, itemPerPage = 10) => {
     try {
       const res: any = await fetcher(`/school/${schoolId}/student`, {
-        query: { page, limit }
+        query: { page, item_per_page: itemPerPage }
       })
       if (res.success) {
         students.value = res.data.data
-        totalStudents.value = res.data.meta.total
+        studentsMeta.value = {
+          page: res.data.page,
+          item_per_page: res.data.item_per_page,
+          total_item: res.data.total_item,
+          total_page: res.data.total_page,
+          list_pagination: res.data.list_pagination
+        }
       }
     } catch (error) {
       console.error('Failed to fetch students:', error)
@@ -26,7 +33,7 @@ export const useStudent = () => {
       method: 'POST',
       body: data
     })
-    await fetchStudents(schoolId)
+    await fetchStudents(schoolId, studentsMeta.value?.page || 1, studentsMeta.value?.item_per_page || 10)
     return res
   }
 
@@ -35,7 +42,7 @@ export const useStudent = () => {
       method: 'PUT',
       body: data
     })
-    await fetchStudents(schoolId)
+    await fetchStudents(schoolId, studentsMeta.value?.page || 1, studentsMeta.value?.item_per_page || 10)
     return res
   }
 
@@ -43,7 +50,7 @@ export const useStudent = () => {
     const res = await fetcher(`/school/${schoolId}/student/${id}`, {
       method: 'DELETE'
     })
-    await fetchStudents(schoolId)
+    await fetchStudents(schoolId, studentsMeta.value?.page || 1, studentsMeta.value?.item_per_page || 10)
     return res
   }
 
@@ -68,12 +75,13 @@ export const useStudent = () => {
       method: 'POST',
       body: formData
     })
-    await fetchStudents(schoolId)
+    await fetchStudents(schoolId, studentsMeta.value?.page || 1, studentsMeta.value?.item_per_page || 10)
     return res
   }
 
   return {
     students,
+    studentsMeta,
     totalStudents,
     fetchStudents,
     createStudent,

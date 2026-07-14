@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { useSchoolContext } from '../../composables/useSchoolContext'
 import { ClipboardCheck, Download, Upload, Info, AlertCircle, CheckCircle, Save, History, Check, Loader2, Edit2, Sparkles } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
-import { useSchool } from '../../composables/useSchool'
 import { useClass } from '../../composables/useClass'
 import { useSubject } from '../../composables/useSubject'
 import { useAcademicYear } from '../../composables/useAcademicYear'
@@ -23,7 +23,7 @@ definePageMeta({
   ]
 })
 
-const { foundations, schools, fetchFoundations, fetchSchools } = useSchool()
+const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
 const { classes, fetchClasses } = useClass()
 const { subjects, fetchSubjects } = useSubject()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
@@ -31,8 +31,6 @@ const gradebook = useGradebook()
 const toast = useToast()
 const { user, fetchUser } = useAuth()
 
-const selectedFoundationId = ref('')
-const selectedSchoolId = ref('')
 const selectedClassId = ref('')
 const selectedSubjectId = ref('')
 const selectedAcademicYearId = ref('')
@@ -83,19 +81,9 @@ const bulkInputText = ref('')
 
 onMounted(async () => {
   await fetchUser()
-  await fetchFoundations()
-  if (foundations.value.length > 0) {
-    selectedFoundationId.value = foundations.value[0].id
-    await fetchSchools(selectedFoundationId.value)
-    if (schools.value.length > 0) {
-      if (user.value && user.value.role !== 'super_admin' && user.value.school_id) {
-        const matchingSchool = schools.value.find(s => s.id === user.value.school_id)
-        selectedSchoolId.value = matchingSchool ? matchingSchool.id : schools.value[0].id
-      } else {
-        selectedSchoolId.value = schools.value[0].id
-      }
-      await loadSchoolData(selectedSchoolId.value)
-    }
+  const schoolId = await initContext()
+  if (schoolId) {
+    await loadSchoolData(schoolId)
   }
 })
 
@@ -113,24 +101,7 @@ const loadSchoolData = async (schoolId: string) => {
   }
 }
 
-watch(selectedFoundationId, async (newVal) => {
-  if (newVal) {
-    await fetchSchools(newVal)
-    if (schools.value.length > 0) {
-      if (user.value && user.value.role !== 'super_admin' && user.value.school_id) {
-        const matchingSchool = schools.value.find(s => s.id === user.value.school_id)
-        selectedSchoolId.value = matchingSchool ? matchingSchool.id : schools.value[0].id
-      } else {
-        selectedSchoolId.value = schools.value[0].id
-      }
-    } else {
-      selectedSchoolId.value = ''
-      classes.value = []
-      subjects.value = []
-      academicYears.value = []
-    }
-  }
-})
+watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {

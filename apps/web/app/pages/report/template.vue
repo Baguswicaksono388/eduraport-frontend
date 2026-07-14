@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { 
   Plus, 
   Trash2, 
@@ -22,7 +22,6 @@ import {
   Check
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
-import { useSchool } from '../../composables/useSchool'
 import { useReportTemplate } from '../../composables/useReportTemplate'
 import { useSubject } from '../../composables/useSubject'
 import { useToast } from '../../composables/useToast'
@@ -43,19 +42,7 @@ definePageMeta({
   ]
 })
 
-const { 
-  foundations, 
-  schools, 
-  fetchFoundations, 
-  fetchSchools, 
-  curriculums, 
-  fetchCurriculums,
-  p5Dimensions,
-  fetchP5Dimensions,
-  createP5Dimension,
-  updateP5Dimension,
-  deleteP5Dimension
-} = useSchool()
+const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
 const { subjects, fetchSubjects } = useSubject()
 const { 
   reportTemplates, 
@@ -73,8 +60,6 @@ const {
 const toast = useToast()
 const { user, fetchUser } = useAuth()
 
-const selectedFoundationId = ref('')
-const selectedSchoolId = ref('')
 const levelFilter = ref('') // all
 const loading = ref(false)
 const detailsLoading = ref(false)
@@ -156,21 +141,9 @@ const editElementForm = reactive({
 
 onMounted(async () => {
   await fetchUser()
-  await fetchFoundations()
-  if (foundations.value.length > 0) {
-    selectedFoundationId.value = foundations.value[0].id
-    await fetchSchools(selectedFoundationId.value)
-    await fetchCurriculums(selectedFoundationId.value)
-    
-    if (schools.value.length > 0) {
-      if (user.value && user.value.role !== 'super_admin' && user.value.school_id) {
-        const matchingSchool = schools.value.find(s => s.id === user.value.school_id)
-        selectedSchoolId.value = matchingSchool ? matchingSchool.id : schools.value[0].id
-      } else {
-        selectedSchoolId.value = schools.value[0].id
-      }
-      await loadSchoolData(selectedSchoolId.value)
-    }
+  const schoolId = await initContext()
+  if (schoolId) {
+    await loadSchoolData(schoolId)
   }
 })
 
@@ -196,24 +169,7 @@ const loadSchoolData = async (schoolId: string) => {
   }
 }
 
-watch(selectedFoundationId, async (newVal) => {
-  if (newVal) {
-    await fetchSchools(newVal)
-    await fetchCurriculums(newVal)
-    if (schools.value.length > 0) {
-      if (user.value && user.value.role !== 'super_admin' && user.value.school_id) {
-        const matchingSchool = schools.value.find(s => s.id === user.value.school_id)
-        selectedSchoolId.value = matchingSchool ? matchingSchool.id : schools.value[0].id
-      } else {
-        selectedSchoolId.value = schools.value[0].id
-      }
-    } else {
-      selectedSchoolId.value = ''
-      reportTemplates.value = []
-      currentTemplate.value = null
-    }
-  }
-})
+watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {
@@ -2029,7 +1985,7 @@ const getGradeTableRows = (items: any[]) => {
       </div>
 
     <!-- Filters & Tenancy Selection -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
+    <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
         <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600">

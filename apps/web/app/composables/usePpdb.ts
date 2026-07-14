@@ -60,11 +60,13 @@ export const usePpdb = () => {
     return res
   }
 
-  const fetchApplicants = async (schoolId: string, batchId: string, status?: string) => {
+  const fetchApplicants = async (schoolId: string, batchId: string, page = 1, itemPerPage = 10, status?: string) => {
     try {
-      const url = status 
-        ? `/school/${schoolId}/ppdb/batches/${batchId}/applicants?status=${status}`
-        : `/school/${schoolId}/ppdb/batches/${batchId}/applicants`
+      const params = new URLSearchParams()
+      params.append('page', String(page))
+      params.append('item_per_page', String(itemPerPage))
+      if (status) params.append('status', status)
+      const url = `/school/${schoolId}/ppdb/batches/${batchId}/applicants?${params.toString()}`
       const res: any = await fetcher(url)
       return res
     } catch (error) {

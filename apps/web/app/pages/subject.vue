@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { useSchoolContext } from '../composables/useSchoolContext'
 import { BookOpen, Plus, Trash2, Edit2, ShieldAlert, CheckCircle2, Bookmark } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
-import { useSchool } from '../composables/useSchool'
 import { useSubject } from '../composables/useSubject'
 
 definePageMeta({
@@ -15,11 +15,10 @@ definePageMeta({
   ]
 })
 
-const { foundations, schools, fetchFoundations, fetchSchools, curriculumCategories, fetchCurriculumCategories } = useSchool()
-const { subjects, fetchSubjects, createSubject, updateSubject, deleteSubject } = useSubject()
+const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
+const { subjects, subjectsMeta, fetchSubjects, createSubject, updateSubject, deleteSubject } = useSubject()
+const { page, itemPerPage } = usePagination(10)
 
-const selectedFoundationId = ref('')
-const selectedSchoolId = ref('')
 const typeFilter = ref('') // all
 
 const filteredSchools = computed(() => {
@@ -55,37 +54,21 @@ const editForm = reactive({
 })
 
 onMounted(async () => {
-  await fetchFoundations()
-  if (foundations.value.length > 0) {
-    selectedFoundationId.value = foundations.value[0].id
-    await fetchSchools(selectedFoundationId.value)
-    if (filteredSchools.value.length > 0) {
-      selectedSchoolId.value = filteredSchools.value[0].id
-      await fetchSubjects(selectedSchoolId.value, typeFilter.value || undefined)
-      const school = filteredSchools.value.find(s => s.id === selectedSchoolId.value)
-      if (school && school.curriculum_id) {
-        await fetchCurriculumCategories(school.curriculum_id)
-      }
+  const schoolId = await initContext()
+  if (schoolId) {
+    await fetchSubjects(schoolId, page.value, itemPerPage.value, typeFilter.value || undefined)
+    const school = schools.value.find(s => s.id === schoolId)
+    if (school && school.curriculum_id) {
+      await fetchCurriculumCategories(school.curriculum_id)
     }
   }
 })
 
-watch(selectedFoundationId, async (newVal) => {
-  if (newVal) {
-    await fetchSchools(newVal)
-    if (filteredSchools.value.length > 0) {
-      selectedSchoolId.value = filteredSchools.value[0].id
-    } else {
-      selectedSchoolId.value = ''
-      subjects.value = []
-      curriculumCategories.value = []
-    }
-  }
-})
+watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {
-    await fetchSubjects(newVal, typeFilter.value || undefined)
+    await fetchSubjects(newVal, page.value, itemPerPage.value, typeFilter.value || undefined)
     const school = filteredSchools.value.find(s => s.id === newVal)
     if (school && school.curriculum_id) {
       await fetchCurriculumCategories(school.curriculum_id)
@@ -100,7 +83,13 @@ watch(selectedSchoolId, async (newVal) => {
 
 watch(typeFilter, async (newVal) => {
   if (selectedSchoolId.value) {
-    await fetchSubjects(selectedSchoolId.value, newVal || undefined)
+    await fetchSubjects(selectedSchoolId.value, page.value, itemPerPage.value, newVal || undefined)
+  }
+})
+
+watch([page, itemPerPage], () => {
+  if (selectedSchoolId.value) {
+    fetchSubjects(selectedSchoolId.value, page.value, itemPerPage.value, typeFilter.value || undefined)
   }
 })
 
@@ -191,7 +180,7 @@ const handleDeleteSubject = async (id: string) => {
     </div>
 
     <!-- Filters and Selection -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
+    <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
         <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10">
@@ -281,6 +270,14 @@ const handleDeleteSubject = async (id: string) => {
           </tr>
         </tbody>
       </table>
+      <AppPagination
+        v-if="subjectsMeta"
+        v-model:page="page"
+        v-model:itemPerPage="itemPerPage"
+        :totalItem="subjectsMeta.total_item"
+        :totalPage="subjectsMeta.total_page"
+        :listPagination="subjectsMeta.list_pagination"
+      />
     </div>
 
     <!-- Create Modal -->

@@ -1,8 +1,7 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { GraduationCap, School, Users, ArrowRight, Clock } from 'lucide-vue-next'
 import { BaseCard } from '@eduraport/ui'
 import { useAuth } from '../composables/useAuth'
-import { useSchool } from '../composables/useSchool'
 import { useStudent } from '../composables/useStudent'
 
 definePageMeta({
@@ -17,17 +16,13 @@ definePageMeta({
 })
 
 const { user } = useAuth()
-const { foundations, schools, fetchFoundations, fetchSchools } = useSchool()
+const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
 const { totalStudents, fetchStudents } = useStudent()
 
 onMounted(async () => {
-  await fetchFoundations()
-  if (foundations.value.length > 0) {
-    const fId = foundations.value[0].id
-    await fetchSchools(fId)
-    if (schools.value.length > 0) {
-      await fetchStudents(schools.value[0].id)
-    }
+  const schoolId = await initContext()
+  if (schoolId) {
+    await fetchStudents(schoolId)
   }
 })
 </script>

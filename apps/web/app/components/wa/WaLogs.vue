@@ -15,6 +15,8 @@ import { BaseCard, BaseButton, BaseModal } from '@eduraport/ui'
 import { useWaDevices } from '../../composables/useWaDevices'
 import { useToast } from '../../composables/useToast'
 
+import { usePagination } from '../../composables/usePagination'
+
 const props = defineProps<{
   schoolId: string
 }>()
@@ -29,12 +31,8 @@ const activeFilter = ref('')
 const searchInput = ref('')
 const searchDebounce = ref('')
 
-const pagination = ref({
-  page: 1,
-  limit: 20,
-  total: 0,
-  totalPages: 1
-})
+const { page, itemPerPage } = usePagination(10)
+const logsMeta = ref<any>(null)
 
 // Modal states for message preview
 const selectedMessage = ref<any | null>(null)
@@ -65,19 +63,25 @@ const getNotificationLabel = (type: string) => {
   return notificationTypesMap[type] || type
 }
 
-const loadLogs = async (page = 1) => {
+const loadLogs = async () => {
   if (!props.schoolId) return
   loading.value = true
   try {
     const res = await fetchMessages(props.schoolId, {
-      page,
-      limit: pagination.value.limit,
+      page: page.value,
+      itemPerPage: itemPerPage.value,
       status: activeFilter.value || undefined,
       search: searchDebounce.value || undefined
     })
     if (res.success) {
-      logs.value = res.data.items
-      pagination.value = res.data.pagination
+      logs.value = res.data.data
+      logsMeta.value = {
+        page: res.data.page,
+        item_per_page: res.data.item_per_page,
+        total_item: res.data.total_item,
+        total_page: res.data.total_page,
+        list_pagination: res.data.list_pagination
+      }
     }
   } catch (err: any) {
     toast.error(err.message || 'Gagal memuat log riwayat pesan.')
@@ -93,7 +97,7 @@ const handleResend = async (msg: any) => {
     const res = await resendMessage(props.schoolId, msg.id)
     if (res.success) {
       toast.success('Pesan berhasil dimasukkan kembali ke antrean untuk dikirim ulang.')
-      await loadLogs(pagination.value.page)
+      await loadLogs()
     }
   } catch (err: any) {
     toast.error(err.message || 'Gagal mengirim ulang pesan.')
@@ -108,8 +112,8 @@ const viewMessageBody = (msg: any) => {
 
 // Watchers for reloading logs on filter change
 watch(activeFilter, () => {
-  pagination.value.page = 1
-  loadLogs(1)
+  page.value = 1
+  loadLogs()
 })
 
 let debounceTimeout: any
@@ -117,18 +121,22 @@ watch(searchInput, (newVal) => {
   clearTimeout(debounceTimeout)
   debounceTimeout = setTimeout(() => {
     searchDebounce.value = newVal
-    pagination.value.page = 1
-    loadLogs(1)
+    page.value = 1
+    loadLogs()
   }, 500)
 })
 
 watch(() => props.schoolId, () => {
-  pagination.value.page = 1
-  loadLogs(1)
+  page.value = 1
+  loadLogs()
+})
+
+watch([page, itemPerPage], () => {
+  loadLogs()
 })
 
 onMounted(() => {
-  loadLogs(1)
+  loadLogs()
 })
 
 const formatDate = (dateStr: string | null) => {
@@ -176,7 +184,7 @@ const formatDate = (dateStr: string | null) => {
         <BaseButton 
           variant="secondary"
           class="h-10 w-10 flex items-center justify-center p-0 rounded-xl"
-          @click="loadLogs(pagination.page)"
+          @click="loadLogs"
           :disabled="loading"
         >
           <RefreshCw :size="16" :class="{ 'animate-spin': loading }" />
@@ -316,38 +324,15 @@ const formatDate = (dateStr: string | null) => {
       </div>
 
       <!-- Pagination Footer -->
-      <div v-if="pagination.totalPages > 1" class="p-4 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between gap-4">
-        <p class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
-          Menampilkan {{ logs.length }} dari {{ pagination.total }} pesan
-        </p>
-
-        <div class="flex items-center gap-2">
-          <!-- Prev Button -->
-          <BaseButton 
-            variant="secondary"
-            class="h-8 w-8 p-0 flex items-center justify-center rounded-lg"
-            :disabled="pagination.page === 1"
-            @click="loadLogs(pagination.page - 1)"
-          >
-            <ChevronLeft :size="14" />
-          </BaseButton>
-
-          <!-- Pages -->
-          <span class="text-xs font-bold text-slate-700 dark:text-zinc-300">
-            Halaman {{ pagination.page }} dari {{ pagination.totalPages }}
-          </span>
-
-          <!-- Next Button -->
-          <BaseButton 
-            variant="secondary"
-            class="h-8 w-8 p-0 flex items-center justify-center rounded-lg"
-            :disabled="pagination.page === pagination.totalPages"
-            @click="loadLogs(pagination.page + 1)"
-          >
-            <ChevronRight :size="14" />
-          </BaseButton>
-        </div>
-      </div>
+      <AppPagination
+        v-if="logsMeta"
+        v-model:page="page"
+        v-model:itemPerPage="itemPerPage"
+        :totalItem="logsMeta.total_item"
+        :totalPage="logsMeta.total_page"
+        :listPagination="logsMeta.list_pagination"
+        class="p-4 border-t border-slate-100 dark:border-zinc-800"
+      />
     </BaseCard>
 
     <!-- Message Detail Preview Modal -->

@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { useSchoolContext } from '../../composables/useSchoolContext'
 import { Plus, Trash2, Edit2, Settings, ClipboardList, Calculator, AlertCircle, CheckCircle, Info, Percent, Award, BookOpen } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
-import { useSchool } from '../../composables/useSchool'
 import { useClass } from '../../composables/useClass'
 import { useSubject } from '../../composables/useSubject'
 import { useAcademicYear } from '../../composables/useAcademicYear'
@@ -19,15 +19,13 @@ definePageMeta({
   ]
 })
 
-const { foundations, schools, fetchFoundations, fetchSchools } = useSchool()
+const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
 const { classes, fetchClasses } = useClass()
 const { subjects, fetchSubjects } = useSubject()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
 const gradebook = useGradebook()
 const toast = useToast()
 
-const selectedFoundationId = ref('')
-const selectedSchoolId = ref('')
 const selectedClassId = ref('')
 const selectedSubjectId = ref('')
 const selectedAcademicYearId = ref('')
@@ -73,14 +71,9 @@ const componentForm = reactive({
 })
 
 onMounted(async () => {
-  await fetchFoundations()
-  if (foundations.value.length > 0) {
-    selectedFoundationId.value = foundations.value[0].id
-    await fetchSchools(selectedFoundationId.value)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-      await loadSchoolData(selectedSchoolId.value)
-    }
+  const schoolId = await initContext()
+  if (schoolId) {
+    await loadSchoolData(schoolId)
   }
 })
 
@@ -98,19 +91,7 @@ const loadSchoolData = async (schoolId: string) => {
   }
 }
 
-watch(selectedFoundationId, async (newVal) => {
-  if (newVal) {
-    await fetchSchools(newVal)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-    } else {
-      selectedSchoolId.value = ''
-      classes.value = []
-      subjects.value = []
-      academicYears.value = []
-    }
-  }
-})
+watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {

@@ -1,7 +1,6 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { Users, Plus, Trash2, Edit2, ShieldAlert, GraduationCap, LayoutGrid, Eye } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
-import { useSchool } from '../composables/useSchool'
 import { useAcademicYear } from '../composables/useAcademicYear'
 import { useClass } from '../composables/useClass'
 import { useToast } from '../composables/useToast'
@@ -17,13 +16,12 @@ definePageMeta({
   ]
 })
 
-const { foundations, schools, fetchFoundations, fetchSchools } = useSchool()
+const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
-const { classes, classStudents, teachers, fetchClasses, fetchClassStudents, fetchTeachers, createClass, updateClass, deleteClass } = useClass()
+const { classes, classesMeta, classStudents, teachers, fetchClasses, fetchClassStudents, fetchTeachers, createClass, updateClass, deleteClass } = useClass()
+const { page, itemPerPage } = usePagination(10)
 const toast = useToast()
 
-const selectedFoundationId = ref('')
-const selectedSchoolId = ref('')
 const selectedAcademicYearId = ref('')
 
 const showCreateModal = ref(false)
@@ -49,14 +47,9 @@ const editForm = reactive({
 })
 
 onMounted(async () => {
-  await fetchFoundations()
-  if (foundations.value.length > 0) {
-    selectedFoundationId.value = foundations.value[0].id
-    await fetchSchools(selectedFoundationId.value)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-      await loadSchoolData(selectedSchoolId.value)
-    }
+  const schoolId = await initContext()
+  if (schoolId) {
+    await loadSchoolData(schoolId)
   }
 })
 
@@ -69,26 +62,14 @@ const loadSchoolData = async (schoolId: string) => {
   if (academicYears.value.length > 0) {
     const activeYear = academicYears.value.find(y => y.is_active)
     selectedAcademicYearId.value = activeYear ? activeYear.id : academicYears.value[0].id
-    await fetchClasses(schoolId, selectedAcademicYearId.value)
+    await fetchClasses(schoolId, selectedAcademicYearId.value, page.value, itemPerPage.value)
   } else {
     selectedAcademicYearId.value = ''
     classes.value = []
   }
 }
 
-watch(selectedFoundationId, async (newVal) => {
-  if (newVal) {
-    await fetchSchools(newVal)
-    if (schools.value.length > 0) {
-      selectedSchoolId.value = schools.value[0].id
-    } else {
-      selectedSchoolId.value = ''
-      academicYears.value = []
-      selectedAcademicYearId.value = ''
-      classes.value = []
-    }
-  }
-})
+watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {
@@ -102,9 +83,15 @@ watch(selectedSchoolId, async (newVal) => {
 
 watch(selectedAcademicYearId, async (newVal) => {
   if (selectedSchoolId.value && newVal) {
-    await fetchClasses(selectedSchoolId.value, newVal)
+    await fetchClasses(selectedSchoolId.value, newVal, page.value, itemPerPage.value)
   } else {
     classes.value = []
+  }
+})
+
+watch([page, itemPerPage], () => {
+  if (selectedSchoolId.value && selectedAcademicYearId.value) {
+    fetchClasses(selectedSchoolId.value, selectedAcademicYearId.value, page.value, itemPerPage.value)
   }
 })
 
@@ -125,7 +112,7 @@ const handleCreateClass = async () => {
         capacity: 30
       })
       toast.success('Kelas baru berhasil ditambahkan.', 'Sukses')
-      await fetchClasses(selectedSchoolId.value, selectedAcademicYearId.value)
+      await fetchClasses(selectedSchoolId.value, selectedAcademicYearId.value, page.value, itemPerPage.value)
     }
   } catch (e: any) {
     if (e.data?.errors) {
@@ -205,7 +192,7 @@ const viewStudents = async (cObj: any) => {
     </div>
 
     <!-- Filters and Selection -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
+    <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
         <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10">
@@ -285,6 +272,14 @@ const viewStudents = async (cObj: any) => {
           </tr>
         </tbody>
       </table>
+      <AppPagination
+        v-if="classesMeta"
+        v-model:page="page"
+        v-model:itemPerPage="itemPerPage"
+        :totalItem="classesMeta.total_item"
+        :totalPage="classesMeta.total_page"
+        :listPagination="classesMeta.list_pagination"
+      />
     </div>
 
     <!-- Create Modal -->
