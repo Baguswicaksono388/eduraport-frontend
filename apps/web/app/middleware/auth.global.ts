@@ -18,6 +18,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // Redirect to login if token is missing
   if (!token.value) {
+    if (to.path === '/') {
+      return navigateTo('/landing')
+    }
     return navigateTo('/login')
   }
 
