@@ -61,6 +61,12 @@ const features = [
     title: 'Executive Dashboard',
     desc: 'Dashboard KPI real-time untuk kepala sekolah & pengurus yayasan. Monitor kehadiran, nilai, keuangan, dan performa seluruh unit sekolah.',
     color: 'indigo'
+  },
+  {
+    icon: '💬',
+    title: 'WhatsApp Gateway (Baru)',
+    desc: 'Kirim notifikasi tagihan, nilai, dan pengumuman otomatis via WhatsApp ke orang tua dan grup kelas. Dilengkapi sistem anti-ban, smart routing, dan multi-device.',
+    color: 'blue'
   }
 ]
 
@@ -103,6 +109,7 @@ const comparisons = [
   { feature: 'Perizinan guru & pengganti cerdas', eduraport: true, competitor: false },
   { feature: 'Yayasan multi-unit (TK+SD+SMP+SMA)', eduraport: true, competitor: false },
   { feature: 'Portal orang tua real-time', eduraport: true, competitor: false },
+  { feature: 'Notifikasi WA pintar (Anti-Ban & Grup)', eduraport: true, competitor: false },
 ]
 
 const chartHeights = [65,80,55,90,70,85,60,95]
@@ -775,6 +782,7 @@ const chartHeights = [65,80,55,90,70,85,60,95]
             <a href="#">PPDB Online</a>
             <a href="#">Keuangan & SPP</a>
             <a href="#">Jadwal Pelajaran</a>
+            <a href="#">WhatsApp Gateway</a>
           </div>
           <div class="footer-col">
             <h4>Perusahaan</h4>
