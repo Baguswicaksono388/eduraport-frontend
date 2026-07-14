@@ -84,8 +84,20 @@ watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {
     await loadData()
+    // Reload active tab data if school changes
+    if (activeTab.value === 'routing') {
+      await loadRoutingRules()
+    } else if (activeTab.value === 'groups') {
+      await loadGroupMappings()
+      await fetchClasses(newVal)
+    } else if (activeTab.value === 'templates') {
+      await loadTemplates()
+    }
   } else {
     devices.value = []
+    routingRules.value = []
+    templates.value = []
+    groupMappings.value = []
   }
 })
 
