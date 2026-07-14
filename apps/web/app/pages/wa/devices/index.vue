@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { 
   Plus, 
   Smartphone, 
@@ -7,7 +7,11 @@ import {
   AlertTriangle,
   Loader2,
   X,
-  FileText
+  FileText,
+  Bold,
+  Italic,
+  Strikethrough,
+  Code
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
 import { useWaDevices } from '../../../composables/useWaDevices'
@@ -373,6 +377,99 @@ const handleSaveTemplateState = async () => {
   } catch (err: any) {
     toast.error(err.message || 'Gagal menyimpan template pesan.')
   }
+}
+
+const templateBodyRef = ref<HTMLTextAreaElement | null>(null)
+
+const applyFormat = (prefix: string, suffix: string) => {
+  if (!editingTemplate.value || !templateBodyRef.value) return
+  
+  const el = templateBodyRef.value
+  const start = el.selectionStart
+  const end = el.selectionEnd
+  const text = editingTemplate.value.body || ''
+  
+  const before = text.substring(0, start)
+  const selected = text.substring(start, end)
+  const after = text.substring(end)
+  
+  editingTemplate.value.body = before + prefix + selected + suffix + after
+  
+  nextTick(() => {
+    el.focus()
+    el.setSelectionRange(start + prefix.length, end + prefix.length)
+  })
+}
+
+const insertVariable = (variable: string) => {
+  if (!editingTemplate.value || !templateBodyRef.value) return
+  
+  const el = templateBodyRef.value
+  const start = el.selectionStart
+  const end = el.selectionEnd
+  const text = editingTemplate.value.body || ''
+  
+  const before = text.substring(0, start)
+  const after = text.substring(end)
+  
+  editingTemplate.value.body = before + variable + after
+  
+  nextTick(() => {
+    el.focus()
+    el.setSelectionRange(start + variable.length, start + variable.length)
+  })
+}
+
+const templateVariables: Record<string, { var: string, desc: string }[]> = {
+  ppdb_registration: [
+    { var: '{{name}}', desc: 'Nama pendaftar/siswa baru' },
+    { var: '{{registration_number}}', desc: 'Nomor pendaftaran PPDB' },
+    { var: '{{school_name}}', desc: 'Nama sekolah' }
+  ],
+  ppdb_new_applicant_alert: [
+    { var: '{{name}}', desc: 'Nama pendaftar baru' },
+    { var: '{{registration_number}}', desc: 'Nomor pendaftaran' }
+  ],
+  ppdb_announcement: [
+    { var: '{{name}}', desc: 'Nama pendaftar/siswa baru' },
+    { var: '{{registration_number}}', desc: 'Nomor pendaftaran PPDB' },
+    { var: '{{status}}', desc: 'Status kelulusan (Lulus / Tidak Lulus)' },
+    { var: '{{school_name}}', desc: 'Nama sekolah' }
+  ],
+  attendance_alert: [
+    { var: '{{name}}', desc: 'Nama siswa' },
+    { var: '{{class}}', desc: 'Kelas siswa' },
+    { var: '{{date}}', desc: 'Tanggal ketidakhadiran' },
+    { var: '{{status}}', desc: 'Status (Alpa / Izin / Sakit)' },
+    { var: '{{reason}}', desc: 'Keterangan/Alasan (opsional)' }
+  ],
+  billing_invoice: [
+    { var: '{{name}}', desc: 'Nama siswa' },
+    { var: '{{class}}', desc: 'Kelas siswa' },
+    { var: '{{billing_name}}', desc: 'Nama tagihan (misal: SPP Juli)' },
+    { var: '{{amount}}', desc: 'Jumlah nominal tagihan' },
+    { var: '{{due_date}}', desc: 'Tanggal jatuh tempo' }
+  ],
+  billing_receipt: [
+    { var: '{{name}}', desc: 'Nama siswa' },
+    { var: '{{class}}', desc: 'Kelas siswa' },
+    { var: '{{billing_name}}', desc: 'Nama tagihan yang dibayar' },
+    { var: '{{amount}}', desc: 'Jumlah yang dibayarkan' },
+    { var: '{{payment_date}}', desc: 'Tanggal pembayaran' },
+    { var: '{{receipt_number}}', desc: 'Nomor kuitansi' }
+  ],
+  grade_published: [
+    { var: '{{name}}', desc: 'Nama siswa' },
+    { var: '{{class}}', desc: 'Kelas siswa' },
+    { var: '{{semester}}', desc: 'Semester' },
+    { var: '{{academic_year}}', desc: 'Tahun ajaran' },
+    { var: '{{link}}', desc: 'URL link untuk melihat rapor (jika ada)' }
+  ],
+  otp: [
+    { var: '{{name}}', desc: 'Nama pengguna' },
+    { var: '{{otp_code}}', desc: 'Kode OTP 6 digit' },
+    { var: '{{expired_in}}', desc: 'Waktu kadaluarsa (menit)' }
+  ]
 }
 
 // Fetch group list from actual WhatsApp device connection
@@ -861,20 +958,60 @@ watch(activeTab, async (newTab) => {
         <div v-if="editingTemplate" class="space-y-4 py-2">
           <div class="space-y-1">
             <label class="text-xs font-bold text-slate-500">Format Template Pesan</label>
+            
+            <!-- Toolbar Editor -->
+            <div class="flex items-center gap-1 p-1.5 border border-slate-200 dark:border-slate-800 border-b-0 rounded-t-lg bg-slate-100 dark:bg-zinc-900">
+              <button type="button" @click="applyFormat('*', '*')" class="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition-colors" title="Bold">
+                <Bold :size="16" />
+              </button>
+              <button type="button" @click="applyFormat('_', '_')" class="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition-colors" title="Italic">
+                <Italic :size="16" />
+              </button>
+              <button type="button" @click="applyFormat('~', '~')" class="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition-colors" title="Strikethrough">
+                <Strikethrough :size="16" />
+              </button>
+              <button type="button" @click="applyFormat('```', '```')" class="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition-colors" title="Monospace">
+                <Code :size="16" />
+              </button>
+            </div>
+            
             <textarea 
+              ref="templateBodyRef"
               v-model="editingTemplate.body" 
               rows="8"
-              class="w-full text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-800 p-3 bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 leading-relaxed focus:ring-2 focus:ring-violet-500"
+              class="w-full text-xs font-mono rounded-b-lg rounded-t-none border border-slate-200 dark:border-slate-800 p-3 bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 leading-relaxed focus:ring-2 focus:ring-violet-500 outline-none"
               placeholder="Contoh: {Halo|Hai|Selamat pagi} {{name}}, tagihan SPP Anda sebesar {{amount}}..."
             ></textarea>
           </div>
 
-          <div class="p-3 bg-violet-50 dark:bg-violet-950/20 rounded-xl border border-violet-100 dark:border-violet-900/50 space-y-2">
-            <h5 class="text-[10px] font-bold text-violet-700 dark:text-violet-400 uppercase tracking-wider">Panduan Penggunaan Placeholders</h5>
-            <ul class="text-[10px] text-violet-600 dark:text-violet-300 list-disc list-inside space-y-1">
-              <li>Gunakan variabel format double-curly braces untuk mengganti data reaktif (misalnya: <code class="bg-violet-100 dark:bg-violet-900/40 px-1 py-0.5 rounded font-mono text-[9px] font-bold">{{name}}</code> atau <code class="bg-violet-100 dark:bg-violet-900/40 px-1 py-0.5 rounded font-mono text-[9px] font-bold">{{class}}</code>).</li>
-              <li>Gunakan sintaks spin (spintax) agar redaksi pesan berbeda-beda demi menghindari banned WhatsApp: <code class="bg-violet-100 dark:bg-violet-900/40 px-1 py-0.5 rounded font-mono text-[9px] font-bold">{Halo|Hai|Selamat Pagi}</code>.</li>
-            </ul>
+          <div class="p-3 bg-slate-50 dark:bg-zinc-900/50 rounded-xl border border-slate-100 dark:border-zinc-800/80 space-y-3">
+            <h5 class="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex justify-between items-center">
+              <span>Variabel Tersedia untuk {{ notificationTypes.find(t => t.id === editingTemplate.notification_type)?.name }}</span>
+            </h5>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div 
+                v-for="v in templateVariables[editingTemplate.notification_type] || []" 
+                :key="v.var"
+                class="flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-zinc-950 hover:border-violet-300 dark:hover:border-violet-700 transition-colors cursor-pointer group"
+                @click="insertVariable(v.var)"
+                title="Klik untuk memasukkan ke dalam template"
+              >
+                <div class="space-y-0.5 flex-1">
+                  <p class="text-[11px] font-mono font-bold text-violet-600 dark:text-violet-400">{{ v.var }}</p>
+                  <p class="text-[9px] text-slate-500 dark:text-zinc-400 leading-tight">{{ v.desc }}</p>
+                </div>
+                <div class="bg-slate-100 dark:bg-zinc-800 text-slate-400 group-hover:bg-violet-100 dark:group-hover:bg-violet-900/30 group-hover:text-violet-600 dark:group-hover:text-violet-400 p-1 rounded transition-colors">
+                  <Plus :size="14" />
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-2 p-2.5 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/20">
+              <p class="text-[10px] text-blue-700 dark:text-blue-300 leading-relaxed">
+                <span class="font-bold">Tips Spintax:</span> Gunakan format <code class="bg-blue-100 dark:bg-blue-800/40 px-1 py-0.5 rounded font-mono font-bold">{Teks1|Teks2|Teks3}</code> agar variasi salam atau sapaan dipilih secara acak. Ini berguna untuk mencegah nomor diblokir oleh WhatsApp karena dianggap spam massal.
+              </p>
+            </div>
           </div>
 
           <div class="flex justify-end gap-3 pt-4">
