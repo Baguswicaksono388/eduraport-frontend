@@ -109,6 +109,15 @@ export const useSchool = () => {
     return res
   }
 
+  const updateSchool = async (id: string, data: any) => {
+    const res: any = await fetcher(`/management/school/${id}`, {
+      method: 'PUT',
+      body: data
+    })
+    await fetchSchools(data.foundation_id)
+    return res
+  }
+
   const deleteSchool = async (id: string, foundationId: string) => {
     const res = await fetcher(`/management/school/${id}`, {
       method: 'DELETE'
@@ -220,6 +229,7 @@ export const useSchool = () => {
     deleteCurriculumCategory,
     fetchSchools,
     createSchool,
+    updateSchool,
     deleteSchool
   }
 }

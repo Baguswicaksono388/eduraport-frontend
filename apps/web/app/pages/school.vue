@@ -33,12 +33,16 @@ const {
   deleteCurriculumCategory,
   fetchSchools,
   createSchool,
+  updateSchool,
   deleteSchool
 } = useSchool()
 
 const selectedFoundationId = ref('')
 const showFoundationModal = ref(false)
 const showSchoolModal = ref(false)
+const isEditingSchool = ref(false)
+const editingSchoolId = ref('')
+const logoFile = ref<File | null>(null)
 const showCurriculumModal = ref(false)
 const showCategoriesModal = ref(false)
 
@@ -69,8 +73,12 @@ const schoolForm = reactive({
   nsm: '',
   address: '',
   curriculum_id: '',
-  accreditation_status: 'A'
+  accreditation_status: 'A',
+  logo: '',
+  logo_dinas: ''
 })
+
+const logoDinasFile = ref<File | null>(null)
 
 const curriculumForm = reactive({
   name: '',
@@ -255,9 +263,79 @@ const categoryForm = reactive({
   description: ''
 })
 
-const handleCreateSchool = async () => {
+const openCreateSchoolModal = () => {
+  isEditingSchool.value = false
+  editingSchoolId.value = ''
+  Object.assign(schoolForm, {
+    foundation_id: '',
+    name: '',
+    level: 'TK',
+    npsn: '',
+    nsm: '',
+    address: '',
+    curriculum_id: '',
+    accreditation_status: 'A',
+    logo: '',
+    logo_dinas: ''
+  })
+  logoFile.value = null
+  logoDinasFile.value = null
+  showSchoolModal.value = true
+}
+
+const openEditSchoolModal = (school: any) => {
+  isEditingSchool.value = true
+  editingSchoolId.value = school.id
+  Object.assign(schoolForm, {
+    foundation_id: school.foundation_id || '',
+    name: school.name || '',
+    level: school.level || 'TK',
+    npsn: school.npsn || '',
+    nsm: school.nsm || '',
+    address: school.address || '',
+    curriculum_id: school.curriculum_id || '',
+    accreditation_status: school.accreditation_status || 'A',
+    logo: school.logo || '',
+    logo_dinas: school.logo_dinas || ''
+  })
+  logoFile.value = null
+  logoDinasFile.value = null
+  showSchoolModal.value = true
+}
+
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = error => reject(error)
+  })
+}
+
+const handleSaveSchool = async () => {
+  if (logoFile.value) {
+    try {
+      schoolForm.logo = await fileToBase64(logoFile.value)
+    } catch (e) {
+      console.error('Failed to read logo file', e)
+    }
+  }
+  if (logoDinasFile.value) {
+    try {
+      schoolForm.logo_dinas = await fileToBase64(logoDinasFile.value)
+    } catch (e) {
+      console.error('Failed to read logo dinas file', e)
+    }
+  }
+
   schoolForm.foundation_id = selectedFoundationId.value
-  const res = await createSchool({ ...schoolForm })
+  let res
+  if (isEditingSchool.value) {
+    res = await updateSchool(editingSchoolId.value, { ...schoolForm })
+  } else {
+    res = await createSchool({ ...schoolForm })
+  }
+
   if (res.success) {
     showSchoolModal.value = false
     Object.assign(schoolForm, {
@@ -268,8 +346,12 @@ const handleCreateSchool = async () => {
       nsm: '',
       address: '',
       curriculum_id: '',
-      accreditation_status: 'A'
+      accreditation_status: 'A',
+      logo: '',
+      logo_dinas: ''
     })
+    logoFile.value = null
+    logoDinasFile.value = null
   }
 }
 
@@ -301,7 +383,7 @@ const handleDeleteSchool = async (id: string) => {
         <BaseButton variant="outline" @click="openCreateFoundationModal" class="py-2.5 px-4 text-xs font-bold">
           <Plus class="mr-1.5" :size="14" /> Yayasan Baru
         </BaseButton>
-        <BaseButton variant="primary" @click="showSchoolModal = true" :disabled="!selectedFoundationId" class="py-2.5 px-4 text-xs font-bold">
+        <BaseButton variant="primary" @click="openCreateSchoolModal" :disabled="!selectedFoundationId" class="py-2.5 px-4 text-xs font-bold">
           <Plus class="mr-1.5" :size="14" /> Unit Sekolah Baru
         </BaseButton>
       </div>
@@ -450,12 +532,20 @@ const handleDeleteSchool = async (id: string) => {
                     <p class="text-[10px] text-slate-400 dark:text-zinc-500 font-medium">NPSN: {{ school.npsn || '-' }} • Akreditasi: {{ school.accreditation_status || '-' }}</p>
                   </div>
                 </div>
-                <button
-                  @click="handleDeleteSchool(school.id)"
-                  class="p-1.5 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Trash2 :size="16" />
-                </button>
+                <div class="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    @click="openEditSchoolModal(school)"
+                    class="p-1.5 text-slate-300 hover:text-violet-500 transition-colors"
+                  >
+                    <Edit2 :size="16" />
+                  </button>
+                  <button
+                    @click="handleDeleteSchool(school.id)"
+                    class="p-1.5 text-slate-300 hover:text-rose-500 transition-colors"
+                  >
+                    <Trash2 :size="16" />
+                  </button>
+                </div>
               </div>
             </BaseCard>
 
@@ -487,9 +577,25 @@ const handleDeleteSchool = async (id: string) => {
     </BaseModal>
 
     <!-- School Modal -->
-    <BaseModal :show="showSchoolModal" title="Tambah Unit Sekolah Baru" @close="showSchoolModal = false">
-      <form @submit.prevent="handleCreateSchool" class="space-y-4">
+    <BaseModal :show="showSchoolModal" :title="isEditingSchool ? 'Edit Unit Sekolah' : 'Tambah Unit Sekolah Baru'" @close="showSchoolModal = false">
+      <form @submit.prevent="handleSaveSchool" class="space-y-4">
         <BaseInput v-model="schoolForm.name" label="Nama Sekolah" placeholder="TK Al-Falah Jakarta" required />
+        <div class="grid grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1.5 w-full">
+            <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Logo Sekolah (Opsional)</label>
+            <div v-if="schoolForm.logo" class="w-16 h-16 rounded overflow-hidden border mb-2">
+              <img :src="schoolForm.logo" class="w-full h-full object-cover" />
+            </div>
+            <input type="file" accept="image/*" @change="(e) => logoFile = (e.target as HTMLInputElement).files?.[0] || null" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-1.5 text-xs font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" />
+          </div>
+          <div class="flex flex-col gap-1.5 w-full">
+            <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Logo Dinas/Yayasan (Opsional)</label>
+            <div v-if="schoolForm.logo_dinas" class="w-16 h-16 rounded overflow-hidden border mb-2">
+              <img :src="schoolForm.logo_dinas" class="w-full h-full object-cover" />
+            </div>
+            <input type="file" accept="image/*" @change="(e) => logoDinasFile = (e.target as HTMLInputElement).files?.[0] || null" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-1.5 text-xs font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" />
+          </div>
+        </div>
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Jenjang</label>
           <select v-model="schoolForm.level" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10">

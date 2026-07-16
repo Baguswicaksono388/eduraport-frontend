@@ -1,0 +1,195 @@
+/* ============================================================
+   Report Builder – Shared CSS for Widget Renderer
+   Used in: report/template.vue (preview) & report/[id].vue (print)
+   ============================================================ */
+
+/* --- Google Fonts --- */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap');
+
+/* --- Base Report Container --- */
+.rp {
+  font-family: 'Source Serif 4', serif;
+  color: #1a1a1a;
+  font-size: 11px;
+  line-height: 1.5;
+  --rp-border: #555;
+  --rp-th-bg: #e8e8e8;
+  --rp-text: #1a1a1a;
+  --rp-muted: #555;
+}
+
+/* === DARK MODE OVERRIDES === */
+.dark .rp,
+.dark-report .rp {
+  color: #e8e8e8;
+  --rp-border: #4a4a5a;
+  --rp-th-bg: #2a2a3a;
+  --rp-text: #e8e8e8;
+  --rp-muted: #9ca3af;
+}
+
+/* --- Header --- */
+.rp-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  border-bottom: 2.5px solid var(--rp-text, #1a1a1a);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+.rp-header .badge {
+  width: 56px;
+  height: 56px;
+  border: 1.5px solid var(--rp-border, #555);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  font-size: 9px;
+  text-align: center;
+  flex: none;
+  color: var(--rp-muted, #555);
+}
+.rp-header .tt { flex: 1; text-align: center; }
+.rp-header .tt .l1 { font-weight: 600; font-size: 11px; letter-spacing: 1px; }
+.rp-header .tt .l2 { font-weight: 800; font-size: 15px; letter-spacing: 0.5px; }
+.rp-header .tt .l3 { font-size: 9.5px; color: var(--rp-muted, #555); }
+
+/* --- Section Title --- */
+.rp-sec-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  border-left: 4px solid var(--rp-text, #1a1a1a);
+  padding-left: 8px;
+  margin: 8px 0 4px;
+}
+
+/* --- Tables --- */
+.rp table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10.5px;
+}
+.rp th, .rp td {
+  border: 1px solid var(--rp-border, #555);
+  padding: 4px 7px;
+  text-align: left;
+  vertical-align: top;
+}
+.rp th {
+  background: var(--rp-th-bg, #e8e8e8);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--rp-text, #1a1a1a);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.dark .rp th { color: #e8e8e8; }
+
+/* --- Student Identity grid --- */
+.rp-ident {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 24px;
+  font-size: 10.5px;
+  margin: 8px 0;
+}
+.rp-ident div { display: flex; gap: 4px; }
+.rp-ident .k { width: 140px; flex: none; color: var(--rp-muted, #555); }
+
+/* --- Narrative block --- */
+.rp-narr {
+  border: 1px solid var(--rp-border, #555);
+  padding: 7px 9px;
+  font-size: 10.5px;
+  margin: 4px 0;
+}
+.rp-narr .nt {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700;
+  font-size: 10px;
+  margin-bottom: 3px;
+  color: var(--rp-text, #1a1a1a);
+}
+
+/* --- Signature block --- */
+.rp-sign {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  font-size: 10.5px;
+  margin-top: 24px;
+}
+.rp-sign-row {
+  display: flex;
+  justify-content: space-between;
+  text-align: center;
+}
+.rp-sign-row .slot { width: 220px; }
+.rp-sign-center { text-align: center; }
+.rp-sign .slot { padding-top: 4px; }
+.rp-sign .line {
+  margin-top: 52px;
+  border-top: 1px solid var(--rp-border, #555);
+  padding-top: 3px;
+  font-weight: 700;
+}
+
+/* --- Photo placeholder --- */
+.rp-photo {
+  width: 85px;
+  height: 110px;
+  border: 1px solid var(--rp-border, #555);
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  color: var(--rp-muted, #888);
+  text-align: center;
+}
+
+/* --- Column layout --- */
+.rp-cols { display: grid; gap: 10px; }
+
+/* --- Page break indicator (screen only) --- */
+.rp-pb {
+  border-top: 2px dashed #b3432b;
+  position: relative;
+  margin: 12px 0;
+}
+.rp-pb::after {
+  content: 'PEMISAH HALAMAN';
+  position: absolute;
+  right: 0;
+  top: -9px;
+  background: #fff;
+  color: #b3432b;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 0 4px;
+}
+.dark .rp-pb::after { background: #18181b; }
+
+/* --- Padding helper --- */
+.rp .pad { padding: 6px 4px; }
+
+/* ============================================================
+   PRINT MODE – force white/black for all report content
+   ============================================================ */
+@media print {
+  .rp { color: #1a1a1a !important; --rp-border: #444 !important; --rp-th-bg: #e8e8e8 !important; --rp-text: #1a1a1a !important; }
+  .rp th { background: #e8e8e8 !important; color: #1a1a1a !important; }
+  .rp th, .rp td { border-color: #444 !important; color: #1a1a1a !important; }
+  .rp-sec-title { border-left-color: #1a1a1a !important; color: #1a1a1a !important; }
+  .rp-header { border-bottom-color: #1a1a1a !important; }
+  .rp-sign .line { border-top-color: #1a1a1a !important; }
+  .rp-pb::after { background: white !important; }
+}

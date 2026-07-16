@@ -45,9 +45,35 @@ const filteredSchools = computed(() => {
 })
 
 const isTKSchool = computed(() => {
-  const school = schools.value.find(s => s.id === selectedSchoolId.value)
+  const school = filteredSchools.value.find((s: any) => s.id === selectedSchoolId.value)
   return school?.level === 'TK'
 })
+
+const needsSync = computed(() => {
+  if (!isTKSchool.value || !selectedTemplateId.value || !tkReportsList.value.length) return false
+  const template = reportTemplates.value.find(t => t.id === selectedTemplateId.value)
+  if (!template || !template.updated_at) return false
+  
+  const templateDate = new Date(template.updated_at).getTime()
+  // Check if any report is older than the template
+  return tkReportsList.value.some(r => {
+    if (!r.report_id) return false
+    const reportDate = new Date(r.updated_at || r.created_at).getTime()
+    return templateDate > reportDate
+  })
+})
+
+const isTemplateModified = computed(() => {
+  if (!activeTKReport.value || (!activeTKReport.value.updated_at && !activeTKReport.value.created_at)) return false
+  const activeTemplate = reportTemplates.value.find((t: any) => t.id === selectedTemplateId.value)
+  if (!activeTemplate || !activeTemplate.updated_at) return false
+
+  const reportTime = new Date(activeTKReport.value.updated_at || activeTKReport.value.created_at).getTime()
+  const templateTime = new Date(activeTemplate.updated_at).getTime()
+  
+  return templateTime > reportTime
+})
+
 const { reportTemplates, fetchReportTemplates } = useReportTemplate()
 const selectedTemplateId = ref('')
 const tkReportsList = ref<any[]>([])
@@ -881,6 +907,16 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
 
       <!-- Right side: TK assessments form -->
       <div class="lg:col-span-2 space-y-6">
+        
+        <!-- WARNING SYNC -->
+        <div v-if="needsSync" class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 flex items-start gap-3">
+          <AlertCircle class="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+          <div>
+            <h4 class="text-sm font-bold text-amber-800 dark:text-amber-500">Perhatian: Template Telah Diperbarui</h4>
+            <p class="text-xs text-amber-700 dark:text-amber-400 mt-1">Template rapor telah diubah di Visual Builder sejak Anda terakhir kali menggenerate rapor kelas ini. Untuk menyesuaikan struktur nilai, mohon tekan tombol <b>Generate Rapor</b> kembali.</p>
+          </div>
+        </div>
+
         <div v-if="loadingTKAssessments" class="py-20 text-center text-slate-400 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm">
           <div class="w-8 h-8 rounded-full border-2 border-violet-600 border-t-transparent animate-spin mx-auto mb-3"></div>
           <p class="text-xs font-semibold">Memuat elemen penilaian...</p>
@@ -911,6 +947,14 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
             >
               <Save class="mr-1.5" :size="14" /> {{ savingTKAssessments ? 'Menyimpan...' : 'Simpan Penilaian' }}
             </BaseButton>
+          </div>
+
+          <div v-if="isTemplateModified" class="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 px-4 py-3 rounded-xl flex items-start gap-3">
+            <AlertCircle :size="18" class="mt-0.5 shrink-0" />
+            <div>
+              <p class="font-bold text-xs mb-1">Perhatian: Template Raport Telah Diubah</p>
+              <p class="text-[10px] leading-relaxed">Terdeteksi adanya perubahan pada struktur template di halaman Visual Builder sejak draft raport ini dibuat. Jika ada form penilaian yang tidak muncul, silakan klik tombol <strong class="text-amber-900 dark:text-amber-100">Buat Draft Rapor Kelas</strong> (di menu kiri bawah) ulang untuk menyinkronkan daftar indikator dengan template terbaru.</p>
+            </div>
           </div>
 
           <div class="space-y-5 max-h-[60vh] overflow-y-auto pr-1">

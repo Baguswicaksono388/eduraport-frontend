@@ -2,8 +2,9 @@
 import { Printer, X, ShieldAlert, FileText, CheckCircle } from 'lucide-vue-next'
 import { useSchool } from '../../composables/useSchool'
 import { useReport } from '../../composables/useReport'
-import { useToast } from '../../composables/useToast'
 import { useReportTemplate } from '../../composables/useReportTemplate'
+import { useReportRenderer } from '../../composables/useReportRenderer'
+import '~/assets/css/report-builder.css'
 
 // Disable Nuxt layout for printing
 definePageMeta({
@@ -24,6 +25,7 @@ const { currentSchoolId, p5Dimensions } = useSchool()
 const { fetchReportDetail } = useReport()
 const { reportTemplates, fetchReportTemplates } = useReportTemplate()
 const toast = useToast()
+const { renderWidgetHTML } = useReportRenderer()
 
 const reportId = route.params.id as string
 const reportData = ref<any>(null)
@@ -93,6 +95,60 @@ const loadReportDetail = async () => {
     loading.value = false
   }
 }
+
+const visualTree = computed(() => {
+  let tree = reportData.value?.template?.widget_tree
+  // Recursively parse in case of double stringification
+  while (typeof tree === 'string') {
+    try { tree = JSON.parse(tree) } catch(e) { tree = []; break }
+  }
+  console.log('[DEBUG] visualTree parsed widget_tree:', tree)
+  
+  if (Array.isArray(tree) && tree.length > 0) {
+    return tree
+  }
+
+  // Fallback: Auto-migrate from element_structure if widget_tree is empty
+  const elStruct = reportData.value?.template?.element_structure
+  let parsedElStruct = elStruct
+  if (typeof elStruct === 'string') {
+    try { parsedElStruct = JSON.parse(elStruct) } catch (e) { parsedElStruct = null }
+  }
+
+  if (parsedElStruct && parsedElStruct.tk_sections) {
+    const newTree = []
+    newTree.push({ id: 'w_header', type: 'header_school', props: { showNpsn: true, showAddress: true } })
+    newTree.push({ id: 'w_ident', type: 'student_identity', props: { showNisn: true, showWali: true } })
+    newTree.push({ id: 'w_pb1', type: 'page_break', props: {} })
+    
+    const descItems = []
+    for (const sec of parsedElStruct.tk_sections) {
+      const subs = sec.elements?.map((el: any) => ({ label: el.name, ref_id: el.id })) || []
+      descItems.push({ name: sec.name, label: sec.name, subs })
+    }
+    if (descItems.length > 0) {
+      newTree.push({
+        id: 'w_desc',
+        type: 'desc_table',
+        props: {
+          scale: "BB/MB/BSH/BSB",
+          hasSub: true,
+          showNarasi: false,
+          perSub: true,
+          items: descItems,
+          cols: [
+            {k:"no",label:"No",on:true},
+            {k:"name",label:"Elemen Capaian",on:true},
+            {k:"val",label:"Capaian",on:true}
+          ]
+        }
+      })
+    }
+    return newTree
+  }
+
+  return []
+})
 
 onMounted(async () => {
   await loadReportDetail()
@@ -395,516 +451,109 @@ const formatDate = (dateStr: any) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-100 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100 p-0 sm:p-6 print:p-0 print:bg-white print:text-black">
-    <!-- Floating Toolbar (Hidden during Print) -->
-    <div class="max-w-4xl mx-auto mb-6 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 shadow-md flex justify-between items-center print:hidden">
-      <div class="flex items-center gap-2">
-        <FileText class="text-violet-600" :size="20" />
-        <div>
-          <h1 class="text-sm font-bold text-slate-900 dark:text-zinc-100">Pratinjau Rapor Digital</h1>
-          <p class="text-[10px] text-slate-500">Gunakan tombol print untuk mencetak rapor resmi A4.</p>
+  <div class="min-h-screen bg-zinc-200 dark:bg-[#0d0d11] print:bg-white py-6 sm:py-10 print:py-0">
+
+    <!-- ══ Unified Card: Toolbar + Paper Canvas ══ -->
+    <div class="max-w-[21cm] mx-auto print:mx-0">
+
+      <!-- Toolbar bar — slim bar above paper -->
+      <div class="bg-white dark:bg-[#1c1c28] border border-slate-200 dark:border-zinc-800 rounded-t-xl px-4 py-2.5 flex flex-wrap justify-between items-center gap-3 print:hidden">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-violet-600/10 dark:bg-violet-500/15 flex items-center justify-center flex-none">
+            <FileText class="text-violet-600 dark:text-violet-400" :size="16" />
+          </div>
+          <div>
+            <h1 class="text-xs font-bold text-slate-900 dark:text-zinc-100">Pratinjau Rapor Digital</h1>
+            <p class="text-[10px] text-slate-400 dark:text-zinc-500">Tekan tombol print untuk mencetak rapor resmi A4.</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center">
+          <!-- Dual format toggle for TK level only -->
+          <div v-if="reportData?.student?.school_level === 'TK'" class="flex bg-slate-100 dark:bg-zinc-800 rounded-lg p-0.5 border border-slate-200 dark:border-zinc-700 print:hidden">
+            <button 
+              @click="selectedTKFormat = 'dinas'" 
+              :class="[
+                'px-3 py-1 text-[11px] font-bold rounded-md transition-all',
+                selectedTKFormat === 'dinas' 
+                  ? 'bg-white dark:bg-zinc-700 text-violet-600 dark:text-violet-400 shadow-sm' 
+                  : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'
+              ]"
+            >
+              Format Dinas
+            </button>
+            <button 
+              @click="selectedTKFormat = 'intra'" 
+              :class="[
+                'px-3 py-1 text-[11px] font-bold rounded-md transition-all',
+                selectedTKFormat === 'intra' 
+                  ? 'bg-white dark:bg-zinc-700 text-violet-600 dark:text-violet-400 shadow-sm' 
+                  : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'
+              ]"
+            >
+              Format Sekolah (Intra)
+            </button>
+          </div>
+
+          <!-- Template Selection Dropdown -->
+          <div v-if="reportTemplates && reportTemplates.length > 0" class="flex items-center gap-1.5 print:hidden">
+            <label class="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Template:</label>
+            <select 
+              v-model="selectedTemplateId" 
+              class="bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-xs font-semibold outline-none transition-all focus:border-violet-500 dark:text-zinc-200 text-slate-700"
+            >
+              <option v-for="tpl in reportTemplates" :key="tpl.id" :value="tpl.id">
+                {{ tpl.name }} {{ tpl.is_active ? '(Aktif)' : '' }}
+              </option>
+            </select>
+          </div>
+          <button @click="handlePrint" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-violet-600 hover:bg-violet-500 text-white text-[11px] font-bold rounded-lg transition-all shadow-sm active:scale-95">
+            <Printer :size="13" /> Cetak
+          </button>
+          <button @click="handleClose" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 text-[11px] font-bold rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all active:scale-95">
+            <X :size="13" /> Tutup
+          </button>
         </div>
       </div>
-      <div class="flex gap-2 items-center">
-        <!-- Dual format toggle for TK level only -->
-        <div v-if="reportData?.student?.school_level === 'TK'" class="flex bg-slate-100 dark:bg-zinc-800 rounded-lg p-0.5 border border-slate-200/60 dark:border-zinc-700 mr-2 print:hidden">
-          <button 
-            @click="selectedTKFormat = 'dinas'" 
-            :class="[
-              'px-3 py-1.5 text-[11px] font-bold rounded-md transition-all',
-              selectedTKFormat === 'dinas' 
-                ? 'bg-white dark:bg-zinc-900 text-violet-600 dark:text-violet-400 shadow-sm' 
-                : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
-            ]"
-          >
-            Format Dinas
-          </button>
-          <button 
-            @click="selectedTKFormat = 'intra'" 
-            :class="[
-              'px-3 py-1.5 text-[11px] font-bold rounded-md transition-all',
-              selectedTKFormat === 'intra' 
-                ? 'bg-white dark:bg-zinc-900 text-violet-600 dark:text-violet-400 shadow-sm' 
-                : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
-            ]"
-          >
-            Format Sekolah (Intra)
-          </button>
-        </div>
 
-        <!-- Template Selection Dropdown -->
-        <div v-if="reportTemplates && reportTemplates.length > 0" class="flex items-center gap-1.5 mr-2 print:hidden">
-          <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest pl-1">Template:</label>
-          <select 
-            v-model="selectedTemplateId" 
-            class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold outline-none transition-all focus:border-violet-600"
-          >
-            <option v-for="tpl in reportTemplates" :key="tpl.id" :value="tpl.id">
-              {{ tpl.name }} {{ tpl.is_active ? '(Aktif)' : '' }}
-            </option>
-          </select>
-        </div>
-        <button @click="handlePrint" class="inline-flex items-center gap-1.5 px-4 py-2 bg-violet-600 text-white text-xs font-bold rounded-lg hover:bg-violet-750 transition-colors shadow-lg shadow-violet-600/10">
-          <Printer :size="14" /> Cetak Rapor
-        </button>
-        <button @click="handleClose" class="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-bold rounded-lg hover:bg-slate-200 transition-colors">
-          <X :size="14" /> Tutup
-        </button>
+      <!-- Loading state -->
+      <div v-if="loading" class="flex flex-col items-center justify-center py-32 bg-white dark:bg-[#1c1c28]">
+        <div class="w-8 h-8 rounded-full border-2 border-violet-600 border-t-transparent animate-spin mb-4"></div>
+        <p class="text-xs font-semibold text-slate-500">Memuat berkas rapor...</p>
       </div>
-    </div>
 
-    <!-- Main Report Container -->
-    <div v-if="loading" class="flex flex-col items-center justify-center py-32">
-      <div class="w-8 h-8 rounded-full border-2 border-violet-600 border-t-transparent animate-spin mb-4"></div>
-      <p class="text-xs font-semibold text-slate-500">Memuat berkas rapor...</p>
-    </div>
+      <!-- Not found state -->
+      <div v-else-if="!reportData" class="flex flex-col items-center justify-center py-20 bg-white dark:bg-[#1c1c28]">
+        <ShieldAlert class="text-rose-500 mb-3" :size="40" />
+        <h2 class="font-bold text-slate-800 dark:text-zinc-200 text-sm">Rapor Tidak Ditemukan</h2>
+        <p class="text-xs text-slate-400 mt-1 mb-6">Pastikan ID Rapor dan Unit Sekolah aktif Anda sesuai.</p>
+        <button @click="handleClose" class="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg">Kembali</button>
+      </div>
 
-    <div v-else-if="!reportData" class="max-w-md mx-auto text-center py-20 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm">
-      <ShieldAlert class="mx-auto text-rose-500 mb-3" :size="40" />
-      <h2 class="font-bold text-slate-800 dark:text-zinc-200 text-sm">Rapor Tidak Ditemukan</h2>
-      <p class="text-xs text-slate-400 mt-1 mb-6">Pastikan ID Rapor dan Unit Sekolah aktif Anda sesuai.</p>
-      <button @click="handleClose" class="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg">Kembali</button>
-    </div>
-
-    <!-- Dynamic Template-Driven Preview/Print Renderer -->
-    <div 
-      v-else-if="reportData.template?.widget_tree && Array.isArray(reportData.template.widget_tree) && reportData.template.widget_tree.length > 0"
-      class="max-w-4xl mx-auto bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 rounded-none sm:rounded-2xl p-8 sm:p-12 print:p-[20mm_20mm] print:border-none print:shadow-none print:bg-white print:text-black shadow-sm space-y-6 print-sheet-canvas"
-    >
+      <!-- Dynamic Template-Driven Renderer -->
       <div 
-        v-for="w in reportData.template.widget_tree" 
-        :key="w.id"
-        class="text-left font-serif text-black dark:text-zinc-150 print:text-black"
+        v-else-if="visualTree.length > 0"
+        class="report-paper print:shadow-none print:rounded-none"
+        :style="{
+          minHeight: reportData.template?.canvas_config?.orient === 'landscape' ? '21cm' : '29.7cm',
+          padding: `${reportData.template?.canvas_config?.margin || 15}mm`,
+          boxSizing: 'border-box',
+        }"
       >
-        <!-- 1. header_school -->
-        <div v-if="w.type === 'header_school'" class="text-center border-b-4 border-double border-slate-900 dark:border-zinc-700 pb-3">
-          <h2 class="text-md font-extrabold uppercase leading-tight tracking-wider">YAYASAN TURSINA SHALAWAT</h2>
-          <h1 class="text-lg font-black uppercase leading-tight mt-0.5 tracking-widest text-violet-750 dark:text-violet-400">{{ reportData.student.school_name?.toUpperCase() }}</h1>
-          <p v-if="w.props.showAddress" class="text-[9px] text-slate-600 dark:text-zinc-400 leading-normal mt-1 italic">
-            {{ reportData.student.school_address }}
-          </p>
-          <p v-if="w.props.showNpsn" class="text-[8px] font-mono text-slate-500 font-bold mt-0.5">NPSN: {{ reportData.student.school_npsn }}</p>
-        </div>
-
-        <!-- 2. student_identity -->
-        <div v-else-if="w.type === 'student_identity'" class="grid grid-cols-2 gap-x-8 gap-y-1 text-[10px]">
-          <div class="flex"><span class="w-24 shrink-0 font-bold uppercase">Nama Peserta Didik</span><span class="mr-2">:</span><span class="font-semibold">{{ reportData.student.full_name }}</span></div>
-          <div class="flex"><span class="w-24 shrink-0 font-bold uppercase">Kelas / Fase</span><span class="mr-2">:</span><span>{{ reportData.student.class_name }} / {{ reportData.student.school_level === 'TK' ? 'Fondasi' : 'Merdeka' }}</span></div>
-          <div v-if="w.props.showNisn" class="flex"><span class="w-24 shrink-0 font-bold uppercase">Nomor Induk / NISN</span><span class="mr-2">:</span><span class="font-mono">{{ reportData.student.student_number || '-' }} / {{ reportData.student.national_student_number || '-' }}</span></div>
-          <div class="flex"><span class="w-24 shrink-0 font-bold uppercase">Semester</span><span class="mr-2">:</span><span>{{ reportData.report.semester === 'odd' ? '1 (Ganjil)' : '2 (Genap)' }}</span></div>
-          <div class="flex"><span class="w-24 shrink-0 font-bold uppercase">Tahun Ajaran</span><span class="mr-2">:</span><span class="font-mono">{{ reportData.report.academic_year_name }}</span></div>
-          <div v-if="w.props.showWali" class="flex"><span class="w-24 shrink-0 font-bold uppercase">Nama Orang Tua / Wali</span><span class="mr-2">:</span><span>{{ reportData.student.guardian_name || '-' }}</span></div>
-        </div>
-
-        <!-- 3. section_block -->
-        <div v-else-if="w.type === 'section_block'" class="py-1">
-          <h3 class="text-[11px] font-black uppercase tracking-wider text-slate-900 dark:text-zinc-200">{{ w.props.title || 'SEKSI PROGRAM' }}</h3>
-        </div>
-
-        <!-- 4. page_break -->
-        <div v-else-if="w.type === 'page_break'" class="print:break-after-page page-break py-4 print:py-0 border-t border-dashed border-rose-500 print:border-none relative">
-          <span class="absolute -top-2.5 right-4 bg-white dark:bg-zinc-900 text-rose-500 text-[8px] font-black tracking-widest px-2 uppercase print:hidden">Batas Halaman Cetak</span>
-        </div>
-
-        <!-- 5. grade_table -->
-        <div v-else-if="w.type === 'grade_table'" class="space-y-3">
-          <table class="w-full text-left border-collapse border border-slate-800 dark:border-zinc-700 text-[10px]">
-            <thead>
-              <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-800 dark:border-zinc-700 font-bold text-[9px] uppercase">
-                <th v-for="col in w.props.cols.filter(c => c.visible)" :key="col.key" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center">
-                  {{ col.label }}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <template v-for="(row, idx) in getGradeTableRows(w.props.items)" :key="idx">
-                <!-- Group Header Row -->
-                <tr v-if="row.type === 'group'" class="bg-slate-100/60 dark:bg-zinc-800/40 border-b border-slate-800 dark:border-zinc-700 font-bold">
-                  <td :colspan="w.props.cols.filter(c => c.visible).length" class="p-2 pl-3 uppercase tracking-wider text-[9px] text-slate-800 dark:text-zinc-200 font-black">
-                    {{ row.label }}
-                  </td>
-                </tr>
-                
-                <!-- Normal Subject Row -->
-                <tr v-else class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
-                  <td v-if="w.props.cols.some(c => c.key === 'no' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-bold">{{ row.no }}</td>
-                  <td v-if="w.props.cols.some(c => c.key === 'name' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-semibold" :class="{ 'pl-4': w.props.items.some(it => it.custom && it.subs && it.subs.length > 0) }">{{ row.label }}</td>
-                  <td v-if="w.props.cols.some(c => c.key === 'kkm' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-mono" :class="{ 'bg-amber-50/10 dark:bg-zinc-850': w.props.highlightKkm }">
-                    {{ getRealSubjectGrade(row.label)?.kkm_score || w.props.kkm || 70 }}
-                  </td>
-                  <td v-if="w.props.cols.some(c => c.key === 'val' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-mono font-bold" :class="{ 'text-rose-600 bg-rose-50/20': w.props.highlightKkm && Number(getRealSubjectGrade(row.label)?.final_score) < Number(getRealSubjectGrade(row.label)?.kkm_score || 70) }">
-                    {{ getRealSubjectGrade(row.label)?.final_score || '-' }}
-                  </td>
-                  <td v-if="w.props.cols.some(c => c.key === 'pred' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-bold">
-                    {{ getRealSubjectGrade(row.label)?.predicate || '-' }}
-                  </td>
-                  <td v-if="w.props.cols.some(c => c.key === 'desc' && c.visible)" class="p-1.5 text-[9px] text-justify italic leading-relaxed text-slate-700 dark:text-zinc-400">
-                    {{ getRealSubjectGrade(row.label)?.achievement_description || 'Belum ada deskripsi capaian kompetensi.' }}
-                  </td>
-                </tr>
-              </template>
-              <tr v-if="w.props.items.length === 0">
-                <td :colspan="w.props.cols.filter(c => c.visible).length" class="p-6 text-center text-slate-400 italic">
-                  Tidak ada mata pelajaran terpilih.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- 6. desc_table -->
-        <div v-else-if="w.type === 'desc_table'" class="space-y-4">
-          <!-- Format B: List Langsung / Flattened -->
-          <table v-if="!w.props.hasSub" class="w-full text-left border-collapse border border-slate-800 dark:border-zinc-700 text-[10px]">
-            <thead>
-              <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-800 dark:border-zinc-700 font-bold text-[9px] uppercase">
-                <th v-for="col in w.props.cols.filter(c => c.visible)" :key="col.key" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center">
-                  {{ col.label }}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <template v-if="w.props.items.some(it => it.subs && it.subs.length > 0)">
-                <tr v-for="(subRow, sIdx) in getDescTableFlattenedRows(w.props.items)" :key="sIdx" class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
-                  <td v-if="w.props.cols.some(c => c.key === 'no' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-bold">{{ sIdx + 1 }}.</td>
-                  <td v-if="w.props.cols.some(c => c.key === 'name' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 pl-2 leading-relaxed">
-                    {{ subRow.subLabel }}
-                    <span class="text-[8px] font-bold text-slate-450 block font-sans">Elemen: {{ subRow.parentLabel }}</span>
-                  </td>
-                  <td v-if="w.props.cols.some(c => c.key === 'val' && c.visible)" class="p-1.5 text-center font-bold text-violet-750 dark:text-violet-400">
-                    {{ subRow.grade }}
-                  </td>
-                </tr>
-              </template>
-              
-              <template v-else-if="w.props.items.length > 0">
-                <tr v-for="(it, idx) in w.props.items" :key="idx" class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
-                  <td v-if="w.props.cols.some(c => c.key === 'no' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-bold">{{ idx + 1 }}.</td>
-                  <td v-if="w.props.cols.some(c => c.key === 'name' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 pl-2 leading-relaxed font-bold">{{ it.label || it.name }}</td>
-                  <td v-if="w.props.cols.some(c => c.key === 'val' && c.visible)" class="p-1.5 text-center font-bold text-violet-750 dark:text-violet-400">
-                    {{ getRealDescTableAssessment(it.label || it.name)?.letter_grade || getRealDescTableAssessment(it.label || it.name)?.predicate || '-' }}
-                  </td>
-                </tr>
-              </template>
-              
-              <tr v-else>
-                <td :colspan="w.props.cols.filter(c => c.visible).length" class="p-6 text-center text-slate-400 italic">
-                  Belum ada aspek capaian terpilih.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          <!-- Format A / Format C: Terkelompok / Grouped -->
-          <div v-else v-for="(it, index) in w.props.items" :key="index" class="space-y-2">
-            <div class="text-[10px] font-black uppercase text-slate-900 dark:text-zinc-200 flex justify-between bg-slate-50 dark:bg-zinc-800 p-1 border-b border-slate-200 dark:border-zinc-700">
-              <span>{{ it.label || it.name }}</span>
-              <span v-if="!w.props.perSub && w.props.cols.some(c => c.key === 'val' && c.visible)" class="text-violet-750 dark:text-violet-400 uppercase text-[9px] font-bold font-sans">
-                {{ getRealDescTableAssessment(it.label || it.name)?.letter_grade || getRealDescTableAssessment(it.label || it.name)?.predicate || '-' }}
-              </span>
-            </div>
-            
-            <table v-if="it.subs && it.subs.length > 0" class="w-full text-left border-collapse border border-slate-800 dark:border-zinc-700 text-[10px]">
-              <thead>
-                <tr class="bg-slate-50/50 dark:bg-zinc-800/40 border-b border-slate-800 dark:border-zinc-700 font-bold text-[8px] uppercase">
-                  <th v-for="col in w.props.cols.filter(c => c.visible)" :key="col.key" class="p-1 border-r border-slate-800 dark:border-zinc-700 text-center">
-                    {{ col.label }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(sub, sIdx) in it.subs" :key="sIdx" class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
-                  <td v-if="w.props.cols.some(c => c.key === 'no' && c.visible)" class="p-1 border-r border-slate-800 dark:border-zinc-700 text-center font-bold">{{ sIdx + 1 }}.</td>
-                  <td v-if="w.props.cols.some(c => c.key === 'name' && c.visible)" class="p-1 border-r border-slate-800 dark:border-zinc-700 pl-2 leading-relaxed text-slate-700 dark:text-zinc-400">{{ sub.label || sub.name }}</td>
-                  <td v-if="w.props.cols.some(c => c.key === 'val' && c.visible)" class="p-1 text-center font-bold text-violet-750 dark:text-violet-400" :class="{ 'text-slate-350 bg-slate-50 dark:bg-zinc-800': !w.props.perSub }">
-                    {{ w.props.perSub ? (getRealDescTableAssessment(sub.label || sub.name)?.letter_grade || getRealDescTableAssessment(sub.label || sub.name)?.predicate || '-') : '-' }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-
-            <div v-if="w.props.showNarasi" class="text-[9px] text-justify leading-relaxed p-2 bg-slate-50/60 dark:bg-zinc-850 border border-slate-200 dark:border-zinc-850 rounded italic text-slate-750 dark:text-zinc-350">
-              <strong>Narasi Capaian |</strong> {{ getRealDescTableAssessment(it.label || it.name)?.narrative || 'Belum ada narasi pencapaian.' }}
-            </div>
-          </div>
-        </div>
-
-        <!-- 7. subject_narrative -->
-        <div v-else-if="w.type === 'subject_narrative'" class="space-y-4 text-[10px] text-justify leading-relaxed">
-          <div v-for="(it, index) in w.props.items" :key="index" class="p-3 border border-slate-800 dark:border-zinc-700 rounded bg-slate-50/20">
-            <strong class="text-[11px] uppercase block mb-1 border-b border-slate-200 dark:border-zinc-750 pb-0.5">{{ it.label || it.name }}</strong>
-            {{ getRealDescTableAssessment(it.label || it.name)?.narrative || 'Belum ada narasi pencapaian.' }}
-          </div>
-        </div>
-
-        <!-- 8. extracurricular -->
-        <div v-else-if="w.type === 'extracurricular'">
-          <table class="w-full text-left border-collapse border border-slate-800 dark:border-zinc-750 text-[10px]">
-            <thead>
-              <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-800 dark:border-zinc-700 font-bold text-[9px] uppercase">
-                <th v-for="col in w.props.cols.filter(c => c.visible)" :key="col.key" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center">
-                  {{ col.label }}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(ex, exIdx) in getRealExtracurriculars(w.props.items)" :key="exIdx" class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
-                <td v-if="w.props.cols.some(c => c.key === 'no' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center">{{ exIdx + 1 }}</td>
-                <td v-if="w.props.cols.some(c => c.key === 'name' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-bold">{{ ex.name }}</td>
-                <td v-if="w.props.cols.some(c => c.key === 'val' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-bold">{{ ex.grade || '-' }}</td>
-                <td v-if="w.props.cols.some(c => c.key === 'note' && c.visible)" class="p-1.5 leading-relaxed">{{ ex.description || '-' }}</td>
-              </tr>
-              <tr v-if="getRealExtracurriculars(w.props.items).length === 0">
-                <td :colspan="w.props.cols.filter(c => c.visible).length" class="p-4 text-center text-slate-400 italic">
-                  Tidak ada ekskul yang diikuti.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- 9. p5_assessment -->
-        <div v-else-if="w.type === 'p5_assessment'">
-          <table class="w-full text-left border-collapse border border-slate-800 dark:border-zinc-750 text-[10px]">
-            <thead>
-              <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-800 dark:border-zinc-700 font-bold text-[9px] uppercase">
-                <th v-for="col in w.props.cols.filter(c => c.visible)" :key="col.key" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center">
-                  {{ col.label }}
-                </th>
-                <th class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center w-10">MB</th>
-                <th class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center w-10">SB</th>
-                <th class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center w-10">BSH</th>
-                <th class="p-1.5 text-center w-10">SAB</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(it, idx) in w.props.items" :key="idx" class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
-                <td v-if="w.props.cols.some(c => c.key === 'name' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-bold">
-                  {{ typeof it === 'string' ? it : it.label || it.name }}
-                </td>
-                <td v-if="w.props.cols.some(c => c.key === 'val' && c.visible)" class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-semibold">
-                  {{ getRealP5Row(typeof it === 'string' ? it : it.label || it.name) }}
-                </td>
-                <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-bold text-violet-650">
-                  {{ getRealP5Row(typeof it === 'string' ? it : it.label || it.name) === 'MB' ? '✓' : '' }}
-                </td>
-                <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-bold text-violet-650">
-                  {{ getRealP5Row(typeof it === 'string' ? it : it.label || it.name) === 'SB' ? '✓' : '' }}
-                </td>
-                <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 text-center font-bold text-violet-650">
-                  {{ getRealP5Row(typeof it === 'string' ? it : it.label || it.name) === 'BSH' ? '✓' : '' }}
-                </td>
-                <td class="p-1.5 text-center font-bold text-violet-650">
-                  {{ getRealP5Row(typeof it === 'string' ? it : it.label || it.name) === 'SAB' ? '✓' : '' }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- 10. attendance -->
-        <div v-else-if="w.type === 'attendance'" class="w-80">
-          <table class="w-full text-left border-collapse border border-slate-800 dark:border-zinc-750 text-[10px]">
-            <thead>
-              <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-800 dark:border-zinc-700 font-bold text-[9px] uppercase">
-                <th class="p-1.5 border-r border-slate-800 dark:border-zinc-700">Kategori Kehadiran</th>
-                <th class="p-1.5 text-center w-24">Jumlah</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="border-b border-slate-800 dark:border-zinc-700">
-                <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Sakit (S)</td>
-                <td class="p-1.5 text-center font-bold">{{ reportData.attendance.sick }} hari</td>
-              </tr>
-              <tr class="border-b border-slate-800 dark:border-zinc-700">
-                <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Izin (I)</td>
-                <td class="p-1.5 text-center font-bold">{{ reportData.attendance.leave }} hari</td>
-              </tr>
-              <tr class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
-                <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Tanpa Keterangan (A)</td>
-                <td class="p-1.5 text-center font-bold">{{ reportData.attendance.absent }} hari</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- 11. growth -->
-        <div v-else-if="w.type === 'growth'" class="w-80">
-          <table class="w-full text-left border-collapse border border-slate-800 dark:border-zinc-750 text-[10px]">
-            <thead>
-              <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-800 dark:border-zinc-700 font-bold text-[9px] uppercase">
-                <th class="p-1.5 border-r border-slate-800 dark:border-zinc-700">Aspek Tumbuh Kembang</th>
-                <th class="p-1.5 text-center w-24">Ukuran</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="border-b border-slate-800 dark:border-zinc-700">
-                <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Tinggi Badan</td>
-                <td class="p-1.5 text-center font-bold">{{ reportData.student.height ? `${reportData.student.height} cm` : '-' }}</td>
-              </tr>
-              <tr class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
-                <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Berat Badan</td>
-                <td class="p-1.5 text-center font-bold">{{ reportData.student.weight ? `${reportData.student.weight} kg` : '-' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- 12. student_photo -->
-        <div v-else-if="w.type === 'student_photo'" class="flex justify-start">
-          <div class="w-24 h-32 border border-slate-400 dark:border-zinc-700 flex items-center justify-center text-[9px] text-slate-400 uppercase tracking-widest font-semibold bg-slate-50 dark:bg-zinc-950">
-            Pas Foto<br>3 x 4
-          </div>
-        </div>
-
-        <!-- 15. homeroom_notes -->
-        <div v-else-if="w.type === 'homeroom_notes'" class="w-full">
-          <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-3">Catatan Wali Kelas</h3>
-          <div class="border border-slate-900 p-4 min-h-[92px] text-xs leading-relaxed text-justify text-slate-700 dark:text-zinc-300 print:text-black">
-            {{ reportData.report.homeroom_notes || 'Belum ada catatan wali kelas.' }}
-          </div>
-        </div>
-
-        <!-- 13. column_layout -->
-        <div v-else-if="w.type === 'column_layout'" class="grid gap-4" :style="{ gridTemplateColumns: `repeat(${w.props.cols || 2}, 1fr)` }">
-          <div v-for="colIdx in (w.props.cols || 2)" :key="colIdx" class="space-y-4">
-             <!-- Render nested items inside this column -->
-             <div v-for="nestedW in (w.props.columns?.[colIdx - 1] || [])" :key="nestedW.id">
-                
-                <!-- 1. header_school inside column -->
-                <div v-if="nestedW.type === 'header_school'" class="text-center border-b-4 border-double border-slate-900 dark:border-zinc-700 pb-3">
-                  <h2 class="text-md font-extrabold uppercase leading-tight tracking-wider">YAYASAN TURSINA SHALAWAT</h2>
-                  <h1 class="text-lg font-black uppercase leading-tight mt-0.5 tracking-widest text-violet-750 dark:text-violet-400">{{ reportData.student.school_name?.toUpperCase() }}</h1>
-                  <p v-if="nestedW.props.showAddress" class="text-[9px] text-slate-600 dark:text-zinc-400 leading-normal mt-1 italic">
-                    {{ reportData.student.school_address }}
-                  </p>
-                  <p v-if="nestedW.props.showNpsn" class="text-[8px] font-mono text-slate-500 font-bold mt-0.5">NPSN: {{ reportData.student.school_npsn }}</p>
-                </div>
-
-                <!-- 2. student_identity inside column -->
-                <div v-else-if="nestedW.type === 'student_identity'" class="grid grid-cols-1 gap-y-1 text-[10px]">
-                  <div class="flex"><span class="w-24 shrink-0 font-bold uppercase">Nama Siswa</span><span class="mr-2">:</span><span class="font-semibold">{{ reportData.student.full_name }}</span></div>
-                  <div class="flex"><span class="w-24 shrink-0 font-bold uppercase">Kelas</span><span class="mr-2">:</span><span>{{ reportData.student.class_name }}</span></div>
-                  <div v-if="nestedW.props.showNisn" class="flex"><span class="w-24 shrink-0 font-bold uppercase">NISN</span><span class="mr-2">:</span><span class="font-mono">{{ reportData.student.national_student_number || '-' }}</span></div>
-                </div>
-
-                <!-- 3. section_block inside column -->
-                <div v-else-if="nestedW.type === 'section_block'" class="py-1">
-                  <h3 class="text-[11px] font-black uppercase tracking-wider text-slate-900 dark:text-zinc-200">{{ nestedW.props.title || 'SEKSI PROGRAM' }}</h3>
-                </div>
-
-                <!-- 4. page_break inside column -->
-                <div v-else-if="nestedW.type === 'page_break'" class="print:break-after-page page-break py-2 print:py-0 border-t border-dashed border-rose-500 print:border-none relative">
-                  <span class="absolute -top-2.5 right-4 bg-white dark:bg-zinc-900 text-rose-500 text-[8px] font-black tracking-widest px-2 uppercase print:hidden">Batas Halaman Cetak</span>
-                </div>
-
-                <!-- 10. attendance inside column -->
-                <div v-else-if="nestedW.type === 'attendance'" class="w-full">
-                  <table class="w-full text-left border-collapse border border-slate-800 dark:border-zinc-700 text-[10px]">
-                    <thead>
-                      <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-800 dark:border-zinc-700 font-bold text-[9px] uppercase">
-                        <th class="p-1.5 border-r border-slate-800 dark:border-zinc-700">Kategori Kehadiran</th>
-                        <th class="p-1.5 text-center w-16">Jumlah</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr class="border-b border-slate-800 dark:border-zinc-700">
-                        <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Sakit (S)</td>
-                        <td class="p-1.5 text-center font-bold">{{ reportData.attendance.sick }} hari</td>
-                      </tr>
-                      <tr class="border-b border-slate-800 dark:border-zinc-700">
-                        <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Izin (I)</td>
-                        <td class="p-1.5 text-center font-bold">{{ reportData.attendance.leave }} hari</td>
-                      </tr>
-                      <tr class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
-                        <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Tanpa Keterangan (A)</td>
-                        <td class="p-1.5 text-center font-bold">{{ reportData.attendance.absent }} hari</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <!-- 11. growth inside column -->
-                <div v-else-if="nestedW.type === 'growth'" class="w-full">
-                  <table class="w-full text-left border-collapse border border-slate-800 dark:border-zinc-700 text-[10px]">
-                    <thead>
-                      <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-800 dark:border-zinc-700 font-bold text-[9px] uppercase">
-                        <th class="p-1.5 border-r border-slate-800 dark:border-zinc-700">Aspek Tumbuh Kembang</th>
-                        <th class="p-1.5 text-center w-16">Ukuran</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr class="border-b border-slate-800 dark:border-zinc-700">
-                        <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Tinggi Badan</td>
-                        <td class="p-1.5 text-center font-bold">{{ reportData.student.height ? `${reportData.student.height} cm` : '-' }}</td>
-                      </tr>
-                      <tr class="border-b border-slate-800 dark:border-zinc-700 last:border-b-0">
-                        <td class="p-1.5 border-r border-slate-800 dark:border-zinc-700 font-medium">Berat Badan</td>
-                        <td class="p-1.5 text-center font-bold">{{ reportData.student.weight ? `${reportData.student.weight} kg` : '-' }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <!-- 12. student_photo inside column -->
-                <div v-else-if="nestedW.type === 'student_photo'" class="flex justify-start">
-                  <div class="w-24 h-32 border border-slate-400 dark:border-zinc-700 flex items-center justify-center text-[9px] text-slate-400 uppercase tracking-widest font-semibold bg-slate-50 dark:bg-zinc-950">
-                    Pas Foto<br>3 x 4
-                  </div>
-                </div>
-
-                <!-- 15. homeroom_notes inside column -->
-                <div v-else-if="nestedW.type === 'homeroom_notes'" class="w-full">
-                  <h4 class="text-xs font-black uppercase border-b border-slate-900 pb-0.5 mb-2">Catatan Wali Kelas</h4>
-                  <div class="border border-slate-900 p-3 min-h-[70px] text-[10px] leading-relaxed text-justify text-slate-700 dark:text-zinc-300 print:text-black">
-                    {{ reportData.report.homeroom_notes || 'Belum ada catatan wali kelas.' }}
-                  </div>
-                </div>
-
-                <!-- 14. signature_block inside column -->
-                <div v-else-if="nestedW.type === 'signature_block'" class="text-[10px] gap-8 pt-4">
-                  <div class="space-y-12">
-                    <span>{{ nestedW.props.place || 'Karanganyar' }}, {{ nestedW.props.date || '20 Desember 2026' }}<br>Mengetahui, Kepala Sekolah</span>
-                    <div class="border-t border-slate-900 dark:border-zinc-700 pt-1 font-bold">{{ nestedW.props.kepsek || reportData.student.principal_name }}</div>
-                  </div>
-                </div>
-
-             </div>
-          </div>
-        </div>
-
-        <!-- 14. signature_block -->
-        <div v-else-if="w.type === 'signature_block'" class="grid grid-cols-3 text-center text-[10px] gap-8 pt-4">
-          <div class="space-y-12">
-            <span>Orang Tua / Wali Siswa</span>
-            <div class="border-t border-slate-900 dark:border-zinc-700 pt-1 font-bold">(...................................................)</div>
-          </div>
-          <div class="space-y-12">
-            <span>Guru Kelas / Wali Kelas</span>
-            <div class="border-t border-slate-900 dark:border-zinc-700 pt-1 font-bold">{{ reportData.student.homeroom_teacher_name }}</div>
-          </div>
-          <div class="space-y-12">
-            <span>{{ w.props.place || 'Karanganyar' }}, {{ w.props.date || '20 Desember 2026' }}<br>Mengetahui, Kepala Sekolah</span>
-            <div class="border-t border-slate-900 dark:border-zinc-700 pt-1 font-bold">{{ w.props.kepsek || reportData.student.principal_name }}</div>
-          </div>
-        </div>
+        <div v-for="w in visualTree" :key="w.id" class="rp" v-html="renderWidgetHTML(w, reportData, false)"></div>
       </div>
-    </div>
 
-    <!-- Fallback Legacy Hardcoded Renderer -->
-    <div 
-      v-else-if="reportData"
-      class="print-report-container"
-      :class="[
-        reportData.student.school_level === 'TK' && selectedTKFormat === 'dinas' ? 'dinas-format' : 'standard-format',
-        'max-w-4xl mx-auto print:border-none print:shadow-none print:bg-white print:text-black shadow-sm print-sheet-canvas',
-        reportData.student.school_level === 'TK' && selectedTKFormat === 'dinas' 
-          ? 'bg-transparent border-none p-0 space-y-6 shadow-none' 
-          : 'bg-white dark:bg-zinc-900 border border-slate-300/60 dark:border-zinc-800 rounded-none sm:rounded-2xl p-8 sm:p-12 print:p-[20mm_20mm]'
-      ]"
-    >
-      
-      <!-- Report Header (shown for non-TK-Dinas formats) -->
+      <!-- Fallback Legacy Hardcoded Renderer -->
+      <div 
+        v-else-if="reportData"
+        class="print-report-container print-sheet-canvas"
+        :class="[
+          reportData.student.school_level === 'TK' && selectedTKFormat === 'dinas' ? 'dinas-format' : 'standard-format',
+          reportData.student.school_level === 'TK' && selectedTKFormat === 'dinas' 
+            ? 'bg-white border-none p-0 space-y-6 shadow-none' 
+            : 'bg-white border-slate-300/60 rounded-b-2xl p-8 sm:p-12 print:p-[20mm_20mm]'
+        ]"
+      >
+        <!-- Report Header (shown for non-TK-Dinas formats) -->
       <div v-if="reportData.student.school_level !== 'TK' || selectedTKFormat !== 'dinas'" class="text-center border-b-2 border-slate-900 pb-6 mb-8 print:pb-4 print:mb-6">
         <h2 class="text-lg font-black uppercase tracking-wide">{{ reportData.student.school_name }}</h2>
         <p class="text-xs font-semibold">{{ reportData.student.school_address }}</p>
@@ -1482,15 +1131,50 @@ const formatDate = (dateStr: any) => {
             <p>Mengetahui,<br>Kepala Sekolah</p>
             <p class="border-b border-slate-900 w-3/4 mx-auto pb-1"></p>
           </div>
-        </div>
-      </div>
+        </div><!-- end grid grid-cols-3 -->
+      </div><!-- end signatures div -->
 
-    </div>
-  </div>
+      </div><!-- end fallback renderer -->
+
+    </div><!-- end max-w-[21cm] -->
+  </div><!-- end min-h-screen -->
 </template>
 
 <style>
+/* Paper canvas – always white like physical paper */
+.report-paper {
+  background-color: #ffffff;
+  color: #1a1a1a;
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-top: none; /* toolbar is above, sharing the border */
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06);
+  box-sizing: border-box;
+}
+.dark .report-paper {
+  border-color: #3f3f46;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.45);
+}
 @media print {
+  /* Force background colors and images to print (e.g. table header #efefef) */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Canvas: no decoration, padding is the only spacing */
+  .report-paper {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    width: 100vw !important;
+    min-height: auto !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   body {
     background-color: white;
     color: black;
@@ -1498,8 +1182,11 @@ const formatDate = (dateStr: any) => {
   .print\:hidden {
     display: none !important;
   }
+
+  /* @page margin = 0 so the canvas padding (15mm all sides) is the ONLY spacing.
+     This guarantees equal left/right/top/bottom margins when printed. */
   @page {
-    margin: 15mm 12mm 12mm 12mm;
+    margin: 0;
     size: A4;
   }
 
@@ -1523,9 +1210,7 @@ const formatDate = (dateStr: any) => {
     box-shadow: none !important;
     background-color: white !important;
     color: black !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: space-between !important;
+    display: block !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
@@ -1603,50 +1288,62 @@ const formatDate = (dateStr: any) => {
   text-overflow: ellipsis;
 }
 
-/* Styling for A4 sheet in Dark Mode on screen */
+/* Canvas rapor – selalu putih seperti kertas cetak */
+.report-canvas-wrapper {
+  background-color: #ffffff;
+  color: #1a1a1a;
+  border: 1px solid #d1d5db;
+}
+@media (prefers-color-scheme: dark) {
+  /* tetap putih di dark mode – ini adalah preview dokumen cetak */
+  .report-canvas-wrapper { background-color: #ffffff; color: #1a1a1a; }
+}
+
+/* Styling untuk A4 sheet di Dark Mode pada screen (legacy hardcoded renderer) */
 .dark .print-sheet-canvas {
-  background-color: #18181b !important; /* dark zinc-900 background */
-  color: #f4f4f5 !important; /* light zinc-100 text */
-  border-color: #3f3f46 !important; /* zinc-700 border */
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
-}
-
-.dark .print-sheet-canvas * {
-  color: #f4f4f5 !important;
+  background-color: #1c1c1f !important;
   border-color: #3f3f46 !important;
+  box-shadow: 0 4px 24px rgb(0 0 0 / 0.4) !important;
 }
 
-/* Specific background restorations for dark color palettes */
-.dark .print-sheet-canvas .bg-slate-50 {
-  background-color: #27272a !important; /* zinc-800 */
+/* Override warna teks secara selektif — JANGAN gunakan * { color } agar tidak merusak kontras tabel */
+.dark .print-sheet-canvas {
+  color: #f0f0f0;
 }
-.dark .print-sheet-canvas .bg-slate-100 {
-  background-color: #27272a !important; /* zinc-800 */
-}
-.dark .print-sheet-canvas .bg-slate-100\/60 {
-  background-color: rgba(39, 39, 42, 0.6) !important;
-}
-.dark .print-sheet-canvas .bg-white {
-  background-color: #18181b !important;
-}
-
-/* Colors for specific titles/emphasis */
 .dark .print-sheet-canvas h1,
 .dark .print-sheet-canvas h2,
 .dark .print-sheet-canvas h3,
 .dark .print-sheet-canvas h4 {
   color: #ffffff !important;
 }
+.dark .print-sheet-canvas table th {
+  background-color: #27272a !important;
+  color: #e4e4e7 !important;
+  border-color: #52525b !important;
+}
+.dark .print-sheet-canvas table td {
+  color: #d4d4d8 !important;
+  border-color: #52525b !important;
+}
+.dark .print-sheet-canvas .bg-slate-50,
+.dark .print-sheet-canvas .bg-slate-100 {
+  background-color: #27272a !important;
+}
+.dark .print-sheet-canvas .bg-white {
+  background-color: #1c1c1f !important;
+}
+.dark .print-sheet-canvas .text-slate-400,
+.dark .print-sheet-canvas .text-slate-500 {
+  color: #a1a1aa !important;
+}
 .dark .print-sheet-canvas .text-violet-750 {
-  color: #c084fc !important; /* violet-400 */
+  color: #c084fc !important;
 }
 .dark .print-sheet-canvas .text-rose-600 {
-  color: #fb7185 !important; /* rose-400 */
+  color: #fb7185 !important;
 }
-.dark .print-sheet-canvas .text-slate-400 {
-  color: #a1a1aa !important; /* zinc-400 */
-}
-.dark .print-sheet-canvas .text-slate-500 {
-  color: #a1a1aa !important; /* zinc-400 */
+.dark .print-sheet-canvas .border-slate-900,
+.dark .print-sheet-canvas .border-b-2 {
+  border-color: #e4e4e7 !important;
 }
 </style>
