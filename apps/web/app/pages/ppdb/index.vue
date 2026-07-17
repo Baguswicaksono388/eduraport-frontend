@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { 
   Layers, Plus, Trash2, Edit2, Settings, UserPlus, Clipboard, 
   CheckSquare, Check, X, ArrowUp, ArrowDown, ChevronRight, HelpCircle, Save, Link, Copy, Megaphone, FileText, Search, TrendingUp
@@ -980,7 +980,7 @@ const copyActiveAnnouncementLink = () => {
       </div>
  
       <!-- Empty State -->
-      <div v-else-if="filteredApplicants.length === 0" class="text-center py-20 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl">
+      <div v-else-if="paginatedApplicants.length === 0" class="text-center py-20 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl">
         <Clipboard class="mx-auto text-slate-300 mb-3" :size="40" />
         <p class="text-xs text-slate-400 font-semibold">Tidak ditemukan pendaftar untuk kriteria pencarian ini.</p>
       </div>
