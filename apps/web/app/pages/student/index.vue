@@ -1,7 +1,8 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { Users, Plus, Trash2, Edit2, School, Search, Download, Upload, FileSpreadsheet, X, CheckCircle, AlertCircle, LayoutGrid } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput, BaseDateInput } from '@eduraport/ui'
 import { useStudent } from '../../composables/useStudent'
+import { useParent } from '../../composables/useParent'
 import { useClass } from '../../composables/useClass'
 import { useAcademicYear } from '../../composables/useAcademicYear'
 import { useToast } from '../../composables/useToast'
@@ -21,6 +22,7 @@ const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, sch
 const { students, totalStudents, studentsMeta, fetchStudents, createStudent, updateStudent, deleteStudent, downloadTemplate, importStudents } = useStudent()
 const { classes, fetchClasses } = useClass()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
+const { parents, fetchParents, createParent, updateParent, deleteParent } = useParent()
 const { page, itemPerPage } = usePagination(10)
 const toast = useToast()
 
@@ -63,6 +65,95 @@ const editForm = reactive({
   height: 0,
   class_id: ''
 })
+
+// Parent Management Refs
+const showParentModal = ref(false)
+const selectedStudentForParent = ref<any>(null)
+const editingParentId = ref('')
+const parentForm = reactive({
+  name: '',
+  relationship: 'Father',
+  phone: '',
+  occupation: ''
+})
+const showParentForm = ref(false)
+
+const openParentModal = async (student: any) => {
+  selectedStudentForParent.value = student
+  showParentModal.value = true
+  showParentForm.value = false
+  editingParentId.value = ''
+  await fetchParents(selectedSchoolId.value, student.id)
+}
+
+const closeParentModal = () => {
+  showParentModal.value = false
+  selectedStudentForParent.value = null
+}
+
+const resetParentForm = () => {
+  editingParentId.value = ''
+  parentForm.name = ''
+  parentForm.relationship = 'Father'
+  parentForm.phone = ''
+  parentForm.occupation = ''
+}
+
+const handleAddParentClick = () => {
+  resetParentForm()
+  showParentForm.value = true
+}
+
+const handleEditParentClick = (parent: any) => {
+  editingParentId.value = parent.id
+  parentForm.name = parent.name
+  parentForm.relationship = parent.relationship
+  parentForm.phone = parent.phone || ''
+  parentForm.occupation = parent.occupation || ''
+  showParentForm.value = true
+}
+
+const handleSaveParent = async () => {
+  if (!parentForm.name) {
+    toast.error('Nama lengkap wajib diisi', 'Validasi Gagal')
+    return
+  }
+  
+  try {
+    const payload = {
+      student_id: selectedStudentForParent.value.id,
+      name: parentForm.name,
+      relationship: parentForm.relationship,
+      phone: parentForm.phone || undefined,
+      occupation: parentForm.occupation || undefined
+    }
+    
+    if (editingParentId.value) {
+      await updateParent(selectedSchoolId.value, editingParentId.value, payload)
+      toast.success('Data orang tua berhasil diperbarui', 'Berhasil')
+    } else {
+      await createParent(selectedSchoolId.value, payload)
+      toast.success('Data orang tua berhasil ditambahkan', 'Berhasil')
+    }
+    
+    showParentForm.value = false
+    await fetchParents(selectedSchoolId.value, selectedStudentForParent.value.id)
+  } catch (e: any) {
+    toast.error(e?.data?.message || 'Gagal menyimpan data orang tua', 'Gagal')
+  }
+}
+
+const handleDeleteParent = async (id: string) => {
+  if (confirm('Yakin ingin menghapus data orang tua ini?')) {
+    try {
+      await deleteParent(selectedSchoolId.value, id)
+      toast.success('Data orang tua berhasil dihapus', 'Berhasil')
+      await fetchParents(selectedSchoolId.value, selectedStudentForParent.value.id)
+    } catch (e: any) {
+      toast.error('Gagal menghapus data orang tua', 'Gagal')
+    }
+  }
+}
 
 // Classes filtered by selected academic year (for dropdowns)
 const filteredClasses = computed(() => {
@@ -430,6 +521,9 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
               </td>
               <td class="px-6 py-4 text-right">
                 <div class="flex items-center justify-end gap-2">
+                  <button @click="openParentModal(student)" class="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg transition-colors" title="Kelola Orang Tua">
+                    <Users :size="14" />
+                  </button>
                   <button @click="openEditModal(student)" class="p-1.5 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg transition-colors">
                     <Edit2 :size="14" />
                   </button>
@@ -639,6 +733,90 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
             {{ importLoading ? 'Sedang Import...' : 'Mulai Import' }}
           </BaseButton>
         </div>
+      </div>
+    </BaseModal>
+
+    <!-- Parent Management Modal -->
+    <BaseModal :show="showParentModal" :title="'Data Orang Tua: ' + (selectedStudentForParent?.full_name || '')" @close="closeParentModal">
+      <!-- List Parents -->
+      <div v-if="!showParentForm" class="space-y-4">
+        <div class="flex justify-between items-center">
+          <p class="text-xs text-slate-500 dark:text-zinc-400">Daftar orang tua atau wali untuk siswa ini.</p>
+          <BaseButton variant="primary" size="sm" @click="handleAddParentClick">
+            <Plus class="mr-1.5" :size="14" /> Tambah Data
+          </BaseButton>
+        </div>
+
+        <div v-if="parents.length === 0" class="text-center py-10 bg-slate-50 dark:bg-zinc-900/50 rounded-lg border border-dashed border-slate-200 dark:border-zinc-800">
+          <Users class="mx-auto text-slate-300 dark:text-zinc-700 mb-2" :size="32" />
+          <p class="text-xs text-slate-500">Belum ada data orang tua yang ditambahkan.</p>
+        </div>
+
+        <div v-else class="space-y-3">
+          <div v-for="parent in parents" :key="parent.id" class="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg shadow-sm">
+            <div>
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-bold text-slate-800 dark:text-zinc-200">{{ parent.name }}</p>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-400 border border-violet-100 dark:border-violet-900/50">
+                  {{ parent.relationship === 'Father' ? 'Ayah' : parent.relationship === 'Mother' ? 'Ibu' : 'Wali' }}
+                </span>
+                <span v-if="parent.user_id" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50" title="Akun Terhubung">
+                  Akun Terhubung
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-zinc-400 mt-1">
+                <span v-if="parent.phone">📞 {{ parent.phone }}</span>
+                <span v-if="parent.phone && parent.occupation" class="mx-2">•</span>
+                <span v-if="parent.occupation">💼 {{ parent.occupation }}</span>
+              </p>
+            </div>
+            <div class="flex items-center gap-1">
+              <button @click="handleEditParentClick(parent)" class="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg transition-colors">
+                <Edit2 :size="14" />
+              </button>
+              <button @click="handleDeleteParent(parent.id)" class="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg transition-colors">
+                <Trash2 :size="14" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <BaseButton variant="outline" @click="closeParentModal">Tutup</BaseButton>
+        </div>
+      </div>
+
+      <!-- Parent Form -->
+      <div v-else class="space-y-4">
+        <div class="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-zinc-800">
+          <button @click="showParentForm = false" class="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200">
+            <X :size="18" />
+          </button>
+          <p class="text-sm font-bold text-slate-700 dark:text-zinc-200">{{ editingParentId ? 'Edit Data Orang Tua' : 'Tambah Orang Tua' }}</p>
+        </div>
+
+        <form @submit.prevent="handleSaveParent" class="space-y-4">
+          <BaseInput v-model="parentForm.name" label="Nama Lengkap" placeholder="Contoh: Budi Santoso" required />
+          
+          <div class="flex flex-col gap-1.5 w-full">
+            <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Hubungan</label>
+            <select v-model="parentForm.relationship" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10">
+              <option value="Father">Ayah</option>
+              <option value="Mother">Ibu</option>
+              <option value="Guardian">Wali</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <BaseInput v-model="parentForm.phone" label="No. Telepon / WA" placeholder="Contoh: 0812345678" />
+            <BaseInput v-model="parentForm.occupation" label="Pekerjaan" placeholder="Contoh: Wiraswasta" />
+          </div>
+
+          <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
+            <BaseButton variant="outline" type="button" @click="showParentForm = false">Batal</BaseButton>
+            <BaseButton variant="primary" type="submit">Simpan</BaseButton>
+          </div>
+        </form>
       </div>
     </BaseModal>
   </div>

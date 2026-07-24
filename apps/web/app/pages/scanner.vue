@@ -100,22 +100,26 @@
       <transition name="fade">
         <div v-if="pendingMoodScan" class="absolute inset-0 bg-slate-900/95 flex flex-col items-center justify-center z-40 p-6">
           <h2 class="text-2xl font-bold mb-8 text-white text-center">Bagaimana perasaanmu hari ini?</h2>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-lg">
-            <button @click="submitMood('senang')" class="flex flex-col items-center p-4 bg-green-500/20 border-2 border-green-500 rounded-2xl hover:bg-green-500/40 transition-colors">
+          <div class="flex flex-wrap justify-center gap-4 w-full max-w-3xl">
+            <button @click="submitMood('senang')" class="flex flex-col items-center p-4 bg-green-500/20 border-2 border-green-500 rounded-2xl hover:bg-green-500/40 transition-colors w-[130px]">
               <span class="text-4xl sm:text-5xl mb-2">😄</span>
               <span class="font-semibold text-green-400 text-sm sm:text-base">Senang</span>
             </button>
-            <button @click="submitMood('biasa')" class="flex flex-col items-center p-4 bg-yellow-500/20 border-2 border-yellow-500 rounded-2xl hover:bg-yellow-500/40 transition-colors">
+            <button @click="submitMood('biasa')" class="flex flex-col items-center p-4 bg-yellow-500/20 border-2 border-yellow-500 rounded-2xl hover:bg-yellow-500/40 transition-colors w-[130px]">
               <span class="text-4xl sm:text-5xl mb-2">😐</span>
               <span class="font-semibold text-yellow-400 text-sm sm:text-base">Biasa</span>
             </button>
-            <button @click="submitMood('sedih')" class="flex flex-col items-center p-4 bg-blue-500/20 border-2 border-blue-500 rounded-2xl hover:bg-blue-500/40 transition-colors">
+            <button @click="submitMood('sedih')" class="flex flex-col items-center p-4 bg-blue-500/20 border-2 border-blue-500 rounded-2xl hover:bg-blue-500/40 transition-colors w-[130px]">
               <span class="text-4xl sm:text-5xl mb-2">😢</span>
               <span class="font-semibold text-blue-400 text-sm sm:text-base">Sedih</span>
             </button>
-            <button @click="submitMood('kesal')" class="flex flex-col items-center p-4 bg-red-500/20 border-2 border-red-500 rounded-2xl hover:bg-red-500/40 transition-colors">
+            <button @click="submitMood('lelah')" class="flex flex-col items-center p-4 bg-orange-500/20 border-2 border-orange-500 rounded-2xl hover:bg-orange-500/40 transition-colors w-[130px]">
+              <span class="text-4xl sm:text-5xl mb-2">😴</span>
+              <span class="font-semibold text-orange-400 text-sm sm:text-base">Lelah</span>
+            </button>
+            <button @click="submitMood('kesal')" class="flex flex-col items-center p-4 bg-red-500/20 border-2 border-red-500 rounded-2xl hover:bg-red-500/40 transition-colors w-[130px]">
               <span class="text-4xl sm:text-5xl mb-2">😠</span>
-              <span class="font-semibold text-red-400 text-sm sm:text-base">Marah</span>
+              <span class="font-semibold text-red-400 text-sm sm:text-base">Kesal</span>
             </button>
           </div>
           <p class="mt-8 text-slate-400 text-sm text-center">Menunggu input siswa...</p>

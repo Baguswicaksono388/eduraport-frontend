@@ -29,6 +29,8 @@ export const ROUTE_ROLES: Record<string, string[]> = {
   '/wa':           ['super_admin', 'principal', 'tu'],
   '/school':       ['super_admin', 'principal'],
   '/academic-year':['super_admin', 'principal'],
+  '/attendance-settings': ['super_admin', 'principal', 'tu'],
+  '/extracurricular': ['super_admin', 'principal', 'tu', 'teacher']
 }
 
 export const useRbac = () => {
