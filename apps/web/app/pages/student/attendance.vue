@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ClipboardCheck, Users, Check, AlertCircle, Save, CheckCircle2, RefreshCw } from 'lucide-vue-next'
 import { BaseCard, BaseButton } from '@eduraport/ui'
 import { useClass } from '../../composables/useClass'
@@ -66,6 +66,9 @@ onMounted(async () => {
   if (schoolId) selectedSchoolId.value = schoolId
 })
 
+// Store checkin info and recommendations
+const studentCheckins = ref<Record<string, { checked_at: string, recommended_status: string, has_checkin: boolean }>>({})
+
 // Load students and attendance records
 const loadData = async () => {
   if (!selectedSchoolId.value || !selectedClassId.value) return
@@ -79,18 +82,61 @@ const loadData = async () => {
     // Fetch students of selected school
     await fetchStudents(schoolId)
 
-    // Fetch existing daily attendance records for selected class and date
+    // Fetch existing daily attendance records, checkins, and rules
     const existingRes = await fetchDailyAttendances(schoolId, classId, date)
-    const existingList = existingRes.data || []
-    const existingMap = new Map(existingList.map((a: any) => [a.student_id, a]))
+    const attendances = existingRes.data?.attendances || []
+    const checkins = existingRes.data?.checkins || []
+    const timeRules = existingRes.data?.timeRules || []
+
+    const existingMap = new Map(attendances.map((a: any) => [a.student_id, a]))
+    const checkinMap = new Map(checkins.map((c: any) => [c.student_id, c]))
+
+    // Determine applied rule
+    let appliedRule = timeRules.find((r: any) => r.scope_type === 'school')
+    const classRule = timeRules.find((r: any) => r.class_id === classId)
+    if (classRule) appliedRule = classRule
 
     // Reset maps
     const tempMap: Record<string, AttendanceState> = {}
+    const sCheckins: Record<string, any> = {}
 
     // Filter students belonging to this class
     const classStudents = students.value.filter((s) => s.class_id === classId)
 
     for (const stud of classStudents) {
+      const checkin = checkinMap.get(stud.id)
+      let recStatus: 'hadir' | 'sakit' | 'izin' | 'alpha' | 'terlambat' = 'hadir'
+      let checkinTimeStr = ''
+      
+      if (checkin && checkin.checked_at) {
+        const d = new Date(checkin.checked_at)
+        checkinTimeStr = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }).replace('.', ':')
+        
+        if (appliedRule) {
+           const scanTime = checkinTimeStr
+           if (scanTime < appliedRule.check_in_start) {
+              recStatus = 'hadir' // awal
+           } else {
+             const [onH, onM] = appliedRule.on_time_until.split(':').map(Number)
+             const tolerance = appliedRule.late_tolerance_min || 0
+             // Get exact diff ignoring seconds for robust logic based on HH:MM string
+             const checkinH = parseInt(checkinTimeStr.split('.')[0] || checkinTimeStr.split(':')[0])
+             const checkinM = parseInt(checkinTimeStr.split('.')[1] || checkinTimeStr.split(':')[1])
+             const diffMin = (checkinH * 60 + checkinM) - (onH * 60 + onM)
+             
+             if (diffMin > tolerance) {
+               recStatus = 'terlambat'
+             }
+           }
+        }
+      }
+
+      sCheckins[stud.id] = {
+        checked_at: checkinTimeStr,
+        recommended_status: recStatus,
+        has_checkin: !!checkin
+      }
+
       const exist = existingMap.get(stud.id)
       if (exist) {
         tempMap[stud.id] = {
@@ -99,12 +145,13 @@ const loadData = async () => {
         }
       } else {
         tempMap[stud.id] = {
-          status: 'hadir',
+          status: recStatus, // Default to recommendation
           note: ''
         }
       }
     }
 
+    studentCheckins.value = sCheckins
     attendanceMap.value = tempMap
   } catch (err: any) {
     console.error('Failed to load attendance:', err)
@@ -189,13 +236,13 @@ const handleSave = async () => {
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 pl-1">Yayasan</label>
         <select v-model="selectedFoundationId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600">
-          <option v-for="f in foundations" :key="f.id" :value="f.id">{{ f.name }}</option>
+          <option v-for="f in foundations" :key="f.id" :value="f.id" class="bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200">{{ f.name }}</option>
         </select>
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 pl-1">Unit Sekolah</label>
         <select v-model="selectedSchoolId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600">
-          <option v-for="s in schools" :key="s.id" :value="s.id">{{ s.name }} ({{ s.level }})</option>
+          <option v-for="s in schools" :key="s.id" :value="s.id" class="bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200">{{ s.name }} ({{ s.level }})</option>
         </select>
       </div>
     </div>
@@ -218,9 +265,9 @@ const handleSave = async () => {
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kelas:</span>
           <select
             v-model="selectedClassId"
-            class="bg-transparent text-xs font-bold text-slate-700 dark:text-zinc-200 outline-none cursor-pointer focus:ring-0"
+            class="bg-transparent text-xs font-bold text-slate-700 dark:text-zinc-200 outline-none cursor-pointer focus:ring-0 w-[120px] sm:w-[150px]"
           >
-            <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.class_name }}</option>
+            <option v-for="c in classes" :key="c.id" :value="c.id" class="bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200">{{ c.class_name }}</option>
           </select>
         </div>
 
@@ -296,23 +343,43 @@ const handleSave = async () => {
       <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
         <div class="min-w-full divide-y divide-slate-200 dark:divide-zinc-800">
           <!-- Table Header -->
-          <div class="bg-slate-50/80 dark:bg-zinc-950/40 p-4 grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
-            <div class="md:col-span-2">Siswa / No Induk</div>
-            <div>Status Kehadiran</div>
-            <div>Catatan / Keterangan</div>
+          <div class="bg-slate-50/80 dark:bg-zinc-950/40 p-4 grid grid-cols-1 md:grid-cols-12 gap-4 text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+            <div class="md:col-span-3">Siswa / No Induk</div>
+            <div class="md:col-span-2">Jam Masuk</div>
+            <div class="md:col-span-4">Status Kehadiran</div>
+            <div class="md:col-span-3">Catatan / Keterangan</div>
           </div>
 
           <!-- Table Body -->
           <div class="divide-y divide-slate-100 dark:divide-zinc-800">
-            <div v-for="s in classStudents" :key="s.id" class="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-center text-sm">
-              <div class="md:col-span-2">
+            <div v-for="s in classStudents" :key="s.id" class="p-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center text-sm">
+              <div class="md:col-span-3">
                 <p class="font-bold text-slate-900 dark:text-zinc-100">{{ s.full_name }}</p>
                 <p class="text-[10px] text-slate-400 font-semibold mt-0.5">NIS: {{ s.student_number || '-' }}</p>
               </div>
 
+              <!-- Jam Masuk -->
+              <div class="md:col-span-2">
+                <div v-if="studentCheckins[s.id]?.has_checkin" class="flex flex-col gap-1">
+                  <span class="font-mono font-bold text-slate-700 dark:text-zinc-200">{{ studentCheckins[s.id].checked_at }}</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.5 rounded w-fit uppercase tracking-wider" 
+                        :class="studentCheckins[s.id].recommended_status === 'hadir' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'">
+                    Rekomendasi: {{ studentCheckins[s.id].recommended_status }}
+                  </span>
+                </div>
+                <div v-else>
+                  <span class="text-[11px] text-slate-400 italic">Belum scan</span>
+                </div>
+              </div>
+
               <!-- Options -->
-              <div>
+              <div class="md:col-span-4">
                 <div v-if="attendanceMap[s.id]" class="flex items-center gap-1.5 flex-wrap">
+                  <!-- Warning Indicator -->
+                  <div v-if="studentCheckins[s.id]?.has_checkin && attendanceMap[s.id].status !== studentCheckins[s.id].recommended_status"
+                       class="text-amber-500 mr-1" title="Status manual tidak sesuai dengan hasil pindai sistem">
+                    <AlertCircle :size="16" />
+                  </div>
                   <button
                     v-for="st in (['hadir', 'terlambat', 'sakit', 'izin', 'alpha'] as const)"
                     :key="st"
@@ -336,7 +403,7 @@ const handleSave = async () => {
               </div>
 
               <!-- Note -->
-              <div v-if="attendanceMap[s.id]">
+              <div v-if="attendanceMap[s.id]" class="md:col-span-3">
                 <input
                   v-model="attendanceMap[s.id].note"
                   type="text"
