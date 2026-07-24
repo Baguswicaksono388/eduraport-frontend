@@ -12,9 +12,12 @@ export const useApi = () => {
       headers['Authorization'] = `Bearer ${token.value}`
     }
 
+    // Gunakan relative path dari config agar diproxy oleh Nuxt
+    let resolvedApiBase = config.public.apiBase
+
     try {
       const response = await $fetch(url, {
-        baseURL: config.public.apiBase,
+        baseURL: resolvedApiBase,
         ...options,
         headers,
       })
@@ -24,7 +27,7 @@ export const useApi = () => {
       if (error.response?.status === 401 && refreshToken.value && !options._retry) {
         try {
           const refreshResponse: any = await $fetch('/auth/refresh', {
-            baseURL: config.public.apiBase,
+            baseURL: resolvedApiBase,
             method: 'POST',
             body: { refresh_token: refreshToken.value }
           })

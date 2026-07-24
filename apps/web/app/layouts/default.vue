@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange, Smartphone } from 'lucide-vue-next'
+import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange, Smartphone, Settings } from 'lucide-vue-next'
 import { BaseModal, BaseButton, BaseInput } from '@eduraport/ui'
 import { useAuth } from '../composables/useAuth'
 import { useToast } from '../composables/useToast'
@@ -127,6 +127,15 @@ watch(currentSchoolId, async (newVal) => {
             <BarChart3 :size="16" /> Dashboard Eksekutif
           </NuxtLink>
           <NuxtLink 
+            v-if="canAccess('/dashboard')"
+            to="/scanner" 
+            target="_blank"
+            @click="isMobileMenuOpen = false"
+            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-amber-400 hover:text-amber-300 hover:bg-amber-900/30 transition-all duration-200"
+          >
+            <Smartphone :size="16" /> QR Scanner PWA
+          </NuxtLink>
+          <NuxtLink 
             v-if="canAccess('/school')"
             to="/school" 
             @click="isMobileMenuOpen = false"
@@ -188,6 +197,15 @@ watch(currentSchoolId, async (newVal) => {
             active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
           >
             <ClipboardCheck :size="16" /> Absensi Guru & Staf
+          </NuxtLink>
+          <NuxtLink 
+            v-if="canAccess('/attendance-settings')"
+            to="/attendance-settings" 
+            @click="isMobileMenuOpen = false"
+            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
+            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
+          >
+            <Settings :size="16" /> Pengaturan Absensi
           </NuxtLink>
           <NuxtLink 
             v-if="canAccess('/homeroom')"
@@ -369,6 +387,14 @@ watch(currentSchoolId, async (newVal) => {
           <BarChart3 :size="16" /> Dashboard Eksekutif
         </NuxtLink>
         <NuxtLink 
+          v-if="canAccess('/dashboard')"
+          to="/scanner" 
+          target="_blank"
+          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-amber-400 hover:text-amber-300 hover:bg-amber-900/30 transition-all duration-200"
+        >
+          <Smartphone :size="16" /> QR Scanner PWA
+        </NuxtLink>
+        <NuxtLink 
           v-if="canAccess('/school')"
           to="/school" 
           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
@@ -423,6 +449,14 @@ watch(currentSchoolId, async (newVal) => {
           active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
         >
           <ClipboardCheck :size="16" /> Absensi Guru & Staf
+        </NuxtLink>
+        <NuxtLink 
+          v-if="canAccess('/attendance-settings')"
+          to="/attendance-settings" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
+          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
+        >
+          <Settings :size="16" /> Pengaturan Absensi
         </NuxtLink>
         <NuxtLink 
           v-if="canAccess('/homeroom')"

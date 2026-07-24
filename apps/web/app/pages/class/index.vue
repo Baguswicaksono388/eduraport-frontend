@@ -1,9 +1,11 @@
-﻿<script setup lang="ts">
-import { Users, Plus, Trash2, Edit2, ShieldAlert, GraduationCap, LayoutGrid, Eye } from 'lucide-vue-next'
+<script setup lang="ts">
+import { Users, Plus, Trash2, Edit2, ShieldAlert, GraduationCap, LayoutGrid, Eye, QrCode } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
-import { useAcademicYear } from '../composables/useAcademicYear'
-import { useClass } from '../composables/useClass'
-import { useToast } from '../composables/useToast'
+import { useAcademicYear } from '~/composables/useAcademicYear'
+import { useClass } from '~/composables/useClass'
+import { useToast } from '~/composables/useToast'
+import { useSchoolContext } from '~/composables/useSchoolContext'
+import { usePagination } from '~/composables/usePagination'
 
 definePageMeta({
   middleware: [
@@ -251,6 +253,9 @@ const viewStudents = async (cObj: any) => {
             </td>
             <td class="p-4 pr-6 text-right">
               <div class="flex justify-end items-center gap-1">
+                <BaseButton variant="outline" @click="$router.push(`/class/${cObj.id}/qr-cards`)" class="py-1.5 px-2.5 text-[10px] font-bold flex items-center gap-1 text-violet-600 border-violet-200 hover:bg-violet-50 dark:border-violet-800 dark:hover:bg-violet-900/30">
+                  <QrCode :size="11" /> Cetak QR
+                </BaseButton>
                 <BaseButton variant="outline" @click="viewStudents(cObj)" class="py-1.5 px-2.5 text-[10px] font-bold flex items-center gap-1">
                   <Eye :size="11" /> Detail Siswa
                 </BaseButton>

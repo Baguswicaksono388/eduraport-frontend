@@ -33,8 +33,8 @@ export const useSchoolContext = () => {
   /** True when user is locked to a single school (school-level role). */
   const isSchoolLocked = computed(() => !!user.value?.school_id)
 
-  const selectedFoundationId = ref('')
-  const selectedSchoolId = ref('')
+  const selectedFoundationId = useState<string>('ctx_foundation_id', () => '')
+  const selectedSchoolId = useCookie<string>('current_school_id', { default: () => '' })
 
   /**
    * Initialise the context. Call this in `onMounted`.
@@ -50,10 +50,15 @@ export const useSchoolContext = () => {
     // Foundation-level user: fetch foundations then auto-pick first school
     await fetchFoundations()
     if (foundations.value.length > 0) {
-      selectedFoundationId.value = foundations.value[0].id
+      if (!selectedFoundationId.value) {
+        selectedFoundationId.value = foundations.value[0].id
+      }
       await fetchSchools(selectedFoundationId.value)
+      
       if (schools.value.length > 0) {
-        selectedSchoolId.value = schools.value[0].id
+        if (!selectedSchoolId.value || !schools.value.find(s => s.id === selectedSchoolId.value)) {
+          selectedSchoolId.value = schools.value[0].id
+        }
       }
     }
     return selectedSchoolId.value

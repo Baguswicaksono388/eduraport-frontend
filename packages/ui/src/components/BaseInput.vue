@@ -10,6 +10,7 @@ defineProps<{
 }>()
 
 defineEmits(['update:modelValue'])
+defineOptions({ inheritAttrs: false })
 </script>
 
 <template>
@@ -22,6 +23,7 @@ defineEmits(['update:modelValue'])
         {{ prefix }}
       </div>
       <input
+        v-bind="{ ...$attrs, class: undefined }"
         :value="modelValue"
         @input="$emit('update:modelValue', type === 'number' ? Number(($event.target as HTMLInputElement).value) : ($event.target as HTMLInputElement).value)"
         :type="type || 'text'"
