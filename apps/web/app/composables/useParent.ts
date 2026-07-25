@@ -47,6 +47,41 @@ export const useParent = () => {
     }
   }
 
+  const allParents = useState<any[]>('allParents', () => [])
+  const allParentsMeta = useState<any>('allParentsMeta', () => null)
+  
+  const fetchAllParents = async (schoolId: string, page?: number, limit?: number, search?: string, status?: 'linked' | 'unlinked' | 'all', foundationId?: string) => {
+    try {
+      const query = new URLSearchParams()
+      if (page) query.append('page', page.toString())
+      if (limit) query.append('limit', limit.toString())
+      if (search) query.append('search', search)
+      if (status) query.append('status', status)
+      
+      let endpoint = `/school/${schoolId}/student/parents/all?${query.toString()}`
+      
+      if (status === 'unlinked' && foundationId) {
+        const foundationQuery = new URLSearchParams()
+        if (page) foundationQuery.append('page', page.toString())
+        if (limit) foundationQuery.append('limit', limit.toString())
+        if (search) foundationQuery.append('search', search)
+        foundationQuery.append('foundationId', foundationId)
+        
+        endpoint = `/parents/unlinked?${foundationQuery.toString()}`
+      }
+      
+      const res: any = await fetcher(endpoint)
+      if (res.success) {
+        allParents.value = res.data.parents
+        allParentsMeta.value = res.data.meta
+      }
+    } catch (error) {
+      console.error('Failed to fetch all parents:', error)
+      allParents.value = []
+      allParentsMeta.value = null
+    }
+  }
+
   const createParent = async (schoolId: string, data: any) => {
     const res = await fetcher(`/school/${schoolId}/student/parents`, {
       method: 'POST',
@@ -72,10 +107,13 @@ export const useParent = () => {
 
   return {
     parents,
+    allParents,
+    allParentsMeta,
     myChildren,
-    fetchParents,
     fetchMyChildren,
     fetchChildDetail,
+    fetchParents,
+    fetchAllParents,
     createParent,
     updateParent,
     deleteParent

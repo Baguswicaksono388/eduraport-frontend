@@ -72,6 +72,73 @@ watch(currentSchoolId, async (newVal) => {
     academicYears.value = []
   }
 })
+
+
+const menuGroups = computed(() => [
+  {
+    title: 'Utama / Dashboard',
+    items: [
+      { to: '/', label: user.value?.role === 'parent' ? 'Portal Orang Tua' : 'Dashboard', icon: LayoutDashboard, access: '/' },
+      { to: '/dashboard', label: 'Dashboard Eksekutif', icon: BarChart3, access: '/dashboard' },
+      { to: '/scanner', label: 'QR Scanner PWA', icon: Smartphone, access: '/dashboard', external: true, customClass: 'text-amber-400 hover:text-amber-300 hover:bg-amber-900/30' }
+    ]
+  },
+  {
+    title: 'Master Data',
+    items: [
+      { to: '/school', label: 'Unit Sekolah', icon: School, access: '/school' },
+      { to: '/academic-year', label: 'Tahun Ajaran', icon: Calendar, access: '/academic-year' },
+      { to: '/class', label: 'Data Kelas', icon: LayoutGrid, access: '/class' },
+      { to: '/subject', label: 'Mata Pelajaran', icon: BookOpen, access: '/subject' },
+      { to: '/extracurricular', label: 'Ekstrakurikuler', icon: Trophy, access: '/extracurricular' }
+    ]
+  },
+  {
+    title: 'Kesiswaan & Absensi',
+    items: [
+      { to: '/student', label: 'Data Siswa', icon: Users, access: '/student' },
+      { to: '/parent', label: 'Data Orang Tua', icon: Users, access: '/student' },
+      { to: '/student/attendance', label: 'Absensi Siswa', icon: ClipboardCheck, access: '/student' },
+      { to: '/attendance-settings', label: 'Pengaturan Absensi', icon: Settings, access: '/attendance-settings' },
+      { to: '/ppdb', label: 'PPDB Online', icon: UserPlus, access: '/ppdb' }
+    ]
+  },
+  {
+    title: 'Kepegawaian',
+    items: [
+      { to: '/teacher', label: 'Guru & Staf', icon: UserCheck, access: '/teacher' },
+      { to: '/teacher/attendance', label: 'Absensi Guru & Staf', icon: ClipboardCheck, access: '/teacher' },
+      { to: '/schedule', label: 'Jadwal Pelajaran', icon: Clock, access: '/schedule' },
+      { to: '/leave', label: 'Cuti & Izin Guru', icon: CalendarRange, access: '/leave' }
+    ]
+  },
+  {
+    title: 'Akademik & Penilaian',
+    items: [
+      { to: '/gradebook/scheme', label: 'Skema Penilaian', icon: FileSpreadsheet, access: '/gradebook' },
+      { to: '/gradebook/input', label: 'Input Nilai', icon: ClipboardCheck, access: '/gradebook' },
+      { to: '/gradebook/analytics', label: 'Analitik & Rekap', icon: BarChart3, access: '/gradebook' },
+      { to: '/homeroom', label: 'Rapor Wali Kelas', icon: ClipboardCheck, access: '/homeroom' },
+      { to: '/report/template', label: 'Template Rapor', icon: LayoutTemplate, access: '/report' },
+      { to: '/report', label: 'Cetak Rapor', icon: ClipboardCheck, access: '/report' }
+    ]
+  },
+  {
+    title: 'Layanan Ekstra',
+    items: [
+      { to: '/financial', label: 'Keuangan & SPP', icon: DollarSign, access: '/financial' },
+      { to: '/wa/devices', label: 'WA Gateway', icon: Smartphone, access: '/wa' }
+    ]
+  }
+])
+
+const filteredMenuGroups = computed(() => {
+  return menuGroups.value.map(group => ({
+    ...group,
+    items: group.items.filter(item => canAccess(item.access))
+  })).filter(group => group.items.length > 0)
+})
+
 </script>
 
 <template>
@@ -107,223 +174,27 @@ watch(currentSchoolId, async (newVal) => {
         </div>
 
         <!-- Navigation Links -->
-        <nav class="flex-1 space-y-1 overflow-y-auto pr-1">
-          <NuxtLink 
-            v-if="canAccess('/')"
-            to="/" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <LayoutDashboard :size="16" /> {{ user?.role === 'parent' ? 'Portal Orang Tua' : 'Dashboard' }}
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/dashboard')"
-            to="/dashboard" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <BarChart3 :size="16" /> Dashboard Eksekutif
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/dashboard')"
-            to="/scanner" 
-            target="_blank"
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-amber-400 hover:text-amber-300 hover:bg-amber-900/30 transition-all duration-200"
-          >
-            <Smartphone :size="16" /> QR Scanner PWA
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/school')"
-            to="/school" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <School :size="16" /> Unit Sekolah
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/academic-year')"
-            to="/academic-year" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <Calendar :size="16" /> Tahun Ajaran
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/class')"
-            to="/class" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <LayoutGrid :size="16" /> Data Kelas
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/student')"
-            to="/student" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <Users :size="16" /> Data Siswa
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/student')"
-            to="/student/attendance" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <ClipboardCheck :size="16" /> Absensi Siswa
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/teacher')"
-            to="/teacher" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <UserCheck :size="16" /> Guru & Staf
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/teacher')"
-            to="/teacher/attendance" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <ClipboardCheck :size="16" /> Absensi Guru & Staf
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/attendance-settings')"
-            to="/attendance-settings" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <Settings :size="16" /> Pengaturan Absensi
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/homeroom')"
-            to="/homeroom" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <ClipboardCheck :size="16" /> Rapor Wali Kelas
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/schedule')"
-            to="/schedule" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <Clock :size="16" /> Jadwal Pelajaran
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/leave')"
-            to="/leave" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <CalendarRange :size="16" /> Cuti & Izin Guru
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/subject')"
-            to="/subject" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <BookOpen :size="16" /> Mata Pelajaran
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/extracurricular')"
-            to="/extracurricular" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <Trophy :size="16" /> Ekstrakurikuler
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/gradebook')"
-            to="/gradebook/scheme" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <FileSpreadsheet :size="16" /> Skema Penilaian
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/gradebook')"
-            to="/gradebook/input" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <ClipboardCheck :size="16" /> Input Nilai
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/gradebook')"
-            to="/gradebook/analytics" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <BarChart3 :size="16" /> Analitik & Rekap
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/report')"
-            to="/report" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <ClipboardCheck :size="16" /> Cetak Rapor
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/report')"
-            to="/report/template" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <LayoutTemplate :size="16" /> Template Rapor
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/financial')"
-            to="/financial" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <DollarSign :size="16" /> Keuangan & SPP
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/ppdb')"
-            to="/ppdb" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <UserPlus :size="16" /> PPDB Online
-          </NuxtLink>
-          <NuxtLink 
-            v-if="canAccess('/wa')"
-            to="/wa/devices" 
-            @click="isMobileMenuOpen = false"
-            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-            active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-          >
-            <Smartphone :size="16" /> WA Gateway
-          </NuxtLink>
+        <nav class="flex-1 overflow-y-auto pr-1 pb-4">
+          <div v-for="(group, gIdx) in filteredMenuGroups" :key="gIdx" class="mb-4 mt-2">
+            <div class="px-5 mb-2">
+              <h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest">{{ group.title }}</h3>
+            </div>
+            <div class="space-y-1">
+              <template v-for="(item, iIdx) in group.items" :key="iIdx">
+                <NuxtLink 
+                  :to="item.to"
+                  :target="item.external ? '_blank' : undefined"
+                  @click="isMobileMenuOpen = false"
+                  class="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200"
+                  :class="item.customClass || 'text-slate-400 hover:text-white hover:bg-slate-800/60'"
+                  active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
+                >
+                  <component :is="item.icon" :size="16" /> 
+                  <span>{{ item.label }}</span>
+                </NuxtLink>
+              </template>
+            </div>
+          </div>
         </nav>
 
         <!-- Sidebar Footer -->
@@ -369,199 +240,26 @@ watch(currentSchoolId, async (newVal) => {
       </div>
 
       <!-- Navigation Links -->
-      <nav class="flex-1 space-y-1 overflow-y-auto pr-1">
-        <NuxtLink 
-          v-if="canAccess('/')"
-          to="/" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <LayoutDashboard :size="16" /> Dashboard
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/dashboard')"
-          to="/dashboard" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <BarChart3 :size="16" /> Dashboard Eksekutif
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/dashboard')"
-          to="/scanner" 
-          target="_blank"
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-amber-400 hover:text-amber-300 hover:bg-amber-900/30 transition-all duration-200"
-        >
-          <Smartphone :size="16" /> QR Scanner PWA
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/school')"
-          to="/school" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <School :size="16" /> Unit Sekolah
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/academic-year')"
-          to="/academic-year" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <Calendar :size="16" /> Tahun Ajaran
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/class')"
-          to="/class" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <LayoutGrid :size="16" /> Data Kelas
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/student')"
-          to="/student" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <Users :size="16" /> Data Siswa
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/student')"
-          to="/student/attendance" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <ClipboardCheck :size="16" /> Absensi Siswa
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/teacher')"
-          to="/teacher" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <UserCheck :size="16" /> Guru & Staf
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/teacher')"
-          to="/teacher/attendance" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <ClipboardCheck :size="16" /> Absensi Guru & Staf
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/attendance-settings')"
-          to="/attendance-settings" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <Settings :size="16" /> Pengaturan Absensi
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/homeroom')"
-          to="/homeroom" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <ClipboardCheck :size="16" /> Rapor Wali Kelas
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/schedule')"
-          to="/schedule" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <Clock :size="16" /> Jadwal Pelajaran
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/leave')"
-          to="/leave" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <CalendarRange :size="16" /> Cuti & Izin Guru
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/subject')"
-          to="/subject" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <BookOpen :size="16" /> Mata Pelajaran
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/extracurricular')"
-          to="/extracurricular" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <Trophy :size="16" /> Ekstrakurikuler
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/gradebook')"
-          to="/gradebook/scheme" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <FileSpreadsheet :size="16" /> Skema Penilaian
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/gradebook')"
-          to="/gradebook/input" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <ClipboardCheck :size="16" /> Input Nilai
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/gradebook')"
-          to="/gradebook/analytics" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <BarChart3 :size="16" /> Analitik & Rekap
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/report')"
-          to="/report" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <ClipboardCheck :size="16" /> Cetak Rapor
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/report')"
-          to="/report/template" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <LayoutTemplate :size="16" /> Template Rapor
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/financial')"
-          to="/financial" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <DollarSign :size="16" /> Keuangan & SPP
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/ppdb')"
-          to="/ppdb" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <UserPlus :size="16" /> PPDB Online
-        </NuxtLink>
-        <NuxtLink 
-          v-if="canAccess('/wa')"
-          to="/wa/devices" 
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wide text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
-          active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
-        >
-          <Smartphone :size="16" /> WA Gateway
-        </NuxtLink>
+      <nav class="flex-1 overflow-y-auto pr-1 pb-4">
+        <div v-for="(group, gIdx) in filteredMenuGroups" :key="gIdx" class="mb-4 mt-2">
+          <div class="px-5 mb-2">
+            <h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest">{{ group.title }}</h3>
+          </div>
+          <div class="space-y-1">
+            <template v-for="(item, iIdx) in group.items" :key="iIdx">
+              <NuxtLink 
+                :to="item.to"
+                :target="item.external ? '_blank' : undefined"
+                class="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200"
+                :class="item.customClass || 'text-slate-400 hover:text-white hover:bg-slate-800/60'"
+                active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
+              >
+                <component :is="item.icon" :size="16" /> 
+                <span>{{ item.label }}</span>
+              </NuxtLink>
+            </template>
+          </div>
+        </div>
       </nav>
 
       <!-- Sidebar Footer (User Info & Logout) -->
