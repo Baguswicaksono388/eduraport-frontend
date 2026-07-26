@@ -24,6 +24,17 @@ const { classes, classesMeta, classStudents, teachers, fetchClasses, fetchClassS
 const { page, itemPerPage } = usePagination(10)
 const toast = useToast()
 
+const classLevelOptions = computed(() => {
+  const school = schools.value.find((s: any) => s.id === selectedSchoolId.value)
+  const schoolLvl = school?.level?.toUpperCase()
+  if (schoolLvl === 'TK') return ['TK A', 'TK B', 'Playgroup']
+  if (schoolLvl === 'SD') return ['1', '2', '3', '4', '5', '6']
+  if (schoolLvl === 'SMP') return ['7', '8', '9']
+  if (schoolLvl === 'SMA' || schoolLvl === 'SMK') return ['10', '11', '12']
+  return ['TK A', 'TK B', 'Playgroup', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
+})
+
+
 const selectedAcademicYearId = ref('')
 
 const showCreateModal = ref(false)
@@ -292,7 +303,13 @@ const viewStudents = async (cObj: any) => {
       <form @submit.prevent="handleCreateClass" class="space-y-4">
         <BaseInput v-model="classForm.class_name" label="Nama Kelas" placeholder="Contoh: 7-A atau Kelas 1" required />
         <div class="grid grid-cols-2 gap-4">
-          <BaseInput v-model="classForm.level" label="Tingkat (Level)" placeholder="Contoh: 7 atau SD-1" required />
+          <div class="flex flex-col gap-1.5 w-full">
+            <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tingkat (Level)</label>
+            <select v-model="classForm.level" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10" required>
+              <option value="" disabled>Pilih Tingkat (Level)</option>
+              <option v-for="lvl in classLevelOptions" :key="lvl" :value="lvl">{{ lvl }}</option>
+            </select>
+          </div>
           <BaseInput v-model="classForm.capacity" type="number" label="Kapasitas Kelas" placeholder="Contoh: 30" required />
         </div>
         
@@ -324,7 +341,13 @@ const viewStudents = async (cObj: any) => {
       <form @submit.prevent="handleUpdateClass" class="space-y-4">
         <BaseInput v-model="editForm.class_name" label="Nama Kelas" placeholder="Contoh: 7-A atau Kelas 1" required />
         <div class="grid grid-cols-2 gap-4">
-          <BaseInput v-model="editForm.level" label="Tingkat (Level)" placeholder="Contoh: 7 atau SD-1" required />
+          <div class="flex flex-col gap-1.5 w-full">
+            <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tingkat (Level)</label>
+            <select v-model="editForm.level" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10" required>
+              <option value="" disabled>Pilih Tingkat (Level)</option>
+              <option v-for="lvl in classLevelOptions" :key="lvl" :value="lvl">{{ lvl }}</option>
+            </select>
+          </div>
           <BaseInput v-model="editForm.capacity" type="number" label="Kapasitas Kelas" placeholder="Contoh: 30" required />
         </div>
         

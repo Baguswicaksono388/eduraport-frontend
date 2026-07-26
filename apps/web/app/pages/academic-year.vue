@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Calendar, Plus, Trash2, Edit2, CheckCircle2, AlertCircle, Play } from 'lucide-vue-next'
+import { Calendar, Plus, Trash2, Edit2, CheckCircle2, AlertCircle, Play, Copy } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput, BaseDateInput } from '@eduraport/ui'
 import { useSchoolContext } from '../composables/useSchoolContext'
 import { useAcademicYear } from '../composables/useAcademicYear'
@@ -16,7 +16,7 @@ definePageMeta({
 })
 
 const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
-const { academicYears, fetchAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear, activateAcademicYear } = useAcademicYear()
+const { academicYears, fetchAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear, activateAcademicYear, cloneClasses } = useAcademicYear()
 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
@@ -35,6 +35,16 @@ const editForm = reactive({
   end_date: '',
   is_active: false
 })
+
+const showCloneModal = ref(false)
+const cloneTargetYearId = ref('')
+const cloneSourceYearId = ref('')
+const cloneLoading = ref(false)
+
+const availableSourceYears = computed(() => {
+  return academicYears.value.filter((y: any) => y.id !== cloneTargetYearId.value)
+})
+
 
 onMounted(async () => {
   const schoolId = await initContext()
@@ -118,11 +128,38 @@ const handleActivateYear = async (id: string) => {
   try {
     const res = await activateAcademicYear(selectedSchoolId.value, id)
     if (res.success) {
-      // Reload current page/layout state if needed or let standard fetch handle it
       alert('Tahun ajaran berhasil diaktifkan.')
     }
   } catch (e: any) {
     alert(e?.message ?? 'Gagal mengaktifkan tahun ajaran')
+  }
+}
+
+const openCloneModal = (targetYearId: string) => {
+  cloneTargetYearId.value = targetYearId
+  cloneSourceYearId.value = ''
+  showCloneModal.value = true
+}
+
+const handleCloneSubmit = async () => {
+  if (!cloneSourceYearId.value) {
+    alert('Pilih tahun ajaran asal')
+    return
+  }
+  
+  cloneLoading.value = true
+  try {
+    const res: any = await cloneClasses(selectedSchoolId.value, cloneTargetYearId.value, cloneSourceYearId.value)
+    if (res.success) {
+      alert(res.message || 'Berhasil menyalin kelas')
+      showCloneModal.value = false
+    } else {
+      alert(res.message || 'Gagal menyalin kelas')
+    }
+  } catch (e: any) {
+    alert(e?.message || 'Gagal menyalin kelas')
+  } finally {
+    cloneLoading.value = false
   }
 }
 </script>
@@ -194,14 +231,17 @@ const handleActivateYear = async (id: string) => {
               </span>
             </td>
             <td class="p-4 pr-6 text-right">
-              <div class="flex justify-end items-center gap-2">
-                <BaseButton v-if="!year.is_active" variant="outline" @click="handleActivateYear(year.id)" class="py-1 px-2 text-[10px] font-bold flex items-center gap-1 border-violet-200 dark:border-violet-900/40 text-violet-600 dark:text-violet-400">
-                  <Play :size="10" /> Aktifkan
+              <div class="flex justify-end items-center gap-1.5">
+                <BaseButton v-if="!year.is_active" @click="handleActivateYear(year.id)" variant="outline" class="py-1.5 px-3 text-[10px] font-bold text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-900/30">
+                  <Play :size="12" class="mr-1" /> Aktifkan
                 </BaseButton>
-                <button @click="openEditModal(year)" class="p-2 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+                <BaseButton @click="openCloneModal(year.id)" variant="outline" class="py-1.5 px-3 text-[10px] font-bold text-blue-600 border-blue-200 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/30">
+                  <Copy :size="12" class="mr-1" /> Salin Kelas
+                </BaseButton>
+                <button @click="openEditModal(year)" class="p-2 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors" title="Ubah">
                   <Edit2 :size="14" />
                 </button>
-                <button @click="handleDeleteYear(year.id)" :disabled="year.is_active" class="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-450 transition-colors disabled:opacity-30 disabled:pointer-events-none">
+                <button @click="handleDeleteYear(year.id)" :disabled="year.is_active" class="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-450 transition-colors disabled:opacity-30 disabled:pointer-events-none" title="Hapus">
                   <Trash2 :size="14" />
                 </button>
               </div>
@@ -254,6 +294,36 @@ const handleActivateYear = async (id: string) => {
           <BaseButton variant="primary" type="submit">Simpan Perubahan</BaseButton>
         </div>
       </form>
+    </BaseModal>
+
+    <!-- Clone Classes Modal -->
+    <BaseModal :show="showCloneModal" title="Salin Kelas" @close="showCloneModal = false">
+      <div class="space-y-4">
+        <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 p-4 rounded-xl mb-2">
+          <div class="flex gap-3">
+            <AlertCircle class="text-amber-500 shrink-0 mt-0.5" :size="16" />
+            <div class="text-xs text-amber-800 dark:text-amber-400/90 leading-relaxed">
+              <span class="font-bold">Perhatian:</span> Aksi ini akan menyalin semua Rombongan Belajar (Kelas) dari tahun ajaran asal ke tahun ajaran tujuan. Siswa dan Wali Kelas <b>tidak</b> ikut disalin.
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-slate-700 dark:text-zinc-300">Tahun Ajaran Asal</label>
+          <select v-model="cloneSourceYearId" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 transition-all">
+            <option value="" disabled>Pilih Tahun Ajaran...</option>
+            <option v-for="y in availableSourceYears" :key="y.id" :value="y.id">{{ y.name }}</option>
+          </select>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800 mt-2">
+          <BaseButton variant="outline" @click="showCloneModal = false" :disabled="cloneLoading">Batal</BaseButton>
+          <BaseButton variant="primary" @click="handleCloneSubmit" :disabled="cloneLoading || !cloneSourceYearId">
+            <span v-if="cloneLoading">Memproses...</span>
+            <span v-else>Salin Kelas</span>
+          </BaseButton>
+        </div>
+      </div>
     </BaseModal>
   </div>
 </template>

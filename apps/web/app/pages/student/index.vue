@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { Users, Plus, Trash2, Edit2, School, Search, Download, Upload, FileSpreadsheet, X, CheckCircle, AlertCircle, LayoutGrid } from 'lucide-vue-next'
+import { Users, Plus, Trash2, Edit2, School, Search, Download, Upload, FileSpreadsheet, X, CheckCircle, AlertCircle, LayoutGrid, History, TrendingUp } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput, BaseDateInput } from '@eduraport/ui'
 import { useStudent } from '../../composables/useStudent'
 import { useParent } from '../../composables/useParent'
 import { useClass } from '../../composables/useClass'
 import { useAcademicYear } from '../../composables/useAcademicYear'
 import { useToast } from '../../composables/useToast'
+import { useApi } from '../../composables/useApi'
 
 definePageMeta({
   middleware: [
@@ -19,7 +20,7 @@ definePageMeta({
 })
 
 const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
-const { students, totalStudents, studentsMeta, fetchStudents, createStudent, updateStudent, deleteStudent, downloadTemplate, importStudents } = useStudent()
+const { students, totalStudents, studentsMeta, fetchStudents, createStudent, updateStudent, deleteStudent, downloadTemplate, importStudents, promoteClass } = useStudent()
 const { classes, fetchClasses } = useClass()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
 const { parents, fetchParents, createParent, updateParent, deleteParent } = useParent()
@@ -36,6 +37,90 @@ const importFile = ref<File | null>(null)
 const importLoading = ref(false)
 const importResult = ref<{ success: number; failed: number; errors: string[] } | null>(null)
 const downloadLoading = ref(false)
+
+const showMassPromotionModal = ref(false)
+const massPromotionSourceClassId = ref('')
+const massPromotionTargetClassId = ref('')
+const selectedStudentIds = ref<string[]>([])
+const massPromotionLoading = ref(false)
+
+const openMassPromotionModal = () => {
+  showMassPromotionModal.value = true
+  massPromotionSourceClassId.value = selectedClassFilter.value === '__none__' ? '' : selectedClassFilter.value
+  massPromotionTargetClassId.value = ''
+  selectedStudentIds.value = []
+}
+
+const modalAvailableStudents = computed(() => {
+  // Use all students without being affected by the main table's search text
+  return students.value.filter((s: any) => 
+    massPromotionSourceClassId.value ? s.class_id === massPromotionSourceClassId.value : !s.class_id
+  )
+})
+
+const toggleAllStudents = () => {
+  const available = modalAvailableStudents.value
+  if (selectedStudentIds.value.length === available.length && available.length > 0) {
+    selectedStudentIds.value = []
+  } else {
+    selectedStudentIds.value = available.map((s: any) => s.id)
+  }
+}
+
+const handleMassPromotion = async () => {
+  if (!massPromotionTargetClassId.value) {
+    toast.error('Silakan pilih kelas tujuan', 'Error')
+    return
+  }
+  if (selectedStudentIds.value.length === 0) {
+    toast.error('Pilih minimal satu siswa', 'Error')
+    return
+  }
+  
+  massPromotionLoading.value = true
+  try {
+    const res = await promoteClass(selectedSchoolId.value, selectedStudentIds.value, massPromotionTargetClassId.value)
+    if (res.success) {
+      toast.success(res.message || 'Siswa berhasil dinaikkan kelas', 'Sukses')
+      showMassPromotionModal.value = false
+    } else {
+      toast.error(res.message || 'Gagal menaikkan kelas siswa', 'Error')
+    }
+  } catch (error: any) {
+    toast.error('Terjadi kesalahan saat memproses data', 'Error')
+  } finally {
+    massPromotionLoading.value = false
+  }
+}
+
+const showHistoryModal = ref(false)
+const selectedStudentHistory = ref<any>(null)
+const historyLoading = ref(false)
+
+const openHistoryModal = async (student: any) => {
+  if (!student.foundation_person_id) {
+    toast.error('Siswa ini belum terhubung dengan data Yayasan.', 'Informasi')
+    return
+  }
+  
+  showHistoryModal.value = true
+  historyLoading.value = true
+  selectedStudentHistory.value = null
+  
+  try {
+    const { fetcher } = useApi()
+    const fid = selectedFoundationId.value || 'my' // fallback if needed
+    const res: any = await fetcher(`/foundation/${fid}/workspace/persons/${student.foundation_person_id}/history`)
+    if (res.success) {
+      selectedStudentHistory.value = res.data
+    }
+  } catch (e: any) {
+    toast.error('Gagal memuat riwayat siswa')
+    showHistoryModal.value = false
+  } finally {
+    historyLoading.value = false
+  }
+}
 
 const studentForm = reactive({
   full_name: '',
@@ -71,7 +156,18 @@ const editForm = reactive({
 const filteredClasses = computed(() => {
   if (!classes.value) return []
   if (!selectedAcademicYearId.value) return classes.value
-  return classes.value.filter(c => c.academic_year_id === selectedAcademicYearId.value)
+  return classes.value.filter((c: any) => c.academic_year_id === selectedAcademicYearId.value)
+})
+
+const formattedAllClasses = computed(() => {
+  if (!classes.value) return []
+  return classes.value.map((c: any) => {
+    const year = academicYears.value.find((y: any) => y.id === c.academic_year_id)
+    return {
+      ...c,
+      display_name: `${c.class_name} (${c.level || '-'}) - ${year ? year.name : 'Unknown Year'}`
+    }
+  })
 })
 
 onMounted(async () => {
@@ -96,10 +192,21 @@ const loadSchoolData = async (schoolId: string) => {
   }
 }
 
-watch([page, itemPerPage], () => {
+watch([page, itemPerPage, selectedClassFilter], () => {
   if (selectedSchoolId.value) {
-    fetchStudents(selectedSchoolId.value, page.value, itemPerPage.value)
+    fetchStudents(selectedSchoolId.value, page.value, itemPerPage.value, searchQuery.value, selectedClassFilter.value === '__none__' ? '__none__' : selectedClassFilter.value)
   }
+})
+
+let searchTimeout: any
+watch(searchQuery, (newVal) => {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    page.value = 1
+    if (selectedSchoolId.value) {
+      fetchStudents(selectedSchoolId.value, page.value, itemPerPage.value, newVal, selectedClassFilter.value === '__none__' ? '__none__' : selectedClassFilter.value)
+    }
+  }, 500)
 })
 
 watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
@@ -248,24 +355,7 @@ const handleImport = async () => {
 }
 
 const filteredStudents = computed(() => {
-  let list = students.value
-
-  // Filter by selected class
-  if (selectedClassFilter.value) {
-    list = list.filter(s => s.class_id === selectedClassFilter.value)
-  }
-
-  // Filter by search query
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    list = list.filter(s =>
-      s.full_name.toLowerCase().includes(query) ||
-      (s.student_number && s.student_number.includes(query)) ||
-      (s.national_student_number && s.national_student_number.includes(query))
-    )
-  }
-
-  return list
+  return students.value
 })
 
 // Stats
@@ -288,6 +378,9 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
         </BaseButton>
         <BaseButton variant="outline" @click="showImportModal = true" :disabled="!selectedSchoolId" class="py-2.5 px-4 text-xs font-bold">
           <Upload class="mr-1.5" :size="14" /> Import Excel
+        </BaseButton>
+        <BaseButton variant="outline" @click="openMassPromotionModal()" :disabled="!selectedSchoolId" class="py-2.5 px-4 text-xs font-bold border-violet-200 text-violet-700 hover:bg-violet-50 dark:border-violet-800 dark:text-violet-400 dark:hover:bg-violet-900/30">
+          <TrendingUp class="mr-1.5" :size="14" /> Naik Kelas Massal
         </BaseButton>
         <BaseButton variant="primary" @click="showCreateModal = true; resetCreateForm()" :disabled="!selectedSchoolId" class="py-2.5 px-4 text-xs font-bold">
           <Plus class="mr-1.5" :size="14" /> Siswa Baru
@@ -433,6 +526,9 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
               </td>
               <td class="px-6 py-4 text-right">
                 <div class="flex items-center justify-end gap-2">
+                  <button @click="openHistoryModal(student)" class="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg transition-colors" title="Riwayat Akademik">
+                    <History :size="14" />
+                  </button>
                   <button @click="openEditModal(student)" class="p-1.5 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg transition-colors">
                     <Edit2 :size="14" />
                   </button>
@@ -644,5 +740,110 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
         </div>
       </div>
     </BaseModal>
+
+    <!-- History Modal -->
+    <BaseModal :show="showHistoryModal" title="Riwayat Siswa" @close="showHistoryModal = false">
+      <div v-if="historyLoading" class="text-center py-8 text-slate-500">Memuat riwayat...</div>
+      <div v-else-if="selectedStudentHistory" class="space-y-4">
+        <div class="bg-slate-50 dark:bg-zinc-900 p-4 rounded-lg border border-slate-200 dark:border-zinc-800">
+          <p class="font-bold text-slate-900 dark:text-white">{{ selectedStudentHistory.person.full_name }}</p>
+          <p class="text-xs text-slate-500">NISN: {{ selectedStudentHistory.person.national_student_number || '-' }}</p>
+        </div>
+        
+        <div v-for="school in selectedStudentHistory.history" :key="school.id" class="border-l-2 border-violet-500 pl-4 py-2 relative">
+          <div class="absolute -left-[5px] top-4 w-2 h-2 rounded-full bg-violet-600"></div>
+          <h3 class="font-bold text-sm text-slate-800 dark:text-zinc-200">{{ school.school_name }} <span class="text-xs text-slate-400 font-normal">({{ school.school_level }})</span></h3>
+          <div class="mt-2 space-y-2">
+            <div v-for="cls in school.class_histories" :key="cls.changed_at" class="text-xs bg-slate-50 dark:bg-zinc-900/50 p-2 rounded flex justify-between items-center border border-slate-100 dark:border-zinc-800">
+              <div>
+                <span class="font-bold text-violet-600 dark:text-violet-400">{{ cls.class_name }}</span>
+                <span class="text-slate-400 ml-2">TA: {{ cls.academic_year_name || '-' }}</span>
+              </div>
+              <span class="text-[10px] text-slate-400">{{ new Date(cls.changed_at).toLocaleDateString('id-ID') }}</span>
+            </div>
+            <div v-if="school.class_histories.length === 0" class="text-xs text-slate-400 italic">Belum ada riwayat kelas</div>
+          </div>
+        </div>
+      </div>
+      <div v-else class="text-center py-8 text-slate-500">Gagal memuat riwayat</div>
+      <div class="flex justify-end pt-4">
+        <BaseButton variant="outline" @click="showHistoryModal = false">Tutup</BaseButton>
+      </div>
+    </BaseModal>
+
+    <!-- Mass Promotion Modal -->
+    <BaseModal :show="showMassPromotionModal" title="Kenaikan Kelas Massal" @close="showMassPromotionModal = false" custom-class="max-w-4xl w-full">
+      <div class="space-y-4">
+        <div class="bg-violet-50 dark:bg-violet-900/20 p-4 rounded-lg border border-violet-100 dark:border-violet-900/50 flex flex-col gap-3">
+          <div class="flex items-center gap-2">
+            <TrendingUp class="text-violet-600 dark:text-violet-400" :size="20" />
+            <h3 class="font-bold text-violet-900 dark:text-violet-100">Proses Kenaikan Kelas</h3>
+          </div>
+          <p class="text-xs text-violet-700 dark:text-violet-300">
+            Pilih kelas asal untuk melihat daftar siswa, kemudian centang siswa yang ingin dipindahkan ke kelas tujuan.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 pl-1">Pilih Kelas Asal</label>
+            <select v-model="massPromotionSourceClassId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10">
+              <option value="">— Belum di Kelas —</option>
+              <option v-for="c in formattedAllClasses" :key="c.id" :value="c.id">{{ c.display_name }}</option>
+            </select>
+          </div>
+          
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 pl-1">Pilih Kelas Tujuan</label>
+            <select v-model="massPromotionTargetClassId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10">
+              <option value="" disabled>— Pilih Kelas Tujuan —</option>
+              <option v-for="c in formattedAllClasses" :key="c.id" :value="c.id">{{ c.display_name }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Student List for Promotion -->
+        <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg overflow-hidden flex flex-col h-[400px]">
+          <div class="bg-slate-50 dark:bg-zinc-950 p-3 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" :checked="selectedStudentIds.length > 0 && selectedStudentIds.length === modalAvailableStudents.length" @change="toggleAllStudents" class="w-4 h-4 text-violet-600 bg-gray-100 border-gray-300 rounded focus:ring-violet-500 dark:focus:ring-violet-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+              <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Pilih Semua ({{ modalAvailableStudents.length }} Siswa)</span>
+            </div>
+            <span class="text-[10px] font-bold px-2 py-1 bg-violet-100 text-violet-700 rounded-full dark:bg-violet-900/30 dark:text-violet-400">
+              {{ selectedStudentIds.length }} Terpilih
+            </span>
+          </div>
+          
+          <div class="flex-1 overflow-auto p-2 space-y-1">
+            <label 
+              v-for="student in modalAvailableStudents" 
+              :key="student.id"
+              class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors"
+              :class="selectedStudentIds.includes(student.id) ? 'bg-violet-50/50 border-violet-200 dark:bg-violet-900/10 dark:border-violet-800' : 'bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-zinc-800'"
+            >
+              <input type="checkbox" :value="student.id" v-model="selectedStudentIds" class="w-4 h-4 text-violet-600 bg-gray-100 border-gray-300 rounded focus:ring-violet-500 dark:focus:ring-violet-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+              <div class="flex-1">
+                <p class="text-sm font-bold text-slate-800 dark:text-zinc-200">{{ student.full_name }}</p>
+                <p class="text-[10px] text-slate-500 dark:text-zinc-400">{{ student.student_number || '-' }} | {{ student.national_student_number || '-' }}</p>
+              </div>
+            </label>
+            
+            <div v-if="modalAvailableStudents.length === 0" class="text-center py-10">
+              <p class="text-xs font-medium text-slate-400">Tidak ada siswa di kelas asal ini.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex justify-end gap-2 pt-4">
+          <BaseButton type="button" variant="outline" @click="showMassPromotionModal = false" class="py-2.5 px-4 text-xs font-bold">
+            Batal
+          </BaseButton>
+          <BaseButton type="button" variant="primary" @click="handleMassPromotion" :disabled="massPromotionLoading || selectedStudentIds.length === 0 || !massPromotionTargetClassId" class="py-2.5 px-4 text-xs font-bold">
+            {{ massPromotionLoading ? 'Memproses...' : 'Proses Kenaikan Kelas' }}
+          </BaseButton>
+        </div>
+      </div>
+    </BaseModal>
+
   </div>
 </template>

@@ -8,7 +8,7 @@ import { useAcademicYear } from '../composables/useAcademicYear'
 import { useRbac } from '../composables/useRbac'
 
 const { user, logout, fetchUser, changePassword } = useAuth()
-const { currentSchoolId } = useSchool()
+const { currentSchoolId, currentSchool } = useSchool()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
 const { canAccess } = useRbac()
 
@@ -74,9 +74,21 @@ watch(currentSchoolId, async (newVal) => {
 })
 
 
-const menuGroups = computed(() => [
-  {
-    title: 'Utama / Dashboard',
+const menuGroups = computed(() => {
+  const groups: any[] = []
+
+  if (currentSchool.value?.foundation_id && ['super_admin', 'principal', 'tu'].includes(user.value?.role)) {
+    groups.push({
+      title: 'Yayasan / Workspace',
+      items: [
+        { to: `/foundation/${currentSchool.value.foundation_id}/workspace`, label: 'Foundation Workspace', icon: Landmark, access: '/' }
+      ]
+    })
+  }
+
+  groups.push(
+    {
+      title: 'Utama / Dashboard',
     items: [
       { to: '/', label: user.value?.role === 'parent' ? 'Portal Orang Tua' : 'Dashboard', icon: LayoutDashboard, access: '/' },
       { to: '/dashboard', label: 'Dashboard Eksekutif', icon: BarChart3, access: '/dashboard' },
@@ -129,8 +141,10 @@ const menuGroups = computed(() => [
       { to: '/financial', label: 'Keuangan & SPP', icon: DollarSign, access: '/financial' },
       { to: '/wa/devices', label: 'WA Gateway', icon: Smartphone, access: '/wa' }
     ]
-  }
-])
+  })
+
+  return groups
+})
 
 const filteredMenuGroups = computed(() => {
   return menuGroups.value.map(group => ({

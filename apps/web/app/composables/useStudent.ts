@@ -8,10 +8,14 @@ export const useStudent = () => {
   const studentsMeta = useState<any>('students_meta', () => null)
   const totalStudents = computed(() => studentsMeta.value?.total_item || 0)
 
-  const fetchStudents = async (schoolId: string, page = 1, itemPerPage = 10) => {
+  const fetchStudents = async (schoolId: string, page = 1, itemPerPage = 10, search?: string, classId?: string) => {
     try {
+      const query: any = { page, item_per_page: itemPerPage }
+      if (search) query.search = search
+      if (classId) query.class_id = classId
+      
       const res: any = await fetcher(`/school/${schoolId}/student`, {
-        query: { page, item_per_page: itemPerPage }
+        query
       })
       if (res.success) {
         students.value = res.data.data
@@ -79,6 +83,18 @@ export const useStudent = () => {
     return res
   }
 
+  const promoteClass = async (schoolId: string, studentIds: string[], toClassId: string) => {
+    const res: any = await fetcher(`/school/${schoolId}/student/promote-class`, {
+      method: 'POST',
+      body: {
+        student_ids: studentIds,
+        to_class_id: toClassId
+      }
+    })
+    await fetchStudents(schoolId, studentsMeta.value?.page || 1, studentsMeta.value?.item_per_page || 10)
+    return res
+  }
+
   return {
     students,
     studentsMeta,
@@ -89,5 +105,6 @@ export const useStudent = () => {
     deleteStudent,
     downloadTemplate,
     importStudents,
+    promoteClass
   }
 }

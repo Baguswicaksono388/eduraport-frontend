@@ -49,12 +49,22 @@ export const useAcademicYear = () => {
     return res
   }
 
+  const cloneClasses = async (schoolId: string, targetId: string, sourceId: string) => {
+    const res = await fetcher(`/school/${schoolId}/academic-year/${targetId}/clone-classes`, {
+      method: 'POST',
+      body: { source_academic_year_id: sourceId }
+    })
+    return res
+  }
+
   return {
     academicYears,
     fetchAcademicYears,
     createAcademicYear,
     updateAcademicYear,
     deleteAcademicYear,
-    activateAcademicYear
+    activateAcademicYear,
+    cloneClasses
   }
 }
+
