@@ -8,11 +8,12 @@ export const useStudent = () => {
   const studentsMeta = useState<any>('students_meta', () => null)
   const totalStudents = computed(() => studentsMeta.value?.total_item || 0)
 
-  const fetchStudents = async (schoolId: string, page = 1, itemPerPage = 10, search?: string, classId?: string) => {
+  const fetchStudents = async (schoolId: string, page = 1, itemPerPage = 10, search?: string, classId?: string, academicYearId?: string) => {
     try {
       const query: any = { page, item_per_page: itemPerPage }
       if (search) query.search = search
       if (classId) query.class_id = classId
+      if (academicYearId) query.academic_year_id = academicYearId
       
       const res: any = await fetcher(`/school/${schoolId}/student`, {
         query

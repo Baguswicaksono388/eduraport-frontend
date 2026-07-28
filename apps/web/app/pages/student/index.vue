@@ -192,9 +192,9 @@ const loadSchoolData = async (schoolId: string) => {
   }
 }
 
-watch([page, itemPerPage, selectedClassFilter], () => {
+watch([page, itemPerPage, selectedClassFilter, selectedAcademicYearId], () => {
   if (selectedSchoolId.value) {
-    fetchStudents(selectedSchoolId.value, page.value, itemPerPage.value, searchQuery.value, selectedClassFilter.value === '__none__' ? '__none__' : selectedClassFilter.value)
+    fetchStudents(selectedSchoolId.value, page.value, itemPerPage.value, searchQuery.value, selectedClassFilter.value === '__none__' ? '__none__' : selectedClassFilter.value, selectedAcademicYearId.value)
   }
 })
 
@@ -204,7 +204,7 @@ watch(searchQuery, (newVal) => {
   searchTimeout = setTimeout(() => {
     page.value = 1
     if (selectedSchoolId.value) {
-      fetchStudents(selectedSchoolId.value, page.value, itemPerPage.value, newVal, selectedClassFilter.value === '__none__' ? '__none__' : selectedClassFilter.value)
+      fetchStudents(selectedSchoolId.value, page.value, itemPerPage.value, newVal, selectedClassFilter.value === '__none__' ? '__none__' : selectedClassFilter.value, selectedAcademicYearId.value)
     }
   }, 500)
 })
