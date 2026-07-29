@@ -4,11 +4,18 @@ export const useSchedule = () => {
   const { fetcher } = useApi()
   const schedules = useState<any[]>('schedules', () => [])
 
-  const fetchSchedules = async (schoolId: string, classId?: string) => {
+  const fetchSchedules = async (schoolId: string, classId?: string, academicYearId?: string) => {
     try {
-      const url = classId 
-        ? `/school/${schoolId}/schedule?classId=${classId}` 
-        : `/school/${schoolId}/schedule`
+      let url = `/school/${schoolId}/schedule`
+      const params = new URLSearchParams()
+      if (classId) params.append('classId', classId)
+      if (academicYearId) params.append('academicYearId', academicYearId)
+      
+      const queryString = params.toString()
+      if (queryString) {
+        url += `?${queryString}`
+      }
+      
       const res: any = await fetcher(url)
       if (res.success) {
         schedules.value = res.data

@@ -26,6 +26,7 @@ import { useTeacher } from '../composables/useTeacher'
 import { useSchedule } from '../composables/useSchedule'
 import { useApi } from '../composables/useApi'
 import { useAuth } from '../composables/useAuth'
+import { useAcademicYear } from '../composables/useAcademicYear'
 
 definePageMeta({
   middleware: [
@@ -47,6 +48,11 @@ const { subjects, fetchSubjects } = useSubject()
 const { teachers, fetchTeachers } = useTeacher()
 const { schedules, fetchSchedules, createSchedule, updateSchedule, deleteSchedule } = useSchedule()
 const { user } = useAuth()
+const { academicYears } = useAcademicYear()
+
+const activeAcademicYear = computed(() => {
+  return academicYears.value.find(y => y.is_active)
+})
 
 // Leave composable for Modul 7.1e
 import { useLeave } from '../composables/useLeave'
@@ -58,9 +64,94 @@ const selectedTeacherId = ref('')
 // Substitution and Vacancy states
 const substitutionMode = ref(false)
 const selectOnlyProblems = ref(false)
-const currentDate = ref(new Date())
+const showVacancies = ref(true)
 const showCandidateModal = ref(false)
-const selectedVacancySlot = ref<any>(null)
+const selectedVacancy = ref<any>(null)
+const vacancyDate = ref('')
+const selectedCandidate = ref<any>(null)
+
+// Current date and week logic
+const currentDate = ref(new Date())
+
+const startOfWeek = computed(() => {
+  const d = new Date(currentDate.value)
+  const day = d.getDay()
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1) // Adjust when day is Sunday
+  d.setDate(diff)
+  d.setHours(0, 0, 0, 0)
+  return d
+})
+
+const endOfWeek = computed(() => {
+  const d = new Date(startOfWeek.value)
+  d.setDate(d.getDate() + 5) // Saturday
+  d.setHours(23, 59, 59, 999)
+  return d
+})
+
+const currentWeekLabel = computed(() => {
+  const start = startOfWeek.value.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+  const end = endOfWeek.value.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+  return `${start} - ${end}`
+})
+
+const weekDates = computed(() => {
+  const dates = []
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(startOfWeek.value)
+    d.setDate(d.getDate() + i)
+    dates.push(d)
+  }
+  return dates
+})
+
+const weekDatesMap = computed(() => {
+  const map: Record<string, string> = {}
+  const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+  
+  weekDates.value.forEach((date, index) => {
+    map[days[index]] = date.toISOString().split('T')[0]
+  })
+  
+  return map
+})
+
+// Change week handler
+const changeWeek = (direction: 'prev' | 'next') => {
+  const newDate = new Date(currentDate.value)
+  if (direction === 'prev') {
+    newDate.setDate(newDate.getDate() - 7)
+  } else {
+    newDate.setDate(newDate.getDate() + 7)
+  }
+  currentDate.value = newDate
+}
+
+
+const todayDayName = computed(() => {
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+  return days[new Date().getDay()]
+})
+
+
+// State for forms and modals
+// Removed duplicates here
+
+const selectedAcademicYearId = ref('')
+
+// Watch selectedAcademicYearId to reload classes if active academic year is updated
+watch(selectedAcademicYearId, async (newVal) => {
+  if (selectedSchoolId.value) {
+    await fetchClasses(selectedSchoolId.value, newVal)
+    await fetchSchedules(selectedSchoolId.value, selectedClassId.value || undefined, newVal)
+  }
+})
+
+watch(activeAcademicYear, (newVal) => {
+  if (!selectedAcademicYearId.value && newVal) {
+    selectedAcademicYearId.value = newVal.id
+  }
+}, { immediate: true })
 const plannedNote = ref('')
 const selectedSubTeacherId = ref('')
 const declineReason = ref('')
@@ -119,6 +210,7 @@ const showToast = (type: 'success' | 'error', message: string) => {
 }
 
 // Lifecycle
+let timeInterval: any = null
 onMounted(async () => {
   const schoolId = await initContext()
   if (schoolId) {
@@ -146,16 +238,17 @@ watch(selectedSchoolId, async (newVal) => {
 
 watch(selectedClassId, async (newVal) => {
   if (selectedSchoolId.value) {
-    await fetchSchedules(selectedSchoolId.value, newVal || undefined)
+    await fetchSchedules(selectedSchoolId.value, newVal || undefined, selectedAcademicYearId.value || activeAcademicYear.value?.id)
   }
 })
 
 const loadSchoolData = async (schoolId: string) => {
+  const ayId = selectedAcademicYearId.value || activeAcademicYear.value?.id
   await Promise.all([
-    fetchClasses(schoolId),
+    fetchClasses(schoolId, ayId),
     fetchSubjects(schoolId),
     fetchTeachers(schoolId),
-    fetchSchedules(schoolId, selectedClassId.value || undefined)
+    fetchSchedules(schoolId, selectedClassId.value || undefined, ayId)
   ])
 }
 
@@ -544,7 +637,6 @@ const processedSchedulesByDay = computed(() => {
 // Current time line updates
 const currentTimeTop = ref<string | null>(null)
 const currentTimeDay = ref<string | null>(null)
-let timeInterval: any = null
 
 const updateCurrentTimeIndicator = () => {
   const now = new Date()
@@ -1040,7 +1132,7 @@ const handleDeclineSubstitution = async (substitutionId: string) => {
     </div>
 
     <!-- Filters & Selection with Glassmorphism styling -->
-    <div :class="['grid grid-cols-1 gap-4 bg-white/70 dark:bg-zinc-900/60 backdrop-blur-md border border-slate-200/70 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm', substitutionMode ? 'md:grid-cols-5' : 'md:grid-cols-4']">
+    <div :class="['grid grid-cols-1 gap-4 bg-white/70 dark:bg-zinc-900/60 backdrop-blur-md border border-slate-200/70 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm', substitutionMode ? 'md:grid-cols-6' : 'md:grid-cols-5']">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
         <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 dark:focus:ring-violet-500/5">
@@ -1058,8 +1150,16 @@ const handleDeclineSubstitution = async (substitutionId: string) => {
       </div>
 
       <div class="flex flex-col gap-1.5">
+        <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tahun Ajaran</label>
+        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 dark:focus:ring-violet-500/5">
+          <option value="" disabled>Pilih Tahun Ajaran</option>
+          <option v-for="ay in academicYears" :key="ay.id" :value="ay.id">{{ ay.name }} {{ ay.is_active ? '(Aktif)' : '' }}</option>
+        </select>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Filter Kelas</label>
-        <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 dark:focus:ring-violet-500/5">
+        <select v-model="selectedClassId" :disabled="!selectedSchoolId || !selectedAcademicYearId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 dark:focus:ring-violet-500/5">
           <option value="">Semua Kelas</option>
           <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.class_name }}</option>
         </select>
