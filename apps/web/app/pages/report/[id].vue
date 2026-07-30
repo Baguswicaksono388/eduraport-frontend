@@ -30,25 +30,7 @@ const { renderWidgetHTML } = useReportRenderer()
 const reportId = route.params.id as string
 const reportData = ref<any>(null)
 const loading = ref(true)
-const selectedTKFormat = ref((route.query.format as string) || 'dinas') // 'dinas' or 'intra'
 const selectedTemplateId = ref((route.query.template_id as string) || '')
-
-watch(() => route.query.format, (newFormat) => {
-  if (newFormat === 'dinas' || newFormat === 'intra') {
-    selectedTKFormat.value = newFormat as string
-  }
-})
-
-watch(selectedTKFormat, (newFormat) => {
-  if (route.query.format !== newFormat) {
-    router.replace({
-      query: {
-        ...route.query,
-        format: newFormat
-      }
-    })
-  }
-})
 
 watch(() => route.query.template_id, (newVal) => {
   if (newVal !== selectedTemplateId.value) {
@@ -73,16 +55,6 @@ const loadReportDetail = async () => {
       // Set initial selectedTemplateId if not already set
       if (!selectedTemplateId.value && res.data?.template?.id) {
         selectedTemplateId.value = res.data.template.id
-      }
-
-      // Auto-switch TK format toggle based on the loaded template name
-      if (res.data?.template?.name) {
-        const name = res.data.template.name.toLowerCase()
-        if (name.includes('intra')) {
-          selectedTKFormat.value = 'intra'
-        } else {
-          selectedTKFormat.value = 'dinas'
-        }
       }
 
       // Fetch all templates for this school and level
@@ -468,31 +440,6 @@ const formatDate = (dateStr: any) => {
           </div>
         </div>
         <div class="flex flex-wrap gap-2 items-center">
-          <!-- Dual format toggle for TK level only -->
-          <div v-if="reportData?.student?.school_level === 'TK'" class="flex bg-slate-100 dark:bg-zinc-800 rounded-lg p-0.5 border border-slate-200 dark:border-zinc-700 print:hidden">
-            <button 
-              @click="selectedTKFormat = 'dinas'" 
-              :class="[
-                'px-3 py-1 text-[11px] font-bold rounded-md transition-all',
-                selectedTKFormat === 'dinas' 
-                  ? 'bg-white dark:bg-zinc-700 text-violet-600 dark:text-violet-400 shadow-sm' 
-                  : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'
-              ]"
-            >
-              Format Dinas
-            </button>
-            <button 
-              @click="selectedTKFormat = 'intra'" 
-              :class="[
-                'px-3 py-1 text-[11px] font-bold rounded-md transition-all',
-                selectedTKFormat === 'intra' 
-                  ? 'bg-white dark:bg-zinc-700 text-violet-600 dark:text-violet-400 shadow-sm' 
-                  : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'
-              ]"
-            >
-              Format Sekolah (Intra)
-            </button>
-          </div>
 
           <!-- Template Selection Dropdown -->
           <div v-if="reportTemplates && reportTemplates.length > 0" class="flex items-center gap-1.5 print:hidden">
@@ -553,15 +500,15 @@ const formatDate = (dateStr: any) => {
             : 'bg-white border-slate-300/60 rounded-b-2xl p-8 sm:p-12 print:p-[20mm_20mm]'
         ]"
       >
-        <!-- Report Header (shown for non-TK-Dinas formats) -->
-      <div v-if="reportData.student.school_level !== 'TK' || selectedTKFormat !== 'dinas'" class="text-center border-b-2 border-slate-900 pb-6 mb-8 print:pb-4 print:mb-6">
+        <!-- Report Header (shown for non-TK formats) -->
+      <div v-if="reportData.student.school_level !== 'TK'" class="text-center border-b-2 border-slate-900 pb-6 mb-8 print:pb-4 print:mb-6">
         <h2 class="text-lg font-black uppercase tracking-wide">{{ reportData.student.school_name }}</h2>
         <p class="text-xs font-semibold">{{ reportData.student.school_address }}</p>
         <p class="text-[10px] text-slate-500 font-medium">NPSN: {{ reportData.student.school_npsn || '-' }} | NSM: {{ reportData.student.school_nsm || '-' }}</p>
       </div>
 
-      <!-- Student & Period Metadata Grid (shown for non-TK-Dinas formats) -->
-      <div v-if="reportData.student.school_level !== 'TK' || selectedTKFormat !== 'dinas'" class="grid grid-cols-2 gap-4 text-xs font-semibold mb-8 print:mb-6">
+      <!-- Student & Period Metadata Grid (shown for non-TK formats) -->
+      <div v-if="reportData.student.school_level !== 'TK'" class="grid grid-cols-2 gap-4 text-xs font-semibold mb-8 print:mb-6">
         <div class="space-y-1">
           <div class="flex"><span class="w-24 text-slate-500">Nama Siswa</span><span class="mr-2">:</span><span class="text-slate-900 dark:text-zinc-100 print:text-black">{{ reportData.student.full_name }}</span></div>
           <div class="flex"><span class="w-24 text-slate-500">NIS / NISN</span><span class="mr-2">:</span><span>{{ reportData.student.student_number || '-' }} / {{ reportData.student.national_student_number || '-' }}</span></div>
@@ -578,7 +525,7 @@ const formatDate = (dateStr: any) => {
       <div v-if="reportData.student.school_level === 'TK'" class="space-y-8 print:space-y-6">
         
         <!-- ══════ FORMAT DINAS (2-page layout) ══════ -->
-        <div v-if="selectedTKFormat === 'dinas'" class="space-y-0 text-black dark:text-zinc-100">
+        <div class="space-y-0 text-black dark:text-zinc-100">
 
           <!-- ── PAGE 1: Header + Intrakurikuler ── -->
           <div
@@ -816,208 +763,7 @@ const formatDate = (dateStr: any) => {
           </div>
         </div>
 
-        <!-- ══════ FORMAT SEKOLAH (INTRA) ══════ -->
-        <div v-else class="space-y-8 print:space-y-6">
-          <!-- Tema & Penilaian Legend Header -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 print:grid-cols-2">
-            <!-- Tema Semester -->
-            <div class="bg-slate-50 dark:bg-zinc-950/40 p-4 rounded-xl border border-slate-200/60 dark:border-zinc-800 print:bg-white print:border-slate-300">
-              <h4 class="text-xs font-extrabold text-slate-900 dark:text-zinc-100 print:text-black mb-2 uppercase">Tema – Semester I:</h4>
-              <ul class="list-decimal pl-4 text-xs space-y-1 text-slate-600 dark:text-zinc-400 print:text-black">
-                <li>Aku Milik Allah</li>
-                <li>Pejuang Islam Negeriku</li>
-                <li>Eksplorasi Islam #1</li>
-                <li>Eksplorasi Islam #2</li>
-                <li>Flora Fauna Ciptaan Allah</li>
-              </ul>
-            </div>
 
-            <!-- Kategori Penilaian Legend -->
-            <div class="bg-slate-50 dark:bg-zinc-950/40 p-4 rounded-xl border border-slate-200/60 dark:border-zinc-800 print:bg-white print:border-slate-300">
-              <h4 class="text-xs font-extrabold text-slate-900 dark:text-zinc-100 print:text-black mb-2 uppercase">Kategori Penilaian:</h4>
-              <div class="grid grid-cols-2 gap-2 text-xs">
-                <div class="flex items-center gap-1.5"><span class="font-black text-violet-650 dark:text-violet-400 print:text-black">BS</span> <span class="text-slate-550 dark:text-zinc-450 print:text-slate-700">: Baik Sekali</span></div>
-                <div class="flex items-center gap-1.5"><span class="font-black text-violet-650 dark:text-violet-400 print:text-black">B</span> <span class="text-slate-550 dark:text-zinc-450 print:text-slate-700">: Baik</span></div>
-                <div class="flex items-center gap-1.5"><span class="font-black text-violet-650 dark:text-violet-400 print:text-black">C</span> <span class="text-slate-550 dark:text-zinc-450 print:text-slate-700">: Cukup</span></div>
-                <div class="flex items-center gap-1.5"><span class="font-black text-violet-650 dark:text-violet-400 print:text-black">K</span> <span class="text-slate-550 dark:text-zinc-450 print:text-slate-700">: Kurang</span></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Aspek Amatan Checklist Table -->
-          <div>
-            <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">I. Kategori Perkembangan Kemampuan &amp; Penilaian</h3>
-            <table class="w-full text-left border border-slate-900 text-xs">
-              <thead>
-                <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-900 dark:border-zinc-700 font-bold">
-                  <th class="p-2 border-r border-slate-900 w-12 text-center">No</th>
-                  <th class="p-2 border-r border-slate-900">ASPEK AMATAN</th>
-                  <th class="p-2 border-r border-slate-900 text-center w-12">K</th>
-                  <th class="p-2 border-r border-slate-900 text-center w-12">C</th>
-                  <th class="p-2 border-r border-slate-900 text-center w-12">B</th>
-                  <th class="p-2 text-center w-12">BS</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Group I -->
-                <tr class="bg-slate-100 dark:bg-zinc-900/60 font-bold border-b border-slate-900">
-                  <td colspan="6" class="p-2">I. Perkembangan Potensi Pribadi</td>
-                </tr>
-                <tr v-for="(asm, index) in intraGroup1" :key="asm.element_id" class="border-b border-slate-900">
-                  <td class="p-2 border-r border-slate-900 text-center">{{ index + 1 }}</td>
-                  <td class="p-2 border-r border-slate-900">{{ asm.element_name }}</td>
-                  <td class="p-2 border-r border-slate-900 text-center font-bold" :class="{'bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400 print:bg-slate-200': asm.letter_grade === 'K'}">
-                    <span v-if="asm.letter_grade === 'K'">✓</span>
-                  </td>
-                  <td class="p-2 border-r border-slate-900 text-center font-bold" :class="{'bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400 print:bg-slate-200': asm.letter_grade === 'C'}">
-                    <span v-if="asm.letter_grade === 'C'">✓</span>
-                  </td>
-                  <td class="p-2 border-r border-slate-900 text-center font-bold" :class="{'bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400 print:bg-slate-200': asm.letter_grade === 'B'}">
-                    <span v-if="asm.letter_grade === 'B'">✓</span>
-                  </td>
-                  <td class="p-2 text-center font-bold" :class="{'bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400 print:bg-slate-200': asm.letter_grade === 'BS'}">
-                    <span v-if="asm.letter_grade === 'BS'">✓</span>
-                  </td>
-                </tr>
-
-                <!-- Group II -->
-                <tr class="bg-slate-100 dark:bg-zinc-900/60 font-bold border-b border-slate-900">
-                  <td colspan="6" class="p-2">II. Sikap Belajar</td>
-                </tr>
-                <tr v-for="(asm, index) in intraGroup2" :key="asm.element_id" class="border-b border-slate-900">
-                  <td class="p-2 border-r border-slate-900 text-center">{{ index + 1 }}</td>
-                  <td class="p-2 border-r border-slate-900">{{ asm.element_name }}</td>
-                  <td class="p-2 border-r border-slate-900 text-center font-bold" :class="{'bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400 print:bg-slate-200': asm.letter_grade === 'K'}">
-                    <span v-if="asm.letter_grade === 'K'">✓</span>
-                  </td>
-                  <td class="p-2 border-r border-slate-900 text-center font-bold" :class="{'bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400 print:bg-slate-200': asm.letter_grade === 'C'}">
-                    <span v-if="asm.letter_grade === 'C'">✓</span>
-                  </td>
-                  <td class="p-2 border-r border-slate-900 text-center font-bold" :class="{'bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400 print:bg-slate-200': asm.letter_grade === 'B'}">
-                    <span v-if="asm.letter_grade === 'B'">✓</span>
-                  </td>
-                  <td class="p-2 text-center font-bold" :class="{'bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400 print:bg-slate-200': asm.letter_grade === 'BS'}">
-                    <span v-if="asm.letter_grade === 'BS'">✓</span>
-                  </td>
-                </tr>
-
-                <!-- Group III -->
-                <tr class="bg-slate-100 dark:bg-zinc-900/60 font-bold border-b border-slate-900">
-                  <td colspan="6" class="p-2">III. Perkembangan Potensi Kemampuan Dasar</td>
-                </tr>
-                <tr v-for="(asm, index) in intraGroup3" :key="asm.element_id" class="border-b border-slate-900 last:border-b-0">
-                  <td class="p-2 border-r border-slate-900 text-center">{{ index + 1 }}</td>
-                  <td class="p-2 border-r border-slate-900">{{ asm.element_name }}</td>
-                  <td class="p-2 border-r border-slate-900 text-center font-bold" :class="{'bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400 print:bg-slate-200': asm.letter_grade === 'K'}">
-                    <span v-if="asm.letter_grade === 'K'">✓</span>
-                  </td>
-                  <td class="p-2 border-r border-slate-900 text-center font-bold" :class="{'bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400 print:bg-slate-200': asm.letter_grade === 'C'}">
-                    <span v-if="asm.letter_grade === 'C'">✓</span>
-                  </td>
-                  <td class="p-2 border-r border-slate-900 text-center font-bold" :class="{'bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400 print:bg-slate-200': asm.letter_grade === 'B'}">
-                    <span v-if="asm.letter_grade === 'B'">✓</span>
-                  </td>
-                  <td class="p-2 text-center font-bold" :class="{'bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400 print:bg-slate-200': asm.letter_grade === 'BS'}">
-                    <span v-if="asm.letter_grade === 'BS'">✓</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Narasi Pencapaian Hasil Belajar -->
-          <div>
-            <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">Narasi Pencapaian Hasil Belajar - Semester I</h3>
-            <div class="space-y-4">
-              <div class="bg-slate-50 dark:bg-zinc-950/40 p-4 rounded-lg border border-slate-200/60 dark:border-zinc-800 print:bg-white print:p-0 print:border-none">
-                <span class="text-xs font-bold text-slate-900 dark:text-zinc-100 print:text-black block mb-1.5">1. Catatan Perkembangan Pribadi &amp; Sikap Belajar</span>
-                <p class="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed text-justify print:text-black">
-                  {{ intraPribadiNarrative || 'Belum ada catatan perkembangan pribadi.' }}
-                </p>
-              </div>
-              <div class="bg-slate-50 dark:bg-zinc-950/40 p-4 rounded-lg border border-slate-200/60 dark:border-zinc-800 print:bg-white print:p-0 print:border-none">
-                <span class="text-xs font-bold text-slate-900 dark:text-zinc-100 print:text-black block mb-1.5">2. Catatan Keterampilan Motorik</span>
-                <p class="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed text-justify print:text-black">
-                  {{ intraMotorikNarrative || 'Belum ada catatan keterampilan motorik.' }}
-                </p>
-              </div>
-              <div class="bg-slate-50 dark:bg-zinc-950/40 p-4 rounded-lg border border-slate-200/60 dark:border-zinc-800 print:bg-white print:p-0 print:border-none">
-                <span class="text-xs font-bold text-slate-900 dark:text-zinc-100 print:text-black block mb-1.5">3. Catatan Kegiatan Keagamaan &amp; Ibadah</span>
-                <p class="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed text-justify print:text-black">
-                  {{ intraAgamaNarrative || 'Belum ada catatan kegiatan keagamaan.' }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Shared Sections for Intra format only -->
-        <div v-if="selectedTKFormat !== 'dinas'" class="space-y-8">
-          <!-- Extracurricular Section -->
-          <div>
-            <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">II. Kegiatan Ekstrakurikuler</h3>
-            <table class="w-full text-left border border-slate-900 text-xs">
-              <thead>
-                <tr class="bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border-b border-slate-900 dark:border-zinc-700 font-bold">
-                  <th class="p-2 border-r border-slate-900 w-1/3">Kegiatan Ekstrakurikuler</th>
-                  <th class="p-2 border-r border-slate-900 text-center w-24">Predikat</th>
-                  <th class="p-2">Deskripsi / Capaian</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="ex in reportData.extracurriculars" :key="ex.extracurricular_name" class="border-b border-slate-900 last:border-0">
-                  <td class="p-2 border-r border-slate-900 font-bold">{{ ex.extracurricular_name }}</td>
-                  <td class="p-2 border-r border-slate-900 text-center font-black text-violet-600 print:text-black">{{ ex.grade || 'A' }}</td>
-                  <td class="p-2 leading-relaxed text-slate-600 print:text-black">{{ ex.description }}</td>
-                </tr>
-                <tr v-if="reportData.extracurriculars.length === 0">
-                  <td colspan="3" class="p-4 text-center text-slate-400">Tidak mengikuti kegiatan ekstrakurikuler.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Attendance & Physical Growth Grid -->
-          <div class="grid grid-cols-2 gap-8 print:gap-6">
-            <!-- Physical Growth -->
-            <div>
-              <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">III. Tumbuh Kembang</h3>
-              <table class="w-full text-left border border-slate-900 text-xs">
-                <tbody>
-                  <tr class="border-b border-slate-900 dark:border-zinc-700">
-                    <td class="p-2 border-r border-slate-900 dark:border-zinc-700 font-bold bg-slate-50 dark:bg-zinc-800/60 text-slate-800 dark:text-zinc-200 w-1/2">Tinggi Badan</td>
-                    <td class="p-2">{{ reportData.student.height ? `${reportData.student.height} cm` : '-' }}</td>
-                  </tr>
-                  <tr>
-                    <td class="p-2 border-r border-slate-900 dark:border-zinc-700 font-bold bg-slate-50 dark:bg-zinc-800/60 text-slate-800 dark:text-zinc-200">Berat Badan</td>
-                    <td class="p-2">{{ reportData.student.weight ? `${reportData.student.weight} kg` : '-' }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Attendance -->
-            <div>
-              <h3 class="text-sm font-black uppercase border-b border-slate-900 pb-1 mb-4">IV. Kehadiran (Absensi)</h3>
-              <table class="w-full text-left border border-slate-900 text-xs">
-                <tbody>
-                  <tr class="border-b border-slate-900 dark:border-zinc-700">
-                    <td class="p-2 border-r border-slate-900 dark:border-zinc-700 font-bold bg-slate-50 dark:bg-zinc-800/60 text-slate-800 dark:text-zinc-200 w-1/2">Sakit (S)</td>
-                    <td class="p-2 text-center">{{ reportData.attendance.sick }} hari</td>
-                  </tr>
-                  <tr class="border-b border-slate-900 dark:border-zinc-700">
-                    <td class="p-2 border-r border-slate-900 dark:border-zinc-700 font-bold bg-slate-50 dark:bg-zinc-800/60 text-slate-800 dark:text-zinc-200">Izin (I)</td>
-                    <td class="p-2 text-center">{{ reportData.attendance.leave }} hari</td>
-                  </tr>
-                  <tr>
-                    <td class="p-2 border-r border-slate-900 dark:border-zinc-700 font-bold bg-slate-50 dark:bg-zinc-800/60 text-slate-800 dark:text-zinc-200">Tanpa Keterangan (A)</td>
-                    <td class="p-2 text-center">{{ reportData.attendance.absent }} hari</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
 
       </div>
 
@@ -1116,8 +862,8 @@ const formatDate = (dateStr: any) => {
 
       </div>
 
-      <!-- Signatures Footer (shown for non-TK-Dinas formats) -->
-      <div v-if="reportData.student.school_level !== 'TK' || selectedTKFormat !== 'dinas'" class="mt-16 print:mt-12 text-xs font-semibold">
+      <!-- Signatures Footer (shown for non-TK formats) -->
+      <div v-if="reportData.student.school_level !== 'TK'" class="mt-16 print:mt-12 text-xs font-semibold">
         <div class="grid grid-cols-3 text-center gap-4">
           <div class="space-y-16">
             <p>Orang Tua / Wali Murid</p>

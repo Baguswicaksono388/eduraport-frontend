@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ClipboardCheck, FileText, CheckCircle, AlertCircle, Play, Eye, ArrowUpRight, ShieldCheck, Printer } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal } from '@eduraport/ui'
 import { useAcademicYear } from '../../composables/useAcademicYear'
@@ -31,12 +31,6 @@ const selectedSemester = ref('odd') // odd, even
 
 const loading = ref(false)
 const generating = ref(false)
-const printFormat = ref('dinas') // 'dinas' or 'intra'
-
-const isTKSchool = computed(() => {
-  const school = schools.value.find(s => s.id === selectedSchoolId.value)
-  return school?.level === 'TK'
-})
 
 onMounted(async () => {
   const schoolId = await initContext()
@@ -269,39 +263,6 @@ const getStatusLabel = (status: string) => {
 
     <!-- Main Content Grid -->
     <div v-else class="space-y-6">
-      <!-- Format Selector for TK School -->
-      <div v-if="isTKSchool && reportsList.length > 0" class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
-        <div>
-          <h4 class="text-sm font-bold text-slate-900 dark:text-zinc-100">Pilihan Format Cetak Rapor</h4>
-          <p class="text-xs text-slate-500 dark:text-zinc-400">Pilih format template yang ingin digunakan saat melihat atau mencetak rapor.</p>
-        </div>
-        <div class="flex bg-slate-100 dark:bg-zinc-800 rounded-lg p-1 border border-slate-200 dark:border-zinc-700">
-          <button 
-            @click="printFormat = 'dinas'" 
-            type="button"
-            :class="[
-              'px-4 py-2 text-xs font-bold rounded-md transition-all',
-              printFormat === 'dinas' 
-                ? 'bg-white dark:bg-zinc-900 text-violet-600 dark:text-violet-400 shadow-sm' 
-                : 'text-slate-650 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
-            ]"
-          >
-            Format Dinas
-          </button>
-          <button 
-            @click="printFormat = 'intra'" 
-            type="button"
-            :class="[
-              'px-4 py-2 text-xs font-bold rounded-md transition-all',
-              printFormat === 'intra' 
-                ? 'bg-white dark:bg-zinc-900 text-violet-600 dark:text-violet-400 shadow-sm' 
-                : 'text-slate-655 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
-            ]"
-          >
-            Format Sekolah (Intra)
-          </button>
-        </div>
-      </div>
       <div v-if="reportsList.length === 0" class="py-16 text-center text-slate-400 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl">
         <AlertCircle class="mx-auto mb-2 text-amber-500 opacity-80" :size="32" />
         <p class="text-xs font-bold text-slate-700 dark:text-zinc-300">Draft Rapor Belum Di-generate</p>
@@ -343,7 +304,7 @@ const getStatusLabel = (status: string) => {
                     <!-- Read action -->
                     <NuxtLink 
                       v-if="rep.report_id"
-                      :to="`/report/${rep.report_id}?school_id=${selectedSchoolId}&format=${printFormat}`" 
+                      :to="`/report/${rep.report_id}?school_id=${selectedSchoolId}`" 
                       target="_blank"
                       class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-250 hover:bg-slate-200 rounded-lg text-[10px] font-bold transition-colors"
                     >
