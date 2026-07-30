@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { useSchoolContext } from '../../composables/useSchoolContext'
-import { Plus, Trash2, Edit2, Settings, ClipboardList, Calculator, AlertCircle, CheckCircle, Info, Percent, Award, BookOpen } from 'lucide-vue-next'
+import { Plus, Trash2, Edit2, Settings, ClipboardList, Calculator, AlertCircle, CheckCircle, Info, Percent, Award, BookOpen, Baby, ArrowRight } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
 import { useClass } from '../../composables/useClass'
 import { useSubject } from '../../composables/useSubject'
 import { useAcademicYear } from '../../composables/useAcademicYear'
 import { useGradebook } from '../../composables/useGradebook'
 import { useToast } from '../../composables/useToast'
+import { isEarlyChildhood } from '../../composables/useSchoolLevel'
 
 definePageMeta({
   middleware: [
@@ -25,6 +26,12 @@ const { subjects, fetchSubjects } = useSubject()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
 const gradebook = useGradebook()
 const toast = useToast()
+
+// Mendeteksi semua satuan PAUD Indonesia: TK, RA, KB, TPA, SPS
+const isTKSchool = computed(() => {
+  const school = schools.value.find((s: any) => s.id === selectedSchoolId.value)
+  return isEarlyChildhood(school?.level)
+})
 
 const selectedClassId = ref('')
 const selectedSubjectId = ref('')
@@ -469,7 +476,71 @@ const getAggregationLabel = (method: string) => {
       </div>
     </div>
 
-    <!-- Scheme State Panels -->
+    <!-- TK/PAUD: Redirect Panel — Tidak memerlukan Setup Skema Penilaian Angka -->
+    <div v-if="isTKSchool" class="bg-white dark:bg-zinc-900 border border-violet-200 dark:border-violet-900/50 rounded-2xl p-8 shadow-sm">
+      <div class="flex flex-col items-center text-center max-w-lg mx-auto">
+        <div class="w-16 h-16 rounded-2xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mb-4">
+          <Baby class="text-violet-600 dark:text-violet-400" :size="32" />
+        </div>
+        <h3 class="text-lg font-black text-slate-900 dark:text-zinc-100 mb-2">Halaman Ini Tidak Diperlukan untuk TK/PAUD</h3>
+        <p class="text-sm text-slate-500 dark:text-zinc-400 leading-relaxed mb-6">
+          Sekolah dengan jenjang <strong>TK, RA, KB, TPA, atau SPS</strong> menggunakan sistem penilaian
+          <strong>Kurikulum Merdeka Fase Fondasi</strong> yang berbeda dari SD–SMA.
+          Penilaian TK/PAUD tidak menggunakan nilai angka, skema bobot, atau KKM.
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left w-full mb-8">
+          <div class="bg-violet-50 dark:bg-violet-900/20 rounded-xl p-4">
+            <p class="text-[10px] font-black text-violet-600 dark:text-violet-400 uppercase tracking-wider mb-1">Skala Nilai PAUD</p>
+            <div class="space-y-1">
+              <div class="flex items-center gap-2 text-xs text-slate-700 dark:text-zinc-300">
+                <span class="w-10 text-center font-black text-rose-500 bg-rose-50 dark:bg-rose-900/30 rounded px-1 py-0.5 text-[10px]">BB</span>
+                <span>Belum Berkembang</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-slate-700 dark:text-zinc-300">
+                <span class="w-10 text-center font-black text-amber-500 bg-amber-50 dark:bg-amber-900/30 rounded px-1 py-0.5 text-[10px]">MB</span>
+                <span>Mulai Berkembang</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-slate-700 dark:text-zinc-300">
+                <span class="w-10 text-center font-black text-sky-500 bg-sky-50 dark:bg-sky-900/30 rounded px-1 py-0.5 text-[10px]">BSH</span>
+                <span>Berkembang Sesuai Harapan</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-slate-700 dark:text-zinc-300">
+                <span class="w-10 text-center font-black text-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 rounded px-1 py-0.5 text-[10px]">BSB</span>
+                <span>Berkembang Sangat Baik</span>
+              </div>
+            </div>
+          </div>
+          <div class="bg-slate-50 dark:bg-zinc-800/40 rounded-xl p-4 space-y-2">
+            <p class="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Cara Setup Penilaian TK</p>
+            <div class="flex items-start gap-2">
+              <span class="shrink-0 w-5 h-5 rounded-full bg-violet-600 text-white text-[9px] font-black flex items-center justify-center">1</span>
+              <p class="text-xs text-slate-600 dark:text-zinc-300">Buka menu <strong>Rapor → Pengaturan Template</strong></p>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="shrink-0 w-5 h-5 rounded-full bg-violet-600 text-white text-[9px] font-black flex items-center justify-center">2</span>
+              <p class="text-xs text-slate-600 dark:text-zinc-300">Buat atau edit Template Rapor TK untuk menetapkan aspek & elemen penilaian</p>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="shrink-0 w-5 h-5 rounded-full bg-violet-600 text-white text-[9px] font-black flex items-center justify-center">3</span>
+              <p class="text-xs text-slate-600 dark:text-zinc-300">Buka <strong>Input Nilai → Generate Draft Rapor</strong> untuk mulai mengisi penilaian</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3 justify-center">
+          <NuxtLink to="/report/template" class="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs py-2.5 px-5 rounded-xl transition-colors shadow-lg shadow-violet-600/20">
+            Pergi ke Pengaturan Template <ArrowRight :size="14" />
+          </NuxtLink>
+          <NuxtLink to="/gradebook/input" class="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 font-bold text-xs py-2.5 px-5 rounded-xl transition-colors">
+            Pergi ke Input Nilai
+          </NuxtLink>
+        </div>
+      </div>
+    </div>
+
+    <!-- SD–SMA: Scheme State Panels -->
+    <template v-else>
     <div v-if="loading" class="flex flex-col items-center justify-center py-20 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm animate-pulse">
       <Calculator class="text-violet-500 animate-spin mb-4" :size="36" />
       <p class="text-xs font-bold text-slate-500">Memuat konfigurasi skema penilaian...</p>
@@ -730,5 +801,6 @@ const getAggregationLabel = (method: string) => {
       </form>
     </BaseModal>
 
+  </template><!-- end v-else SD-SMA -->
   </div>
 </template>

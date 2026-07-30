@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useSchoolContext } from '../../composables/useSchoolContext'
-import { ClipboardCheck, Download, Upload, Info, AlertCircle, CheckCircle, Save, History, Check, Loader2, Edit2, Sparkles } from 'lucide-vue-next'
-import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
+import { ClipboardCheck, Download, Upload, Info, AlertCircle, CheckCircle, Save, History, Check, Loader2, Edit2, Trash2, Sparkles, NotebookPen, Calendar, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { BaseCard, BaseButton, BaseModal, BaseInput, BaseDateInput } from '@eduraport/ui'
 import { useClass } from '../../composables/useClass'
 import { useSubject } from '../../composables/useSubject'
 import { useAcademicYear } from '../../composables/useAcademicYear'
@@ -11,6 +11,7 @@ import { useReport } from '../../composables/useReport'
 import { useReportTemplate } from '../../composables/useReportTemplate'
 import { useApi } from '../../composables/useApi'
 import { useAuth } from '../../composables/useAuth'
+import { isEarlyChildhood } from '../../composables/useSchoolLevel'
 
 definePageMeta({
   middleware: [
@@ -44,9 +45,10 @@ const filteredSchools = computed(() => {
   return schools.value
 })
 
+// Mendeteksi semua satuan PAUD Indonesia: TK, RA, KB, TPA, SPS (Kurikulum Merdeka)
 const isTKSchool = computed(() => {
   const school = filteredSchools.value.find((s: any) => s.id === selectedSchoolId.value)
-  return school?.level === 'TK'
+  return isEarlyChildhood(school?.level)
 })
 
 const needsSync = computed(() => {
@@ -105,6 +107,21 @@ const showBulkModal = ref(false)
 const activeBulkComponentId = ref('')
 const bulkInputText = ref('')
 
+// Anecdotal Notes State
+const activeTKTab = ref<'rapor' | 'anecdotal'>('rapor')
+const anecdotalNotes = ref<any[]>([])
+const loadingAnecdotal = ref(false)
+const savingAnecdotal = ref(false)
+const anecdotalForm = ref({
+  date: new Date().toISOString().split('T')[0],
+  activity_name: '',
+  observation_notes: ''
+})
+const editingAnecdotalId = ref<string | null>(null)
+const anecdotalPagination = ref({ page: 1, total_pages: 1, total: 0, limit: 10 })
+const showDeleteModal = ref(false)
+const deletingAnecdotalId = ref<string | null>(null)
+
 onMounted(async () => {
   await fetchUser()
   const schoolId = await initContext()
@@ -119,6 +136,18 @@ const loadSchoolData = async (schoolId: string) => {
     fetchSubjects(schoolId),
     fetchAcademicYears(schoolId)
   ])
+
+  // Fetch TK templates if it is a TK school
+  const isTK = isEarlyChildhood(filteredSchools.value.find((s: any) => s.id === schoolId)?.level)
+  if (isTK) {
+    await fetchReportTemplates(schoolId, 'TK')
+    if (reportTemplates.value.length > 0 && !selectedTemplateId.value) {
+      selectedTemplateId.value = reportTemplates.value[0].id
+    }
+  } else {
+    selectedTemplateId.value = ''
+  }
+
   const activeYear = academicYears.value.find(y => y.is_active)
   if (activeYear) {
     selectedAcademicYearId.value = activeYear.id
@@ -134,18 +163,6 @@ watch(selectedSchoolId, async (newVal) => {
     selectedClassId.value = ''
     selectedSubjectId.value = ''
     await loadSchoolData(newVal)
-    
-    // Fetch TK templates if it is a TK school
-    if (isTKSchool.value) {
-      await fetchReportTemplates(newVal, 'TK')
-      if (reportTemplates.value.length > 0) {
-        selectedTemplateId.value = reportTemplates.value[0].id
-      } else {
-        selectedTemplateId.value = ''
-      }
-    } else {
-      selectedTemplateId.value = ''
-    }
   } else {
     classes.value = []
     subjects.value = []
@@ -589,26 +606,60 @@ const loadTKReports = async () => {
   }
 }
 
+const fetchAnecdotalNotes = async (page = 1) => {
+  if (!activeTKReport.value) return
+  loadingAnecdotal.value = true
+  try {
+    const { fetcher } = useApi()
+    const studentId = activeTKReport.value.student_id
+    const res = await fetcher(`/school/${selectedSchoolId.value}/anecdotal-note?student_id=${studentId}&academic_year_id=${selectedAcademicYearId.value}&semester=${selectedSemester.value}&limit=${anecdotalPagination.value.limit}&offset=${(page - 1) * anecdotalPagination.value.limit}`) as any
+    if (res.success && res.data) {
+      anecdotalNotes.value = res.data.data || []
+      anecdotalPagination.value = res.data.meta || { total: 0, limit: 10, offset: 0, page: 1, total_pages: 0 }
+    }
+  } catch (e: any) {
+    console.error('Fetch anecdotal error:', e);
+    toast.error(e?.response?._data?.error?.message || e.message || 'Gagal memuat catatan anekdot', 'Error')
+  } finally {
+    loadingAnecdotal.value = false
+  }
+}
+
 const selectTKStudent = async (report: any) => {
   if (!report.report_id) {
     toast.warning('Draft rapor belum di-generate untuk siswa ini.', 'Peringatan')
     return
   }
   activeTKReport.value = report
-  loadingTKAssessments.value = true
-  tkAssessmentsForm.value = []
-  try {
-    const { fetchReportAssessments } = useReport()
-    const res = await fetchReportAssessments(selectedSchoolId.value, report.report_id, selectedTemplateId.value)
-    if (res.success) {
-      tkAssessmentsForm.value = res.data
+  
+  if (activeTKTab.value === 'anecdotal') {
+    await fetchAnecdotalNotes(1)
+  } else {
+    loadingTKAssessments.value = true
+    tkAssessmentsForm.value = []
+    try {
+      const { fetchReportAssessments } = useReport()
+      const res = await fetchReportAssessments(selectedSchoolId.value, report.report_id, selectedTemplateId.value)
+      if (res.success) {
+        tkAssessmentsForm.value = res.data
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Gagal memuat form penilaian TK.', 'Gagal')
+    } finally {
+      loadingTKAssessments.value = false
     }
-  } catch (e: any) {
-    toast.error(e?.message || 'Gagal memuat form penilaian TK.', 'Gagal')
-  } finally {
-    loadingTKAssessments.value = false
   }
 }
+
+watch(activeTKTab, async (newTab) => {
+  if (activeTKReport.value) {
+    if (newTab === 'anecdotal') {
+      await fetchAnecdotalNotes(1)
+    } else {
+      await selectTKStudent(activeTKReport.value)
+    }
+  }
+})
 
 const handleSaveTKAssessments = async () => {
   if (!activeTKReport.value) return
@@ -630,6 +681,85 @@ const handleSaveTKAssessments = async () => {
   } finally {
     savingTKAssessments.value = false
   }
+}
+
+const handleSaveAnecdotalNote = async () => {
+  if (!activeTKReport.value || !anecdotalForm.value.observation_notes.trim()) return
+  savingAnecdotal.value = true
+  try {
+    const { fetcher } = useApi()
+    const payload = {
+      student_id: activeTKReport.value.student_id,
+      academic_year_id: selectedAcademicYearId.value,
+      semester: selectedSemester.value,
+      date: anecdotalForm.value.date,
+      activity_name: anecdotalForm.value.activity_name,
+      observation_notes: anecdotalForm.value.observation_notes
+    }
+    
+    const url = editingAnecdotalId.value 
+      ? `/school/${selectedSchoolId.value}/anecdotal-note/${editingAnecdotalId.value}`
+      : `/school/${selectedSchoolId.value}/anecdotal-note`
+      
+    const res = await fetcher(url, {
+      method: editingAnecdotalId.value ? 'PUT' : 'POST',
+      body: payload
+    }) as any
+    if (res.success) {
+      toast.success(`Catatan Anekdot berhasil ${editingAnecdotalId.value ? 'diperbarui' : 'disimpan'}.`, 'Sukses')
+      anecdotalForm.value.activity_name = ''
+      anecdotalForm.value.observation_notes = ''
+      editingAnecdotalId.value = null
+      await fetchAnecdotalNotes(1)
+    }
+  } catch (e: any) {
+    toast.error(e?.message || 'Gagal menyimpan catatan anekdot.', 'Gagal')
+  } finally {
+    savingAnecdotal.value = false
+  }
+}
+
+const promptDeleteAnecdotalNote = (id: string) => {
+  deletingAnecdotalId.value = id
+  showDeleteModal.value = true
+}
+
+const confirmDeleteAnecdotalNote = async () => {
+  if (!deletingAnecdotalId.value) return
+  const id = deletingAnecdotalId.value
+  try {
+    const { fetcher } = useApi()
+    const res = await fetcher(`/school/${selectedSchoolId.value}/anecdotal-note/${id}`, {
+      method: 'DELETE'
+    }) as any
+    if (res.success) {
+      toast.success('Catatan berhasil dihapus', 'Sukses')
+      if (editingAnecdotalId.value === id) {
+        editingAnecdotalId.value = null
+        anecdotalForm.value.activity_name = ''
+        anecdotalForm.value.observation_notes = ''
+      }
+      showDeleteModal.value = false
+      await fetchAnecdotalNotes(anecdotalPagination.value.page)
+    }
+  } catch(e: any) {
+    toast.error('Gagal menghapus catatan', 'Gagal')
+  } finally {
+    deletingAnecdotalId.value = null
+  }
+}
+
+const editAnecdotalNote = (note: any) => {
+  editingAnecdotalId.value = note.id
+  anecdotalForm.value.date = new Date(note.date).toISOString().split('T')[0]
+  anecdotalForm.value.activity_name = note.activity_name || ''
+  anecdotalForm.value.observation_notes = note.observation_notes || ''
+}
+const cancelEditAnecdotal = () => {
+  editingAnecdotalId.value = null
+  anecdotalForm.value.date = new Date().toISOString().split('T')[0]
+  anecdotalForm.value.activity_name = ''
+  anecdotalForm.value.observation_notes = ''
 }
 
 const handleGenerateTK = async () => {
@@ -906,27 +1036,47 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
       </div>
 
       <!-- Right side: TK assessments form -->
-      <div class="lg:col-span-2 space-y-6">
+      <div class="lg:col-span-2 space-y-4">
         
-        <!-- WARNING SYNC -->
-        <div v-if="needsSync" class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 flex items-start gap-3">
-          <AlertCircle class="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
-          <div>
-            <h4 class="text-sm font-bold text-amber-800 dark:text-amber-500">Perhatian: Template Telah Diperbarui</h4>
-            <p class="text-xs text-amber-700 dark:text-amber-400 mt-1">Template rapor telah diubah di Visual Builder sejak Anda terakhir kali menggenerate rapor kelas ini. Untuk menyesuaikan struktur nilai, mohon tekan tombol <b>Generate Rapor</b> kembali.</p>
-          </div>
+        <!-- Tabs -->
+        <div v-if="activeTKReport" class="flex items-center gap-2 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 p-1.5 rounded-xl shadow-sm w-max">
+          <button 
+            @click="activeTKTab = 'rapor'"
+            class="px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2"
+            :class="activeTKTab === 'rapor' ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-zinc-800/50'"
+          >
+            <ClipboardCheck :size="14" /> Penilaian Rapor
+          </button>
+          <button 
+            @click="activeTKTab = 'anecdotal'"
+            class="px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2"
+            :class="activeTKTab === 'anecdotal' ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-zinc-800/50'"
+          >
+            <Edit2 :size="14" /> Jurnal Anekdot Harian
+          </button>
         </div>
 
-        <div v-if="loadingTKAssessments" class="py-20 text-center text-slate-400 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm">
-          <div class="w-8 h-8 rounded-full border-2 border-violet-600 border-t-transparent animate-spin mx-auto mb-3"></div>
-          <p class="text-xs font-semibold">Memuat elemen penilaian...</p>
-        </div>
-
-        <div v-else-if="!activeTKReport" class="flex flex-col items-center justify-center py-20 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm text-center">
+        <div v-if="!activeTKReport" class="flex flex-col items-center justify-center py-20 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm text-center">
           <ClipboardCheck class="text-slate-350 dark:text-zinc-700 mb-3" :size="40" />
           <p class="text-xs font-bold text-slate-700 dark:text-zinc-200">Belum Ada Siswa yang Dipilih</p>
           <p class="text-[10px] text-slate-400 max-w-xs mt-1">Pilih salah satu siswa dari daftar di sebelah kiri untuk mulai mengisi penilaian perkembangan TK.</p>
         </div>
+
+        <!-- Tab Content: Penilaian Rapor -->
+        <template v-else-if="activeTKTab === 'rapor'">
+          <!-- WARNING SYNC -->
+          <div v-if="needsSync" class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle class="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+            <div>
+              <h4 class="text-sm font-bold text-amber-800 dark:text-amber-500">Perhatian: Template Telah Diperbarui</h4>
+              <p class="text-xs text-amber-700 dark:text-amber-400 mt-1">Template rapor telah diubah di Visual Builder sejak Anda terakhir kali menggenerate rapor kelas ini. Untuk menyesuaikan struktur nilai, mohon tekan tombol <b>Generate Rapor</b> kembali.</p>
+            </div>
+          </div>
+
+          <div v-if="loadingTKAssessments" class="py-20 text-center text-slate-400 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm">
+            <div class="w-8 h-8 rounded-full border-2 border-violet-600 border-t-transparent animate-spin mx-auto mb-3"></div>
+            <p class="text-xs font-semibold">Memuat elemen penilaian...</p>
+          </div>
 
         <div v-else class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl p-6 shadow-sm space-y-6">
           <div class="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-4">
@@ -970,19 +1120,16 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                 
                 <div class="flex items-center gap-2 shrink-0">
                   <label class="text-[9px] font-black text-slate-500 uppercase tracking-wider">Capaian:</label>
+                  <!-- Skala Kurikulum Merdeka Fase Fondasi (BB/MB/BSH/BSB) -->
                   <select 
                     v-model="item.letter_grade" 
                     class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-1 text-xs font-black outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600"
                   >
                     <option :value="null">- Pilih Capaian -</option>
-                    <option value="BB">BB (Belum Berkembang)</option>
-                    <option value="MB">MB (Mulai Berkembang)</option>
-                    <option value="BSH">BSH (Berkembang Sesuai Harapan)</option>
-                    <option value="BSB">BSB (Berkembang Sangat Baik)</option>
-                    <option value="BS">BS (Baik Sekali)</option>
-                    <option value="B">B (Baik)</option>
-                    <option value="C">C (Cukup)</option>
-                    <option value="K">K (Kurang)</option>
+                    <option value="BB">BB — Belum Berkembang</option>
+                    <option value="MB">MB — Mulai Berkembang</option>
+                    <option value="BSH">BSH — Berkembang Sesuai Harapan</option>
+                    <option value="BSB">BSB — Berkembang Sangat Baik</option>
                   </select>
                 </div>
               </div>
@@ -1016,6 +1163,170 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
             </BaseButton>
           </div>
         </div>
+        </template>
+        
+        <!-- Tab Content: Jurnal Anekdot Harian -->
+        <template v-else-if="activeTKTab === 'anecdotal'">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Form Input Anekdot (Left/Top Column) -->
+            <div class="lg:col-span-5 flex flex-col gap-4">
+              <div class="bg-gradient-to-br from-violet-500 to-indigo-600 rounded-3xl p-6 text-white shadow-xl shadow-violet-500/20 relative overflow-hidden group">
+                <div class="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all duration-700"></div>
+                <h3 class="text-lg font-black tracking-tight mb-1">
+                  {{ editingAnecdotalId ? 'Edit Jurnal Anekdot' : 'Catat Jurnal Anekdot' }}
+                </h3>
+                <p class="text-xs text-violet-100/80 leading-relaxed">
+                  {{ editingAnecdotalId ? 'Perbarui observasi untuk' : 'Observasi harian untuk' }} <strong>{{ activeTKReport.full_name }}</strong>
+                </p>
+              </div>
+
+              <div class="bg-white dark:bg-zinc-900 border border-slate-200/50 dark:border-zinc-800/50 rounded-3xl p-6 shadow-sm space-y-5">
+                <div class="space-y-4">
+                  <BaseDateInput 
+                    v-model="anecdotalForm.date" 
+                    label="Tanggal Kejadian" 
+                    required
+                  />
+                  <BaseInput 
+                    v-model="anecdotalForm.activity_name" 
+                    label="Konteks / Nama Kegiatan" 
+                    placeholder="Contoh: Bermain balok, Makan siang..." 
+                  />
+                  
+                  <div class="flex flex-col gap-2">
+                    <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider px-1">
+                      Catatan Peristiwa (Fakta Obyektif) <span class="text-rose-500">*</span>
+                    </label>
+                    <textarea 
+                      v-model="anecdotalForm.observation_notes" 
+                      rows="6" 
+                      placeholder="Contoh: Budi menyusun balok vertikal hingga tinggi 1 meter tanpa jatuh, lalu memanggil gurunya, 'Lihat menaraku!'"
+                      class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all duration-300 resize-none placeholder:text-slate-400"
+                    ></textarea>
+                  </div>
+
+                  <div class="flex gap-2">
+                    <BaseButton 
+                      v-if="editingAnecdotalId"
+                      variant="outline" 
+                      @click="cancelEditAnecdotal" 
+                      class="w-1/3 py-3 mt-2 rounded-xl text-sm font-bold shadow-sm transition-all duration-300 relative overflow-hidden"
+                    >
+                      Batal
+                    </BaseButton>
+                    <BaseButton 
+                      variant="primary" 
+                      @click="handleSaveAnecdotalNote" 
+                      :disabled="savingAnecdotal || !anecdotalForm.observation_notes.trim()" 
+                      class="py-3 mt-2 rounded-xl text-sm font-bold shadow-lg shadow-violet-600/20 hover:shadow-violet-600/30 hover:-translate-y-0.5 transition-all duration-300 active:translate-y-0 relative overflow-hidden"
+                      :class="editingAnecdotalId ? 'w-2/3' : 'w-full'"
+                    >
+                      <span class="relative z-10 flex items-center justify-center gap-2">
+                        <Save :size="16" /> {{ savingAnecdotal ? 'Sedang Menyimpan...' : (editingAnecdotalId ? 'Simpan Perubahan' : 'Simpan Jurnal Anekdot') }}
+                      </span>
+                    </BaseButton>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Timeline/Riwayat (Right/Bottom Column) -->
+            <div class="lg:col-span-7 flex flex-col">
+              <div class="bg-white dark:bg-zinc-900 border border-slate-200/50 dark:border-zinc-800/50 rounded-3xl p-6 shadow-sm flex flex-col h-full min-h-[500px]">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-zinc-800">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                      <History :size="20" />
+                    </div>
+                    <div>
+                      <h3 class="text-base font-black text-slate-900 dark:text-zinc-100">Riwayat Anekdot</h3>
+                      <p class="text-[11px] font-medium text-slate-500 dark:text-zinc-400 mt-0.5">Jejak observasi selama satu semester berjalan.</p>
+                    </div>
+                  </div>
+                  <div v-if="anecdotalPagination.total > 0" class="flex flex-col items-end">
+                    <span class="text-2xl font-black text-slate-800 dark:text-zinc-200 leading-none">{{ anecdotalPagination.total }}</span>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1">Catatan</span>
+                  </div>
+                </div>
+
+                <div v-if="loadingAnecdotal" class="flex-1 flex flex-col items-center justify-center">
+                  <Loader2 class="text-violet-500 animate-spin mb-3" :size="32" />
+                  <p class="text-xs font-semibold text-slate-500 animate-pulse">Memuat riwayat...</p>
+                </div>
+
+                <div v-else-if="anecdotalNotes.length === 0" class="flex-1 flex flex-col items-center justify-center text-center p-8">
+                  <div class="w-20 h-20 mb-4 rounded-full bg-slate-50 dark:bg-zinc-800/50 flex items-center justify-center text-slate-300 dark:text-zinc-700">
+                    <NotebookPen :size="32" stroke-width="1.5" />
+                  </div>
+                  <h4 class="text-sm font-bold text-slate-700 dark:text-zinc-300 mb-1">Ruang Kosong</h4>
+                  <p class="text-[11px] font-medium text-slate-500 dark:text-zinc-500 max-w-xs leading-relaxed">Anda belum pernah mencatat anekdot untuk siswa ini. Jadikan setiap momen belajar anak bermakna dengan mencatatnya.</p>
+                </div>
+
+                <div v-else class="flex-1 space-y-6 overflow-y-auto pr-3 custom-scrollbar max-h-[500px]">
+                  <div v-for="note in anecdotalNotes" :key="note.id" class="relative pl-6 group">
+                    <div class="absolute left-[3px] top-4 bottom-[-24px] w-px bg-slate-200 dark:bg-zinc-800 group-last:bg-transparent"></div>
+                    <div class="absolute w-2 h-2 bg-white dark:bg-zinc-900 border-[2px] border-violet-500 rounded-full left-0 top-[18px] shadow-[0_0_8px_rgba(139,92,246,0.4)] group-hover:scale-125 transition-transform duration-300 z-10"></div>
+                    
+                    <div class="bg-slate-50/50 dark:bg-zinc-950/50 border border-slate-100 dark:border-zinc-800/80 rounded-2xl p-4 hover:shadow-md hover:border-violet-200 dark:hover:border-violet-900/50 transition-all duration-300">
+                      <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-violet-100/50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400 text-[10px] font-bold uppercase tracking-wider">
+                          <Calendar :size="12" /> {{ new Date(note.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' }) }}
+                        </span>
+                        
+                        <!-- Action Buttons -->
+                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <button 
+                            @click="editAnecdotalNote(note)" 
+                            class="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 rounded-md transition-colors"
+                            title="Edit Catatan"
+                          >
+                            <Edit2 :size="14" />
+                          </button>
+                          <button 
+                            @click="promptDeleteAnecdotalNote(note.id)" 
+                            class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md transition-colors"
+                            title="Hapus Catatan"
+                          >
+                            <Trash2 :size="14" />
+                          </button>
+                        </div>
+                      </div>
+                      <h5 v-if="note.activity_name" class="text-sm font-bold text-slate-800 dark:text-zinc-200 mb-1.5">{{ note.activity_name }}</h5>
+                      <p class="text-xs font-medium text-slate-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap">{{ note.observation_notes }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Pagination -->
+                <div v-if="anecdotalPagination.total_pages > 1" class="flex items-center justify-between border-t border-slate-100 dark:border-zinc-800 pt-5 mt-4">
+                  <button 
+                    :disabled="anecdotalPagination.page === 1" 
+                    @click="fetchAnecdotalNotes(anecdotalPagination.page - 1)"
+                    class="py-1.5 px-3 text-xs font-semibold rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 dark:text-zinc-300 flex items-center gap-1 border border-slate-200 dark:border-zinc-700"
+                  >
+                    <ChevronLeft :size="14" /> Prev
+                  </button>
+                  <div class="flex items-center gap-1.5">
+                    <span v-for="p in anecdotalPagination.total_pages" :key="p" 
+                      class="h-1.5 rounded-full transition-all duration-300 cursor-pointer"
+                      :class="p === anecdotalPagination.page ? 'bg-violet-600 w-4' : 'bg-slate-200 dark:bg-zinc-700 w-1.5 hover:bg-violet-400'"
+                      @click="fetchAnecdotalNotes(p)"
+                    ></span>
+                  </div>
+                  <button 
+                    :disabled="anecdotalPagination.page === anecdotalPagination.total_pages" 
+                    @click="fetchAnecdotalNotes(anecdotalPagination.page + 1)"
+                    class="py-1.5 px-3 text-xs font-semibold rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 dark:text-zinc-300 flex items-center gap-1 border border-slate-200 dark:border-zinc-700"
+                  >
+                    Next <ChevronRight :size="14" />
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -1344,6 +1655,25 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
 
         <div class="flex justify-end pt-2">
           <BaseButton variant="outline" type="button" @click="showLogsModal = false">Tutup</BaseButton>
+        </div>
+      </div>
+    </BaseModal>
+
+    <!-- Delete Confirmation Modal -->
+    <BaseModal :show="showDeleteModal" title="Hapus Catatan Anekdot" @close="showDeleteModal = false">
+      <div class="space-y-4">
+        <div class="flex flex-col items-center justify-center p-4 text-center">
+          <div class="w-16 h-16 bg-rose-50 dark:bg-rose-900/30 text-rose-500 rounded-full flex items-center justify-center mb-4">
+            <Trash2 :size="32" stroke-width="1.5" />
+          </div>
+          <h4 class="text-base font-bold text-slate-800 dark:text-zinc-200 mb-2">Hapus Catatan Ini?</h4>
+          <p class="text-xs text-slate-500 dark:text-zinc-400 max-w-sm">
+            Tindakan ini tidak dapat dibatalkan. Catatan observasi akan dihapus secara permanen dari riwayat siswa.
+          </p>
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-zinc-800">
+          <BaseButton variant="outline" type="button" @click="showDeleteModal = false" class="py-2.5 px-4 font-bold">Batal</BaseButton>
+          <BaseButton variant="primary" @click="confirmDeleteAnecdotalNote" class="py-2.5 px-4 font-bold bg-rose-600 hover:bg-rose-700 text-white border-0 shadow-lg shadow-rose-600/20">Ya, Hapus</BaseButton>
         </div>
       </div>
     </BaseModal>
