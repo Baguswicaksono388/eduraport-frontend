@@ -30,6 +30,13 @@ export const useGradebook = () => {
     })
   }
 
+  const copyScheme = async (schoolId: string, data: any) => {
+    return await fetcher(`/school/${schoolId}/gradebook/copy`, {
+      method: 'POST',
+      body: data
+    })
+  }
+
   const updateScheme = async (schoolId: string, id: string, data: any) => {
     return await fetcher(`/school/${schoolId}/gradebook/${id}`, {
       method: 'PUT',
@@ -199,7 +206,8 @@ export const useGradebook = () => {
     fetchClassRecapitulation,
     fetchClassDistribution,
     fetchStudentProgression,
-    fetchEarlyWarning
+    fetchEarlyWarning,
+    copyScheme
   }
 }
 

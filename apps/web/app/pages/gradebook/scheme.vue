@@ -258,13 +258,7 @@ const handleCopyScheme = async () => {
     if (selectedSourceSemester.value) {
       payload.source_semester = selectedSourceSemester.value
     }
-    const res: any = await $fetch(`/api/v1/school/${selectedSchoolId.value}/gradebook/copy`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${useCookie('auth_token').value}`
-      },
-      body: payload
-    })
+    const res: any = await gradebook.copyScheme(selectedSchoolId.value, payload)
 
     if (res.success) {
       toast.success('Skema penilaian berhasil disalin.', 'Berhasil')
