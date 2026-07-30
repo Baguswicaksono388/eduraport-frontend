@@ -38,6 +38,8 @@ const parentForm = reactive({
   relationship: 'Father',
   phone: '',
   occupation: '',
+  email: '',
+  password: '',
   user_id: undefined as string | undefined
 })
 
@@ -89,6 +91,8 @@ const resetParentForm = () => {
   parentForm.relationship = 'Father'
   parentForm.phone = ''
   parentForm.occupation = ''
+  parentForm.email = ''
+  parentForm.password = ''
   parentForm.user_id = undefined
 }
 
@@ -105,6 +109,8 @@ const handleEditParentClick = (parent: any) => {
   parentForm.relationship = parent.relationship || 'Father'
   parentForm.phone = parent.phone || ''
   parentForm.occupation = parent.occupation || ''
+  parentForm.email = parent.email || ''
+  parentForm.password = ''
   parentForm.user_id = parent.data_type === 'unlinked' ? parent.id : parent.user_id || undefined
   showParentForm.value = true
 }
@@ -122,6 +128,8 @@ const handleSaveParent = async () => {
       relationship: parentForm.relationship,
       phone: parentForm.phone || undefined,
       occupation: parentForm.occupation || undefined,
+      email: parentForm.email || undefined,
+      password: parentForm.password || undefined,
       user_id: parentForm.user_id
     }
     
@@ -354,6 +362,16 @@ const confirmDeleteParent = async () => {
         <div class="grid grid-cols-2 gap-4">
           <BaseInput v-model="parentForm.phone" label="No. Telepon / WA" placeholder="Contoh: 0812345678" />
           <BaseInput v-model="parentForm.occupation" label="Pekerjaan" placeholder="Contoh: Wiraswasta" />
+        </div>
+
+        <!-- Akun Login Section -->
+        <div class="mt-6 pt-4 border-t border-slate-100 dark:border-zinc-800">
+          <h4 class="text-xs font-bold text-slate-800 dark:text-zinc-200 mb-3 uppercase tracking-wider">Info Akun Login (Opsional)</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <BaseInput v-model="parentForm.email" type="email" label="Email Login" placeholder="parent@email.com" />
+            <BaseInput v-model="parentForm.password" type="password" label="Password Baru" placeholder="Kosongkan jika tidak diubah" />
+          </div>
+          <p class="text-[10px] text-slate-400 mt-2 italic">Isi email dan password jika Anda ingin mengizinkan orang tua login. Jika password tidak diisi saat update, password lama tidak akan berubah.</p>
         </div>
 
         <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">

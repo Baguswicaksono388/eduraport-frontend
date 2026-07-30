@@ -237,40 +237,84 @@
           <div v-if="studentDetail.grades.length === 0" class="text-center py-12 bg-white/50 dark:bg-zinc-900/50 rounded-xl border border-dashed border-slate-200">
             <p class="text-slate-500 font-semibold">Belum ada data nilai</p>
           </div>
-          <BaseCard v-else class="overflow-hidden p-0">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-sm whitespace-nowrap">
-                <thead class="bg-slate-50 dark:bg-zinc-900/50 text-slate-600 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider border-b border-slate-100 dark:border-zinc-800">
-                  <tr>
-                    <th class="px-6 py-4">Tanggal</th>
-                    <th class="px-6 py-4">Nilai Angka</th>
-                    <th class="px-6 py-4">Predikat</th>
-                    <th class="px-6 py-4">Status</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
-                  <tr v-for="grade in studentDetail.grades" :key="grade.created_at" class="hover:bg-slate-50/50 dark:hover:bg-zinc-900/20">
-                    <td class="px-6 py-4 font-medium text-slate-700 dark:text-zinc-300">
-                      {{ new Date(grade.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}
-                    </td>
-                    <td class="px-6 py-4">
-                      <span class="font-bold text-slate-900 dark:text-white">{{ grade.score }}</span>
-                    </td>
-                    <td class="px-6 py-4">
-                      <span class="px-2 py-1 bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 rounded-md font-bold text-xs">
-                        {{ grade.grade_letter || '-' }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-4">
-                      <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                        {{ grade.status }}
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          <!-- Period Filter Dropdown -->
+          <div v-if="gradePeriods.length > 0" class="flex items-center justify-between bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-zinc-800">
+            <div>
+              <h3 class="font-bold text-slate-800 dark:text-zinc-100">Periode Akademik</h3>
+              <p class="text-xs text-slate-500">Pilih tahun ajaran dan semester untuk melihat nilai</p>
             </div>
-          </BaseCard>
+            <select 
+              v-model="selectedPeriod"
+              class="px-4 py-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-sm font-semibold text-slate-700 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer"
+            >
+              <option v-for="period in gradePeriods" :key="period" :value="period">
+                {{ period }}
+              </option>
+            </select>
+          </div>
+          
+          <div v-if="Object.keys(groupedGrades).length === 0 && gradePeriods.length > 0" class="text-center py-8 bg-white/50 dark:bg-zinc-900/50 rounded-xl border border-dashed border-slate-200">
+            <p class="text-slate-500 font-semibold">Tidak ada nilai untuk periode ini</p>
+          </div>
+
+          <!-- Accordion Cards for each Subject -->
+          <div class="space-y-3">
+            <BaseCard v-for="(grades, subject) in groupedGrades" :key="subject" class="p-0 overflow-hidden transition-all duration-200">
+              <!-- Header (Clickable) -->
+              <div 
+                @click="toggleSubject(subject)"
+                class="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-900/50"
+              >
+                <div>
+                  <h3 class="font-bold text-slate-800 dark:text-zinc-100 text-base">{{ subject }}</h3>
+                  <div class="flex items-center gap-3 mt-1">
+                    <p class="text-xs text-slate-500">{{ grades.length }} Nilai Masuk</p>
+                    <span v-if="subjectFinalGrades[subject]" class="text-xs font-bold text-violet-600 dark:text-violet-400">
+                      Nilai Akhir: {{ subjectFinalGrades[subject].final_score || '-' }} ({{ subjectFinalGrades[subject].predicate || '-' }})
+                    </span>
+                  </div>
+                </div>
+                <div class="p-2 bg-slate-100 dark:bg-zinc-800 rounded-full text-slate-500">
+                  <ChevronUp v-if="expandedSubjects.includes(subject)" class="w-4 h-4" />
+                  <ChevronDown v-else class="w-4 h-4" />
+                </div>
+              </div>
+
+              <!-- Body (Expandable) -->
+              <div v-show="expandedSubjects.includes(subject)" class="border-t border-slate-100 dark:border-zinc-800 bg-slate-50/30 dark:bg-zinc-900/20">
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-sm whitespace-nowrap">
+                    <thead class="bg-slate-100/50 dark:bg-zinc-800/30 text-slate-500 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider border-b border-slate-100 dark:border-zinc-800">
+                      <tr>
+                        <th class="px-6 py-3">Komponen</th>
+                        <th class="px-6 py-3">Tanggal</th>
+                        <th class="px-6 py-3">Nilai Angka</th>
+                        <th class="px-6 py-3">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+                      <tr v-for="grade in grades" :key="grade.created_at" class="hover:bg-white dark:hover:bg-zinc-900/50">
+                        <td class="px-6 py-3 font-medium text-violet-600 dark:text-violet-400">
+                          {{ grade.component_name || '-' }}
+                        </td>
+                        <td class="px-6 py-3 font-medium text-slate-600 dark:text-zinc-400 text-xs">
+                          {{ new Date(grade.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}
+                        </td>
+                        <td class="px-6 py-3">
+                          <span class="font-bold text-slate-900 dark:text-white">{{ grade.score }}</span>
+                        </td>
+                        <td class="px-6 py-3">
+                          <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                            {{ grade.status }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </BaseCard>
+          </div>
         </div>
 
         <!-- 4. Ekstrakurikuler -->
@@ -301,9 +345,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { ArrowLeft, ClipboardCheck, Activity, BookOpen, User, CheckCircle, Clock, AlertTriangle, Smile } from 'lucide-vue-next'
+import { ArrowLeft, ClipboardCheck, Activity, BookOpen, User, CheckCircle, Clock, AlertTriangle, Smile, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import { useParent } from '~/composables/useParent'
 
 const route = useRoute()
@@ -312,6 +356,69 @@ const { fetchChildDetail } = useParent()
 const studentId = route.params.id as string
 const loading = ref(true)
 const studentDetail = ref<any>(null)
+
+const gradePeriods = computed(() => {
+  if (!studentDetail.value?.grades) return []
+  const uniquePeriods = new Set<string>()
+  studentDetail.value.grades.forEach((grade: any) => {
+    const ay = grade.academic_year_name || 'Tanpa Tahun Ajaran'
+    const sem = grade.semester ? (String(grade.semester).charAt(0).toUpperCase() + String(grade.semester).slice(1)) : 'Tanpa Semester'
+    uniquePeriods.add(`${ay} - ${sem}`)
+  })
+  return Array.from(uniquePeriods).sort((a, b) => b.localeCompare(a)) // descending sort
+})
+
+const selectedPeriod = ref<string>('')
+
+watch(gradePeriods, (newVal) => {
+  if (newVal.length > 0 && !selectedPeriod.value) {
+    selectedPeriod.value = newVal[0]
+  }
+})
+
+const groupedGrades = computed(() => {
+  const groups: Record<string, any[]> = {}
+  if (!studentDetail.value?.grades || !selectedPeriod.value) return groups
+  
+  studentDetail.value.grades.forEach((grade: any) => {
+    const ay = grade.academic_year_name || 'Tanpa Tahun Ajaran'
+    const sem = grade.semester ? (String(grade.semester).charAt(0).toUpperCase() + String(grade.semester).slice(1)) : 'Tanpa Semester'
+    const periodStr = `${ay} - ${sem}`
+    
+    if (periodStr === selectedPeriod.value) {
+      const subject = grade.subject_name || 'Lainnya'
+      if (!groups[subject]) groups[subject] = []
+      groups[subject].push(grade)
+    }
+  })
+  return groups
+})
+
+const subjectFinalGrades = computed(() => {
+  const map: Record<string, any> = {}
+  if (!studentDetail.value?.finalGrades || !selectedPeriod.value) return map
+  
+  studentDetail.value.finalGrades.forEach((fg: any) => {
+    const ay = fg.academic_year_name || 'Tanpa Tahun Ajaran'
+    const sem = fg.semester ? (String(fg.semester).charAt(0).toUpperCase() + String(fg.semester).slice(1)) : 'Tanpa Semester'
+    const periodStr = `${ay} - ${sem}`
+    
+    if (periodStr === selectedPeriod.value) {
+      const subject = fg.subject_name || 'Lainnya'
+      map[subject] = fg
+    }
+  })
+  return map
+})
+
+const expandedSubjects = ref<string[]>([])
+const toggleSubject = (subject: string) => {
+  if (expandedSubjects.value.includes(subject)) {
+    expandedSubjects.value = expandedSubjects.value.filter(s => s !== subject)
+  } else {
+    expandedSubjects.value.push(subject)
+  }
+}
 
 const today = new Date()
 const sevenDaysAgo = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000)
