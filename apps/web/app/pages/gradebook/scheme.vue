@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useSchoolContext } from '../../composables/useSchoolContext'
-import { Plus, Trash2, Edit2, Settings, ClipboardList, Calculator, AlertCircle, CheckCircle, Info, Percent, Award, BookOpen, Baby, ArrowRight } from 'lucide-vue-next'
+import { Plus, Trash2, Edit2, Settings, ClipboardList, Calculator, AlertCircle, CheckCircle, Info, Percent, Award, BookOpen, Baby, ArrowRight, Copy } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
 import { useClass } from '../../composables/useClass'
 import { useSubject } from '../../composables/useSubject'
@@ -26,6 +26,12 @@ const { subjects, fetchSubjects } = useSubject()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
 const gradebook = useGradebook()
 const toast = useToast()
+
+const showCopyModal = ref(false)
+const selectedSourceClassId = ref('')
+const selectedSourceAcademicYearId = ref('')
+const selectedSourceSemester = ref('odd')
+const sourceClasses = ref<any[]>([])
 
 // Mendeteksi semua satuan PAUD Indonesia: TK, RA, KB, TPA, SPS
 const isTKSchool = computed(() => {
@@ -86,15 +92,20 @@ onMounted(async () => {
 
 const loadSchoolData = async (schoolId: string) => {
   await Promise.all([
-    fetchClasses(schoolId),
     fetchSubjects(schoolId),
     fetchAcademicYears(schoolId)
   ])
-  const activeYear = academicYears.value.find(y => y.is_active)
+  const activeYear = academicYears.value.find((y: any) => y.is_active)
   if (activeYear) {
     selectedAcademicYearId.value = activeYear.id
   } else if (academicYears.value.length > 0) {
     selectedAcademicYearId.value = academicYears.value[0].id
+  }
+
+  if (selectedAcademicYearId.value) {
+    await fetchClasses(schoolId, selectedAcademicYearId.value)
+  } else {
+    await fetchClasses(schoolId)
   }
 }
 
@@ -112,8 +123,42 @@ watch(selectedSchoolId, async (newVal) => {
   }
 })
 
+watch(selectedSourceAcademicYearId, async (newVal) => {
+  if (newVal && selectedSchoolId.value) {
+    try {
+      const res: any = await $fetch(`/api/v1/school/${selectedSchoolId.value}/class`, {
+        query: { academic_year_id: newVal, page: 1, item_per_page: 1000 },
+        headers: { Authorization: `Bearer ${useCookie('auth_token').value}` }
+      })
+      if (res.success) {
+        sourceClasses.value = res.data.data
+        if (!sourceClasses.value.find((c: any) => c.id === selectedSourceClassId.value)) {
+          selectedSourceClassId.value = ''
+        }
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  } else {
+    sourceClasses.value = []
+  }
+})
+
+watch(showCopyModal, (newVal) => {
+  if (newVal) {
+    if (!selectedSourceAcademicYearId.value) selectedSourceAcademicYearId.value = selectedAcademicYearId.value
+    if (!selectedSourceSemester.value) selectedSourceSemester.value = selectedSemester.value
+  }
+})
+
 // Trigger scheme fetch on filter change
-watch([selectedClassId, selectedSubjectId, selectedAcademicYearId, selectedSemester], async () => {
+watch([selectedClassId, selectedSubjectId, selectedAcademicYearId, selectedSemester], async ([newClass, newSubject, newYear, newSemester], [oldClass, oldSubject, oldYear, oldSemester]) => {
+  if (newYear !== oldYear && newYear && selectedSchoolId.value) {
+    await fetchClasses(selectedSchoolId.value, newYear)
+    if (!classes.value.find(c => c.id === selectedClassId.value)) {
+      selectedClassId.value = ''
+    }
+  }
   await loadActiveScheme()
 })
 
@@ -192,6 +237,43 @@ const handleCreateScheme = async () => {
     }
   } catch (error: any) {
     toast.error(error.message || 'Gagal membuat skema penilaian', 'Gagal')
+  }
+}
+
+const handleCopyScheme = async () => {
+  if (!selectedSchoolId.value || !selectedSourceClassId.value || !selectedClassId.value || !selectedSubjectId.value || !selectedAcademicYearId.value) return
+
+  try {
+    const payload: any = {
+      source_class_id: selectedSourceClassId.value,
+      target_class_id: selectedClassId.value,
+      target_subject_id: selectedSubjectId.value,
+      target_academic_year_id: selectedAcademicYearId.value,
+      target_semester: selectedSemester.value
+    }
+    
+    if (selectedSourceAcademicYearId.value) {
+      payload.source_academic_year_id = selectedSourceAcademicYearId.value
+    }
+    if (selectedSourceSemester.value) {
+      payload.source_semester = selectedSourceSemester.value
+    }
+    const res: any = await $fetch(`/api/v1/school/${selectedSchoolId.value}/gradebook/copy`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${useCookie('auth_token').value}`
+      },
+      body: payload
+    })
+
+    if (res.success) {
+      toast.success('Skema penilaian berhasil disalin.', 'Berhasil')
+      showCopyModal.value = false
+      selectedSourceClassId.value = ''
+      await loadActiveScheme()
+    }
+  } catch (error: any) {
+    toast.error(error.response?._data?.message || error.message || 'Gagal menyalin skema penilaian', 'Gagal')
   }
 }
 
@@ -556,9 +638,14 @@ const getAggregationLabel = (method: string) => {
       <AlertCircle class="text-amber-500 mb-3" :size="40" />
       <p class="text-sm font-bold text-slate-700 dark:text-zinc-200">Skema Penilaian Belum Dibuat</p>
       <p class="text-xs text-slate-400 max-w-sm mt-1 mb-6">Mata pelajaran dan kelas yang dipilih belum memiliki skema penilaian aktif untuk semester ini.</p>
-      <BaseButton variant="primary" @click="handleCreateScheme" class="py-2.5 px-5 text-xs font-bold shadow-lg shadow-violet-600/15">
-        <Plus class="mr-1.5" :size="14" /> Buat Skema Penilaian Sekarang
-      </BaseButton>
+      <div class="flex items-center gap-3">
+        <BaseButton variant="primary" @click="handleCreateScheme" class="py-2.5 px-5 text-xs font-bold shadow-lg shadow-violet-600/15">
+          <Plus class="mr-1.5" :size="14" /> Buat Skema Baru
+        </BaseButton>
+        <BaseButton variant="outline" @click="showCopyModal = true" class="py-2.5 px-5 text-xs font-bold border-violet-200 text-violet-600 hover:bg-violet-50 dark:border-violet-900 dark:text-violet-400 dark:hover:bg-violet-900/30">
+          <Copy class="mr-1.5" :size="14" /> Salin dari Kelas Lain
+        </BaseButton>
+      </div>
     </div>
 
     <!-- Active Scheme Config Workspace -->
@@ -801,6 +888,45 @@ const getAggregationLabel = (method: string) => {
       </form>
     </BaseModal>
 
+    <!-- Copy Scheme Modal -->
+    <BaseModal :show="showCopyModal" title="Salin Skema Penilaian" @close="showCopyModal = false">
+      <form @submit.prevent="handleCopyScheme" class="space-y-4">
+        <p class="text-xs text-slate-500 mb-2">
+          Pilih kelas sumber untuk menyalin seluruh konfigurasi kelompok dan komponen penilaian. KKM tidak akan disalin.
+        </p>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Tahun Ajaran Sumber</label>
+            <select v-model="selectedSourceAcademicYearId" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-violet-600 dark:bg-zinc-950 dark:border-zinc-800">
+              <option value="" disabled>Pilih Tahun Ajaran</option>
+              <option v-for="y in academicYears" :key="y.id" :value="y.id">{{ y.name }}</option>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Semester Sumber</label>
+            <select v-model="selectedSourceSemester" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-violet-600 dark:bg-zinc-950 dark:border-zinc-800">
+              <option value="odd">Ganjil</option>
+              <option value="even">Genap</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Kelas Sumber</label>
+          <select v-model="selectedSourceClassId" required class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-violet-600 dark:bg-zinc-950 dark:border-zinc-800">
+            <option value="" disabled>Pilih Kelas Sumber</option>
+            <option v-for="c in (sourceClasses.length ? sourceClasses : classes).filter((cls: any) => cls.id !== selectedClassId)" :key="c.id" :value="c.id">{{ c.class_name }}</option>
+          </select>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
+          <BaseButton variant="outline" type="button" @click="showCopyModal = false">Batal</BaseButton>
+          <BaseButton variant="primary" type="submit" :disabled="!selectedSourceClassId">Salin Skema</BaseButton>
+        </div>
+      </form>
+    </BaseModal>
   </template><!-- end v-else SD-SMA -->
   </div>
 </template>
