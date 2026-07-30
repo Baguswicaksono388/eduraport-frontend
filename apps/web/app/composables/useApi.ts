@@ -55,7 +55,17 @@ export const useApi = () => {
       
       // Extract custom backend error message if available
       if (error.data) {
-        const customMessage = error.data.message || error.data.error?.message;
+        let customMessage = error.data.message || error.data.error?.message;
+        
+        // Append details if they exist (e.g. ValidationError errors)
+        const errorDetails = error.data.errors || error.data.details;
+        if (errorDetails && typeof errorDetails === 'object') {
+          const detailMessages = Object.values(errorDetails).flat();
+          if (detailMessages.length > 0) {
+            customMessage = customMessage ? `${customMessage}: ${detailMessages.join(' ')}` : detailMessages.join(' ');
+          }
+        }
+
         if (customMessage) {
           error.message = customMessage;
         }

@@ -45,6 +45,11 @@ const filteredSchools = computed(() => {
   return schools.value
 })
 
+const filteredClasses = computed(() => {
+  if (!selectedAcademicYearId.value) return []
+  return classes.value.filter((c: any) => c.academic_year_id === selectedAcademicYearId.value)
+})
+
 // Mendeteksi semua satuan PAUD Indonesia: TK, RA, KB, TPA, SPS (Kurikulum Merdeka)
 const isTKSchool = computed(() => {
   const school = filteredSchools.value.find((s: any) => s.id === selectedSchoolId.value)
@@ -155,6 +160,16 @@ const loadSchoolData = async (schoolId: string) => {
     selectedAcademicYearId.value = academicYears.value[0].id
   }
 }
+
+watch(selectedAcademicYearId, (newYearId) => {
+  // If the currently selected class does not belong to the new academic year, reset it
+  if (selectedClassId.value) {
+    const classExists = classes.value.find((c: any) => c.id === selectedClassId.value && c.academic_year_id === newYearId)
+    if (!classExists) {
+      selectedClassId.value = ''
+    }
+  }
+})
 
 watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
@@ -914,7 +929,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Kelas</label>
         <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
           <option value="" disabled>Pilih Kelas</option>
-          <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.class_name }}</option>
+          <option v-for="c in filteredClasses" :key="c.id" :value="c.id">{{ c.class_name }}</option>
         </select>
       </div>
 
