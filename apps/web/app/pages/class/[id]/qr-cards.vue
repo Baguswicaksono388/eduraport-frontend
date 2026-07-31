@@ -38,6 +38,28 @@ onMounted(async () => {
   fetchData()
 })
 
+const generateToken = async (studentId: string) => {
+  if (!currentSchoolId.value) return
+  
+  try {
+    const res: any = await fetcher(`/school/${currentSchoolId.value}/attendance/students/${studentId}/qr-token/regenerate`, {
+      method: 'POST',
+      body: { reason: 'renewal' } // default reason for initial generation
+    })
+    
+    if (res.success) {
+      // Update the token in the local state
+      const student = cardsData.value.students.find((s: any) => s.id === studentId)
+      if (student) {
+        student.token = `ERQR1:${res.data.token}`
+      }
+    }
+  } catch (err) {
+    console.error('Failed to generate token', err)
+    alert('Gagal membuat token QR baru. Silakan coba lagi.')
+  }
+}
+
 const printCards = () => {
   window.print()
 }
@@ -107,8 +129,26 @@ const printCards = () => {
         </div>
 
         <!-- QR Code -->
-        <div class="bg-white p-2 rounded-xl border-2 border-slate-100 shadow-sm mb-2">
-          <QrcodeVue :value="student.token" :size="120" level="H" class="rounded-lg" />
+        <div class="bg-white p-2 rounded-xl border-2 border-slate-100 shadow-sm mb-2 flex flex-col items-center justify-center relative group" style="min-height: 140px; min-width: 140px;">
+          <QrcodeVue v-if="student.token" :value="student.token" :size="120" level="H" class="rounded-lg" />
+          
+          <div v-else class="text-center p-2 w-full h-full flex flex-col items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto text-red-400 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p class="text-[10px] text-red-500 font-bold leading-tight mb-2">Token Belum<br/>Di-generate</p>
+            
+            <button @click="generateToken(student.id)" class="print:hidden px-3 py-1 bg-violet-100 text-violet-700 hover:bg-violet-200 rounded-md text-[10px] font-bold transition-colors shadow-sm">
+              Buat Token
+            </button>
+          </div>
+          
+          <!-- Regenerate Overlay (Optional, for existing tokens) -->
+          <div v-if="student.token" class="absolute inset-0 bg-white/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 print:hidden flex items-center justify-center transition-opacity rounded-xl">
+            <button @click="generateToken(student.id)" class="px-3 py-2 bg-slate-800 text-white hover:bg-slate-700 rounded-lg text-[10px] font-bold shadow-md">
+              Buat Ulang Token
+            </button>
+          </div>
         </div>
         <p class="text-[8px] text-slate-400 font-mono tracking-widest mt-1">SIMPAN KARTU INI</p>
         

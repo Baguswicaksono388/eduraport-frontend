@@ -61,6 +61,7 @@
       <!-- Scanner Tab -->
       <div v-if="currentTab === 'scan'" class="absolute inset-0 flex items-center justify-center">
       <qrcode-stream
+        :paused="scanning"
         :track="paintBoundingBox"
         @detect="onDetect"
         @error="onError"
@@ -282,8 +283,13 @@ const syncQueue = async () => {
     }
   } catch (error) {
     console.error('Failed to sync scans:', error)
-    // Optional: mark as failed to stop retrying immediately if it's a 4xx error
-    // For now we just leave them as pending to retry on next interval
+    if (error.response?.status === 400 || error.response?.status === 429) {
+      showResult(false, error.message)
+      // Delete the items so they don't block the queue forever
+      const idsToDelete = pendingItems.map(item => item.id)
+      await db.scanQueue.bulkDelete(idsToDelete)
+      await updatePendingCount()
+    }
   }
 }
 

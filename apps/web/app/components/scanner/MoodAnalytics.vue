@@ -41,7 +41,9 @@
       
       <!-- CLASS VIEW -->
       <div v-if="activeView === 'class'">
-        <h3 class="text-lg font-bold text-slate-800 mb-4">Heatmap Mood — 7 Hari Terakhir</h3>
+        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+          Heatmap Mood — 7 Hari Terakhir
+        </h3>
         <div class="overflow-x-auto">
           <table class="w-full text-sm text-left text-slate-600">
             <thead class="text-xs text-slate-500 uppercase bg-slate-50">
@@ -90,7 +92,9 @@
                 <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
               </svg>
             </button>
-            <h3 class="text-lg font-bold text-slate-800">Tren Mood Individu — {{ selectedStudent.name }}</h3>
+            <h3 class="text-lg font-bold text-slate-800 flex items-center">
+              Tren Mood Individu — {{ selectedStudent.name }}
+            </h3>
           </div>
           
           <div class="relative w-full h-[200px] bg-slate-50 rounded-xl border border-slate-100 p-4">
@@ -124,7 +128,9 @@
       <div v-else-if="activeView === 'school'">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
-            <h3 class="text-lg font-bold text-slate-800 mb-1">Ringkas Sekolah — Indeks Mood per Kelas</h3>
+            <h3 class="text-lg font-bold text-slate-800 mb-1 flex items-center">
+              Ringkas Sekolah — Indeks Mood per Kelas
+            </h3>
             <p class="text-sm text-slate-500">Jumlah check-in mood siswa pada rentang waktu terpilih.</p>
           </div>
           <div class="flex flex-wrap items-end gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
@@ -159,7 +165,9 @@
             <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest pl-2 mb-2">Detail per Kelas</h3>
             <div v-for="c in summaryData.byClass" :key="c.class_id" class="border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
               <button @click="toggleClass(c.class_id)" class="w-full flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors">
-                <div class="w-20 font-bold text-slate-700 text-left">{{ c.class_name }}</div>
+                <div class="w-auto font-bold text-slate-700 text-left whitespace-nowrap">
+                  {{ c.class_name }} <span v-if="c.academic_year_name" class="font-normal text-slate-500">(TA {{ c.academic_year_name }})</span>
+                </div>
                 <div class="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
                   <div class="h-full rounded-full bg-indigo-500 transition-all" :style="{ width: c.mood.total > 0 ? Math.round(((c.mood.senang + c.mood.biasa) / c.mood.total) * 100) + '%' : '0%' }"></div>
                 </div>
@@ -202,17 +210,19 @@
       <div v-else-if="activeView === 'arrival'">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
-            <h3 class="text-lg font-bold text-slate-800 mb-1">Analitik Jam Kedatangan Siswa</h3>
+            <h3 class="text-lg font-bold text-slate-800 mb-1 flex items-center">
+              Analitik Jam Kedatangan Siswa
+            </h3>
             <p class="text-sm text-slate-500">Distribusi kedatangan siswa di sekolah berdasarkan rentang tanggal.</p>
           </div>
           <div class="flex flex-wrap items-end gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
             <div>
               <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1 block mb-1">Dari Tanggal</label>
-              <input type="date" v-model="summaryStartDate" @click="(e: any) => { try { e.target.showPicker() } catch(err){} }" class="w-[130px] bg-white text-slate-800 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer" />
+              <input type="date" v-model="summaryStartDate" @click="(e) => { try { e.target.showPicker() } catch(err){} }" class="w-[130px] bg-white text-slate-800 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer" />
             </div>
             <div>
               <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1 block mb-1">Sampai</label>
-              <input type="date" v-model="summaryEndDate" @click="(e: any) => { try { e.target.showPicker() } catch(err){} }" class="w-[130px] bg-white text-slate-800 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer" />
+              <input type="date" v-model="summaryEndDate" @click="(e) => { try { e.target.showPicker() } catch(err){} }" class="w-[130px] bg-white text-slate-800 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer" />
             </div>
             <button @click="loadSummaryData" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors h-[38px] flex items-center justify-center">Terapkan</button>
           </div>
@@ -258,7 +268,9 @@
             <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest pl-2 mb-2">Detail per Kelas</h3>
             <div v-for="c in summaryData.byClass" :key="c.class_id" class="border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
               <button @click="toggleClass(c.class_id)" class="w-full flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors">
-                <div class="w-20 font-bold text-slate-700 text-left">{{ c.class_name }}</div>
+                <div class="w-auto font-bold text-slate-700 text-left whitespace-nowrap">
+                  {{ c.class_name }} <span v-if="c.academic_year_name" class="font-normal text-slate-500">(TA {{ c.academic_year_name }})</span>
+                </div>
 
                 <div class="flex-1 hidden md:flex h-3 bg-slate-100 rounded-full overflow-hidden">
                   <div v-if="c.arrival.awal > 0" class="h-full bg-blue-500 transition-all" :style="{ width: c.arrival.total > 0 ? Math.round((c.arrival.awal/c.arrival.total)*100)+'%' : '0%' }" title="Datang Awal"></div>
