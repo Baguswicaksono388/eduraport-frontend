@@ -179,12 +179,21 @@ export const useReportRenderer = () => {
             g.subject_name?.toLowerCase() === subjectName?.toLowerCase() ||
             g.subject_code?.toLowerCase() === subjectName?.toLowerCase()
           )
+          let finalScore = fg ? (fg.final_score ?? fg.score ?? '-') : '-';
+          let finalKkm = fg ? (fg.kkm_score ?? fg.kkm ?? kkm) : kkm;
+
+          if (typeof finalScore === 'number') finalScore = Math.round(finalScore);
+          else if (typeof finalScore === 'string' && !isNaN(Number(finalScore)) && finalScore !== '') finalScore = Math.round(Number(finalScore));
+
+          if (typeof finalKkm === 'number') finalKkm = Math.round(finalKkm);
+          else if (typeof finalKkm === 'string' && !isNaN(Number(finalKkm)) && finalKkm !== '') finalKkm = Math.round(Number(finalKkm));
+
           return fg ? {
-            score: fg.final_score ?? fg.score ?? '-',
+            score: finalScore,
             pred: fg.predicate || '-',
             desc: fg.achievement_description || fg.description || fg.narrative || '-',
-            kkm: fg.kkm || kkm
-          } : { score: '-', pred: '-', desc: '-', kkm }
+            kkm: finalKkm
+          } : { score: '-', pred: '-', desc: '-', kkm: finalKkm }
         }
 
         let rows = subjects

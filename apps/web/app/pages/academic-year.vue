@@ -3,6 +3,7 @@ import { Calendar, Plus, Trash2, Edit2, CheckCircle2, AlertCircle, Play, Copy } 
 import { BaseCard, BaseButton, BaseModal, BaseInput, BaseDateInput } from '@eduraport/ui'
 import { useSchoolContext } from '../composables/useSchoolContext'
 import { useAcademicYear } from '../composables/useAcademicYear'
+import { useToast } from '../composables/useToast'
 
 definePageMeta({
   middleware: [
@@ -17,6 +18,7 @@ definePageMeta({
 
 const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
 const { academicYears, fetchAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear, activateAcademicYear, cloneClasses } = useAcademicYear()
+const toast = useToast()
 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
@@ -78,9 +80,9 @@ const handleCreateYear = async () => {
       const errorMsg = Object.entries(e.data.errors)
         .map(([field, msgs]: any) => `${field}: ${msgs.join(', ')}`)
         .join('\n')
-      alert(`Gagal menambah tahun ajaran:\n${errorMsg}`)
+      toast.error(`Gagal menambah tahun ajaran:\n${errorMsg}`)
     } else {
-      alert(e?.message ?? 'Gagal menambah tahun ajaran')
+      toast.error(e?.message ?? 'Gagal menambah tahun ajaran')
     }
   }
 }
@@ -107,9 +109,9 @@ const handleUpdateYear = async () => {
       const errorMsg = Object.entries(e.data.errors)
         .map(([field, msgs]: any) => `${field}: ${msgs.join(', ')}`)
         .join('\n')
-      alert(`Gagal memperbarui tahun ajaran:\n${errorMsg}`)
+      toast.error(`Gagal memperbarui tahun ajaran:\n${errorMsg}`)
     } else {
-      alert(e?.message ?? 'Gagal memperbarui tahun ajaran')
+      toast.error(e?.message ?? 'Gagal memperbarui tahun ajaran')
     }
   }
 }
@@ -118,8 +120,9 @@ const handleDeleteYear = async (id: string) => {
   if (confirm('Apakah Anda yakin ingin menghapus Tahun Ajaran ini?')) {
     try {
       await deleteAcademicYear(selectedSchoolId.value, id)
+      toast.success('Berhasil menghapus tahun ajaran')
     } catch (e: any) {
-      alert(e?.message ?? 'Gagal menghapus tahun ajaran')
+      toast.error(e?.message ?? 'Gagal menghapus tahun ajaran')
     }
   }
 }
@@ -128,10 +131,10 @@ const handleActivateYear = async (id: string) => {
   try {
     const res = await activateAcademicYear(selectedSchoolId.value, id)
     if (res.success) {
-      alert('Tahun ajaran berhasil diaktifkan.')
+      toast.success('Tahun ajaran berhasil diaktifkan.')
     }
   } catch (e: any) {
-    alert(e?.message ?? 'Gagal mengaktifkan tahun ajaran')
+    toast.error(e?.message ?? 'Gagal mengaktifkan tahun ajaran')
   }
 }
 
@@ -143,7 +146,7 @@ const openCloneModal = (targetYearId: string) => {
 
 const handleCloneSubmit = async () => {
   if (!cloneSourceYearId.value) {
-    alert('Pilih tahun ajaran asal')
+    toast.error('Pilih tahun ajaran asal')
     return
   }
   
@@ -151,13 +154,13 @@ const handleCloneSubmit = async () => {
   try {
     const res: any = await cloneClasses(selectedSchoolId.value, cloneTargetYearId.value, cloneSourceYearId.value)
     if (res.success) {
-      alert(res.message || 'Berhasil menyalin kelas')
+      toast.success(res.message || 'Berhasil menyalin kelas')
       showCloneModal.value = false
     } else {
-      alert(res.message || 'Gagal menyalin kelas')
+      toast.error(res.message || 'Gagal menyalin kelas')
     }
   } catch (e: any) {
-    alert(e?.message || 'Gagal menyalin kelas')
+    toast.error(e?.message || 'Gagal menyalin kelas')
   } finally {
     cloneLoading.value = false
   }
