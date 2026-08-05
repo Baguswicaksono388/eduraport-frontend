@@ -14,8 +14,9 @@ export const useDashboard = () => {
     return await fetcher(`/school/${schoolId}/dashboard/metrics?keys=${keysStr}&period=${period}&role=${role}${dateQuery}`)
   }
 
-  const recalculateMetric = async (schoolId: string, key: string) => {
-    return await fetcher(`/school/${schoolId}/dashboard/metrics/${key}/recalculate`, {
+  const recalculateMetric = async (schoolId: string, key: string, date?: string) => {
+    const dateQuery = date ? `?date=${date}` : ''
+    return await fetcher(`/school/${schoolId}/dashboard/metrics/${key}/recalculate${dateQuery}`, {
       method: 'POST'
     })
   }

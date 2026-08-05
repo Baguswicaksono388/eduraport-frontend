@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useSchoolContext } from '../../composables/useSchoolContext'
+import { useAcademicYear } from '../../composables/useAcademicYear'
 import { 
   CreditCard, 
   Plus, 
@@ -23,11 +24,17 @@ import {
   X
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput, BaseDateInput } from '@eduraport/ui'
+import CashierDrawer from '../../components/financial/CashierDrawer.vue'
+import BalanceSheetReport from '../../components/financial/BalanceSheetReport.vue'
+import IncomeStatementReport from '../../components/financial/IncomeStatementReport.vue'
+import BosK7aReport from '../../components/financial/BosK7aReport.vue'
+import FoundationReport from '../../components/financial/FoundationReport.vue'
 import { useClass } from '../../composables/useClass'
 import { useFinancial } from '../../composables/useFinancial'
 import { useToast } from '../../composables/useToast'
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ASSET_CATEGORIES, DEPRECIATION_METHODS } from '@eduraport/shared'
+import { formatNumber, formatDate } from '~/utils/format'
 
 definePageMeta({
   middleware: [
@@ -41,14 +48,17 @@ definePageMeta({
 })
 
 const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
+const { academicYears, fetchAcademicYears } = useAcademicYear()
 const { classes, fetchClasses } = useClass()
 const { 
   billsList, 
   accountsList, 
   journalsList, 
+  journalsMeta,
   categoriesList,
   assetsList,
   fetchBills, 
+  previewBulkSPP,
   generateBulkSPP, 
   recordPayment, 
   fetchAccounts, 
@@ -72,6 +82,8 @@ const filterStatus = ref('') // all, pending, paid
 
 const activeTab = ref('bills') // bills, journals, accounts, reports, assets
 const activeReportSubTab = ref('balance-sheet') // balance-sheet, income-statement, bos, foundation
+const journalCurrentPage = ref(1)
+const journalItemsPerPage = ref(50)
 const loading = ref(false)
 
 // Reports data states
@@ -153,12 +165,30 @@ const journalForm = reactive({
   debit_account_id: '',
   credit_account_id: '',
   amount: '',
-  reference: ''
+  reference: '',
+  funding_source: 'yayasan',
+  bos_component_id: ''
 })
 
+// Reversal state
+const showReversalModal = ref(false)
+const reversalForm = reactive({
+  txRef: '',
+  reason: ''
+})
+
+// Period Lock state
+const showPeriodLockModal = ref(false)
+const periodLockForm = reactive({
+  year: new Date().getFullYear(),
+  month: new Date().getMonth() + 1
+})
+const lockedPeriods = ref<any[]>([])
+
 // Grouped Bills & Details Modal States
-const showDetailModal = ref(false)
+const showCashierDrawer = ref(false)
 const activeStudentId = ref('')
+const activeStudentName = ref('')
 
 const groupedBills = computed(() => {
   const groups: Record<string, {
@@ -189,14 +219,60 @@ const groupedBills = computed(() => {
 
     groups[studentId].bills.push(bill)
     const amt = Number(bill.amount) || 0
+    const paidAmt = Number(bill.amount_paid) || 0
     groups[studentId].total_amount += amt
-    if (bill.status !== 'paid') {
-      groups[studentId].unpaid_amount += amt
+    
+    const unpaid = Math.max(0, amt - paidAmt)
+    groups[studentId].unpaid_amount += unpaid
+    if (unpaid > 0) {
       groups[studentId].status = 'pending'
     }
   }
 
   return Object.values(groups).sort((a, b) => a.student_name.localeCompare(b.student_name))
+})
+
+const billsSummary = computed(() => {
+  let tertagihkan = 0
+  let tertagih = 0
+  let outstanding = 0
+  let unpaidCount = 0
+
+  for (const bill of billsList.value) {
+    const amt = Number(bill.amount) || 0
+    const paidAmt = Number(bill.amount_paid) || 0
+    tertagihkan += amt
+    tertagih += paidAmt
+    
+    const unpaid = Math.max(0, amt - paidAmt)
+    if (unpaid > 0) {
+      outstanding += unpaid
+      unpaidCount++
+    }
+  }
+
+  const tertagihPct = tertagihkan > 0 ? Math.round((tertagih / tertagihkan) * 100) : 0
+
+  return { tertagihkan, tertagih, outstanding, tertagihPct, unpaidCount }
+})
+
+const journalsGlobalTotal = computed(() => {
+  return { 
+    debit: Number(journalsMeta.value?.total_debit) || 0, 
+    credit: Number(journalsMeta.value?.total_credit) || 0 
+  }
+})
+
+const journalsPageTotal = computed(() => {
+  let debit = 0
+  let credit = 0
+  for (const j of journalsList.value) {
+    if (!j.reversed_by_tx) {
+      debit += Number(j.debit) || 0
+      credit += Number(j.credit) || 0
+    }
+  }
+  return { debit, credit }
 })
 
 const activeStudent = computed(() => {
@@ -206,21 +282,58 @@ const activeStudent = computed(() => {
 // SPP Gen Modal
 const showSPPModal = ref(false)
 const sppForm = reactive({
-  class_id: '',
+  class_ids: [] as string[],
   period: new Date().toISOString().substring(0, 7), // YYYY-MM
   amount: '450000',
   due_date: new Date(new Date().setDate(new Date().getDate() + 10)).toISOString().substring(0, 10), // YYYY-MM-DD
   category_id: ''
 })
 
-// Payment Modal
-const showPaymentModal = ref(false)
-const activeBill = ref<any>(null)
-const paymentForm = reactive({
-  amount_paid: '0',
-  method: 'cash',
-  transaction_code: ''
+// Generate upcoming periods for dropdown (from 2 months ago to 10 months ahead)
+const periodOptions = computed(() => {
+  const options = []
+  const today = new Date()
+  for (let i = -2; i <= 10; i++) {
+    const d = new Date(today.getFullYear(), today.getMonth() + i, 1)
+    const value = d.toISOString().substring(0, 7) // YYYY-MM
+    const label = new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(d)
+    options.push({ value, label })
+  }
+  return options
 })
+
+const previewData = ref<any>(null)
+const isPreviewLoading = ref(false)
+
+let previewTimeout: any = null
+watch(sppForm, (newVal) => {
+  if (!selectedSchoolId.value || newVal.class_ids.length === 0 || !newVal.category_id || !newVal.period || !newVal.amount) {
+    previewData.value = null
+    return
+  }
+  
+  if (previewTimeout) clearTimeout(previewTimeout)
+  previewTimeout = setTimeout(async () => {
+    isPreviewLoading.value = true
+    try {
+      const res = await previewBulkSPP(selectedSchoolId.value, {
+        class_ids: newVal.class_ids,
+        period: newVal.period,
+        amount: newVal.amount,
+        due_date: newVal.due_date,
+        category_id: newVal.category_id
+      })
+      if (res.success) {
+        previewData.value = res.data
+      }
+    } catch (err) {
+      console.error('Failed to preview SPP', err)
+      previewData.value = null
+    } finally {
+      isPreviewLoading.value = false
+    }
+  }, 500)
+}, { deep: true })
 
 // Asset totals helper
 const assetTotals = computed(() => {
@@ -265,10 +378,13 @@ const loadReports = async (schoolId: string) => {
 const loadSchoolData = async (schoolId: string) => {
   loading.value = true
   try {
-    await fetchClasses(schoolId)
+    await fetchAcademicYears(schoolId)
+    const activeYear = academicYears.value.find(y => y.is_active)
+    await fetchClasses(schoolId, activeYear ? activeYear.id : undefined)
+    
     await Promise.all([
       fetchAccounts(schoolId),
-      fetchJournals(schoolId),
+      fetchJournals(schoolId, journalCurrentPage.value, journalItemsPerPage.value),
       fetchCategories(schoolId),
       fetchAssets(schoolId),
       loadReports(schoolId)
@@ -325,20 +441,39 @@ const openSPPModal = () => {
   showSPPModal.value = true
 }
 
-const openDetailModal = (student: any) => {
+const openCashierDrawer = (student: any) => {
   activeStudentId.value = student.student_id
-  showDetailModal.value = true
+  activeStudentName.value = student.student_name
+  showCashierDrawer.value = true
 }
 
+const loadJournalsPage = async (page: number) => {
+  if (page < 1 || page > Math.ceil(journalsMeta.value.total / journalItemsPerPage.value)) return
+  journalCurrentPage.value = page
+  loading.value = true
+  try {
+    await fetchJournals(selectedSchoolId.value, journalCurrentPage.value, journalItemsPerPage.value)
+  } finally {
+    loading.value = false
+  }
+}
+
+const handlePaymentSuccess = () => {
+  // refresh bills and journals
+  if (selectedSchoolId.value) {
+    fetchBills(selectedSchoolId.value)
+    fetchJournals(selectedSchoolId.value, journalCurrentPage.value, journalItemsPerPage.value)
+  }
+}
 const handleGenerateSPP = async () => {
-  if (!selectedSchoolId.value || !sppForm.class_id) {
+  if (!selectedSchoolId.value || sppForm.class_ids.length === 0) {
     toast.error('Pilih kelas rombel terlebih dahulu.', 'Validasi')
     return
   }
 
   try {
     const res = await generateBulkSPP(selectedSchoolId.value, {
-      class_id: sppForm.class_id,
+      class_ids: sppForm.class_ids,
       period: sppForm.period,
       amount: sppForm.amount,
       due_date: sppForm.due_date,
@@ -348,47 +483,26 @@ const handleGenerateSPP = async () => {
     if (res.success) {
       toast.success(`Berhasil membuat ${res.data.billedCount} tagihan SPP baru.`, 'Berhasil')
       showSPPModal.value = false
+      sppForm.class_ids = [] // reset form
       await loadBills()
     }
   } catch (error: any) {
     toast.error(error.message || 'Gagal membuat tagihan SPP.', 'Gagal')
   }
 }
-
-const openPaymentModal = (bill: any) => {
-  activeBill.value = bill
-  paymentForm.amount_paid = String(Number(bill.amount))
-  paymentForm.method = 'cash'
-  paymentForm.transaction_code = `TX-${Date.now()}`
-  showPaymentModal.value = true
-}
-
-const handleRecordPayment = async () => {
-  if (!selectedSchoolId.value || !activeBill.value) return
-
-  try {
-    const res = await recordPayment(selectedSchoolId.value, {
-      bill_id: activeBill.value.id,
-      amount_paid: paymentForm.amount_paid,
-      method: paymentForm.method,
-      transaction_code: paymentForm.transaction_code
-    }, selectedClassId.value)
-
-    if (res.success) {
-      toast.success('Pembayaran SPP berhasil dicatat dan dibukukan.', 'Pembayaran Sukses')
-      showPaymentModal.value = false
-      await loadBills()
-      // Reload reports and COA balances
-      await loadReports(selectedSchoolId.value)
-    }
-  } catch (error: any) {
-    toast.error(error.message || 'Gagal mencatat pembayaran.', 'Gagal')
-  }
-}
-
 // Asset Management logic
 const handleCreateAsset = async () => {
   if (!selectedSchoolId.value) return
+  try {
+    const res = await getStudentBilling(selectedSchoolId.value)
+    if (res.success) {
+      studentBillsList.value = res.data
+    }
+    const locks = await getLockedPeriods(selectedSchoolId.value)
+    lockedPeriods.value = locks
+  } catch (error) {
+    console.error('Error loading student bills:', error)
+  }
   try {
     const res = await createAsset(selectedSchoolId.value, { ...assetForm })
     if (res.success) {
@@ -437,27 +551,63 @@ watch(formattedAmount, (newVal) => {
 
 const handleCreateJournal = async () => {
   if (!selectedSchoolId.value) return
-  if (!journalForm.debit_account_id || !journalForm.credit_account_id || !journalForm.amount || !journalForm.description) {
-    toast.error('Mohon isi semua field yang wajib.', 'Validasi')
-    return
-  }
+
   try {
-    const res = await createManualJournal(selectedSchoolId.value, { ...journalForm })
+    const res = await createManualJournal(selectedSchoolId.value, journalForm)
     if (res.success) {
-      toast.success('Jurnal transaksi berhasil dicatat.', 'Berhasil')
+      toast.success('Jurnal umum berhasil dicatat.', 'Berhasil')
       showJournalModal.value = false
-      // Reset form
       journalForm.description = ''
-      journalForm.debit_account_id = ''
-      journalForm.credit_account_id = ''
       journalForm.amount = ''
       journalForm.reference = ''
-      formattedAmount.value = ''
-      // Reload reports and general journals
+      journalForm.bos_component_id = ''
+      await loadJournals()
+      await loadAccounts()
       await loadReports(selectedSchoolId.value)
     }
   } catch (error: any) {
-    toast.error(error.message || 'Gagal menyimpan transaksi jurnal.', 'Gagal')
+    toast.error(error.message || 'Gagal mencatat jurnal umum.', 'Gagal')
+  }
+}
+
+const promptReverseJournal = (journal: any) => {
+  if (journal.origin === 'reversal' || journal.reversed_by_tx) {
+    toast.error('Jurnal ini tidak bisa dikoreksi lagi.')
+    return
+  }
+  reversalForm.txRef = journal.reference
+  reversalForm.reason = ''
+  showReversalModal.value = true
+}
+
+const submitReversal = async () => {
+  if (!selectedSchoolId.value || !reversalForm.txRef) return
+  try {
+    const res = await reverseJournal(selectedSchoolId.value, reversalForm.txRef, reversalForm.reason)
+    if (res.success) {
+      toast.success('Jurnal berhasil dikoreksi.', 'Berhasil')
+      showReversalModal.value = false
+      await loadJournals()
+      await loadAccounts()
+      await loadReports(selectedSchoolId.value)
+    }
+  } catch (error: any) {
+    toast.error(error.message || 'Gagal mengoreksi jurnal.', 'Gagal')
+  }
+}
+
+const handlePeriodLock = async () => {
+  if (!selectedSchoolId.value) return
+  try {
+    const res = await lockPeriod(selectedSchoolId.value, Number(periodLockForm.year), Number(periodLockForm.month))
+    if (res.success) {
+      toast.success(res.message || 'Periode berhasil ditutup.', 'Berhasil')
+      showPeriodLockModal.value = false
+      const locks = await getLockedPeriods(selectedSchoolId.value)
+      lockedPeriods.value = locks
+    }
+  } catch (error: any) {
+    toast.error(error.message || 'Gagal menutup periode buku.', 'Gagal')
   }
 }
 
@@ -472,24 +622,6 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
   a.download = `Laporan_${activeReportSubTab.value}_${Date.now()}.${format}`
   a.click()
 }
-
-const formatNumber = (numStr: any) => {
-  if (numStr === null || numStr === undefined) return '0'
-  return new Number(numStr).toLocaleString('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0
-  })
-}
-
-const formatDate = (dateStr: any) => {
-  if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  })
-}
 </script>
 
 <template>
@@ -502,10 +634,13 @@ const formatDate = (dateStr: any) => {
       </div>
       <div class="flex gap-2 flex-wrap" v-if="selectedSchoolId && activeTab === 'bills'">
         <BaseButton variant="primary" @click="openSPPModal" class="py-2.5 px-4 text-xs font-bold shadow-lg shadow-violet-600/15">
-          <Plus class="mr-1.5" :size="14" /> Buat Tagihan SPP Bulanan
+          <Plus class="mr-1.5" :size="14" /> Buat Tagihan SPP Massal
         </BaseButton>
       </div>
       <div class="flex gap-2 flex-wrap" v-if="selectedSchoolId && activeTab === 'journals'">
+        <BaseButton variant="outline" @click="showPeriodLockModal = true" class="py-2.5 px-4 text-xs font-bold border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900/50 dark:hover:bg-rose-900/20">
+          <Lock class="mr-1.5" :size="14" /> Tutup Buku Bulanan
+        </BaseButton>
         <BaseButton variant="primary" @click="showJournalModal = true" class="py-2.5 px-4 text-xs font-bold shadow-lg shadow-violet-600/15">
           <Plus class="mr-1.5" :size="14" /> Tambah Jurnal Umum
         </BaseButton>
@@ -615,6 +750,34 @@ const formatDate = (dateStr: any) => {
       <div v-else class="space-y-6">
         <!-- Tab Content 1: SPP Bills -->
         <div v-if="activeTab === 'bills'" class="space-y-4 animate-in fade-in duration-300">
+          
+          <!-- Summary Cards from Prototype -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4" v-if="billsList.length > 0">
+            <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm space-y-1">
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Tertagihkan</span>
+              <p class="text-xl font-extrabold text-slate-900 dark:text-zinc-100 font-mono">{{ formatNumber(billsSummary.tertagihkan) }}</p>
+              <p class="text-[10px] text-slate-400 font-medium mt-1">Total Tagihan Keseluruhan</p>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm space-y-1">
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Tertagih</span>
+              <p class="text-xl font-extrabold text-emerald-600 dark:text-emerald-450 font-mono">{{ formatNumber(billsSummary.tertagih) }}</p>
+              <p class="text-[10px] text-slate-400 font-medium mt-1">{{ billsSummary.tertagihPct }}% dari tertagihkan</p>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm space-y-1">
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Outstanding Total</span>
+              <p class="text-xl font-extrabold text-rose-600 dark:text-rose-450 font-mono">{{ formatNumber(billsSummary.outstanding) }}</p>
+              <p class="text-[10px] text-slate-400 font-medium mt-1">{{ billsSummary.unpaidCount }} tagihan belum lunas</p>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm space-y-1">
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Aging Tunggakan</span>
+              <div class="flex h-10 w-full rounded-md overflow-hidden text-[10px] font-bold text-center leading-[40px]">
+                <div class="bg-amber-100 text-amber-700 flex-1 border-r border-amber-200/50 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20" title="≤30 Hari">≤30h</div>
+                <div class="bg-orange-100 text-orange-700 flex-1 border-r border-orange-200/50 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20" title="31-90 Hari">31-90</div>
+                <div class="bg-rose-100 text-rose-700 flex-1 dark:bg-rose-500/10 dark:text-rose-400" title=">90 Hari">>90</div>
+              </div>
+            </div>
+          </div>
+
           <div v-if="billsList.length === 0" class="py-16 text-center text-slate-400 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl">
             <Info class="mx-auto mb-2 text-violet-500 opacity-60" :size="30" />
             <p class="text-xs font-bold text-slate-700 dark:text-zinc-300">Belum Ada Tagihan SPP</p>
@@ -655,7 +818,7 @@ const formatDate = (dateStr: any) => {
                       </span>
                     </td>
                     <td class="p-4 text-center pr-6">
-                      <button @click="openDetailModal(student)" class="text-xs font-bold text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300">
+                      <button @click="openCashierDrawer(student)" class="text-xs font-bold text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300">
                         Rincian & Bayar
                       </button>
                     </td>
@@ -674,7 +837,30 @@ const formatDate = (dateStr: any) => {
             <p class="text-[10px] mt-1">Pembayaran SPP yang diselesaikan akan otomatis dibukukan ke dalam jurnal double-entry ini.</p>
           </div>
 
-          <div v-else class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
+          <div v-else class="space-y-4">
+            <!-- Global Totals Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+              <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm space-y-1">
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Debit Terfilter</span>
+                <p class="text-xl font-extrabold text-slate-900 dark:text-zinc-100 font-mono">{{ formatNumber(journalsGlobalTotal.debit) }}</p>
+                <p class="text-[10px] text-slate-400 font-medium mt-1">Total seluruh data yang sesuai filter</p>
+              </div>
+              <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm space-y-1">
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Kredit Terfilter</span>
+                <p class="text-xl font-extrabold text-slate-900 dark:text-zinc-100 font-mono">{{ formatNumber(journalsGlobalTotal.credit) }}</p>
+                <div class="flex items-center justify-between mt-1">
+                  <p class="text-[10px] text-slate-400 font-medium">Total seluruh data yang sesuai filter</p>
+                  <span 
+                    class="text-[10px] font-bold px-2 py-0.5 rounded-full" 
+                    :class="journalsGlobalTotal.debit === journalsGlobalTotal.credit ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-500' : 'bg-amber-500/10 text-amber-600 dark:text-amber-500'"
+                  >
+                    {{ journalsGlobalTotal.debit === journalsGlobalTotal.credit ? '✓ Seimbang' : '⚠ Tidak Seimbang' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
             <div class="overflow-x-auto">
               <table class="w-full text-left border-collapse text-xs">
                 <thead>
@@ -684,30 +870,90 @@ const formatDate = (dateStr: any) => {
                     <th class="p-4">Rekening COA</th>
                     <th class="p-4">Debit</th>
                     <th class="p-4">Kredit</th>
-                    <th class="p-4 pr-6">Referensi</th>
+                    <th class="p-4">Sumber</th>
+                    <th class="p-4">Asal</th>
+                    <th class="p-4">Referensi</th>
+                    <th class="p-4 pr-6 text-center">Aksi</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/80 text-slate-700 dark:text-zinc-300">
                   <tr v-for="j in journalsList" :key="j.id" class="hover:bg-slate-50/30 dark:hover:bg-zinc-950/20 transition-all font-medium">
-                    <td class="p-4 pl-6 text-slate-500">{{ formatDate(j.date) }}</td>
+                    <td class="p-4 pl-6 text-slate-500 whitespace-nowrap">{{ formatDate(j.date) }}</td>
                     <td class="p-4 font-semibold">{{ j.description }}</td>
                     <td class="p-4">
                       <span class="font-mono bg-slate-100 dark:bg-zinc-800 px-2 py-1 rounded text-[10px]">
                         {{ j.account_code }} - {{ j.account_name }}
                       </span>
                     </td>
-                    <td class="p-4 font-mono font-bold text-slate-800 dark:text-zinc-200">
+                    <td class="p-4 font-mono font-bold text-slate-800 dark:text-zinc-200" :class="{'line-through opacity-50': j.reversed_by_tx}">
                       {{ Number(j.debit) > 0 ? formatNumber(j.debit) : '-' }}
                     </td>
-                    <td class="p-4 font-mono font-bold text-slate-850 dark:text-zinc-300">
+                    <td class="p-4 font-mono font-bold text-slate-850 dark:text-zinc-300" :class="{'line-through opacity-50': j.reversed_by_tx}">
                       {{ Number(j.credit) > 0 ? formatNumber(j.credit) : '-' }}
                     </td>
-                    <td class="p-4 font-mono text-slate-400 pr-6">{{ j.reference || '-' }}</td>
+                    <td class="p-4">
+                      <span class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase border"
+                        :class="j.funding_source?.startsWith('bos') ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'"
+                      >
+                        {{ j.funding_source?.replace('_', ' ') || '-' }}
+                      </span>
+                    </td>
+                    <td class="p-4">
+                      <span 
+                        class="px-2 py-0.5 w-max rounded text-[9px] font-extrabold uppercase"
+                        :class="[
+                          j.origin === 'auto' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
+                          j.origin === 'reversal' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' :
+                          'bg-violet-500/10 text-violet-600 dark:text-violet-400'
+                        ]"
+                      >
+                        {{ j.origin === 'auto' ? 'Otomatis' : j.origin === 'reversal' ? 'Koreksi' : 'Manual' }}
+                      </span>
+                    </td>
+                    <td class="p-4 font-mono text-[10px] text-slate-400">
+                      {{ j.reference || '-' }}
+                      <span v-if="j.reversed_by_tx" class="block text-[9px] text-rose-500 mt-0.5">Dibatalkan oleh {{ j.reversed_by_tx }}</span>
+                    </td>
+                    <td class="p-4 pr-6 text-center">
+                      <button 
+                        v-if="j.origin !== 'reversal' && !j.reversed_by_tx"
+                        @click="promptReverseJournal(j)" 
+                        class="text-xs font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300"
+                        title="Koreksi (Jurnal Pembalik)"
+                      >
+                        Koreksi
+                      </button>
+                    </td>
+                  </tr>
+                  
+                  <!-- TOTAL ROW -->
+                  <tr class="bg-slate-50/50 dark:bg-zinc-900/50">
+                    <td colspan="3" class="p-4 pl-6 font-extrabold text-slate-800 dark:text-zinc-200">TOTAL HALAMAN INI</td>
+                    <td class="p-4 font-mono font-extrabold text-slate-800 dark:text-zinc-200">{{ formatNumber(journalsPageTotal.debit) }}</td>
+                    <td class="p-4 font-mono font-extrabold text-slate-800 dark:text-zinc-200">{{ formatNumber(journalsPageTotal.credit) }}</td>
+                    <td colspan="4" class="p-4 pr-6 font-extrabold" :class="journalsPageTotal.debit === journalsPageTotal.credit ? 'text-emerald-600 dark:text-emerald-500' : 'text-amber-600 dark:text-amber-500'">
+                      <span v-if="journalsPageTotal.debit === journalsPageTotal.credit">✓ Seimbang</span>
+                      <span v-else>⚠ Tidak Seimbang</span>
+                    </td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </div>
+          </div>
+          
+          <div v-if="journalsMeta.total > 0" class="mt-4">
+            <AppPagination
+              v-model:page="journalCurrentPage"
+              v-model:itemPerPage="journalItemsPerPage"
+              :total-item="journalsMeta.total"
+              :total-page="Math.ceil(journalsMeta.total / journalItemsPerPage)"
+              @update:page="loadJournalsPage($event)"
+              @update:itemPerPage="journalCurrentPage = 1; loadJournalsPage(1)"
+            />
+          </div>
+
+          <p class="text-[11px] text-slate-500 mt-2">Jurnal bersifat <b>append-only</b> — tidak ada edit/hapus. Salah catat → aksi "Koreksi" membuat jurnal pembalik (contoh baris KOREKSI di atas) + entri baru yang benar.</p>
         </div>
 
         <!-- Tab Content 3: COA accounts -->
@@ -720,13 +966,27 @@ const formatDate = (dateStr: any) => {
                     <th class="p-4 pl-6">Kode Rekening</th>
                     <th class="p-4">Nama Akun</th>
                     <th class="p-4">Tipe Klasifikasi</th>
-                    <th class="p-4 pr-6 text-right">Saldo Saat Ini</th>
+                    <th class="p-4 pr-6 text-right">Saldo Saat Ini (derivasi jurnal)</th>
+                    <th class="p-4"></th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/80 font-medium">
                   <tr v-for="acc in accountsList" :key="acc.id" class="hover:bg-slate-50/30 dark:hover:bg-zinc-950/20 transition-all text-slate-700 dark:text-zinc-300">
                     <td class="p-4 pl-6 font-mono font-extrabold text-violet-600 dark:text-violet-400">{{ acc.account_code }}</td>
-                    <td class="p-4 font-bold text-slate-800 dark:text-zinc-200">{{ acc.name }}</td>
+                    <td class="p-4">
+                      <div class="flex items-center gap-2 font-bold text-slate-800 dark:text-zinc-200">
+                        {{ acc.name }}
+                        <span v-if="['101', '401', '102'].includes(acc.account_code)" class="px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase bg-violet-500/10 text-violet-600 border border-violet-500/20" title="Dipakai auto-posting">
+                          Sistem
+                        </span>
+                        <div v-if="acc.account_code === '101'" class="group relative flex items-center">
+                          <Info class="w-3.5 h-3.5 text-slate-400 hover:text-blue-500 cursor-help transition-colors" />
+                          <div class="absolute left-1/2 -translate-x-1/2 top-full mt-2 hidden group-hover:block w-48 p-2 bg-slate-800 text-white text-[10px] rounded shadow-xl text-center z-50 before:content-[''] before:absolute before:bottom-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-b-slate-800 font-normal leading-relaxed">
+                            Saldo ini adalah total keseluruhan uang masuk ke lembaga dari berbagai penerimaan (SPP, Seragam, dll).
+                          </div>
+                        </div>
+                      </div>
+                    </td>
                     <td class="p-4">
                       <span 
                         class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase"
@@ -741,14 +1001,20 @@ const formatDate = (dateStr: any) => {
                         {{ acc.type }}
                       </span>
                     </td>
-                    <td class="p-4 pr-6 text-right font-mono font-extrabold text-slate-900 dark:text-zinc-150">
+                    <td class="p-4 pr-6 text-right font-mono font-extrabold text-slate-900 dark:text-zinc-200">
                       {{ formatNumber(acc.balance) }}
+                    </td>
+                    <td class="p-4 pr-6 text-right">
+                      <button v-if="!['101', '401', '102'].includes(acc.account_code)" class="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 font-bold transition-colors">
+                        Arsipkan
+                      </button>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </div>
+          <p class="text-[11px] text-slate-500 mt-2">COA default ter-seed otomatis saat aktivasi. Saldo dihitung dari jurnal, bukan kolom statis — direkonsiliasi harian.</p>
         </div>
 
         <!-- Tab Content 4: Laporan Keuangan -->
@@ -797,216 +1063,16 @@ const formatDate = (dateStr: any) => {
           </div>
 
           <!-- SUBTAB 1: Neraca -->
-          <div v-if="activeReportSubTab === 'balance-sheet'" class="space-y-4 animate-in fade-in duration-200">
-            <!-- Balance check banner -->
-            <div 
-              v-if="balanceSheetData" 
-              class="flex items-center gap-3 p-4 rounded-xl border"
-              :class="balanceSheetData.totals.balanced ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-rose-500/10 text-rose-600 border-rose-500/20'"
-            >
-              <CheckCircle v-if="balanceSheetData.totals.balanced" :size="18" />
-              <AlertCircle v-else :size="18" />
-              <div class="text-xs">
-                <span class="font-bold">Verifikasi Saldo Neraca: </span>
-                <span>{{ balanceSheetData.totals.balanced ? 'SEIMBANG (Total Aset = Total Liabilitas + Ekuitas)' : 'BELUM SEIMBANG' }}</span>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" v-if="balanceSheetData">
-              <!-- Assets Column -->
-              <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl p-5 space-y-4">
-                <div class="border-b border-slate-100 dark:border-zinc-800 pb-2 flex justify-between">
-                  <h4 class="font-bold text-sm text-slate-800 dark:text-zinc-200">Aset (Assets)</h4>
-                  <span class="text-xs text-slate-400">Kode Rekening 1xx</span>
-                </div>
-                <div class="space-y-2">
-                  <div v-for="acc in balanceSheetData.assets" :key="acc.id" class="flex justify-between text-xs py-1">
-                    <span class="text-slate-500">{{ acc.account_code }} - {{ acc.name }}</span>
-                    <span class="font-mono font-bold">{{ formatNumber(acc.balance) }}</span>
-                  </div>
-                  <div v-if="balanceSheetData.assets.length === 0" class="text-xs text-slate-400 py-4 text-center">Tidak ada data aset.</div>
-                </div>
-                <div class="flex justify-between border-t border-slate-100 dark:border-zinc-800 pt-3 font-extrabold text-slate-800 dark:text-zinc-200 text-xs">
-                  <span>TOTAL ASET</span>
-                  <span class="font-mono">{{ formatNumber(balanceSheetData.totals.assets) }}</span>
-                </div>
-              </div>
-
-              <!-- Liabilities & Equities Column -->
-              <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl p-5 space-y-6">
-                <!-- Liabilities -->
-                <div class="space-y-4">
-                  <div class="border-b border-slate-100 dark:border-zinc-800 pb-2 flex justify-between">
-                    <h4 class="font-bold text-sm text-slate-800 dark:text-zinc-200">Kewajiban (Liabilities)</h4>
-                    <span class="text-xs text-slate-400">Kode Rekening 2xx</span>
-                  </div>
-                  <div class="space-y-2">
-                    <div v-for="acc in balanceSheetData.liabilities" :key="acc.id" class="flex justify-between text-xs py-1">
-                      <span class="text-slate-500">{{ acc.account_code }} - {{ acc.name }}</span>
-                      <span class="font-mono font-bold">{{ formatNumber(acc.balance) }}</span>
-                    </div>
-                    <div v-if="balanceSheetData.liabilities.length === 0" class="text-xs text-slate-400 py-2 text-center">Tidak ada data kewajiban.</div>
-                  </div>
-                </div>
-
-                <!-- Equities -->
-                <div class="space-y-4">
-                  <div class="border-b border-slate-100 dark:border-zinc-800 pb-2 flex justify-between">
-                    <h4 class="font-bold text-sm text-slate-800 dark:text-zinc-200">Ekuitas (Equity)</h4>
-                    <span class="text-xs text-slate-400">Kode Rekening 3xx</span>
-                  </div>
-                  <div class="space-y-2">
-                    <div v-for="acc in balanceSheetData.equities" :key="acc.id" class="flex justify-between text-xs py-1">
-                      <span class="text-slate-500">{{ acc.account_code }} - {{ acc.name }}</span>
-                      <span class="font-mono font-bold">{{ formatNumber(acc.balance) }}</span>
-                    </div>
-                    <div v-if="balanceSheetData.equities.length === 0" class="text-xs text-slate-400 py-2 text-center">Tidak ada data ekuitas.</div>
-                  </div>
-                </div>
-
-                <!-- Combined Total -->
-                <div class="flex justify-between border-t border-slate-100 dark:border-zinc-800 pt-3 font-extrabold text-slate-800 dark:text-zinc-200 text-xs">
-                  <span>TOTAL KEWAJIBAN & EKUITAS</span>
-                  <span class="font-mono">{{ formatNumber(balanceSheetData.totals.liabilities_and_equities) }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <BalanceSheetReport v-if="activeReportSubTab === 'balance-sheet'" :data="balanceSheetData" />
 
           <!-- SUBTAB 2: Laba/Rugi -->
-          <div v-else-if="activeReportSubTab === 'income-statement'" class="space-y-4 animate-in fade-in duration-200">
-            <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl p-6 space-y-6 max-w-3xl mx-auto" v-if="incomeStatementData">
-              <div class="text-center border-b border-slate-100 dark:border-zinc-800 pb-4">
-                <h4 class="font-bold text-base text-slate-800 dark:text-zinc-200">Laporan Aktivitas Laba / Rugi</h4>
-                <p class="text-[10px] text-slate-400 mt-1">Performa Pendapatan dan Beban Operasional Sekolah</p>
-              </div>
-
-              <!-- Revenues -->
-              <div class="space-y-3">
-                <h5 class="font-extrabold text-xs text-slate-800 dark:text-zinc-250 uppercase tracking-widest border-b border-slate-50 dark:border-zinc-850 pb-1">Pendapatan (Revenues)</h5>
-                <div v-for="acc in incomeStatementData.revenues" :key="acc.id" class="flex justify-between text-xs py-1 px-2 hover:bg-slate-50/50 dark:hover:bg-zinc-950/25 rounded transition-all">
-                  <span class="text-slate-500 font-semibold">{{ acc.account_code }} - {{ acc.name }}</span>
-                  <span class="font-mono font-bold text-slate-700 dark:text-zinc-300">{{ formatNumber(acc.balance) }}</span>
-                </div>
-                <div v-if="incomeStatementData.revenues.length === 0" class="text-xs text-slate-400 py-4 text-center">Tidak ada pendapatan tercatat.</div>
-                <div class="flex justify-between font-bold text-slate-800 dark:text-zinc-200 text-xs px-2 pt-2 border-t border-dashed border-slate-100 dark:border-zinc-800">
-                  <span>Total Pendapatan</span>
-                  <span class="font-mono">{{ formatNumber(incomeStatementData.totals.revenue) }}</span>
-                </div>
-              </div>
-
-              <!-- Expenses -->
-              <div class="space-y-3">
-                <h5 class="font-extrabold text-xs text-slate-800 dark:text-zinc-250 uppercase tracking-widest border-b border-slate-50 dark:border-zinc-850 pb-1">Beban Operasional (Expenses)</h5>
-                <div v-for="acc in incomeStatementData.expenses" :key="acc.id" class="flex justify-between text-xs py-1 px-2 hover:bg-slate-50/50 dark:hover:bg-zinc-950/25 rounded transition-all">
-                  <span class="text-slate-500 font-semibold">{{ acc.account_code }} - {{ acc.name }}</span>
-                  <span class="font-mono font-bold text-slate-700 dark:text-zinc-300">{{ formatNumber(acc.balance) }}</span>
-                </div>
-                <div v-if="incomeStatementData.expenses.length === 0" class="text-xs text-slate-400 py-4 text-center">Tidak ada beban operasional tercatat.</div>
-                <div class="flex justify-between font-bold text-slate-800 dark:text-zinc-200 text-xs px-2 pt-2 border-t border-dashed border-slate-100 dark:border-zinc-800">
-                  <span>Total Beban</span>
-                  <span class="font-mono">{{ formatNumber(incomeStatementData.totals.expense) }}</span>
-                </div>
-              </div>
-
-              <!-- Net profit -->
-              <div 
-                class="flex justify-between items-center p-4 rounded-xl border font-extrabold text-sm"
-                :class="Number(incomeStatementData.totals.net_income) >= 0 ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-rose-500/10 text-rose-600 border-rose-500/20'"
-              >
-                <span>LABA (RUGI) BERSIH</span>
-                <span class="font-mono text-base">{{ formatNumber(incomeStatementData.totals.net_income) }}</span>
-              </div>
-            </div>
-          </div>
+          <IncomeStatementReport v-else-if="activeReportSubTab === 'income-statement'" :data="incomeStatementData" />
 
           <!-- SUBTAB 3: Laporan BOS -->
-          <div v-else-if="activeReportSubTab === 'bos'" class="space-y-4 animate-in fade-in duration-200">
-            <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl p-6 space-y-6 max-w-3xl mx-auto" v-if="bosReportData">
-              <div class="text-center border-b border-slate-100 dark:border-zinc-800 pb-4">
-                <h4 class="font-bold text-base text-slate-800 dark:text-zinc-200">Laporan Penggunaan Dana BOS</h4>
-                <p class="text-[10px] text-slate-400 mt-1">Formulir K7a - Kompatibel Standar Kemendikbudristek</p>
-              </div>
-
-              <!-- Revenue Section -->
-              <div class="space-y-3">
-                <h5 class="font-extrabold text-xs text-slate-850 dark:text-zinc-250 uppercase tracking-widest border-b border-slate-50 dark:border-zinc-850 pb-1">I. Penerimaan Dana</h5>
-                <div class="flex justify-between text-xs py-1.5 px-2 bg-slate-50 dark:bg-zinc-950 rounded">
-                  <span class="text-slate-500 font-semibold">{{ bosReportData.revenue.account_code }} - {{ bosReportData.revenue.name }}</span>
-                  <span class="font-mono font-bold text-slate-800 dark:text-zinc-250">{{ formatNumber(bosReportData.revenue.balance) }}</span>
-                </div>
-              </div>
-
-              <!-- Spending Section -->
-              <div class="space-y-3">
-                <h5 class="font-extrabold text-xs text-slate-850 dark:text-zinc-250 uppercase tracking-widest border-b border-slate-50 dark:border-zinc-850 pb-1">II. Penggunaan Dana per Komponen</h5>
-                
-                <div v-for="exp in bosReportData.expenses" :key="exp.account_code" class="flex justify-between text-xs py-1 px-2 border-b border-slate-50 dark:border-zinc-900">
-                  <span class="text-slate-500 font-semibold">{{ exp.account_code }} - {{ exp.name }}</span>
-                  <span class="font-mono font-bold text-slate-700 dark:text-zinc-300">{{ formatNumber(exp.balance) }}</span>
-                </div>
-                
-                <div v-if="bosReportData.expenses.length === 0" class="text-xs text-slate-400 py-4 text-center">Belum ada rincian belanja dana BOS.</div>
-              </div>
-
-              <!-- Summary Section -->
-              <div class="grid grid-cols-3 gap-4 pt-4 border-t border-slate-100 dark:border-zinc-800">
-                <div class="bg-slate-50 dark:bg-zinc-950 p-3 rounded-lg text-center">
-                  <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Penerimaan</span>
-                  <span class="font-mono font-bold text-xs text-slate-800 dark:text-zinc-200">{{ formatNumber(bosReportData.totals.revenue) }}</span>
-                </div>
-                <div class="bg-slate-50 dark:bg-zinc-950 p-3 rounded-lg text-center">
-                  <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Realisasi Belanja</span>
-                  <span class="font-mono font-bold text-xs text-slate-850 dark:text-zinc-200">{{ formatNumber(bosReportData.totals.expense) }}</span>
-                </div>
-                <div class="bg-slate-50 dark:bg-zinc-950 p-3 rounded-lg text-center">
-                  <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Sisa Dana</span>
-                  <span class="font-mono font-bold text-xs" :class="Number(bosReportData.totals.remaining) >= 0 ? 'text-emerald-600' : 'text-rose-600'">
-                    {{ formatNumber(bosReportData.totals.remaining) }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <BosK7aReport v-else-if="activeReportSubTab === 'bos'" :data="bosReportData" />
 
           <!-- SUBTAB 4: Laporan Yayasan -->
-          <div v-else-if="activeReportSubTab === 'foundation'" class="space-y-4 animate-in fade-in duration-200">
-            <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
-              <div class="p-5 border-b border-slate-100 dark:border-zinc-800/80">
-                <h4 class="font-bold text-sm text-slate-800 dark:text-zinc-200">Perbandingan Keuangan Konsolidasi Unit Sekolah</h4>
-                <p class="text-[10px] text-slate-400 mt-1">Ringkasan performa kas dan surplus antar unit sekolah di bawah naungan yayasan.</p>
-              </div>
-              <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr class="border-b border-slate-100 dark:border-zinc-800 bg-slate-50/30 dark:bg-zinc-900/20 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                      <th class="p-4 pl-6">Unit Sekolah</th>
-                      <th class="p-4">Jenjang</th>
-                      <th class="p-4">Saldo Kas & Bank</th>
-                      <th class="p-4">Total Pendapatan</th>
-                      <th class="p-4">Total Pengeluaran</th>
-                      <th class="p-4 pr-6 text-right">Net Surplus / Defisit</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100 dark:divide-zinc-800 font-medium">
-                    <tr v-for="schoolReport in foundationReportData" :key="schoolReport.school_id" class="hover:bg-slate-50/30 dark:hover:bg-zinc-950/20 text-slate-700 dark:text-zinc-300">
-                      <td class="p-4 pl-6 font-bold text-slate-800 dark:text-zinc-200">{{ schoolReport.school_name }}</td>
-                      <td class="p-4 font-bold uppercase text-slate-500">{{ schoolReport.level }}</td>
-                      <td class="p-4 font-mono font-semibold">{{ formatNumber(schoolReport.cash_balance) }}</td>
-                      <td class="p-4 font-mono font-semibold text-emerald-600">{{ formatNumber(schoolReport.revenue) }}</td>
-                      <td class="p-4 font-mono font-semibold text-slate-650">{{ formatNumber(schoolReport.expense) }}</td>
-                      <td class="p-4 pr-6 text-right font-mono font-extrabold" :class="Number(schoolReport.net_surplus) >= 0 ? 'text-emerald-600' : 'text-rose-600'">
-                        {{ formatNumber(schoolReport.net_surplus) }}
-                      </td>
-                    </tr>
-                    <tr v-if="!foundationReportData || foundationReportData.length === 0">
-                      <td colspan="6" class="p-8 text-center text-slate-400">Tidak ada unit sekolah yang terdaftar.</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+          <FoundationReport v-else-if="activeReportSubTab === 'foundation'" :data="foundationReportData" />
         </div>
 
         <!-- Tab Content 5: Manajemen Aset -->
@@ -1033,7 +1099,7 @@ const formatDate = (dateStr: any) => {
               <table class="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr class="border-b border-slate-100 dark:border-zinc-800 bg-slate-50/30 dark:bg-zinc-900/20 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                    <th class="p-4 pl-6">Kode Aset</th>
+                    <th class="p-4 pl-6">Kode Aset (auto)</th>
                     <th class="p-4">Nama Barang</th>
                     <th class="p-4">Kategori</th>
                     <th class="p-4">Tgl Perolehan</th>
@@ -1166,57 +1232,64 @@ const formatDate = (dateStr: any) => {
       </div>
     </BaseModal>
 
-    <!-- Modal: Record Payment -->
-    <BaseModal :show="showPaymentModal" title="Pencatatan Pembayaran SPP" @close="showPaymentModal = false">
-      <div v-if="activeBill" class="space-y-4">
-        <div class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 p-4 rounded-xl text-xs space-y-1">
-          <p class="text-slate-400">Nama Murid: <strong class="text-slate-800 dark:text-zinc-200">{{ activeBill.student_name }}</strong></p>
-          <p class="text-slate-400">Tagihan: <strong class="text-slate-800 dark:text-zinc-200">{{ activeBill.name }}</strong></p>
-          <p class="text-slate-400">Jumlah Tagihan: <strong class="text-slate-800 dark:text-zinc-200">{{ formatNumber(activeBill.amount) }}</strong></p>
-        </div>
+    <CashierDrawer 
+      :is-open="showCashierDrawer"
+      :student-id="activeStudentId"
+      :student-name="activeStudentName"
+      @close="showCashierDrawer = false"
+      @payment-success="handlePaymentSuccess"
+    />
 
-        <BaseInput v-model="paymentForm.amount_paid" label="Jumlah Dibayarkan (IDR)" type="number" required />
-        
-        <div class="flex flex-col gap-1.5 w-full">
-          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Metode Pembayaran</label>
-          <select v-model="paymentForm.method" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
-            <option value="cash">Tunai (Cash)</option>
-            <option value="transfer">Transfer Bank (VA)</option>
-            <option value="qris">QRIS / E-Wallet</option>
-          </select>
-        </div>
-
-        <BaseInput v-model="paymentForm.transaction_code" label="Nomor Referensi Transaksi (Bukti)" required />
-
-        <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
-          <BaseButton variant="outline" type="button" @click="showPaymentModal = false">Batal</BaseButton>
-          <BaseButton variant="primary" @click="handleRecordPayment">Catat & Bukukan Pembayaran</BaseButton>
-        </div>
-      </div>
-    </BaseModal>
-
-    <!-- Modal: Buat Tagihan SPP Bulanan -->
-    <BaseModal :show="showSPPModal" title="Buat Tagihan SPP Bulanan" @close="showSPPModal = false">
+    <!-- Modal: Buat Tagihan SPP Massal -->
+    <BaseModal :show="showSPPModal" title="Buat Tagihan SPP Massal" @close="showSPPModal = false">
       <div class="space-y-4">
         <div class="flex flex-col gap-1.5 w-full">
-          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Rombel Kelas</label>
-          <select v-model="sppForm.class_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
-            <option value="" disabled>Pilih Rombel Kelas</option>
+          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Rombel Kelas (boleh lebih dari satu)</label>
+          <select v-model="sppForm.class_ids" multiple size="4" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
             <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.class_name }}</option>
           </select>
         </div>
 
         <div class="flex flex-col gap-1.5 w-full">
-          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Kategori Biaya</label>
+          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Struktur Biaya</label>
           <select v-model="sppForm.category_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
-            <option value="" disabled>Pilih Kategori</option>
+            <option value="" disabled>Pilih Struktur Biaya</option>
             <option v-for="cat in categoriesList" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
           </select>
         </div>
-
-        <BaseInput v-model="sppForm.period" label="Periode Tagihan (YYYY-MM)" type="month" required />
-        <BaseInput v-model="sppForm.amount" label="Nominal Tagihan (IDR)" type="number" required />
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <BaseInput v-model="sppForm.amount" label="Nominal Khusus + Alasan" type="number" placeholder="Contoh: 450000" required />
+          
+          <div class="flex flex-col gap-1.5 w-full">
+            <div class="flex items-center gap-1.5 px-1">
+              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Periode Tagihan</label>
+              <span title="Pilih bulan dan tahun tagihan. Sistem otomatis mengecek dan melewati siswa yang sudah memiliki tagihan di bulan ini (mencegah duplikasi).">
+                <Info :size="14" class="text-slate-400 cursor-help" />
+              </span>
+            </div>
+            <select v-model="sppForm.period" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
+              <option v-for="opt in periodOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            </select>
+          </div>
+        </div>
         <BaseDateInput v-model="sppForm.due_date" label="Tanggal Jatuh Tempo" required />
+
+        <div class="p-3 bg-violet-50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-900/20 rounded-lg text-xs leading-relaxed text-slate-600 dark:text-zinc-400">
+          <template v-if="isPreviewLoading">
+            <span class="animate-pulse">Menghitung pratinjau tagihan...</span>
+          </template>
+          <template v-else-if="previewData">
+            Pratinjau: akan membuat <b class="text-slate-800 dark:text-zinc-200">{{ previewData.totalStudents - previewData.skippedCount }} tagihan</b> 
+            untuk {{ previewData.totalStudents }} siswa di {{ sppForm.class_ids.length }} rombel 
+            &middot; <b class="text-slate-800 dark:text-zinc-200">{{ previewData.discountStudents }} keringanan diterapkan</b> 
+            &middot; total tertagihkan <b class="font-mono text-slate-800 dark:text-zinc-200">{{ formatNumber(previewData.totalAmount) }}</b> 
+            &middot; {{ previewData.skippedCount }} dilewati (sudah ada).
+          </template>
+          <template v-else>
+            Pilih kelas dan lengkapi form untuk melihat pratinjau tagihan.
+          </template>
+        </div>
 
         <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
           <BaseButton variant="outline" type="button" @click="showSPPModal = false">Batal</BaseButton>
@@ -1303,9 +1376,71 @@ const formatDate = (dateStr: any) => {
         <BaseInput v-model="formattedAmount" label="Nominal Transaksi (IDR)" placeholder="Contoh: 300.000" type="text" required />
         <BaseInput v-model="journalForm.reference" label="Referensi / Nomor Bukti (Opsional)" placeholder="Contoh: BKK-001 / INV-889" />
 
+        <div class="flex flex-col gap-1.5 w-full">
+          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Sumber Dana</label>
+          <select v-model="journalForm.funding_source" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
+            <option value="yayasan">Dana Yayasan / Pribadi</option>
+            <option value="spp">Dana SPP</option>
+            <option value="bos_reguler">Dana BOS Reguler</option>
+            <option value="bos_kinerja">Dana BOS Kinerja</option>
+            <option value="lainnya">Lainnya</option>
+          </select>
+        </div>
+
+        <BaseInput 
+          v-if="journalForm.funding_source.startsWith('bos_')"
+          v-model="journalForm.bos_component_id" 
+          label="Komponen Pembiayaan BOS (Kode)" 
+          placeholder="Contoh: K-01 / Kegiatan Pembelajaran" 
+          required 
+        />
+
         <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
           <BaseButton variant="outline" type="button" @click="showJournalModal = false">Batal</BaseButton>
           <BaseButton variant="primary" @click="handleCreateJournal">Simpan Transaksi</BaseButton>
+        </div>
+      </div>
+    </BaseModal>
+
+    <!-- Modal: Koreksi Jurnal (Reversal) -->
+    <BaseModal :show="showReversalModal" title="Koreksi / Batalkan Jurnal" @close="showReversalModal = false">
+      <div class="space-y-4">
+        <div class="p-4 bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900 rounded-xl">
+          <p class="text-xs text-rose-700 dark:text-rose-300">
+            <strong>Peringatan!</strong> Anda akan membuat jurnal pembalik untuk membatalkan jurnal dengan Referensi: <span class="font-bold font-mono">{{ reversalForm.txRef }}</span>.<br><br>Sistem keuangan menggunakan metode double-entry immutable (tidak dapat dihapus atau diedit setelah dicatat). Proses ini akan membuat entri jurnal pembalik otomatis.
+          </p>
+        </div>
+        <BaseInput v-model="reversalForm.reason" label="Alasan Koreksi (Wajib)" placeholder="Contoh: Salah catat nominal / Salah pilih akun beban" required />
+        <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
+          <BaseButton variant="outline" type="button" @click="showReversalModal = false">Batal</BaseButton>
+          <BaseButton variant="danger" @click="submitReversal">Buat Jurnal Pembalik</BaseButton>
+        </div>
+      </div>
+    </BaseModal>
+
+    <!-- Modal: Tutup Buku (Period Lock) -->
+    <BaseModal :show="showPeriodLockModal" title="Tutup Buku Bulanan" @close="showPeriodLockModal = false">
+      <div class="space-y-4">
+        <div class="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900 rounded-xl">
+          <p class="text-xs text-amber-700 dark:text-amber-300">
+            <strong>Peringatan!</strong> Periode buku yang sudah ditutup tidak akan bisa dicatat atau dikoreksi jurnalnya lagi. Pastikan semua laporan sudah di-review.
+          </p>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1.5 w-full">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Tahun</label>
+            <input type="number" v-model="periodLockForm.year" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600" required />
+          </div>
+          <div class="flex flex-col gap-1.5 w-full">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Bulan (1-12)</label>
+            <input type="number" min="1" max="12" v-model="periodLockForm.month" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600" required />
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
+          <BaseButton variant="outline" type="button" @click="showPeriodLockModal = false">Batal</BaseButton>
+          <BaseButton variant="primary" @click="handlePeriodLock">Kunci Periode</BaseButton>
         </div>
       </div>
     </BaseModal>

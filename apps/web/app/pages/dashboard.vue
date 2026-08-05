@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useAuth } from '../composables/useAuth'
 import { useToast } from '../composables/useToast'
@@ -105,10 +105,10 @@ const loadDashboard = async (forceRecalculate = false) => {
     if (isFoundation) {
       if (forceRecalculate) {
         for (const s of schools.value) {
-          await recalculateMetric(s.id, 'acad.report.readiness').catch(() => {})
-          await recalculateMetric(s.id, 'acad.teacher.lagging').catch(() => {})
-          await recalculateMetric(s.id, 'fin.collect.month').catch(() => {})
-          await recalculateMetric(s.id, 'growth.occupancy').catch(() => {})
+          await recalculateMetric(s.id, 'acad.report.readiness', selectedDate.value).catch(() => {})
+          await recalculateMetric(s.id, 'acad.teacher.lagging', selectedDate.value).catch(() => {})
+          await recalculateMetric(s.id, 'fin.collect.month', selectedDate.value).catch(() => {})
+          await recalculateMetric(s.id, 'growth.occupancy', selectedDate.value).catch(() => {})
         }
       }
 
@@ -132,11 +132,11 @@ const loadDashboard = async (forceRecalculate = false) => {
       const schoolId = selectedSchoolId.value
 
       if (forceRecalculate) {
-        await recalculateMetric(schoolId, 'acad.report.readiness').catch(() => {})
-        await recalculateMetric(schoolId, 'acad.teacher.lagging').catch(() => {})
-        await recalculateMetric(schoolId, 'growth.occupancy').catch(() => {})
-        await recalculateMetric(schoolId, 'fin.collect.month').catch(() => {})
-        await recalculateMetric(schoolId, 'fin.aging').catch(() => {})
+        await recalculateMetric(schoolId, 'acad.report.readiness', selectedDate.value).catch(() => {})
+        await recalculateMetric(schoolId, 'acad.teacher.lagging', selectedDate.value).catch(() => {})
+        await recalculateMetric(schoolId, 'growth.occupancy', selectedDate.value).catch(() => {})
+        await recalculateMetric(schoolId, 'fin.collect.month', selectedDate.value).catch(() => {})
+        await recalculateMetric(schoolId, 'fin.aging', selectedDate.value).catch(() => {})
       }
 
       // 1. Fetch Catalog
@@ -211,7 +211,7 @@ const handleRecalculate = async (key: string) => {
   recalculatingKeys.value[key] = true
   
   try {
-    await recalculateMetric(selectedSchoolId.value, key)
+    await recalculateMetric(selectedSchoolId.value, key, selectedDate.value)
     toast.success('Kalkulasi ulang metrik selesai.', 'Sukses')
     await loadDashboard()
   } catch (err: any) {

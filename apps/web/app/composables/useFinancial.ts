@@ -5,6 +5,13 @@ export const useFinancial = () => {
   const billsList = useState<any[]>('bills_list', () => [])
   const accountsList = useState<any[]>('accounts_list', () => [])
   const journalsList = useState<any[]>('journals_list', () => [])
+  const journalsMeta = useState<any>('journals_meta', () => ({
+    total: 0,
+    page: 1,
+    limit: 50,
+    total_debit: '0',
+    total_credit: '0'
+  }))
   const categoriesList = useState<any[]>('categories_list', () => [])
   const assetsList = useState<any[]>('assets_list', () => [])
 
@@ -27,10 +34,32 @@ export const useFinancial = () => {
     }
   }
 
+  const previewBulkSPP = async (
+    schoolId: string,
+    payload: {
+      class_ids: string[]
+      period: string
+      amount: string
+      due_date: string
+      category_id: string
+    }
+  ) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/bills/bulk-preview`, {
+        method: 'POST',
+        body: payload
+      })
+      return res
+    } catch (error) {
+      console.error('Failed to preview bulk bills:', error)
+      throw error
+    }
+  }
+
   const generateBulkSPP = async (
     schoolId: string,
     payload: {
-      class_id: string
+      class_ids: string[]
       period: string
       amount: string
       due_date: string
@@ -43,7 +72,7 @@ export const useFinancial = () => {
         body: payload
       })
       if (res.success) {
-        await fetchBills(schoolId, { class_id: payload.class_id })
+        await fetchBills(schoolId)
       }
       return res
     } catch (error) {
@@ -55,10 +84,13 @@ export const useFinancial = () => {
   const recordPayment = async (
     schoolId: string,
     payload: {
-      bill_id: string
-      amount_paid: string
+      bill_ids: string[]
+      amount: string
       method: string
-      transaction_code?: string | null
+      paid_at?: string
+      proof_no?: string | null
+      note?: string | null
+      proof_file_url?: string | null
     },
     classId?: string
   ) => {
@@ -79,6 +111,31 @@ export const useFinancial = () => {
     }
   }
 
+  const getStudentBilling = async (schoolId: string, studentId: string) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/students/${studentId}/billing`)
+      return res
+    } catch (error) {
+      console.error('Failed to get student billing:', error)
+      throw error
+    }
+  }
+
+  const uploadProof = async (schoolId: string, file: File) => {
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res: any = await fetcher(`/school/${schoolId}/financial/payments/upload-proof`, {
+        method: 'POST',
+        body: formData
+      })
+      return res
+    } catch (error) {
+      console.error('Failed to upload proof:', error)
+      throw error
+    }
+  }
+
   const fetchAccounts = async (schoolId: string) => {
     try {
       const res: any = await fetcher(`/school/${schoolId}/financial/accounts`)
@@ -93,11 +150,14 @@ export const useFinancial = () => {
     }
   }
 
-  const fetchJournals = async (schoolId: string) => {
+  const fetchJournals = async (schoolId: string, page: number = 1, limit: number = 50) => {
     try {
-      const res: any = await fetcher(`/school/${schoolId}/financial/journals`)
+      const res: any = await fetcher(`/school/${schoolId}/financial/journals?page=${page}&limit=${limit}`)
       if (res.success) {
-        journalsList.value = res.data
+        journalsList.value = res.data.data || []
+        if (res.data.meta) {
+          journalsMeta.value = res.data.meta
+        }
       }
       return res
     } catch (error) {
@@ -231,15 +291,74 @@ export const useFinancial = () => {
     }
   }
 
+  const reverseJournal = async (schoolId: string, txRef: string, reason: string) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/journals/${txRef}/reverse`, {
+        method: 'POST',
+        body: { reason }
+      })
+      if (res.success) {
+        await Promise.all([
+          fetchJournals(schoolId),
+          fetchAccounts(schoolId)
+        ])
+      }
+      return res
+    } catch (error) {
+      console.error('Failed to reverse journal entry:', error)
+      throw error
+    }
+  }
+
+  const getLockedPeriods = async (schoolId: string) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/period-locks`)
+      return res.data?.locks || []
+    } catch (error) {
+      console.error('Failed to fetch period locks:', error)
+      return []
+    }
+  }
+
+  const lockPeriod = async (schoolId: string, year: number, month: number) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/period-locks`, {
+        method: 'POST',
+        body: { year, month }
+      })
+      return res
+    } catch (error) {
+      console.error('Failed to lock period:', error)
+      throw error
+    }
+  }
+
+  const unlockPeriod = async (schoolId: string, year: number, month: number) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/period-locks/unlock`, {
+        method: 'POST',
+        body: { year, month }
+      })
+      return res
+    } catch (error) {
+      console.error('Failed to unlock period:', error)
+      throw error
+    }
+  }
+
   return {
     billsList,
     accountsList,
     journalsList,
+    journalsMeta,
     categoriesList,
     assetsList,
     fetchBills,
+    previewBulkSPP,
     generateBulkSPP,
     recordPayment,
+    getStudentBilling,
+    uploadProof,
     fetchAccounts,
     fetchJournals,
     fetchCategories,
@@ -252,6 +371,10 @@ export const useFinancial = () => {
     fetchIncomeStatement,
     fetchBOSReport,
     fetchFoundationReport,
-    createManualJournal
+    createManualJournal,
+    reverseJournal,
+    getLockedPeriods,
+    lockPeriod,
+    unlockPeriod
   }
 }
