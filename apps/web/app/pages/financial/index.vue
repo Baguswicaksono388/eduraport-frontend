@@ -83,6 +83,7 @@ const {
   fetchBOSReport,
   fetchFoundationReport,
   createManualJournal,
+  reverseJournal,
   fetchSettings,
   updateSettings,
   lockedPeriodsList,
@@ -109,8 +110,8 @@ const bosForm = reactive({
   code: '',
   name: '',
   budget_year: 2026,
-  min_pct: null as number | null,
-  max_pct: null as number | null
+  min_pct: undefined as number | undefined,
+  max_pct: undefined as number | undefined
 })
 
 const openBosModal = (comp?: any) => {
@@ -129,8 +130,8 @@ const openBosModal = (comp?: any) => {
     bosForm.name = ''
     const activeYear = academicYears.value.find(y => y.is_active)
     bosForm.budget_year = activeYear ? parseInt(activeYear.name.split('/')[0]) : new Date().getFullYear()
-    bosForm.min_pct = null
-    bosForm.max_pct = null
+    bosForm.min_pct = undefined
+    bosForm.max_pct = undefined
   }
   showBosModal.value = true
 }
@@ -178,8 +179,8 @@ const loading = ref(false)
 
 const openDatePicker = (e: Event) => {
   try {
-    const target = e.target as HTMLInputElement
-    if (typeof target.showPicker === 'function') {
+    const target = e.target as HTMLInputElement | null
+    if (target && typeof target.showPicker === 'function') {
       target.showPicker()
     }
   } catch (err) {
@@ -450,9 +451,9 @@ const executeToggleLock = async () => {
 
 // Grouped Bills & Details Modal States
 const showCashierDrawer = ref(false)
+const showDetailModal = ref(false)
 const activeStudentId = ref('')
 const activeStudentName = ref('')
-
 const groupedBills = computed(() => {
   const groups: Record<string, {
     student_id: string
@@ -524,9 +525,9 @@ const debitAccountGroups = computed(() => {
     'ASET (KAS & BANK)': [],
     'BEBAN (PENGELUARAN)': []
   }
-  for (const acc of accountsList.value) {
-    if (acc.type === 'asset') groups['ASET (KAS & BANK)'].push(acc)
-    else if (acc.type === 'expense') groups['BEBAN (PENGELUARAN)'].push(acc)
+  for (const acc of (accountsList.value || [])) {
+    if (acc.type === 'asset') groups['ASET (KAS & BANK)']?.push(acc)
+    else if (acc.type === 'expense') groups['BEBAN (PENGELUARAN)']?.push(acc)
   }
   return groups
 })
@@ -537,10 +538,10 @@ const creditAccountGroups = computed(() => {
     'PENDAPATAN': [],
     'KEWAJIBAN & EKUITAS': []
   }
-  for (const acc of accountsList.value) {
-    if (acc.type === 'asset') groups['ASET (KAS & BANK)'].push(acc)
-    else if (acc.type === 'revenue') groups['PENDAPATAN'].push(acc)
-    else if (acc.type === 'liability' || acc.type === 'equity') groups['KEWAJIBAN & EKUITAS'].push(acc)
+  for (const acc of (accountsList.value || [])) {
+    if (acc.type === 'asset') groups['ASET (KAS & BANK)']?.push(acc)
+    else if (acc.type === 'revenue') groups['PENDAPATAN']?.push(acc)
+    else if (acc.type === 'liability' || acc.type === 'equity') groups['KEWAJIBAN & EKUITAS']?.push(acc)
   }
   return groups
 })
@@ -548,8 +549,8 @@ const creditAccountGroups = computed(() => {
 const transactionExplanation = computed(() => {
   if (!journalForm.debit_account_id || !journalForm.credit_account_id) return null
 
-  const debitAcc = accountsList.value.find(a => a.id === journalForm.debit_account_id)
-  const creditAcc = accountsList.value.find(a => a.id === journalForm.credit_account_id)
+  const debitAcc = (accountsList.value || []).find((a: any) => a.id === journalForm.debit_account_id)
+  const creditAcc = (accountsList.value || []).find((a: any) => a.id === journalForm.credit_account_id)
 
   if (!debitAcc || !creditAcc) return null
 
@@ -686,14 +687,15 @@ const loadReports = async (schoolId: string) => {
       fetchBalanceSheet(schoolId),
       fetchIncomeStatement(schoolId, incomeStatementStartDate.value, incomeStatementEndDate.value),
       fetchBOSReport(schoolId)
-    ])
-    balanceSheetData.value = bs.data
-    incomeStatementData.value = inc.data
-    bosReportData.value = bos.data
+    ]) as any[]
+    
+    balanceSheetData.value = bs?.data
+    incomeStatementData.value = inc?.data
+    bosReportData.value = bos?.data
     
     if (selectedFoundationId.value) {
-      const fd = await fetchFoundationReport(schoolId, selectedFoundationId.value)
-      foundationReportData.value = fd.data
+      const fd: any = await fetchFoundationReport(schoolId, selectedFoundationId.value)
+      foundationReportData.value = fd?.data
     }
   } catch (err) {
     console.error('Failed to load accounting reports:', err)
@@ -705,7 +707,7 @@ const loadSchoolData = async (schoolId: string) => {
   try {
     await fetchAcademicYears(schoolId)
     const activeYear = academicYears.value.find(y => y.is_active)
-    await fetchClasses(schoolId, activeYear ? activeYear.id : undefined)
+    await fetchClasses(schoolId, activeYear ? (activeYear.id as any) : undefined)
     
     await Promise.all([
       fetchAccounts(schoolId),
@@ -773,7 +775,7 @@ watch([selectedSchoolId, selectedClassId, filterStatus], async () => {
 })
 
 const openSPPModal = () => {
-  sppForm.class_id = selectedClassId.value
+  sppForm.class_ids = selectedClassId.value ? [selectedClassId.value] : []
   if (categoriesList.value.length > 0) {
     sppForm.category_id = categoriesList.value[0].id
   } else {
@@ -808,8 +810,8 @@ const applyIncomeStatementFilter = async () => {
   if (selectedSchoolId.value) {
     loading.value = true
     try {
-      const inc = await fetchIncomeStatement(selectedSchoolId.value, incomeStatementStartDate.value, incomeStatementEndDate.value)
-      incomeStatementData.value = inc.data
+      const inc: any = await fetchIncomeStatement(selectedSchoolId.value, incomeStatementStartDate.value, incomeStatementEndDate.value)
+      incomeStatementData.value = inc?.data
     } finally {
       loading.value = false
     }
@@ -851,7 +853,7 @@ const handleGenerateSPP = async () => {
 
 // Account Mapping Logic
 const revenueAccounts = computed(() => {
-  return accountsList.value.filter(a => a.type === 'revenue' && !a.is_archived)
+  return (accountsList.value || []).filter((a: any) => a.type === 'revenue' && !a.is_archived)
 })
 
 const handleSaveMapping = async (categoryId: string, accountId: string | null) => {
@@ -925,8 +927,8 @@ const handleCreateJournal = async () => {
       journalForm.amount = ''
       journalForm.reference = ''
       journalForm.bos_component_id = ''
-      await loadJournals()
-      await loadAccounts()
+      await loadJournalsPage(journalCurrentPage.value)
+      await fetchAccounts(selectedSchoolId.value)
       await loadReports(selectedSchoolId.value)
     }
   } catch (error: any) {
@@ -974,8 +976,8 @@ const submitReversal = async () => {
     if (res.success) {
       toast.success('Jurnal berhasil dikoreksi.', 'Berhasil')
       showReversalModal.value = false
-      await loadJournals()
-      await loadAccounts()
+      await loadJournalsPage(journalCurrentPage.value)
+      await fetchAccounts(selectedSchoolId.value)
       await loadReports(selectedSchoolId.value)
     }
   } catch (error: any) {
@@ -983,20 +985,6 @@ const submitReversal = async () => {
   }
 }
 
-const handlePeriodLock = async () => {
-  if (!selectedSchoolId.value) return
-  try {
-    const res = await lockPeriod(selectedSchoolId.value, Number(periodLockForm.year), Number(periodLockForm.month))
-    if (res.success) {
-      toast.success(res.message || 'Periode berhasil ditutup.', 'Berhasil')
-      showPeriodLockModal.value = false
-      const locks = await getLockedPeriods(selectedSchoolId.value)
-      lockedPeriods.value = locks
-    }
-  } catch (error: any) {
-    toast.error(error.message || 'Gagal menutup periode buku.', 'Gagal')
-  }
-}
 
 // Real Export Action
 const config = useRuntimeConfig()
@@ -1874,7 +1862,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
               <div>
                 <button 
                   v-if="bill.status !== 'paid'"
-                  @click="openPaymentModal(bill)"
+                  @click="showDetailModal = false; openCashierDrawer(activeStudent)"
                   class="px-3 py-1.5 bg-violet-600 hover:bg-violet-750 text-white rounded-lg text-[10px] font-bold transition-all shadow-sm shadow-violet-600/15"
                 >
                   Bayar
