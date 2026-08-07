@@ -439,7 +439,7 @@ export const useFinancial = () => {
       return res
     } catch (error) {
       console.error('Failed to fetch BOS components:', error)
-      throw error
+      return { success: false }
     }
   }
 
