@@ -15,7 +15,7 @@ const totalExpense = computed(() => {
 })
 
 const totalNet = computed(() => {
-  return props.data?.reduce((acc: number, item: any) => acc + (Number(item.net_income) || 0), 0) || 0
+  return totalRevenue.value - totalExpense.value
 })
 </script>
 
@@ -39,8 +39,8 @@ const totalNet = computed(() => {
               <td class="p-4 pl-6 font-bold text-slate-800 dark:text-zinc-200">{{ school.school_name }}</td>
               <td class="p-4 font-mono font-bold">{{ formatNumber(school.revenue) }}</td>
               <td class="p-4 font-mono font-bold">{{ formatNumber(school.expense) }}</td>
-              <td class="p-4 font-mono font-bold" :class="Number(school.net_income) >= 0 ? 'text-emerald-600 dark:text-emerald-450' : 'text-rose-600 dark:text-rose-450'">
-                {{ formatNumber(school.net_income) }}
+              <td class="p-4 font-mono font-bold" :class="(Number(school.revenue) - Number(school.expense)) >= 0 ? 'text-emerald-600 dark:text-emerald-450' : 'text-rose-600 dark:text-rose-450'">
+                {{ formatNumber(Number(school.revenue) - Number(school.expense)) }}
               </td>
               <td class="p-4 font-mono text-slate-400">-</td>
               <td class="p-4 pr-6 font-mono text-slate-400">-</td>

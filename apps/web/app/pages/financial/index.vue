@@ -88,13 +88,80 @@ const {
   lockedPeriodsList,
   fetchLockedPeriods,
   lockPeriod,
-  unlockPeriod
+  unlockPeriod,
+  bosComponentsList,
+  fetchBosComponents,
+  createBosComponent,
+  updateBosComponent,
+  deleteBosComponent
 } = useFinancial()
 const toast = useToast()
 
 const authToken = useCookie('auth_token')
 const showProofModal = ref(false)
 const proofImageUrl = ref('')
+
+// BOS Components State
+const showBosModal = ref(false)
+const isEditBos = ref(false)
+const bosForm = reactive({
+  id: '',
+  code: '',
+  name: '',
+  budget_year: 2026,
+  min_pct: null as number | null,
+  max_pct: null as number | null
+})
+
+const openBosModal = (comp?: any) => {
+  if (comp) {
+    isEditBos.value = true
+    bosForm.id = comp.id
+    bosForm.code = comp.code
+    bosForm.name = comp.name
+    bosForm.budget_year = comp.budget_year
+    bosForm.min_pct = comp.min_pct
+    bosForm.max_pct = comp.max_pct
+  } else {
+    isEditBos.value = false
+    bosForm.id = ''
+    bosForm.code = ''
+    bosForm.name = ''
+    const activeYear = academicYears.value.find(y => y.is_active)
+    bosForm.budget_year = activeYear ? parseInt(activeYear.name.split('/')[0]) : new Date().getFullYear()
+    bosForm.min_pct = null
+    bosForm.max_pct = null
+  }
+  showBosModal.value = true
+}
+
+const handleSaveBosComp = async () => {
+  try {
+    if (isEditBos.value) {
+      await updateBosComponent(selectedSchoolId.value, bosForm.id, bosForm)
+      toast.success('Komponen BOS berhasil diperbarui')
+    } else {
+      await createBosComponent(selectedSchoolId.value, bosForm)
+      toast.success('Komponen BOS berhasil ditambahkan')
+    }
+    showBosModal.value = false
+    await fetchBosComponents(selectedSchoolId.value)
+  } catch (error: any) {
+    toast.error(error?.data?.message || 'Gagal menyimpan komponen BOS')
+  }
+}
+
+const handleDeleteBosComp = async (id: string) => {
+  if (confirm('Yakin ingin menghapus komponen ini? Tindakan ini tidak dapat dibatalkan.')) {
+    try {
+      await deleteBosComponent(selectedSchoolId.value, id)
+      toast.success('Komponen berhasil dihapus')
+      await fetchBosComponents(selectedSchoolId.value)
+    } catch (error: any) {
+      toast.error('Gagal menghapus komponen BOS')
+    }
+  }
+}
 
 const selectedClassId = ref('')
 const filterStatus = ref('') // all, pending, paid
@@ -437,6 +504,68 @@ const billsSummary = computed(() => {
   return { tertagihkan, tertagih, outstanding, tertagihPct, unpaidCount }
 })
 
+const debitAccountGroups = computed(() => {
+  const groups: Record<string, any[]> = {
+    'ASET (KAS & BANK)': [],
+    'BEBAN (PENGELUARAN)': []
+  }
+  for (const acc of accountsList.value) {
+    if (acc.type === 'asset') groups['ASET (KAS & BANK)'].push(acc)
+    else if (acc.type === 'expense') groups['BEBAN (PENGELUARAN)'].push(acc)
+  }
+  return groups
+})
+
+const creditAccountGroups = computed(() => {
+  const groups: Record<string, any[]> = {
+    'ASET (KAS & BANK)': [],
+    'PENDAPATAN': [],
+    'KEWAJIBAN & EKUITAS': []
+  }
+  for (const acc of accountsList.value) {
+    if (acc.type === 'asset') groups['ASET (KAS & BANK)'].push(acc)
+    else if (acc.type === 'revenue') groups['PENDAPATAN'].push(acc)
+    else if (acc.type === 'liability' || acc.type === 'equity') groups['KEWAJIBAN & EKUITAS'].push(acc)
+  }
+  return groups
+})
+
+const transactionExplanation = computed(() => {
+  if (!journalForm.debit_account_id || !journalForm.credit_account_id) return null
+
+  const debitAcc = accountsList.value.find(a => a.id === journalForm.debit_account_id)
+  const creditAcc = accountsList.value.find(a => a.id === journalForm.credit_account_id)
+
+  if (!debitAcc || !creditAcc) return null
+
+  const tDeb = debitAcc.type
+  const tCred = creditAcc.type
+
+  if (tDeb === 'expense' && tCred === 'asset') {
+    return `Tujuan: <b>Membayar Pengeluaran / Beban</b><br/>• Beban <i>'${debitAcc.name}'</i> akan <b>bertambah</b> (tercatat sebagai pengeluaran).<br/>• Saldo fisik uang di <i>'${creditAcc.name}'</i> akan <b>BERKURANG</b> untuk membayarnya.`
+  }
+  if (tDeb === 'asset' && tCred === 'revenue') {
+    return `Tujuan: <b>Menerima Pendapatan</b><br/>• Saldo fisik uang di <i>'${debitAcc.name}'</i> akan <b>BERTAMBAH</b>.<br/>• Pendapatan <i>'${creditAcc.name}'</i> akan <b>bertambah</b> (tercatat sebagai riwayat pemasukan).`
+  }
+  if (tDeb === 'asset' && tCred === 'asset') {
+    return `Tujuan: <b>Pindah Buku / Mutasi Kas</b><br/>• Saldo di <i>'${creditAcc.name}'</i> (Asal Uang) akan <b>BERKURANG</b>.<br/>• Saldo di <i>'${debitAcc.name}'</i> (Tujuan Uang) akan <b>BERTAMBAH</b>.<br/>Total uang Anda secara keseluruhan tidak berubah.`
+  }
+  if (tDeb === 'asset' && tCred === 'liability') {
+    return `Tujuan: <b>Menerima Pinjaman / Hutang</b><br/>• Saldo fisik uang di <i>'${debitAcc.name}'</i> akan <b>BERTAMBAH</b>.<br/>• Nilai hutang pada <i>'${creditAcc.name}'</i> juga <b>BERTAMBAH</b> (Kewajiban bayar Anda bertambah).`
+  }
+  if (tDeb === 'liability' && tCred === 'asset') {
+    return `Tujuan: <b>Melunasi Hutang / Kewajiban</b><br/>• Saldo fisik uang di <i>'${creditAcc.name}'</i> akan <b>BERKURANG</b> untuk membayar hutang.<br/>• Nilai hutang pada <i>'${debitAcc.name}'</i> akan <b>BERKURANG / LUNAS</b>.`
+  }
+  if (tDeb === 'expense' && tCred === 'revenue') {
+    return `Tujuan: <b>Transaksi Non-Tunai / Barter</b> (Hati-hati! Sangat jarang)<br/>• Beban <i>'${debitAcc.name}'</i> <b>bertambah</b> (tercatat pengeluaran).<br/>• Pendapatan <i>'${creditAcc.name}'</i> juga <b>bertambah</b>.<br/>⚠️ <b>PENTING:</b> Transaksi ini TIDAK menambah atau mengurangi saldo Kas/Bank sama sekali. (Pastikan ini bukan salah klik).`
+  }
+  if (tDeb === 'asset' && tCred === 'equity') {
+    return `Tujuan: <b>Menerima Suntikan Modal Pribadi / Yayasan</b><br/>• Saldo fisik uang di <i>'${debitAcc.name}'</i> akan <b>BERTAMBAH</b>.<br/>• Modal awal pada <i>'${creditAcc.name}'</i> juga <b>BERTAMBAH</b>.`
+  }
+
+  return `Jurnal ini akan menambah saldo di sisi Debit pada <i>'${debitAcc.name}'</i> dan di sisi Kredit pada <i>'${creditAcc.name}'</i>.`
+})
+
 const journalsGlobalTotal = computed(() => {
   return { 
     debit: Number(journalsMeta.value?.total_debit) || 0, 
@@ -571,6 +700,7 @@ const loadSchoolData = async (schoolId: string) => {
       fetchAssets(schoolId),
       fetchSettings(schoolId),
       fetchLockedPeriods(schoolId),
+      fetchBosComponents(schoolId),
       loadReports(schoolId)
     ])
   } catch (error) {
@@ -1486,6 +1616,61 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         <div v-else class="text-sm text-slate-400 animate-pulse">Memuat pengaturan...</div>
       </div>
 
+      <!-- Manajemen Komponen BOS Section -->
+      <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 p-6 rounded-2xl shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-bold text-lg text-slate-800 dark:text-zinc-200 mb-1">Standar Komponen BOS (Juknis)</h3>
+            <p class="text-sm text-slate-500 leading-relaxed max-w-3xl">
+              Kelola daftar komponen BOS secara dinamis sesuai petunjuk teknis (Juknis) tahun berjalan.
+            </p>
+          </div>
+          <BaseButton @click="openBosModal()">
+            <Plus :size="16" class="mr-2" />
+            Tambah Komponen
+          </BaseButton>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse min-w-[600px]">
+            <thead>
+              <tr class="border-b border-slate-200 dark:border-zinc-800/80">
+                <th class="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-widest w-16">Kode</th>
+                <th class="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Nama Komponen</th>
+                <th class="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-widest w-24">Tahun</th>
+                <th class="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-widest w-32 text-center">Batas Juknis</th>
+                <th class="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-widest w-24 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="comp in bosComponentsList" :key="comp.id" class="border-b border-slate-100 dark:border-zinc-800/40 hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 transition-colors">
+                <td class="py-3 px-4 font-mono font-bold text-slate-700 dark:text-zinc-300">{{ comp.code }}</td>
+                <td class="py-3 px-4 text-sm font-semibold">{{ comp.name }}</td>
+                <td class="py-3 px-4 text-sm font-mono">{{ comp.budget_year }}</td>
+                <td class="py-3 px-4 text-sm text-center">
+                  <span v-if="comp.min_pct !== null" class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold">Min {{ comp.min_pct }}%</span>
+                  <span v-else-if="comp.max_pct !== null" class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-xs font-bold">Maks {{ comp.max_pct }}%</span>
+                  <span v-else class="text-slate-400">-</span>
+                </td>
+                <td class="py-3 px-4 text-center">
+                  <div class="flex items-center justify-center gap-2">
+                    <button @click="openBosModal(comp)" class="p-1.5 text-slate-400 hover:text-violet-600 transition-colors rounded-lg hover:bg-violet-50">
+                      <Wrench :size="14" />
+                    </button>
+                    <button @click="handleDeleteBosComp(comp.id)" class="p-1.5 text-slate-400 hover:text-rose-600 transition-colors rounded-lg hover:bg-rose-50">
+                      <Trash2 :size="14" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="!bosComponentsList.length">
+                <td colspan="5" class="p-8 text-center text-slate-400">Belum ada komponen BOS.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 p-6 rounded-2xl shadow-sm">
         <h3 class="font-bold text-lg text-slate-800 dark:text-zinc-200 mb-2">Pemetaan Akun Pendapatan (Account Mapping)</h3>
         <p class="text-sm text-slate-500 mb-6 leading-relaxed max-w-3xl">
@@ -1744,23 +1929,38 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         <BaseInput v-model="journalForm.description" label="Keterangan / Deskripsi Transaksi" placeholder="Contoh: Pembelian ATK Kantor / Bayar Listrik Bulanan" required />
         
         <div class="flex flex-col gap-1.5 w-full">
-          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Akun Debit (Penggunaan Dana / Beban / Aset Baru)</label>
+          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Akun Debit (Penggunaan Dana / Beban / Aset)</label>
           <select v-model="journalForm.debit_account_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
             <option value="" disabled>Pilih Akun Debit</option>
-            <option v-for="acc in accountsList" :key="'deb-'+acc.id" :value="acc.id">
-              {{ acc.account_code }} - {{ acc.name }} (Saldo: {{ formatNumber(acc.balance) }})
-            </option>
+            <template v-for="(accounts, groupName) in debitAccountGroups" :key="'debgrp-'+groupName">
+              <optgroup :label="String(groupName)" v-if="accounts.length > 0">
+                <option v-for="acc in accounts" :key="'deb-'+acc.id" :value="acc.id">
+                  {{ acc.account_code }} - {{ acc.name }} (Saldo: {{ formatNumber(acc.balance) }})
+                </option>
+              </optgroup>
+            </template>
           </select>
+          <p class="text-[10px] text-slate-500 italic px-1 mt-1">💡 Debit: mencatat pengeluaran/beban (misal: bayar listrik) atau penambahan aset/kas.</p>
         </div>
 
         <div class="flex flex-col gap-1.5 w-full">
-          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Akun Kredit (Sumber Dana / Kas & Bank / Hutang)</label>
+          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Akun Kredit (Sumber Dana / Kas / Pendapatan)</label>
           <select v-model="journalForm.credit_account_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
             <option value="" disabled>Pilih Akun Kredit</option>
-            <option v-for="acc in accountsList" :key="'cred-'+acc.id" :value="acc.id">
-              {{ acc.account_code }} - {{ acc.name }} (Saldo: {{ formatNumber(acc.balance) }})
-            </option>
+            <template v-for="(accounts, groupName) in creditAccountGroups" :key="'credgrp-'+groupName">
+              <optgroup :label="String(groupName)" v-if="accounts.length > 0">
+                <option v-for="acc in accounts" :key="'cred-'+acc.id" :value="acc.id">
+                  {{ acc.account_code }} - {{ acc.name }} (Saldo: {{ formatNumber(acc.balance) }})
+                </option>
+              </optgroup>
+            </template>
           </select>
+          <p class="text-[10px] text-slate-500 italic px-1 mt-1">💡 Kredit: mencatat berkurangnya kas/bank, atau mencatat adanya pendapatan/donasi baru.</p>
+        </div>
+
+        <div v-if="transactionExplanation" class="text-xs p-3.5 rounded-lg bg-sky-50 dark:bg-sky-900/20 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800/30 flex gap-3 items-start">
+          <div class="text-sky-500 mt-0.5 text-base">ℹ️</div>
+          <div class="leading-relaxed" v-html="transactionExplanation"></div>
         </div>
 
         <BaseInput v-model="formattedAmount" label="Nominal Transaksi (IDR)" placeholder="Contoh: 300.000" type="text" required />
@@ -1775,15 +1975,18 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
             <option value="bos_kinerja">Dana BOS Kinerja</option>
             <option value="lainnya">Lainnya</option>
           </select>
+          <p class="text-[10px] text-slate-500 italic px-1 mt-1">💡 Sumber Dana bukanlah Akun COA. Ini hanya berfungsi sebagai <b>Label/Tag</b> untuk memudahkan pelaporan penggunaan tiap-tiap alokasi dana.</p>
         </div>
 
-        <BaseInput 
-          v-if="journalForm.funding_source.startsWith('bos_')"
-          v-model="journalForm.bos_component_id" 
-          label="Komponen Pembiayaan BOS (Kode)" 
-          placeholder="Contoh: K-01 / Kegiatan Pembelajaran" 
-          required 
-        />
+        <div class="flex flex-col gap-1.5 w-full" v-if="journalForm.funding_source.startsWith('bos_')">
+          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Komponen Pembiayaan BOS</label>
+          <select v-model="journalForm.bos_component_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
+            <option value="" disabled>Pilih Komponen BOS</option>
+            <option v-for="comp in bosComponentsList" :key="comp.id" :value="comp.code">
+              {{ comp.code }} - {{ comp.name }}
+            </option>
+          </select>
+        </div>
 
         <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
           <BaseButton variant="outline" type="button" @click="showJournalModal = false">Batal</BaseButton>
@@ -2086,6 +2289,29 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
       <div class="flex justify-center items-center p-2 bg-slate-50 dark:bg-zinc-900 rounded-xl">
         <img v-if="proofImageUrl" :src="`${proofImageUrl}?token=${authToken}`" class="w-full max-h-[85vh] object-contain rounded-xl shadow-sm" alt="Bukti Transfer" />
       </div>
+    </BaseModal>
+
+    <!-- Modal: Manajemen Komponen BOS -->
+    <BaseModal :show="showBosModal" :title="isEditBos ? 'Edit Komponen BOS' : 'Tambah Komponen BOS'" @close="showBosModal = false">
+      <form @submit.prevent="handleSaveBosComp" class="space-y-4 py-2">
+        <div class="grid grid-cols-2 gap-4">
+          <BaseInput v-model="bosForm.code" label="Kode Komponen" placeholder="Contoh: 01" required />
+          <BaseInput v-model.number="bosForm.budget_year" type="number" label="Tahun Anggaran" required />
+        </div>
+        
+        <BaseInput v-model="bosForm.name" label="Nama Komponen" placeholder="Contoh: Penerimaan Peserta Didik Baru" required />
+        
+        <div class="grid grid-cols-2 gap-4">
+          <BaseInput v-model.number="bosForm.min_pct" type="number" label="Batas Min % (Opsional)" placeholder="Contoh: 10" />
+          <BaseInput v-model.number="bosForm.max_pct" type="number" label="Batas Maks % (Opsional)" placeholder="Contoh: 50" />
+        </div>
+        <p class="text-xs text-slate-500 italic">Batas persentase digunakan untuk memvalidasi indikator kepatuhan BOS K7a.</p>
+
+        <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
+          <BaseButton type="button" variant="outline" @click="showBosModal = false">Batal</BaseButton>
+          <BaseButton type="submit" variant="primary">Simpan</BaseButton>
+        </div>
+      </form>
     </BaseModal>
   </div>
 </template>

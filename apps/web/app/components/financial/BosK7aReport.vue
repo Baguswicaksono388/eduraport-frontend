@@ -1,16 +1,26 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { formatNumber } from '~/utils/format'
 
 const props = defineProps<{
   data: any
 }>()
 
-// Calculate dummy compliance for display purpose (to match prototype UI)
-const getCompliance = (code: string) => {
-  if (code.startsWith('07')) return { pct: 15, valid: true }
-  if (code.startsWith('11')) return { pct: 0, valid: true }
-  return { pct: 5, valid: true }
-}
+const perpusPct = computed(() => {
+  if (!props.data || props.data.totals.revenue <= 0) return 0
+  const perpusTotal = props.data.expenses.find((e: any) => e.account_code === '507')?.balance || 0
+  return Math.round((Number(perpusTotal) / Number(props.data.totals.revenue)) * 100)
+})
+
+const honorPct = computed(() => {
+  if (!props.data || props.data.totals.revenue <= 0) return 0
+  const honorTotal = props.data.expenses.reduce((sum: number, e: any) => 
+    ['501', '502'].includes(e.account_code) ? sum + Number(e.balance) : sum, 0)
+  return Math.round((honorTotal / Number(props.data.totals.revenue)) * 100)
+})
+
+const isPerpusValid = computed(() => perpusPct.value >= 10)
+const isHonorValid = computed(() => honorPct.value <= 50)
 </script>
 
 <template>
@@ -62,20 +72,20 @@ const getCompliance = (code: string) => {
           <div class="space-y-1.5">
             <div class="flex justify-between text-xs font-medium">
               <span class="text-slate-700 dark:text-zinc-300">Perpustakaan (min 10%)</span>
-              <span class="font-mono text-emerald-600 font-bold">15% ✓</span>
+              <span class="font-mono font-bold" :class="isPerpusValid ? 'text-emerald-600' : 'text-red-500'">{{ perpusPct }}% {{ isPerpusValid ? '✓' : '⚠️' }}</span>
             </div>
             <div class="h-2 w-full bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-              <div class="h-full bg-emerald-500" style="width: 15%"></div>
+              <div class="h-full" :class="isPerpusValid ? 'bg-emerald-500' : 'bg-red-500'" :style="`width: ${Math.min(perpusPct, 100)}%`"></div>
             </div>
           </div>
           
           <div class="space-y-1.5">
             <div class="flex justify-between text-xs font-medium">
               <span class="text-slate-700 dark:text-zinc-300">Honor (maks 50%)</span>
-              <span class="font-mono text-emerald-600 font-bold">0% ✓</span>
+              <span class="font-mono font-bold" :class="isHonorValid ? 'text-emerald-600' : 'text-red-500'">{{ honorPct }}% {{ isHonorValid ? '✓' : '⚠️' }}</span>
             </div>
             <div class="h-2 w-full bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-              <div class="h-full bg-emerald-500" style="width: 0%"></div>
+              <div class="h-full" :class="isHonorValid ? 'bg-emerald-500' : 'bg-red-500'" :style="`width: ${Math.min(honorPct, 100)}%`"></div>
             </div>
           </div>
         </div>

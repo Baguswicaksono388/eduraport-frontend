@@ -15,6 +15,7 @@ export const useFinancial = () => {
   const categoriesList = useState<any[]>('categories_list', () => [])
   const assetsList = useState<any[]>('assets_list', () => [])
   const settings = useState<any>('settings', () => null)
+  const bosComponentsList = useState<any[]>('bos_components_list', () => [])
 
   const fetchBills = async (
     schoolId: string,
@@ -427,6 +428,59 @@ export const useFinancial = () => {
     }
   }
 
+  const fetchBosComponents = async (schoolId: string, filters: { year?: string } = {}) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/bos-components`, {
+        query: filters
+      })
+      if (res.success) {
+        bosComponentsList.value = res.data
+      }
+      return res
+    } catch (error) {
+      console.error('Failed to fetch BOS components:', error)
+      throw error
+    }
+  }
+
+  const createBosComponent = async (schoolId: string, payload: any) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/bos-components`, {
+        method: 'POST',
+        body: payload
+      })
+      return res
+    } catch (error) {
+      console.error('Failed to create BOS component:', error)
+      throw error
+    }
+  }
+
+  const updateBosComponent = async (schoolId: string, id: string, payload: any) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/bos-components/${id}`, {
+        method: 'PUT',
+        body: payload
+      })
+      return res
+    } catch (error) {
+      console.error('Failed to update BOS component:', error)
+      throw error
+    }
+  }
+
+  const deleteBosComponent = async (schoolId: string, id: string) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/bos-components/${id}`, {
+        method: 'DELETE'
+      })
+      return res
+    } catch (error) {
+      console.error('Failed to delete BOS component:', error)
+      throw error
+    }
+  }
+
   const fetchSettings = async (schoolId: string) => {
     try {
       const res: any = await fetcher(`/school/${schoolId}/financial/settings`)
@@ -465,6 +519,7 @@ export const useFinancial = () => {
     feeCategoriesList,
     assetsList,
     lockedPeriodsList,
+    bosComponentsList,
     settings,
     fetchBills,
     previewBulkSPP,
@@ -494,6 +549,10 @@ export const useFinancial = () => {
     fetchLockedPeriods,
     lockPeriod,
     unlockPeriod,
+    fetchBosComponents,
+    createBosComponent,
+    updateBosComponent,
+    deleteBosComponent,
     fetchSettings,
     updateSettings
   }
