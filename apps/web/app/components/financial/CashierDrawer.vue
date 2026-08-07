@@ -15,7 +15,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'payment-success'])
 
 const { selectedSchoolId } = useSchoolContext()
-const { getStudentBilling, recordPayment, uploadProof } = useFinancial()
+const { getStudentBilling, recordPayment, uploadProof, accountsList, fetchAccounts } = useFinancial()
 const toast = useToast()
 
 const loading = ref(false)
@@ -25,19 +25,30 @@ const bills = ref<any[]>([])
 const selectedBillIds = ref<string[]>([])
 const paymentAmount = ref('')
 const paymentMethod = ref('tunai') // tunai, transfer_manual
+const cashAccountId = ref<string | null>(null)
 const note = ref('')
 const proofFile = ref<File | null>(null)
-const proofUrl = ref('')
+const proofBase64 = ref<string>('') // base64 tanpa prefix data URL
+const proofPreviewUrl = ref<string>('') // data URL untuk preview gambar
 const rawResponseDebug = ref<any>(null)
 
 const receiptData = ref<{ receipt_number: string, receipt_url: string } | null>(null)
 
 watch([() => props.isOpen, () => props.studentId], async ([newIsOpen, newStudentId]) => {
   if (newIsOpen && newStudentId && selectedSchoolId.value) {
-    await fetchBilling()
+    await Promise.all([
+      fetchBilling(),
+      fetchAccounts(selectedSchoolId.value)
+    ])
   } else if (!newIsOpen) {
     resetForm()
   }
+})
+
+const cashAccounts = computed(() => {
+  return accountsList.value.filter((a: any) => 
+    (a.type === 'asset' || a.type === 'cash' || a.type === 'bank') && !a.is_archived
+  )
 })
 
 const fetchBilling = async () => {
@@ -98,10 +109,66 @@ const updateDefaultAmount = () => {
   paymentAmount.value = totalSelectedAmount.value.toString()
 }
 
-const handleFileChange = (e: Event) => {
+/**
+ * Konversi gambar ke WebP menggunakan Canvas API browser.
+ * Secara otomatis resize jika terlalu besar, lalu compress ke WebP quality 0.82.
+ * Return: { base64, mimeType, previewUrl }
+ */
+const convertToWebP = (file: File): Promise<{ base64: string; mimeType: string; previewUrl: string }> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const objectUrl = URL.createObjectURL(file)
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl)
+
+      // Resize jika lebar/tinggi melebihi 1920px
+      const MAX_DIM = 1920
+      let { width, height } = img
+      if (width > MAX_DIM || height > MAX_DIM) {
+        if (width > height) {
+          height = Math.round((height / width) * MAX_DIM)
+          width = MAX_DIM
+        } else {
+          width = Math.round((width / height) * MAX_DIM)
+          height = MAX_DIM
+        }
+      }
+
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0, width, height)
+
+      // Export ke WebP quality 0.82 (hemat ~60-80% vs JPEG/PNG original)
+      const dataUrl = canvas.toDataURL('image/webp', 0.82)
+      const base64 = dataUrl.split(',')[1] ?? ''
+
+      resolve({ base64, mimeType: 'image/webp', previewUrl: dataUrl })
+    }
+
+    img.onerror = reject
+    img.src = objectUrl
+  })
+}
+
+const handleFileChange = async (e: Event) => {
   const target = e.target as HTMLInputElement
   if (target.files && target.files.length > 0) {
-    proofFile.value = target.files[0]
+    const file = target.files[0]
+    proofFile.value = file
+    try {
+      const { base64, mimeType, previewUrl } = await convertToWebP(file)
+      proofBase64.value = base64
+      proofPreviewUrl.value = previewUrl
+      // Update mime type ke webp untuk dikirim ke backend
+      proofFile.value = new File([file], file.name.replace(/\.[^.]+$/, '.webp'), { type: mimeType })
+    } catch (err) {
+      console.error('Gagal konversi gambar ke WebP:', err)
+      toast.error('Gagal memproses gambar. Coba file lain.', 'Error')
+      proofFile.value = null
+    }
   }
 }
 
@@ -118,10 +185,14 @@ const submitPayment = async () => {
 
   processing.value = true
   try {
-    // 1. Upload proof if any
+    // 1. Upload proof jika ada — kirim base64 ke backend, disimpan di tabel media
     let uploadedProofUrl = null
-    if (proofFile.value) {
-      const uploadRes = await uploadProof(selectedSchoolId.value, proofFile.value)
+    if (proofFile.value && proofBase64.value) {
+      const uploadRes = await uploadProof(selectedSchoolId.value, {
+        data: proofBase64.value,
+        file_name: proofFile.value.name,
+        mime_type: proofFile.value.type || 'image/jpeg'
+      })
       uploadedProofUrl = uploadRes.data.url
     }
 
@@ -132,6 +203,7 @@ const submitPayment = async () => {
       method: paymentMethod.value,
       note: note.value,
       proof_file_url: uploadedProofUrl,
+      cash_account_id: cashAccountId.value
     })
 
     receiptData.value = {
@@ -156,6 +228,8 @@ const resetForm = () => {
   paymentMethod.value = 'tunai'
   note.value = ''
   proofFile.value = null
+  proofBase64.value = ''
+  proofPreviewUrl.value = ''
   receiptData.value = null
 }
 
@@ -273,13 +347,41 @@ const formatDate = (dateStr: string) => {
               </select>
             </div>
 
+            <div v-if="cashAccounts.length > 0">
+              <label class="block text-xs font-semibold mb-1">Diterima Di Rekening (Kredit Kas)</label>
+              <select v-model="cashAccountId" class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-sm">
+                <option :value="null">-- Gunakan Rekening Default Sistem --</option>
+                <option v-for="acc in cashAccounts" :key="acc.id" :value="acc.id">
+                  {{ acc.account_code }} - {{ acc.name }}{{ acc.bank_account_number ? ` (${acc.bank_account_number}${acc.bank_account_name ? ` - a.n. ${acc.bank_account_name}` : ''})` : '' }}
+                </option>
+              </select>
+            </div>
+
             <div v-if="paymentMethod === 'transfer_manual'">
               <label class="block text-xs font-semibold mb-1">Bukti Transfer (Opsional)</label>
-              <div class="border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-lg p-4 text-center hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer relative">
-                <input type="file" @change="handleFileChange" accept="image/*,.pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+              
+              <!-- Preview gambar jika sudah dipilih -->
+              <div v-if="proofPreviewUrl" class="relative mb-2 rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-700">
+                <img :src="proofPreviewUrl" alt="Preview Bukti Transfer" class="w-full max-h-48 object-contain bg-slate-50 dark:bg-zinc-900" />
+                <button
+                  type="button"
+                  @click="proofFile = null; proofBase64 = ''; proofPreviewUrl = ''"
+                  class="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                >
+                  <X :size="12" />
+                </button>
+                <div class="px-3 py-1.5 bg-slate-50 dark:bg-zinc-900 border-t border-slate-100 dark:border-zinc-800">
+                  <span class="text-[10px] text-slate-500 truncate block">{{ proofFile?.name }}</span>
+                </div>
+              </div>
+
+              <!-- Upload area jika belum ada file -->
+              <div v-else class="border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-lg p-4 text-center hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer relative">
+                <input type="file" @change="handleFileChange" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                 <div class="flex flex-col items-center gap-2">
                   <UploadCloud :size="24" class="text-slate-400" />
-                  <span class="text-xs text-slate-500">{{ proofFile ? proofFile.name : 'Pilih file atau drop disini' }}</span>
+                  <span class="text-xs text-slate-500">Pilih gambar atau drop disini</span>
+                  <span class="text-[10px] text-slate-400">JPG, PNG, WEBP</span>
                 </div>
               </div>
             </div>

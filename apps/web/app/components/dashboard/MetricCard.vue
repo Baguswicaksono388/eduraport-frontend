@@ -134,8 +134,15 @@ const freshnessLabel = computed(() => {
             <span>Rp {{ Number(metric.payload.collected || 0).toLocaleString('id-ID') }}</span>
           </div>
           <div class="flex justify-between font-semibold text-[10px] text-slate-400">
-            <span>Target Total:</span>
+            <span>Target Bulan Ini:</span>
             <span>Rp {{ Number(metric.payload.billed || 0).toLocaleString('id-ID') }}</span>
+          </div>
+          <div
+            v-if="metric.payload.historical_arrears > 0"
+            class="flex justify-between font-bold text-[10px] text-rose-500 border-t border-rose-200/40 dark:border-rose-900/40 pt-1.5 mt-1"
+          >
+            <span>⚠ Tunggakan Bulan Lalu+:</span>
+            <span>Rp {{ Number(metric.payload.historical_arrears).toLocaleString('id-ID') }}</span>
           </div>
         </template>
 

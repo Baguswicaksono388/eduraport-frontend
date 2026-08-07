@@ -1,10 +1,30 @@
 <script setup lang="ts">
 import { X } from 'lucide-vue-next'
 
-defineProps<{
+import { computed } from 'vue'
+
+const props = withDefaults(defineProps<{
   show: boolean
   title: string
-}>()
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | 'full'
+}>(), {
+  size: 'lg'
+})
+
+const sizeClass = computed(() => {
+  const sizes = {
+    sm: 'max-w-sm',
+    md: 'max-w-md',
+    lg: 'max-w-lg',
+    xl: 'max-w-xl',
+    '2xl': 'max-w-2xl',
+    '3xl': 'max-w-3xl',
+    '4xl': 'max-w-4xl',
+    '5xl': 'max-w-5xl',
+    full: 'max-w-[95vw] h-[95vh] flex flex-col',
+  }
+  return sizes[props.size] || sizes.lg
+})
 
 defineEmits(['close'])
 </script>
@@ -21,7 +41,8 @@ defineEmits(['close'])
     >
       <div v-if="show" class="fixed inset-0 bg-slate-950/40 backdrop-blur-[2px] z-[100] flex items-center justify-center p-4">
         <div 
-          class="bg-white dark:bg-zinc-900 w-full max-w-lg rounded-xl border border-slate-200/60 dark:border-zinc-800 shadow-xl overflow-hidden animate-in zoom-in-95 duration-300"
+          class="bg-white dark:bg-zinc-900 w-full rounded-xl border border-slate-200/60 dark:border-zinc-800 shadow-xl overflow-hidden animate-in zoom-in-95 duration-300"
+          :class="sizeClass"
           @click.stop
         >
           <!-- Header -->

@@ -14,6 +14,7 @@ export const useFinancial = () => {
   }))
   const categoriesList = useState<any[]>('categories_list', () => [])
   const assetsList = useState<any[]>('assets_list', () => [])
+  const settings = useState<any>('settings', () => null)
 
   const fetchBills = async (
     schoolId: string,
@@ -121,13 +122,12 @@ export const useFinancial = () => {
     }
   }
 
-  const uploadProof = async (schoolId: string, file: File) => {
+  const uploadProof = async (schoolId: string, payload: { data: string; file_name: string; mime_type: string }) => {
     try {
-      const formData = new FormData()
-      formData.append('file', file)
       const res: any = await fetcher(`/school/${schoolId}/financial/payments/upload-proof`, {
         method: 'POST',
-        body: formData
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       })
       return res
     } catch (error) {
@@ -139,13 +139,57 @@ export const useFinancial = () => {
   const fetchAccounts = async (schoolId: string) => {
     try {
       const res: any = await fetcher(`/school/${schoolId}/financial/accounts`)
-      if (res.success) {
-        accountsList.value = res.data
-      }
+      accountsList.value = res.data || []
       return res
     } catch (error) {
       console.error('Failed to fetch accounts:', error)
       accountsList.value = []
+    }
+  }
+
+  const createAccount = async (schoolId: string, payload: any) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/accounts`, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      })
+      if (res.success) {
+        await fetchAccounts(schoolId)
+      }
+      return res
+    } catch (error) {
+      console.error('Failed to create account:', error)
+      throw error
+    }
+  }
+
+  const updateAccount = async (schoolId: string, accountId: string, payload: any) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/accounts/${accountId}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      })
+      if (res.success) {
+        await fetchAccounts(schoolId)
+      }
+      return res
+    } catch (error) {
+      console.error('Failed to update account:', error)
+      throw error
+    }
+  }
+
+  const archiveAccount = async (schoolId: string, accountId: string) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/accounts/${accountId}/archive`, {
+        method: 'PATCH'
+      })
+      if (res.success) {
+        await fetchAccounts(schoolId)
+      }
+      return res
+    } catch (error) {
+      console.error('Failed to archive account:', error)
       throw error
     }
   }
@@ -177,6 +221,38 @@ export const useFinancial = () => {
     } catch (error) {
       console.error('Failed to fetch categories:', error)
       categoriesList.value = []
+      throw error
+    }
+  }
+
+  const feeCategoriesList = ref<any[]>([])
+
+  const fetchFeeCategories = async (schoolId: string) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/fee-categories`)
+      if (res.success) {
+        feeCategoriesList.value = res.data
+      }
+      return res
+    } catch (error) {
+      console.error('Failed to fetch fee categories:', error)
+      feeCategoriesList.value = []
+      throw error
+    }
+  }
+
+  const updateFeeCategoryMapping = async (schoolId: string, categoryId: string, revenueAccountId: string | null) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/fee-categories/${categoryId}/account-mapping`, {
+        method: 'PATCH',
+        body: JSON.stringify({ revenue_account_id: revenueAccountId })
+      })
+      if (res.success) {
+        await fetchFeeCategories(schoolId)
+      }
+      return res
+    } catch (error) {
+      console.error('Failed to update fee category mapping:', error)
       throw error
     }
   }
@@ -310,13 +386,18 @@ export const useFinancial = () => {
     }
   }
 
-  const getLockedPeriods = async (schoolId: string) => {
+  const lockedPeriodsList = ref<any[]>([])
+
+  const fetchLockedPeriods = async (schoolId: string) => {
     try {
       const res: any = await fetcher(`/school/${schoolId}/financial/period-locks`)
-      return res.data?.locks || []
+      if (res.success) {
+        lockedPeriodsList.value = res.data?.locks || []
+      }
+      return res
     } catch (error) {
       console.error('Failed to fetch period locks:', error)
-      return []
+      return { success: false }
     }
   }
 
@@ -346,13 +427,45 @@ export const useFinancial = () => {
     }
   }
 
+  const fetchSettings = async (schoolId: string) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/settings`)
+      if (res.success) {
+        settings.value = res.data
+      }
+      return res
+    } catch (error) {
+      console.error('Failed to fetch financial settings:', error)
+      throw error
+    }
+  }
+
+  const updateSettings = async (schoolId: string, data: { enable_sub_ledger: boolean }) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/settings`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+      })
+      if (res.success) {
+        settings.value = res.data
+      }
+      return res
+    } catch (error) {
+      console.error('Failed to update financial settings:', error)
+      throw error
+    }
+  }
+
   return {
     billsList,
     accountsList,
     journalsList,
     journalsMeta,
     categoriesList,
+    feeCategoriesList,
     assetsList,
+    lockedPeriodsList,
+    settings,
     fetchBills,
     previewBulkSPP,
     generateBulkSPP,
@@ -360,8 +473,13 @@ export const useFinancial = () => {
     getStudentBilling,
     uploadProof,
     fetchAccounts,
+    createAccount,
+    updateAccount,
+    archiveAccount,
     fetchJournals,
     fetchCategories,
+    fetchFeeCategories,
+    updateFeeCategoryMapping,
     fetchAssets,
     createAsset,
     deleteAsset,
@@ -373,8 +491,10 @@ export const useFinancial = () => {
     fetchFoundationReport,
     createManualJournal,
     reverseJournal,
-    getLockedPeriods,
+    fetchLockedPeriods,
     lockPeriod,
-    unlockPeriod
+    unlockPeriod,
+    fetchSettings,
+    updateSettings
   }
 }

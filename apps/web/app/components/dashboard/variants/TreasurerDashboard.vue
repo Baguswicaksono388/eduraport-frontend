@@ -88,7 +88,7 @@ const handleWaReminder = (student: any) => {
                 Tren Kolektibilitas Bulanan
               </h3>
               <p class="text-lg font-bold text-slate-800 dark:text-zinc-100 mt-0.5">
-                Grafik Kolektibilitas SPP (6 Bulan Terakhir)
+                Grafik Kolektibilitas SPP (Tagihan Bulan Berjalan)
               </p>
             </div>
             <TrendingUp class="text-violet-500" :size="20" />

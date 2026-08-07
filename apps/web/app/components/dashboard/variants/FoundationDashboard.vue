@@ -77,7 +77,7 @@ const getMetricValue = (key: string) => {
       
       <!-- SPP Collectibility -->
       <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-3">
-        <span class="text-[9px] uppercase tracking-wider font-extrabold text-slate-400 dark:text-zinc-500 block">Kolektibilitas SPP Yayasan</span>
+        <span class="text-[9px] uppercase tracking-wider font-extrabold text-slate-400 dark:text-zinc-500 block">Kolektibilitas SPP Yayasan (Bulan Ini)</span>
         <h4 class="text-2xl md:text-3xl font-black text-slate-800 dark:text-zinc-100">
           {{ getMetricValue('fin.collect.month') }}%
         </h4>

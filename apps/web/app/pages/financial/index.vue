@@ -21,7 +21,8 @@ import {
   Download,
   Scale,
   Upload,
-  X
+  X,
+  Settings
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput, BaseDateInput } from '@eduraport/ui'
 import CashierDrawer from '../../components/financial/CashierDrawer.vue'
@@ -35,6 +36,7 @@ import { useToast } from '../../composables/useToast'
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ASSET_CATEGORIES, DEPRECIATION_METHODS } from '@eduraport/shared'
 import { formatNumber, formatDate } from '~/utils/format'
+import * as XLSX from 'xlsx'
 
 definePageMeta({
   middleware: [
@@ -56,14 +58,21 @@ const {
   journalsList, 
   journalsMeta,
   categoriesList,
+  feeCategoriesList,
   assetsList,
-  fetchBills, 
+  settings,
+  fetchBills,
   previewBulkSPP,
-  generateBulkSPP, 
+  generateBulkSPP,
   recordPayment, 
   fetchAccounts, 
+  createAccount,
+  updateAccount,
+  archiveAccount,
   fetchJournals,
   fetchCategories,
+  fetchFeeCategories,
+  updateFeeCategoryMapping,
   fetchAssets,
   createAsset,
   deleteAsset,
@@ -73,14 +82,24 @@ const {
   fetchIncomeStatement,
   fetchBOSReport,
   fetchFoundationReport,
-  createManualJournal
+  createManualJournal,
+  fetchSettings,
+  updateSettings,
+  lockedPeriodsList,
+  fetchLockedPeriods,
+  lockPeriod,
+  unlockPeriod
 } = useFinancial()
 const toast = useToast()
+
+const authToken = useCookie('auth_token')
+const showProofModal = ref(false)
+const proofImageUrl = ref('')
 
 const selectedClassId = ref('')
 const filterStatus = ref('') // all, pending, paid
 
-const activeTab = ref('bills') // bills, journals, accounts, reports, assets
+const activeTab = ref('bills') // bills, journals, accounts, reports, assets, settings
 const activeReportSubTab = ref('balance-sheet') // balance-sheet, income-statement, bos, foundation
 const journalCurrentPage = ref(1)
 const journalItemsPerPage = ref(50)
@@ -91,6 +110,97 @@ const balanceSheetData = ref<any>(null)
 const incomeStatementData = ref<any>(null)
 const bosReportData = ref<any>(null)
 const foundationReportData = ref<any>(null)
+
+// COA Add & Archive State
+const showAddAccountModal = ref(false)
+const newAccount = ref({ code: '', name: '', type: '', is_sub: false, parent_code: '101', sub_suffix: '', bank_account_number: '', bank_account_name: '' })
+
+async function handleCreateAccount() {
+  let finalCode = newAccount.value.code;
+  let finalType = newAccount.value.type;
+  
+  if (settings.value?.enable_sub_ledger && newAccount.value.is_sub) {
+    if (!newAccount.value.parent_code || !newAccount.value.sub_suffix) {
+      toast.error('Induk dan akhiran sub-akun wajib diisi')
+      return
+    }
+    finalCode = `${newAccount.value.parent_code}.${newAccount.value.sub_suffix}`
+    finalType = 'asset' // Kas dan Bank are assets
+  } else {
+    if (!finalCode || !finalType) {
+      toast.error('Kode dan tipe akun wajib diisi')
+      return
+    }
+  }
+
+  if (!newAccount.value.name) {
+    toast.error('Nama akun wajib diisi')
+    return
+  }
+
+  try {
+    await createAccount(selectedSchoolId.value, { 
+      account_code: finalCode, 
+      name: newAccount.value.name, 
+      type: finalType,
+      bank_account_number: newAccount.value.bank_account_number,
+      bank_account_name: newAccount.value.bank_account_name
+    })
+    showAddAccountModal.value = false
+    newAccount.value = { code: '', name: '', type: '', is_sub: false, parent_code: '101', sub_suffix: '', bank_account_number: '', bank_account_name: '' }
+    toast.success('Akun COA baru berhasil ditambahkan')
+  } catch (e: any) {
+    toast.error(e?.message || 'Gagal menambahkan akun')
+  }
+}
+
+async function handleArchiveAccount(acc: any) {
+  if (!confirm(`Arsipkan akun "${acc.account_code} - ${acc.name}"?\nAkun ini tidak akan tampil di transaksi baru, namun riwayat historis tetap tersimpan.`)) return
+  try {
+    await archiveAccount(selectedSchoolId.value, acc.id)
+    toast.success(`Akun ${acc.account_code} berhasil diarsipkan`)
+  } catch (e: any) {
+    toast.error(e?.message || 'Gagal mengarsipkan akun')
+  }
+}
+
+// Edit Account Logic
+const showEditAccountModal = ref(false)
+const editingAccountId = ref('')
+const editAccountForm = reactive({
+  name: '',
+  bank_account_number: '',
+  bank_account_name: ''
+})
+const isEditingSubAccount = ref(false)
+
+const openEditAccount = (acc: any) => {
+  editingAccountId.value = acc.id
+  editAccountForm.name = acc.name
+  editAccountForm.bank_account_number = acc.bank_account_number || ''
+  editAccountForm.bank_account_name = acc.bank_account_name || ''
+  // A sub-account is assumed if it has a bank account number, or if parent code is 102 (but here we can just use the bank account number check)
+  isEditingSubAccount.value = !!acc.bank_account_number || acc.account_code?.startsWith('102.')
+  showEditAccountModal.value = true
+}
+
+const submitEditAccount = async () => {
+  if (!selectedSchoolId.value) return
+  if (!editAccountForm.name) {
+    toast.error('Nama Akun wajib diisi')
+    return
+  }
+  
+  try {
+    const res = await updateAccount(selectedSchoolId.value, editingAccountId.value, editAccountForm)
+    if (res.success) {
+      toast.success('Akun berhasil diperbarui')
+      showEditAccountModal.value = false
+    }
+  } catch (error: any) {
+    toast.error(error.message || 'Gagal memperbarui akun')
+  }
+}
 
 // Assets state & modal
 const showAssetModal = ref(false)
@@ -178,12 +288,83 @@ const reversalForm = reactive({
 })
 
 // Period Lock state
-const showPeriodLockModal = ref(false)
-const periodLockForm = reactive({
-  year: new Date().getFullYear(),
-  month: new Date().getMonth() + 1
+const last12Months = computed(() => {
+  const months = []
+  const now = new Date()
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const year = d.getFullYear()
+    const month = d.getMonth() + 1
+    const periodStr = `${year}-${String(month).padStart(2, '0')}`
+    const label = d.toLocaleString('id-ID', { month: 'long', year: 'numeric' })
+    const lock = lockedPeriodsList.value?.find((l: any) => l.period === periodStr)
+    months.push({
+      year,
+      month,
+      periodStr,
+      label,
+      isLocked: lock?.is_locked === true
+    })
+  }
+  return months
 })
-const lockedPeriods = ref<any[]>([])
+
+const previousMonthDate = computed(() => {
+  const d = new Date()
+  d.setMonth(d.getMonth() - 1)
+  return d
+})
+
+const previousMonthName = computed(() => {
+  return previousMonthDate.value.toLocaleString('id-ID', { month: 'long', year: 'numeric' })
+})
+
+const isPreviousMonthLocked = computed(() => {
+  if (!lockedPeriodsList.value) return true // assume true if not loaded to prevent flicker
+  const pm = previousMonthDate.value
+  const periodStr = `${pm.getFullYear()}-${String(pm.getMonth() + 1).padStart(2, '0')}`
+  const lock = lockedPeriodsList.value.find(l => l.period === periodStr)
+  return lock?.is_locked === true
+})
+
+const showConfirmLockModal = ref(false)
+const pendingPeriodAction = ref<any>(null)
+const confirmLockMessage = ref('')
+const confirmLockTitle = ref('')
+
+const handleToggleLock = (period: any) => {
+  if (!selectedSchoolId.value) return
+  pendingPeriodAction.value = period
+  if (period.isLocked) {
+    confirmLockTitle.value = 'Buka Kunci Periode?'
+    confirmLockMessage.value = `Buka kunci periode ${period.label}? Transaksi historis di bulan ini akan bisa ditambah/diubah kembali.`
+  } else {
+    confirmLockTitle.value = 'Kunci Periode?'
+    confirmLockMessage.value = `Kunci periode ${period.label}? Transaksi di bulan ini akan dikunci dan tidak bisa diubah.`
+  }
+  showConfirmLockModal.value = true
+}
+
+const executeToggleLock = async () => {
+  if (!selectedSchoolId.value || !pendingPeriodAction.value) return
+  const period = pendingPeriodAction.value
+  showConfirmLockModal.value = false
+  
+  try {
+    if (period.isLocked) {
+      await unlockPeriod(selectedSchoolId.value, period.year, period.month)
+      toast.success(`Kunci periode ${period.label} berhasil dibuka.`)
+    } else {
+      await lockPeriod(selectedSchoolId.value, period.year, period.month)
+      toast.success(`Periode ${period.label} berhasil dikunci.`)
+    }
+    await fetchLockedPeriods(selectedSchoolId.value)
+  } catch (error: any) {
+    toast.error(error.message || 'Gagal mengubah status kunci periode.')
+  }
+}
+
+// Grouped Bills & Details Modal States
 
 // Grouped Bills & Details Modal States
 const showCashierDrawer = ref(false)
@@ -386,13 +567,28 @@ const loadSchoolData = async (schoolId: string) => {
       fetchAccounts(schoolId),
       fetchJournals(schoolId, journalCurrentPage.value, journalItemsPerPage.value),
       fetchCategories(schoolId),
+      fetchFeeCategories(schoolId),
       fetchAssets(schoolId),
+      fetchSettings(schoolId),
+      fetchLockedPeriods(schoolId),
       loadReports(schoolId)
     ])
   } catch (error) {
     console.error('Failed loading school data:', error)
   } finally {
     loading.value = false
+  }
+}
+
+const handleToggleSubLedger = async () => {
+  if (!selectedSchoolId.value || !settings.value) return
+  
+  const newValue = !settings.value.enable_sub_ledger
+  try {
+    await updateSettings(selectedSchoolId.value, { enable_sub_ledger: newValue })
+    toast.success(`Sub-Ledger berhasil ${newValue ? 'diaktifkan' : 'dinonaktifkan'}.`, 'Berhasil')
+  } catch (error) {
+    toast.error('Gagal memperbarui setelan sub-ledger.', 'Gagal')
   }
 }
 
@@ -490,19 +686,25 @@ const handleGenerateSPP = async () => {
     toast.error(error.message || 'Gagal membuat tagihan SPP.', 'Gagal')
   }
 }
+
+// Account Mapping Logic
+const revenueAccounts = computed(() => {
+  return accountsList.value.filter(a => a.type === 'revenue' && !a.is_archived)
+})
+
+const handleSaveMapping = async (categoryId: string, accountId: string | null) => {
+  if (!selectedSchoolId.value) return
+  try {
+    await updateFeeCategoryMapping(selectedSchoolId.value, categoryId, accountId)
+    toast.success('Pemetaan akun berhasil disimpan.', 'Berhasil')
+  } catch (error: any) {
+    toast.error(error.message || 'Gagal menyimpan pemetaan akun.', 'Gagal')
+  }
+}
+
 // Asset Management logic
 const handleCreateAsset = async () => {
   if (!selectedSchoolId.value) return
-  try {
-    const res = await getStudentBilling(selectedSchoolId.value)
-    if (res.success) {
-      studentBillsList.value = res.data
-    }
-    const locks = await getLockedPeriods(selectedSchoolId.value)
-    lockedPeriods.value = locks
-  } catch (error) {
-    console.error('Error loading student bills:', error)
-  }
   try {
     const res = await createAsset(selectedSchoolId.value, { ...assetForm })
     if (res.success) {
@@ -570,6 +772,29 @@ const handleCreateJournal = async () => {
   }
 }
 
+// Journal Details Logic
+const showJournalDetailModal = ref(false)
+const selectedJournalGroup = ref<any[]>([])
+const selectedJournalContext = ref<any>(null)
+
+const openJournalDetail = (journal: any) => {
+  selectedJournalContext.value = journal
+  if (journal.reference) {
+    // Group by reference to find the balancing entries
+    selectedJournalGroup.value = journalsList.value.filter(j => j.reference === journal.reference && j.origin === journal.origin)
+  } else if (journal.description) {
+    // Fallback: Group by description and date
+    selectedJournalGroup.value = journalsList.value.filter(
+      j => j.description === journal.description && 
+           j.date.substring(0,10) === journal.date.substring(0,10) && 
+           j.origin === journal.origin
+    )
+  } else {
+    selectedJournalGroup.value = [journal]
+  }
+  showJournalDetailModal.value = true
+}
+
 const promptReverseJournal = (journal: any) => {
   if (journal.origin === 'reversal' || journal.reversed_by_tx) {
     toast.error('Jurnal ini tidak bisa dikoreksi lagi.')
@@ -611,26 +836,47 @@ const handlePeriodLock = async () => {
   }
 }
 
-// Simulated Export Action
+// Real Export Action
+const config = useRuntimeConfig()
 const exportReport = (format: 'pdf' | 'xlsx') => {
+  const token = useCookie('auth_token').value
+  const type = activeReportSubTab.value
+  let url = `${config.public.apiBase}/school/${selectedSchoolId.value}/financial/reports/${type}/export?format=${format}&token=${token}`
+  
+  if (type === 'foundation' && selectedFoundationId.value) {
+    url += `&foundation_id=${selectedFoundationId.value}`
+  }
+  
   toast.success(`Laporan sedang diekspor ke format ${format.toUpperCase()}...`, 'Export Berhasil')
-  // Simulated download triggers
-  const blob = new Blob(['Export Data'], { type: 'application/octet-stream' })
-  const url = window.URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `Laporan_${activeReportSubTab.value}_${Date.now()}.${format}`
-  a.click()
+  window.open(url, '_blank')
 }
 </script>
 
 <template>
   <div class="space-y-8 animate-in fade-in duration-500">
+    <!-- Period Lock Warning Banner -->
+    <div v-if="!isPreviousMonthLocked && selectedSchoolId" class="bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-xl p-4 flex items-center justify-between gap-4 shadow-sm">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-amber-200 dark:bg-amber-800/50 flex items-center justify-center shrink-0">
+          <AlertTriangle class="text-amber-700 dark:text-amber-400" :size="20" />
+        </div>
+        <div>
+          <h3 class="font-bold text-amber-900 dark:text-amber-300 text-sm">Peringatan Tutup Buku</h3>
+          <p class="text-xs text-amber-800 dark:text-amber-400/80 mt-0.5">
+            Bulan <strong>{{ previousMonthName }}</strong> belum ditutup! Silakan lakukan Tutup Buku agar laporan keuangan bulan lalu terkunci aman dari perubahan.
+          </p>
+        </div>
+      </div>
+      <BaseButton variant="primary" @click="activeTab = 'settings'" class="shrink-0 bg-amber-600 hover:bg-amber-700 text-white border-0 text-xs py-2 px-4 shadow-lg shadow-amber-600/20">
+        Tutup Buku Sekarang
+      </BaseButton>
+    </div>
+
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">Keuangan Sekolah</h2>
-        <p class="text-xs text-slate-500 dark:text-zinc-400">Atur tagihan SPP bulanan, pembayaran uang sekolah, dan pantau jurnal akuntansi double-entry terpus.</p>
+        <p class="text-xs text-slate-500 dark:text-zinc-400">Atur tagihan SPP bulanan, pembayaran uang sekolah, dan pantau jurnal akuntansi double-entry terpusat.</p>
       </div>
       <div class="flex gap-2 flex-wrap" v-if="selectedSchoolId && activeTab === 'bills'">
         <BaseButton variant="primary" @click="openSPPModal" class="py-2.5 px-4 text-xs font-bold shadow-lg shadow-violet-600/15">
@@ -638,9 +884,6 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         </BaseButton>
       </div>
       <div class="flex gap-2 flex-wrap" v-if="selectedSchoolId && activeTab === 'journals'">
-        <BaseButton variant="outline" @click="showPeriodLockModal = true" class="py-2.5 px-4 text-xs font-bold border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900/50 dark:hover:bg-rose-900/20">
-          <Lock class="mr-1.5" :size="14" /> Tutup Buku Bulanan
-        </BaseButton>
         <BaseButton variant="primary" @click="showJournalModal = true" class="py-2.5 px-4 text-xs font-bold shadow-lg shadow-violet-600/15">
           <Plus class="mr-1.5" :size="14" /> Tambah Jurnal Umum
         </BaseButton>
@@ -739,6 +982,13 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         >
           <Wrench :size="14" /> Manajemen Aset
         </button>
+        <button 
+          @click="activeTab = 'settings'" 
+          class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap"
+          :class="[activeTab === 'settings' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300']"
+        >
+          <Settings :size="14" /> Setelan Keuangan
+        </button>
       </div>
 
       <!-- Loading Overlay -->
@@ -756,7 +1006,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
             <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm space-y-1">
               <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Tertagihkan</span>
               <p class="text-xl font-extrabold text-slate-900 dark:text-zinc-100 font-mono">{{ formatNumber(billsSummary.tertagihkan) }}</p>
-              <p class="text-[10px] text-slate-400 font-medium mt-1">Total Tagihan Keseluruhan</p>
+              <p class="text-[10px] text-slate-400 font-medium mt-1">Total Semua Tagihan (Sesuai Filter)</p>
             </div>
             <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm space-y-1">
               <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Tertagih</span>
@@ -915,14 +1165,23 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
                       <span v-if="j.reversed_by_tx" class="block text-[9px] text-rose-500 mt-0.5">Dibatalkan oleh {{ j.reversed_by_tx }}</span>
                     </td>
                     <td class="p-4 pr-6 text-center">
-                      <button 
-                        v-if="j.origin !== 'reversal' && !j.reversed_by_tx"
-                        @click="promptReverseJournal(j)" 
-                        class="text-xs font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300"
-                        title="Koreksi (Jurnal Pembalik)"
-                      >
-                        Koreksi
-                      </button>
+                      <div class="flex items-center justify-center gap-3">
+                        <button 
+                          @click="openJournalDetail(j)" 
+                          class="text-xs font-bold text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
+                          title="Lihat Detail Transaksi"
+                        >
+                          Detail
+                        </button>
+                        <button 
+                          v-if="j.origin !== 'reversal' && !j.reversed_by_tx"
+                          @click="promptReverseJournal(j)" 
+                          class="text-xs font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300"
+                          title="Koreksi (Jurnal Pembalik)"
+                        >
+                          Koreksi
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   
@@ -958,6 +1217,16 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
 
         <!-- Tab Content 3: COA accounts -->
         <div v-else-if="activeTab === 'accounts'" class="space-y-4 animate-in fade-in duration-300">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-slate-800 dark:text-zinc-100 flex items-center gap-2">
+              <Layers class="w-4 h-4 text-violet-500" />
+              Chart of Accounts (COA)
+            </h3>
+            <button @click="showAddAccountModal = true" class="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold transition-colors flex items-center gap-1.5 shadow-sm">
+              <Plus :size="14" />
+              Tambah Akun
+            </button>
+          </div>
           <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
             <div class="overflow-x-auto">
               <table class="w-full text-left border-collapse text-xs">
@@ -974,16 +1243,21 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
                   <tr v-for="acc in accountsList" :key="acc.id" class="hover:bg-slate-50/30 dark:hover:bg-zinc-950/20 transition-all text-slate-700 dark:text-zinc-300">
                     <td class="p-4 pl-6 font-mono font-extrabold text-violet-600 dark:text-violet-400">{{ acc.account_code }}</td>
                     <td class="p-4">
-                      <div class="flex items-center gap-2 font-bold text-slate-800 dark:text-zinc-200">
-                        {{ acc.name }}
-                        <span v-if="['101', '401', '102'].includes(acc.account_code)" class="px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase bg-violet-500/10 text-violet-600 border border-violet-500/20" title="Dipakai auto-posting">
-                          Sistem
-                        </span>
-                        <div v-if="acc.account_code === '101'" class="group relative flex items-center">
-                          <Info class="w-3.5 h-3.5 text-slate-400 hover:text-blue-500 cursor-help transition-colors" />
-                          <div class="absolute left-1/2 -translate-x-1/2 top-full mt-2 hidden group-hover:block w-48 p-2 bg-slate-800 text-white text-[10px] rounded shadow-xl text-center z-50 before:content-[''] before:absolute before:bottom-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-b-slate-800 font-normal leading-relaxed">
-                            Saldo ini adalah total keseluruhan uang masuk ke lembaga dari berbagai penerimaan (SPP, Seragam, dll).
+                      <div class="flex flex-col gap-1 items-start">
+                        <div class="flex items-center gap-2 font-bold text-slate-800 dark:text-zinc-200">
+                          {{ acc.name }}
+                          <span v-if="acc.is_system" class="ml-2 text-[8px] bg-slate-100 dark:bg-zinc-700 text-slate-400 px-1.5 py-0.5 rounded uppercase font-bold tracking-wide" title="Akun default sistem">
+                            SISTEM
+                          </span>
+                          <div v-if="acc.account_code === '101'" class="group relative flex items-center">
+                            <Info class="w-3.5 h-3.5 text-slate-400 hover:text-blue-500 cursor-help transition-colors" />
+                            <div class="absolute left-1/2 -translate-x-1/2 top-full mt-2 hidden group-hover:block w-48 p-2 bg-slate-800 text-white text-[10px] rounded shadow-xl text-center z-50 before:content-[''] before:absolute before:bottom-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-b-slate-800 font-normal leading-relaxed">
+                              Saldo ini adalah total keseluruhan uang masuk ke lembaga dari berbagai penerimaan (SPP, Seragam, dll).
+                            </div>
                           </div>
+                        </div>
+                        <div v-if="acc.bank_account_number" class="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">
+                          (No. Rek: <span class="font-mono text-slate-600 dark:text-zinc-300 font-bold">{{ acc.bank_account_number }}</span><span v-if="acc.bank_account_name"> - a.n. {{ acc.bank_account_name }}</span>)
                         </div>
                       </div>
                     </td>
@@ -1005,9 +1279,14 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
                       {{ formatNumber(acc.balance) }}
                     </td>
                     <td class="p-4 pr-6 text-right">
-                      <button v-if="!['101', '401', '102'].includes(acc.account_code)" class="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 font-bold transition-colors">
-                        Arsipkan
-                      </button>
+                      <div class="flex items-center justify-end gap-3">
+                        <button v-if="!acc.is_system && !acc.is_archived" @click="openEditAccount(acc)" class="text-[10px] text-violet-400 hover:text-violet-600 dark:hover:text-violet-300 font-bold transition-colors">
+                          Edit
+                        </button>
+                        <button v-if="!acc.is_system && !acc.is_archived" @click="handleArchiveAccount(acc)" class="text-[10px] text-rose-400 hover:text-rose-600 font-bold transition-colors">
+                          Arsipkan
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 </tbody>
@@ -1145,10 +1424,116 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
             </div>
           </div>
         </div>
+    <!-- Tab Content 6: Setelan Keuangan -->
+    <div v-else-if="activeTab === 'settings'" class="space-y-6 animate-in fade-in duration-300">
+      
+      <!-- Tutup Buku Section -->
+      <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 p-6 rounded-2xl shadow-sm">
+        <div class="flex items-start gap-3 mb-6">
+          <div class="w-10 h-10 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center shrink-0">
+            <Lock class="text-rose-600 dark:text-rose-400" :size="20" />
+          </div>
+          <div>
+            <h3 class="font-bold text-lg text-slate-800 dark:text-zinc-200 mb-1">Tutup Buku Bulanan (Period Lock)</h3>
+            <p class="text-sm text-slate-500 max-w-3xl leading-relaxed">
+              Kunci periode pembukuan untuk mencegah perubahan jurnal di bulan tersebut. Laporan yang sudah ditutup tidak dapat dimodifikasi lagi tanpa membuka kuncinya.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div v-for="month in last12Months" :key="month.periodStr" class="flex items-center justify-between p-3 border rounded-xl" :class="month.isLocked ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-950/20' : 'border-slate-200 bg-slate-50 dark:border-zinc-800 dark:bg-zinc-900/50'">
+            <div>
+              <p class="text-sm font-bold text-slate-700 dark:text-zinc-300">{{ month.label }}</p>
+              <p class="text-[10px] font-semibold mt-0.5 uppercase tracking-wider" :class="month.isLocked ? 'text-emerald-600' : 'text-slate-400'">
+                {{ month.isLocked ? 'TERKUNCI' : 'TERBUKA' }}
+              </p>
+            </div>
+            <button 
+              @click="handleToggleLock(month)"
+              class="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+              :class="month.isLocked ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200' : 'bg-slate-200 text-slate-500 hover:bg-slate-300 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'"
+              :title="month.isLocked ? 'Buka Kunci' : 'Kunci Periode'"
+            >
+              <Lock v-if="month.isLocked" :size="14" />
+              <Unlock v-else :size="14" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 p-6 rounded-2xl shadow-sm">
+        <h3 class="font-bold text-lg text-slate-800 dark:text-zinc-200 mb-2">Setelan Sub-Ledger (Multi-Rekening)</h3>
+        <p class="text-sm text-slate-500 mb-6 leading-relaxed max-w-3xl">
+          Aktifkan fitur ini jika sekolah Anda membutuhkan pemisahan rekening bank secara detail (misalnya Rekening SPP BCA, Mandiri, Rekening BOS, dll). Jika diaktifkan, Anda dapat membuat sub-akun dari Kas (101) dan Bank (102).
+        </p>
+
+        <div v-if="settings" class="flex items-center gap-4">
+          <button 
+            @click="handleToggleSubLedger"
+            class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none"
+            :class="settings.enable_sub_ledger ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'"
+          >
+              <span 
+                class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                :class="settings.enable_sub_ledger ? 'translate-x-6' : 'translate-x-1'"
+              ></span>
+          </button>
+          <span class="text-sm font-bold" :class="settings.enable_sub_ledger ? 'text-emerald-600 dark:text-emerald-450' : 'text-slate-500'">
+            {{ settings.enable_sub_ledger ? 'Sub-Ledger Aktif' : 'Sub-Ledger Nonaktif' }}
+          </span>
+        </div>
+        <div v-else class="text-sm text-slate-400 animate-pulse">Memuat pengaturan...</div>
+      </div>
+
+      <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 p-6 rounded-2xl shadow-sm">
+        <h3 class="font-bold text-lg text-slate-800 dark:text-zinc-200 mb-2">Pemetaan Akun Pendapatan (Account Mapping)</h3>
+        <p class="text-sm text-slate-500 mb-6 leading-relaxed max-w-3xl">
+          Petakan Struktur Biaya (seperti SPP, Kegiatan, Seragam) ke akun pendapatan yang sesuai di Bagan Akun (Chart of Accounts). Pemetaan ini digunakan untuk pencatatan otomatis di Jurnal saat terjadi pembayaran.
+        </p>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse min-w-[600px]">
+            <thead>
+              <tr class="border-b border-slate-200 dark:border-zinc-800/80">
+                <th class="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Struktur Biaya</th>
+                <th class="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Akun Pendapatan (Kredit)</th>
+                <th class="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-widest w-32 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="cat in feeCategoriesList" :key="cat.id" class="border-b border-slate-100 dark:border-zinc-800/40 hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 transition-colors">
+                <td class="py-3 px-4">
+                  <div class="font-bold text-slate-700 dark:text-zinc-300 text-sm">{{ cat.name }}</div>
+                  <div class="text-[11px] text-slate-400 font-mono mt-0.5">{{ cat.code }}</div>
+                </td>
+                <td class="py-3 px-4">
+                  <select 
+                    v-model="cat.revenue_account_id" 
+                    class="w-full max-w-sm bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600 transition-all"
+                  >
+                    <option :value="null">-- Pilih Akun Pendapatan --</option>
+                    <option v-for="acc in revenueAccounts" :key="acc.id" :value="acc.id">
+                      {{ acc.account_code }} - {{ acc.name }}
+                    </option>
+                  </select>
+                </td>
+                <td class="py-3 px-4 text-center">
+                  <BaseButton variant="outline" size="sm" @click="handleSaveMapping(cat.id, cat.revenue_account_id)">Simpan</BaseButton>
+                </td>
+              </tr>
+              <tr v-if="!feeCategoriesList.length">
+                <td colspan="3" class="p-8 text-center text-slate-400">Memuat kategori...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
+  </div>
+  </div>
 
-    <!-- Modal: Detail SPP Murid -->
+  <!-- Modal: Detail SPP Murid -->
     <BaseModal :show="showDetailModal" title="Detail Tagihan SPP Murid" @close="showDetailModal = false">
       <div v-if="activeStudent" class="space-y-6">
         <!-- Student Summary Header -->
@@ -1251,7 +1636,12 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         </div>
 
         <div class="flex flex-col gap-1.5 w-full">
-          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Struktur Biaya</label>
+          <div class="flex items-center gap-1.5 px-1">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Struktur Biaya</label>
+            <span title="Kategori penagihan siswa. Pembayaran tagihan ini akan dijurnal otomatis ke akun Pendapatan yang sesuai.">
+              <Info :size="14" class="text-slate-400 cursor-help" />
+            </span>
+          </div>
           <select v-model="sppForm.category_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
             <option value="" disabled>Pilih Struktur Biaya</option>
             <option v-for="cat in categoriesList" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
@@ -1402,6 +1792,106 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
       </div>
     </BaseModal>
 
+    <!-- Modal: Detail Jurnal -->
+    <BaseModal :show="showJournalDetailModal" title="Detail Jurnal Transaksi" @close="showJournalDetailModal = false; selectedJournalGroup = []" class="max-w-2xl">
+      <div class="space-y-4">
+        <!-- Header Info -->
+        <div class="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4 rounded-xl flex flex-col md:flex-row justify-between gap-4">
+          <div class="space-y-1" v-if="selectedJournalContext">
+            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Keterangan</h4>
+            <p class="text-sm font-semibold text-slate-800 dark:text-zinc-200">{{ selectedJournalContext.description }}</p>
+            <p class="text-[10px] text-slate-400 font-mono mt-1">{{ formatDate(selectedJournalContext.date) }} &bull; {{ selectedJournalContext.reference || 'Tanpa Referensi' }}</p>
+            
+            <div v-if="selectedJournalContext.payment_method" class="mt-2 pt-2 border-t border-slate-200 dark:border-zinc-700/50 flex flex-wrap items-center gap-2">
+               <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Metode Pembayaran:</span>
+               <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300">
+                 {{ selectedJournalContext.payment_method === 'cash' ? 'Tunai' : selectedJournalContext.payment_method === 'transfer_manual' ? 'Transfer Bank' : selectedJournalContext.payment_method === 'transfer_auto' ? 'Virtual Account' : selectedJournalContext.payment_method }}
+               </span>
+               <button v-if="selectedJournalContext.payment_proof_url" type="button" @click="proofImageUrl = selectedJournalContext.payment_proof_url; showProofModal = true" class="text-[10px] text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1 font-bold ml-2">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.234 20.252 21 12.3"></path><path d="m16 6-8.414 8.586a2 2 0 0 0 0 2.828 2 2 0 0 0 2.828 0l8.414-8.586a4 4 0 0 0 0-5.656 4 4 0 0 0-5.656 0l-8.415 8.585a6 6 0 1 0 8.486 8.486"></path></svg>
+                 Lihat Bukti Transfer
+               </button>
+            </div>
+          </div>
+          <div class="space-y-1 text-right" v-if="selectedJournalContext">
+            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Transaksi</h4>
+            <p class="text-lg font-mono font-extrabold text-slate-800 dark:text-zinc-100">{{ formatNumber(selectedJournalGroup.reduce((sum, j) => sum + Number(j.debit), 0)) }}</p>
+          </div>
+        </div>
+
+        <!-- Rincian Akun (Debit/Kredit) -->
+        <div class="border border-slate-200/60 dark:border-zinc-800/80 rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                  <th class="p-3 pl-4">Akun (COA)</th>
+                  <th class="p-3 text-right">Debit</th>
+                  <th class="p-3 pr-4 text-right">Kredit</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/80">
+                <tr v-for="entry in selectedJournalGroup" :key="entry.id" class="hover:bg-slate-50/50 dark:hover:bg-zinc-950/20 text-slate-700 dark:text-zinc-300 font-medium">
+                  <td class="p-3 pl-4">
+                    <span class="font-mono bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded text-[10px] mr-2">
+                      {{ entry.account_code }}
+                    </span>
+                    {{ entry.account_name }}
+                  </td>
+                  <td class="p-3 text-right font-mono" :class="Number(entry.debit) > 0 ? 'font-bold text-slate-800 dark:text-zinc-200' : 'text-slate-400'">
+                    {{ Number(entry.debit) > 0 ? formatNumber(entry.debit) : '-' }}
+                  </td>
+                  <td class="p-3 pr-4 text-right font-mono" :class="Number(entry.credit) > 0 ? 'font-bold text-slate-800 dark:text-zinc-200' : 'text-slate-400'">
+                    {{ Number(entry.credit) > 0 ? formatNumber(entry.credit) : '-' }}
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot class="bg-slate-50 dark:bg-zinc-900 border-t border-slate-200 dark:border-zinc-800">
+                <tr>
+                  <td class="p-3 pl-4 font-bold text-slate-500 text-right">TOTAL</td>
+                  <td class="p-3 text-right font-mono font-extrabold text-slate-800 dark:text-zinc-200">
+                    {{ formatNumber(selectedJournalGroup.reduce((sum, j) => sum + Number(j.debit), 0)) }}
+                  </td>
+                  <td class="p-3 pr-4 text-right font-mono font-extrabold text-slate-800 dark:text-zinc-200" :class="selectedJournalGroup.reduce((sum, j) => sum + Number(j.debit), 0) === selectedJournalGroup.reduce((sum, j) => sum + Number(j.credit), 0) ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-500'">
+                    {{ formatNumber(selectedJournalGroup.reduce((sum, j) => sum + Number(j.credit), 0)) }}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <BaseButton variant="outline" type="button" @click="showJournalDetailModal = false; selectedJournalGroup = []">Tutup</BaseButton>
+        </div>
+      </div>
+    </BaseModal>
+
+    <!-- Modal: Edit Akun -->
+    <BaseModal :show="showEditAccountModal" title="Edit Akun (COA)" @close="showEditAccountModal = false">
+      <form @submit.prevent="submitEditAccount" class="space-y-4">
+        <BaseInput v-model="editAccountForm.name" label="Nama Akun" placeholder="Contoh: Kas Utama" required />
+        
+        <template v-if="isEditingSubAccount">
+          <div class="flex gap-3">
+            <div class="w-1/2 flex flex-col gap-1.5">
+              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Nomor Rekening</label>
+              <input type="text" v-model="editAccountForm.bank_account_number" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-600 transition-all font-mono" placeholder="Contoh: 1234567890" />
+            </div>
+            <div class="w-1/2 flex flex-col gap-1.5">
+              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Atas Nama</label>
+              <input type="text" v-model="editAccountForm.bank_account_name" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-600 transition-all" placeholder="Contoh: Yayasan Tursina" />
+            </div>
+          </div>
+        </template>
+        
+        <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
+          <BaseButton variant="outline" type="button" @click="showEditAccountModal = false">Batal</BaseButton>
+          <BaseButton variant="primary" type="submit">Simpan Perubahan</BaseButton>
+        </div>
+      </form>
+    </BaseModal>
+
     <!-- Modal: Koreksi Jurnal (Reversal) -->
     <BaseModal :show="showReversalModal" title="Koreksi / Batalkan Jurnal" @close="showReversalModal = false">
       <div class="space-y-4">
@@ -1414,33 +1904,6 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
           <BaseButton variant="outline" type="button" @click="showReversalModal = false">Batal</BaseButton>
           <BaseButton variant="danger" @click="submitReversal">Buat Jurnal Pembalik</BaseButton>
-        </div>
-      </div>
-    </BaseModal>
-
-    <!-- Modal: Tutup Buku (Period Lock) -->
-    <BaseModal :show="showPeriodLockModal" title="Tutup Buku Bulanan" @close="showPeriodLockModal = false">
-      <div class="space-y-4">
-        <div class="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900 rounded-xl">
-          <p class="text-xs text-amber-700 dark:text-amber-300">
-            <strong>Peringatan!</strong> Periode buku yang sudah ditutup tidak akan bisa dicatat atau dikoreksi jurnalnya lagi. Pastikan semua laporan sudah di-review.
-          </p>
-        </div>
-        
-        <div class="grid grid-cols-2 gap-4">
-          <div class="flex flex-col gap-1.5 w-full">
-            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Tahun</label>
-            <input type="number" v-model="periodLockForm.year" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600" required />
-          </div>
-          <div class="flex flex-col gap-1.5 w-full">
-            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Bulan (1-12)</label>
-            <input type="number" min="1" max="12" v-model="periodLockForm.month" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600" required />
-          </div>
-        </div>
-
-        <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
-          <BaseButton variant="outline" type="button" @click="showPeriodLockModal = false">Batal</BaseButton>
-          <BaseButton variant="primary" @click="handlePeriodLock">Kunci Periode</BaseButton>
         </div>
       </div>
     </BaseModal>
@@ -1511,6 +1974,117 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
             {{ assetImportLoading ? 'Sedang Import...' : 'Mulai Import' }}
           </BaseButton>
         </div>
+      </div>
+    </BaseModal>
+
+    <!-- Modal Tambah Akun COA -->
+    <BaseModal :show="showAddAccountModal" title="Tambah Akun COA Baru" @close="showAddAccountModal = false">
+      <form @submit.prevent="handleCreateAccount" class="space-y-4">
+        <div v-if="settings?.enable_sub_ledger" class="flex flex-col gap-1.5 w-full bg-violet-50 dark:bg-violet-900/10 p-3 rounded-xl border border-violet-100 dark:border-violet-900/20 mb-2">
+          <label class="text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest px-1">Jenis Pembuatan Akun</label>
+          <div class="flex gap-4 px-1 mt-1">
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="radio" v-model="newAccount.is_sub" :value="false" class="text-violet-600"> Akun Reguler
+            </label>
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="radio" v-model="newAccount.is_sub" :value="true" class="text-violet-600"> Sub-Rekening Kas/Bank
+            </label>
+          </div>
+        </div>
+
+        <template v-if="newAccount.is_sub && settings?.enable_sub_ledger">
+          <div class="flex gap-3">
+            <div class="w-1/2 flex flex-col gap-1.5">
+              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Induk Rekening</label>
+              <select v-model="newAccount.parent_code" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
+                <option value="101">101 - Kas Tunai</option>
+                <option value="102">102 - Bank</option>
+              </select>
+            </div>
+            <div class="w-1/2 flex flex-col gap-1.5">
+              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Akhiran (Suffix)</label>
+              <div class="flex items-center border border-slate-200 dark:border-zinc-800 rounded-lg overflow-hidden bg-white dark:bg-zinc-950">
+                <span class="bg-slate-100 dark:bg-zinc-900 px-3 py-2 text-sm text-slate-500 font-mono font-bold">{{ newAccount.parent_code }}.</span>
+                <input type="text" v-model="newAccount.sub_suffix" class="w-full px-2 py-2 text-sm bg-transparent text-slate-900 dark:text-zinc-100 outline-none font-mono" placeholder="01" maxlength="3" required />
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-3" v-if="newAccount.parent_code === '102'">
+            <div class="w-1/2 flex flex-col gap-1.5">
+              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Nomor Rekening</label>
+              <input type="text" v-model="newAccount.bank_account_number" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-600 transition-all font-mono" placeholder="Contoh: 1234567890" />
+            </div>
+            <div class="w-1/2 flex flex-col gap-1.5">
+              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Atas Nama</label>
+              <input type="text" v-model="newAccount.bank_account_name" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-600 transition-all" placeholder="Contoh: Yayasan Tursina" />
+            </div>
+          </div>
+          <p class="text-[10px] text-slate-400 px-1 -mt-2">Otomatis berjenis Aset (Harta).</p>
+        </template>
+        <template v-else>
+          <BaseInput v-model="newAccount.code" label="Kode Akun" placeholder="Contoh: 510" required />
+          <div class="flex flex-col gap-1.5 w-full">
+            <div class="flex items-center gap-1.5 px-1">
+              <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Tipe Klasifikasi</label>
+              <span title="Kategori dasar pembukuan akuntansi (COA) untuk pelaporan neraca keuangan dan laba/rugi.">
+                <Info :size="14" class="text-slate-400 cursor-help" />
+              </span>
+            </div>
+            <select v-model="newAccount.type" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10" required>
+              <option value="" disabled>Pilih Tipe</option>
+              <option value="asset">Aset (Harta)</option>
+              <option value="liability">Kewajiban (Hutang)</option>
+              <option value="equity">Ekuitas (Modal)</option>
+              <option value="revenue">Pendapatan</option>
+              <option value="expense">Beban (Pengeluaran)</option>
+            </select>
+            
+            <div v-if="newAccount.type === ''" class="text-[10px] text-slate-500 bg-slate-100/50 dark:bg-zinc-800/50 px-2.5 py-2 rounded-md mt-0.5 border border-slate-200 dark:border-zinc-700/50 italic">
+              Pilih salah satu tipe klasifikasi di atas untuk melihat penjelasannya.
+            </div>
+            
+            <div v-if="newAccount.type === 'asset'" class="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2.5 py-2 rounded-md mt-0.5 border border-blue-100 dark:border-blue-800/30">
+              <span class="font-bold">Aset (Harta):</span> Uang tunai, saldo bank, piutang, atau barang inventaris. Bertambah di Debit.
+            </div>
+            <div v-if="newAccount.type === 'liability'" class="text-[10px] text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2.5 py-2 rounded-md mt-0.5 border border-orange-100 dark:border-orange-800/30">
+              <span class="font-bold">Kewajiban (Hutang):</span> Hutang sekolah kepada pihak ketiga. Bertambah di Kredit.
+            </div>
+            <div v-if="newAccount.type === 'equity'" class="text-[10px] text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-2.5 py-2 rounded-md mt-0.5 border border-purple-100 dark:border-purple-800/30">
+              <span class="font-bold">Ekuitas (Modal):</span> Kekayaan bersih yayasan, modal awal, atau dana ditahan. Bertambah di Kredit.
+            </div>
+            <div v-if="newAccount.type === 'revenue'" class="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-2 rounded-md mt-0.5 border border-emerald-100 dark:border-emerald-800/30">
+              <span class="font-bold">Pendapatan:</span> Sumber penerimaan masuk seperti SPP, Uang Gedung, dll. Bertambah di Kredit.
+            </div>
+            <div v-if="newAccount.type === 'expense'" class="text-[10px] text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 px-2.5 py-2 rounded-md mt-0.5 border border-rose-100 dark:border-rose-800/30">
+              <span class="font-bold">Beban (Pengeluaran):</span> Pengeluaran rutin / biaya operasional seperti Listrik, Gaji, dll. Bertambah di Debit.
+            </div>
+          </div>
+        </template>
+
+        <BaseInput v-model="newAccount.name" label="Nama Akun" placeholder="Contoh: Biaya Transportasi atau Rekening BCA" required />
+
+        <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
+          <BaseButton type="button" variant="outline" @click="showAddAccountModal = false">Batal</BaseButton>
+          <BaseButton type="submit" variant="primary">Simpan Akun</BaseButton>
+        </div>
+      </form>
+    </BaseModal>
+
+    <!-- Modal: Konfirmasi Kunci / Buka Kunci Periode -->
+    <BaseModal :show="showConfirmLockModal" :title="confirmLockTitle" @close="showConfirmLockModal = false">
+      <div class="py-4">
+        <p class="text-sm text-slate-700 dark:text-zinc-300">{{ confirmLockMessage }}</p>
+      </div>
+      <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
+        <BaseButton type="button" variant="outline" @click="showConfirmLockModal = false">Batal</BaseButton>
+        <BaseButton type="button" variant="primary" @click="executeToggleLock">Ya, Lanjutkan</BaseButton>
+      </div>
+    </BaseModal>
+
+    <!-- Modal: Bukti Transfer -->
+    <BaseModal :show="showProofModal" title="Bukti Transfer" @close="showProofModal = false; proofImageUrl = ''" size="4xl">
+      <div class="flex justify-center items-center p-2 bg-slate-50 dark:bg-zinc-900 rounded-xl">
+        <img v-if="proofImageUrl" :src="`${proofImageUrl}?token=${authToken}`" class="w-full max-h-[85vh] object-contain rounded-xl shadow-sm" alt="Bukti Transfer" />
       </div>
     </BaseModal>
   </div>
