@@ -195,9 +195,13 @@ export const useFinancial = () => {
     }
   }
 
-  const fetchJournals = async (schoolId: string, page: number = 1, limit: number = 50) => {
+  const fetchJournals = async (schoolId: string, page = 1, limit = 50, startDate?: string, endDate?: string) => {
     try {
-      const res: any = await fetcher(`/school/${schoolId}/financial/journals?page=${page}&limit=${limit}`)
+      let query = `?page=${page}&limit=${limit}`
+      if (startDate) query += `&start_date=${startDate}`
+      if (endDate) query += `&end_date=${endDate}`
+      
+      const res: any = await fetcher(`/school/${schoolId}/financial/journals${query}`)
       if (res.success) {
         journalsList.value = res.data.data || []
         if (res.data.meta) {
@@ -337,8 +341,15 @@ export const useFinancial = () => {
     return fetcher(`/school/${schoolId}/financial/reports/balance-sheet`)
   }
 
-  const fetchIncomeStatement = async (schoolId: string) => {
-    return fetcher(`/school/${schoolId}/financial/reports/income-statement`)
+  const fetchIncomeStatement = async (schoolId: string, startDate?: string, endDate?: string) => {
+    let query = ''
+    if (startDate || endDate) {
+      const params = new URLSearchParams()
+      if (startDate) params.append('from', startDate)
+      if (endDate) params.append('to', endDate)
+      query = `?${params.toString()}`
+    }
+    return fetcher(`/school/${schoolId}/financial/reports/income-statement${query}`)
   }
 
   const fetchBOSReport = async (schoolId: string) => {

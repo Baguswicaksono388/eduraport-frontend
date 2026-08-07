@@ -170,7 +170,22 @@ const activeTab = ref('bills') // bills, journals, accounts, reports, assets, se
 const activeReportSubTab = ref('balance-sheet') // balance-sheet, income-statement, bos, foundation
 const journalCurrentPage = ref(1)
 const journalItemsPerPage = ref(50)
+const journalStartDate = ref('')
+const journalEndDate = ref('')
+const incomeStatementStartDate = ref('')
+const incomeStatementEndDate = ref('')
 const loading = ref(false)
+
+const openDatePicker = (e: Event) => {
+  try {
+    const target = e.target as HTMLInputElement
+    if (typeof target.showPicker === 'function') {
+      target.showPicker()
+    }
+  } catch (err) {
+    console.error('Browser does not support showPicker', err)
+  }
+}
 
 // Reports data states
 const balanceSheetData = ref<any>(null)
@@ -669,7 +684,7 @@ const loadReports = async (schoolId: string) => {
   try {
     const [bs, inc, bos] = await Promise.all([
       fetchBalanceSheet(schoolId),
-      fetchIncomeStatement(schoolId),
+      fetchIncomeStatement(schoolId, incomeStatementStartDate.value, incomeStatementEndDate.value),
       fetchBOSReport(schoolId)
     ])
     balanceSheetData.value = bs.data
@@ -694,7 +709,7 @@ const loadSchoolData = async (schoolId: string) => {
     
     await Promise.all([
       fetchAccounts(schoolId),
-      fetchJournals(schoolId, journalCurrentPage.value, journalItemsPerPage.value),
+      fetchJournals(schoolId, journalCurrentPage.value, journalItemsPerPage.value, journalStartDate.value, journalEndDate.value),
       fetchCategories(schoolId),
       fetchFeeCategories(schoolId),
       fetchAssets(schoolId),
@@ -778,9 +793,26 @@ const loadJournalsPage = async (page: number) => {
   journalCurrentPage.value = page
   loading.value = true
   try {
-    await fetchJournals(selectedSchoolId.value, journalCurrentPage.value, journalItemsPerPage.value)
+    await fetchJournals(selectedSchoolId.value, journalCurrentPage.value, journalItemsPerPage.value, journalStartDate.value, journalEndDate.value)
   } finally {
     loading.value = false
+  }
+}
+
+const applyJournalFilter = async () => {
+  journalCurrentPage.value = 1
+  await loadJournalsPage(1)
+}
+
+const applyIncomeStatementFilter = async () => {
+  if (selectedSchoolId.value) {
+    loading.value = true
+    try {
+      const inc = await fetchIncomeStatement(selectedSchoolId.value, incomeStatementStartDate.value, incomeStatementEndDate.value)
+      incomeStatementData.value = inc.data
+    } finally {
+      loading.value = false
+    }
   }
 }
 
@@ -788,7 +820,7 @@ const handlePaymentSuccess = () => {
   // refresh bills and journals
   if (selectedSchoolId.value) {
     fetchBills(selectedSchoolId.value)
-    fetchJournals(selectedSchoolId.value, journalCurrentPage.value, journalItemsPerPage.value)
+    fetchJournals(selectedSchoolId.value, journalCurrentPage.value, journalItemsPerPage.value, journalStartDate.value, journalEndDate.value)
   }
 }
 const handleGenerateSPP = async () => {
@@ -1211,6 +1243,35 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
 
         <!-- Tab Content 2: Jurnal Umum -->
         <div v-else-if="activeTab === 'journals'" class="space-y-4 animate-in fade-in duration-300">
+          <!-- Filter Tanggal Jurnal -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-2 shadow-sm gap-3">
+            <div class="flex items-center gap-3 pl-3 text-xs text-slate-500 dark:text-zinc-400 font-medium">
+              <Calendar class="w-4 h-4 text-violet-500 hidden sm:block" />
+              <span class="hidden sm:inline">Periode:</span>
+              <div class="flex items-center bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg overflow-hidden flex-1">
+                <input 
+                  type="date" 
+                  v-model="journalStartDate"
+                  @click="openDatePicker"
+                  class="bg-transparent border-none text-slate-700 dark:text-zinc-300 focus:ring-0 cursor-pointer w-full sm:w-[130px] text-[11px] font-bold py-2 px-3" 
+                />
+                <span class="text-slate-300 dark:text-zinc-600 font-bold px-1">-</span>
+                <input 
+                  type="date" 
+                  v-model="journalEndDate"
+                  @click="openDatePicker"
+                  class="bg-transparent border-none text-slate-700 dark:text-zinc-300 focus:ring-0 cursor-pointer w-full sm:w-[130px] text-[11px] font-bold py-2 px-3" 
+                />
+              </div>
+            </div>
+            <button 
+              @click="applyJournalFilter" 
+              class="w-full sm:w-auto bg-violet-50 hover:bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:hover:bg-violet-500/20 dark:text-violet-400 px-5 py-2 rounded-lg text-[11px] font-bold transition-colors flex items-center justify-center gap-2"
+            >
+              <Search class="w-3.5 h-3.5" /> Terapkan Filter
+            </button>
+          </div>
+
           <div v-if="journalsList.length === 0" class="py-16 text-center text-slate-400 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl">
             <Info class="mx-auto mb-2 text-violet-500 opacity-60" :size="30" />
             <p class="text-xs font-bold text-slate-700 dark:text-zinc-300">Jurnal Masih Kosong</p>
@@ -1475,7 +1536,36 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
           <BalanceSheetReport v-if="activeReportSubTab === 'balance-sheet'" :data="balanceSheetData" />
 
           <!-- SUBTAB 2: Laba/Rugi -->
-          <IncomeStatementReport v-else-if="activeReportSubTab === 'income-statement'" :data="incomeStatementData" />
+          <div v-else-if="activeReportSubTab === 'income-statement'" class="space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-2 shadow-sm gap-3">
+              <div class="flex items-center gap-3 pl-3 text-xs text-slate-500 dark:text-zinc-400 font-medium">
+                <Calendar class="w-4 h-4 text-violet-500 hidden sm:block" />
+                <span class="hidden sm:inline">Periode:</span>
+                <div class="flex items-center bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg overflow-hidden flex-1">
+                  <input 
+                    type="date" 
+                    v-model="incomeStatementStartDate"
+                    @click="openDatePicker"
+                    class="bg-transparent border-none text-slate-700 dark:text-zinc-300 focus:ring-0 cursor-pointer w-full sm:w-[130px] text-[11px] font-bold py-2 px-3" 
+                  />
+                  <span class="text-slate-300 dark:text-zinc-600 font-bold px-1">-</span>
+                  <input 
+                    type="date" 
+                    v-model="incomeStatementEndDate"
+                    @click="openDatePicker"
+                    class="bg-transparent border-none text-slate-700 dark:text-zinc-300 focus:ring-0 cursor-pointer w-full sm:w-[130px] text-[11px] font-bold py-2 px-3" 
+                  />
+                </div>
+              </div>
+              <button 
+                @click="applyIncomeStatementFilter" 
+                class="w-full sm:w-auto bg-violet-50 hover:bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:hover:bg-violet-500/20 dark:text-violet-400 px-5 py-2 rounded-lg text-[11px] font-bold transition-colors flex items-center justify-center gap-2"
+              >
+                <Search class="w-3.5 h-3.5" /> Terapkan Filter
+              </button>
+            </div>
+            <IncomeStatementReport :data="incomeStatementData" />
+          </div>
 
           <!-- SUBTAB 3: Laporan BOS -->
           <BosK7aReport v-else-if="activeReportSubTab === 'bos'" :data="bosReportData" />
