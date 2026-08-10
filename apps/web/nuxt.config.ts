@@ -51,7 +51,9 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    '/api/v1/**': { proxy: 'http://127.0.0.1:3000/api/v1/**' }
+    '/api/v1/**': { proxy: 'http://127.0.0.1:3000/api/v1/**' },
+    '/uploads/**': { proxy: 'http://127.0.0.1:3000/uploads/**' },
+    '/ai-images/**': { proxy: 'http://127.0.0.1:3000/ai-images/**' }
   },
   
   css: ['./app/assets/css/main.css'],

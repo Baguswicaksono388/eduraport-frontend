@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange, Smartphone, Settings } from 'lucide-vue-next'
+import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange, Smartphone, Settings, Sparkles } from 'lucide-vue-next'
 import { BaseModal, BaseButton, BaseInput } from '@eduraport/ui'
 import { useAuth } from '../composables/useAuth'
 import { useToast } from '../composables/useToast'
@@ -102,6 +102,7 @@ const menuGroups = computed(() => {
       { to: '/academic-year', label: 'Tahun Ajaran', icon: Calendar, access: '/academic-year' },
       { to: '/class', label: 'Data Kelas', icon: LayoutGrid, access: '/class' },
       { to: '/subject', label: 'Mata Pelajaran', icon: BookOpen, access: '/subject' },
+      { to: '/kurikulum', label: 'Manajemen Kurikulum', icon: BookOpen, access: '/subject' },
       { to: '/extracurricular', label: 'Ekstrakurikuler', icon: Trophy, access: '/extracurricular' }
     ]
   },
@@ -127,6 +128,7 @@ const menuGroups = computed(() => {
   {
     title: 'Akademik & Penilaian',
     items: [
+      { to: '/ai-asisten', label: 'AI Asisten Guru', icon: Sparkles, access: '/gradebook', customClass: 'text-violet-400 hover:text-violet-300 hover:bg-violet-900/30' },
       { to: '/gradebook/scheme', label: 'Skema Penilaian', icon: FileSpreadsheet, access: '/gradebook' },
       { to: '/gradebook/input', label: 'Input Nilai', icon: ClipboardCheck, access: '/gradebook' },
       { to: '/gradebook/analytics', label: 'Analitik & Rekap', icon: BarChart3, access: '/gradebook' },

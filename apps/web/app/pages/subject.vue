@@ -53,18 +53,29 @@ const editForm = reactive({
   is_active: true
 })
 
+watch(selectedFoundationId, async (newVal) => {
+  if (!newVal || isSchoolLocked.value) return
+  await fetchSchools(newVal)
+  selectedSchoolId.value = filteredSchools.value.length > 0 ? filteredSchools.value[0].id : ''
+})
+
 onMounted(async () => {
-  const schoolId = await initContext()
-  if (schoolId) {
-    await fetchSubjects(schoolId, page.value, itemPerPage.value, typeFilter.value || undefined)
-    const school = schools.value.find(s => s.id === schoolId)
+  await initContext()
+  
+  // Jika sekolah yang terpilih di context (cookie) adalah TK (difilter),
+  // paksa pindah ke sekolah pertama yang valid.
+  if (filteredSchools.value.length > 0 && !filteredSchools.value.find(s => s.id === selectedSchoolId.value)) {
+    selectedSchoolId.value = filteredSchools.value[0].id
+  }
+
+  if (selectedSchoolId.value) {
+    await fetchSubjects(selectedSchoolId.value, page.value, itemPerPage.value, typeFilter.value || undefined)
+    const school = filteredSchools.value.find(s => s.id === selectedSchoolId.value)
     if (school && school.curriculum_id) {
       await fetchCurriculumCategories(school.curriculum_id)
     }
   }
 })
-
-watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {
