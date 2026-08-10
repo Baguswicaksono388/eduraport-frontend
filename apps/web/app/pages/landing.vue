@@ -15,6 +15,12 @@ onMounted(async () => {
 
 const features = [
   {
+    icon: '✨',
+    title: 'AI Asisten Guru (Baru!)',
+    desc: 'Generate Modul Ajar/RPP, Soal Evaluasi, Materi Ajar berilustrasi, hingga Bahan Tayang PPT dalam hitungan detik. Konteks CP/TP otomatis dari kurikulum — guru tidak perlu mengetik ulang.',
+    color: 'ai'
+  },
+  {
     icon: '📋',
     title: 'E-Raport Fleksibel',
     desc: 'Generate raport PDF otomatis untuk semua jenjang. Mendukung format Kurikulum Merdeka, K-13, hingga kurikulum pesantren dan internasional.',
@@ -64,7 +70,7 @@ const features = [
   },
   {
     icon: '💬',
-    title: 'WhatsApp Gateway (Baru)',
+    title: 'WhatsApp Gateway',
     desc: 'Kirim notifikasi tagihan, nilai, dan pengumuman otomatis via WhatsApp ke orang tua dan grup kelas. Dilengkapi sistem anti-ban, smart routing, dan multi-device.',
     color: 'blue'
   }
@@ -87,7 +93,7 @@ const personas = [
 
 const stats = [
   { value: '5+', label: 'Jenjang Pendidikan', icon: '🏫' },
-  { value: '14', label: 'Widget Desainer Rapor', icon: '🎨' },
+  { value: '4', label: 'Jenis Dokumen AI', icon: '✨' },
   { value: '10+', label: 'Format Penilaian', icon: '📊' },
   { value: '100%', label: 'Berbasis Cloud', icon: '☁️' }
 ]
@@ -101,14 +107,16 @@ const curriculums = [
 ]
 
 const comparisons = [
+  { feature: 'Generate RPP/Modul Ajar AI otomatis', eduraport: true, competitor: false },
+  { feature: 'Konteks CP/TP otomatis dari kurikulum', eduraport: true, competitor: false },
+  { feature: 'Hasil AI tersimpan & terelasi di DB', eduraport: true, competitor: false },
+  { feature: 'Bank Materi sekolah lintas tahun', eduraport: true, competitor: false },
+  { feature: 'Soal AI terhubung ke penilaian riil', eduraport: true, competitor: false },
   { feature: 'E-Raport TK/PAUD mendalam', eduraport: true, competitor: false },
   { feature: 'Narasi otomatis & multi-skala', eduraport: true, competitor: false },
   { feature: 'Desainer rapor visual drag-drop', eduraport: true, competitor: false },
   { feature: 'Manajemen keuangan terintegrasi', eduraport: true, competitor: false },
-  { feature: 'PPDB Online terintegrasi', eduraport: true, competitor: false },
-  { feature: 'Perizinan guru & pengganti cerdas', eduraport: true, competitor: false },
   { feature: 'Yayasan multi-unit (TK+SD+SMP+SMA)', eduraport: true, competitor: false },
-  { feature: 'Portal orang tua real-time', eduraport: true, competitor: false },
   { feature: 'Notifikasi WA pintar (Anti-Ban & Grup)', eduraport: true, competitor: false },
 ]
 
@@ -500,6 +508,213 @@ const chartHeights = [65,80,55,90,70,85,60,95]
             <h3 class="fc-title">{{ f.title }}</h3>
             <p class="fc-desc">{{ f.desc }}</p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ✨ AI ASISTEN GURU SHOWCASE -->
+    <section id="ai-asisten" class="section ai-showcase-section">
+      <div class="container">
+        <!-- Badge + header -->
+        <div class="section-header">
+          <div class="section-badge ai-badge">✨ Fitur Terbaru · AI Asisten Guru</div>
+          <h2 class="section-title">
+            Generate Perangkat Ajar<br>
+            <span class="gradient-text-ai">dalam Hitungan Detik</span>
+          </h2>
+          <p class="section-sub">
+            Modul Ajar/RPP, Soal Evaluasi + Rubrik, Materi Ajar berilustrasi, dan Bahan Tayang PPT —
+            semuanya dihasilkan AI dengan konteks kurikulum otomatis dari sistem. Tidak perlu mengetik ulang.
+          </p>
+        </div>
+
+        <!-- Two-column: mockup + feature list -->
+        <div class="ai-showcase-grid">
+          <!-- LEFT: Animated AI Generate Mockup -->
+          <div class="ai-mockup-wrap">
+            <div class="ai-mockup-window">
+              <div class="ai-mockup-bar">
+                <span class="dot red" /><span class="dot yellow" /><span class="dot green" />
+                <span class="ai-mockup-url">app.eduraport.id/ai-asisten</span>
+                <span class="ai-badge-pill">✨ AI</span>
+              </div>
+              <div class="ai-mockup-body">
+                <!-- Step 1 type selector -->
+                <div class="ai-type-row">
+                  <div class="ai-type-chip active">📄 Modul Ajar/RPP</div>
+                  <div class="ai-type-chip">📝 Soal/Kuis</div>
+                  <div class="ai-type-chip">📖 Materi Ajar</div>
+                  <div class="ai-type-chip">🎞️ Bahan Tayang PPT</div>
+                </div>
+                <!-- Context fields (auto-filled) -->
+                <div class="ai-field-group">
+                  <div class="ai-field-label">Mata Pelajaran</div>
+                  <div class="ai-field-value">Matematika — Kelas 4 SD</div>
+                </div>
+                <div class="ai-field-group">
+                  <div class="ai-field-label">Tujuan Pembelajaran <span class="ai-auto-badge">✨ otomatis dari kurikulum</span></div>
+                  <div class="ai-field-value ai-tp-value">[Bilangan] 4.1 - Peserta didik mampu memahami pecahan senilai menggunakan representasi garis bilangan…</div>
+                </div>
+                <div class="ai-field-group">
+                  <div class="ai-field-label">Topik Spesifik</div>
+                  <div class="ai-field-value">Pecahan Senilai dengan Garis Bilangan</div>
+                </div>
+                <!-- Generate button -->
+                <div class="ai-mockup-btn">
+                  <span class="ai-spin">◌</span>
+                  <span>AI sedang menyusun Modul Ajar…</span>
+                </div>
+                <!-- Result preview -->
+                <div class="ai-result-preview">
+                  <div class="ai-result-header">
+                    <span class="ai-result-type">📄 Modul Ajar — DRAFT AI</span>
+                    <span class="ai-result-status">✅ Tersimpan</span>
+                  </div>
+                  <div class="ai-result-section">
+                    <div class="ai-result-label">Capaian Pembelajaran</div>
+                    <div class="ai-result-text">Peserta didik mampu memahami pecahan senilai menggunakan representasi berbagai model konkret…</div>
+                  </div>
+                  <div class="ai-result-section">
+                    <div class="ai-result-label">Langkah Pembelajaran</div>
+                    <div class="ai-result-steps">
+                      <div>🟢 Pendahuluan: Apersepsi, motivasi, orientasi masalah</div>
+                      <div>🔵 Inti: Eksplorasi, elaborasi, konfirmasi (PBL)</div>
+                      <div>🟡 Penutup: Refleksi, asesmen formatif, tindak lanjut</div>
+                    </div>
+                  </div>
+                  <div class="ai-result-actions">
+                    <button class="ai-action-btn">✏️ Edit</button>
+                    <button class="ai-action-btn">📄 Word</button>
+                    <button class="ai-action-btn">📑 PDF</button>
+                    <button class="ai-action-btn primary">✨ Lanjut Buat Soal…</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Floating badge -->
+            <div class="ai-float-badge">
+              <span>⚡</span>
+              <div>
+                <div class="ai-float-title">Tersimpan otomatis</div>
+                <div class="ai-float-sub">ke Bank Materi Sekolah</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Feature points -->
+          <div class="ai-features-list">
+            <div class="ai-feature-item">
+              <div class="ai-feat-icon">🧠</div>
+              <div>
+                <div class="ai-feat-title">Konteks Kurikulum Otomatis</div>
+                <div class="ai-feat-desc">CP, TP, Dimensi Profil Pelajar Pancasila, dan alokasi waktu diambil langsung dari sistem — guru hanya memilih topik dan klik Generate.</div>
+              </div>
+            </div>
+            <div class="ai-feature-item">
+              <div class="ai-feat-icon">🔗</div>
+              <div>
+                <div class="ai-feat-title">Hasil Tersimpan & Terelasi</div>
+                <div class="ai-feat-desc">Setiap dokumen AI tersimpan di database, terhubung ke guru, mapel, kelas, dan TP. Bukan file terpisah yang hilang — melainkan bank materi sekolah yang hidup.</div>
+              </div>
+            </div>
+            <div class="ai-feature-item">
+              <div class="ai-feat-icon">📊</div>
+              <div>
+                <div class="ai-feat-title">Soal AI → Penilaian Riil</div>
+                <div class="ai-feat-desc">Soal Evaluasi + Rubrik yang di-generate dapat ditautkan langsung ke Assessment Scheme — menjadi instrumen penilaian nyata, bukan dokumen lepas.</div>
+              </div>
+            </div>
+            <div class="ai-feature-item">
+              <div class="ai-feat-icon">♻️</div>
+              <div>
+                <div class="ai-feat-title">Bank Materi Lintas Tahun</div>
+                <div class="ai-feat-desc">Guru paralel kelas 4A bisa memakai modul kelas 4B. Duplikasi satu klik ke kelas berbeda. Materi tetap ada meski guru berpindah.</div>
+              </div>
+            </div>
+            <div class="ai-feature-item">
+              <div class="ai-feat-icon">🛡️</div>
+              <div>
+                <div class="ai-feat-title">Privasi & Kuota Terkontrol</div>
+                <div class="ai-feat-desc">Data siswa tidak pernah melewati provider AI gratis. Kuota generate harian per guru dikonfigurasi admin. Biaya transparan & terkontrol.</div>
+              </div>
+            </div>
+            <div class="ai-feature-item">
+              <div class="ai-feat-icon">🎨</div>
+              <div>
+                <div class="ai-feat-title">PPT Adaptif per Jenjang</div>
+                <div class="ai-feat-desc">AI memilih tema visual PPT otomatis: Playful untuk SD, Saintifik untuk IPA/Matematika, Modern untuk SMK. Bukan template yang selalu sama.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Document types showcase -->
+        <div class="ai-doc-types">
+          <div class="ai-doc-type-card">
+            <div class="ai-doc-icon">📄</div>
+            <div class="ai-doc-name">Modul Ajar / RPP</div>
+            <div class="ai-doc-desc">Identitas, CP/TP, langkah pembelajaran (PBL/PjBL/dll), asesmen formatif & sumatif, LKPD, bahan bacaan</div>
+            <div class="ai-doc-export">Word · PDF</div>
+          </div>
+          <div class="ai-doc-type-card">
+            <div class="ai-doc-icon">📝</div>
+            <div class="ai-doc-name">Soal Evaluasi + Rubrik</div>
+            <div class="ai-doc-desc">Kisi-kisi, PG + esai HOTS, kunci jawaban, rubrik penilaian per kriteria, sinkron dengan penilaian</div>
+            <div class="ai-doc-export">Word · PDF</div>
+          </div>
+          <div class="ai-doc-type-card">
+            <div class="ai-doc-icon">📖</div>
+            <div class="ai-doc-name">Materi Ajar Berilustrasi</div>
+            <div class="ai-doc-desc">Ringkasan, sub-bab terstruktur, ilustrasi AI per sub-bab, mudah dipahami siswa segala jenjang</div>
+            <div class="ai-doc-export">Word · PDF</div>
+          </div>
+          <div class="ai-doc-type-card">
+            <div class="ai-doc-icon">🎞️</div>
+            <div class="ai-doc-name">Bahan Tayang PPT</div>
+            <div class="ai-doc-desc">Slide struktural + catatan pembicara, ilustrasi visual per slide, tema adaptif per mapel & jenjang</div>
+            <div class="ai-doc-export">Download PPTX</div>
+          </div>
+        </div>
+
+        <!-- VS comparison -->
+        <div class="ai-vs-wrap">
+          <div class="ai-vs-label">EduRaport AI vs Aplikasi Generate Lepas</div>
+          <div class="ai-vs-grid">
+            <div class="ai-vs-header">
+              <div>Aspek</div>
+              <div class="ai-vs-col-edu">EduRaport AI</div>
+              <div class="ai-vs-col-other">Aplikasi Lepas</div>
+            </div>
+            <div class="ai-vs-row">
+              <div>Konteks CP/TP</div>
+              <div class="ai-vs-yes">✅ Otomatis dari sistem</div>
+              <div class="ai-vs-no">❌ Ketik manual tiap kali</div>
+            </div>
+            <div class="ai-vs-row">
+              <div>Penyimpanan hasil</div>
+              <div class="ai-vs-yes">✅ DB terelasi</div>
+              <div class="ai-vs-no">❌ Download lalu lepas</div>
+            </div>
+            <div class="ai-vs-row">
+              <div>Pemakaian ulang</div>
+              <div class="ai-vs-yes">✅ Bank materi sekolah</div>
+              <div class="ai-vs-no">❌ Tidak ada</div>
+            </div>
+            <div class="ai-vs-row">
+              <div>Soal → Penilaian</div>
+              <div class="ai-vs-yes">✅ Tertaut langsung</div>
+              <div class="ai-vs-no">❌ Terputus</div>
+            </div>
+            <div class="ai-vs-row">
+              <div>Konsistensi kurikulum</div>
+              <div class="ai-vs-yes">✅ Terikat TP & update kurikulum</div>
+              <div class="ai-vs-no">❌ Manual</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align:center; margin-top: 40px;">
+          <a href="/login" class="btn-hero-primary">✨ Coba AI Asisten Guru Gratis →</a>
         </div>
       </div>
     </section>
@@ -1673,6 +1888,8 @@ const chartHeights = [65,80,55,90,70,85,60,95]
   .price-card.featured:hover { transform: translateY(-4px); }
   .two-col { grid-template-columns: 1fr; }
   .personas-grid { grid-template-columns: repeat(3, 1fr); }
+  .ai-showcase-grid { grid-template-columns: 1fr; }
+  .ai-doc-types { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 768px) {
   .nav-links, .nav-cta { display: none; }
@@ -1689,6 +1906,7 @@ const chartHeights = [65,80,55,90,70,85,60,95]
   .preview-sidebar { display: none; }
   .hero-title { letter-spacing: -1px; }
   .cta-actions { flex-direction: column; align-items: center; }
+  .ai-vs-grid { font-size: 12px; }
 }
 @media (max-width: 480px) {
   .features-grid { grid-template-columns: 1fr; }
@@ -1697,5 +1915,242 @@ const chartHeights = [65,80,55,90,70,85,60,95]
   .pricing-note { flex-direction: column; gap: 8px; }
   .hero-trust { flex-direction: column; gap: 8px; }
   .curriculum-tags { flex-direction: column; align-items: flex-start; }
+  .ai-doc-types { grid-template-columns: 1fr; }
 }
+
+/* ───────────────────────────────────────────── */
+/* AI FEATURE CARD (in features grid)           */
+/* ───────────────────────────────────────────── */
+.fc-ai {
+  background: linear-gradient(135deg, rgba(124,58,237,0.12) 0%, rgba(236,72,153,0.08) 100%);
+  border: 1px solid rgba(167,139,250,0.35);
+  position: relative;
+  overflow: hidden;
+}
+.fc-ai::before {
+  content: 'NEW';
+  position: absolute;
+  top: 12px; right: 12px;
+  font-size: 9px; font-weight: 900;
+  letter-spacing: 1.5px;
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+.fc-ai .fc-icon { font-size: 2rem; }
+.fc-ai .fc-title { color: #d8b4fe; }
+.gradient-text-ai {
+  background: linear-gradient(135deg, #a78bfa, #f472b6, #fb923c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ───────────────────────────────────────────── */
+/* AI SHOWCASE SECTION                          */
+/* ───────────────────────────────────────────── */
+.ai-showcase-section {
+  background: linear-gradient(180deg, #060614 0%, #0c0c20 50%, #060614 100%);
+  position: relative;
+  overflow: hidden;
+}
+.ai-showcase-section::before {
+  content: '';
+  position: absolute;
+  top: -100px; left: 50%;
+  transform: translateX(-50%);
+  width: 800px; height: 400px;
+  background: radial-gradient(ellipse, rgba(124,58,237,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.ai-badge {
+  background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(236,72,153,0.15));
+  border: 1px solid rgba(167,139,250,0.4);
+  color: #c4b5fd;
+}
+.ai-showcase-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: start;
+  margin-top: 48px;
+}
+
+/* Mockup window */
+.ai-mockup-wrap { position: relative; }
+.ai-mockup-window {
+  background: #0d0d1a;
+  border: 1px solid rgba(167,139,250,0.2);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(124,58,237,0.2);
+}
+.ai-mockup-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 14px;
+  background: #0a0a16;
+  border-bottom: 1px solid rgba(167,139,250,0.1);
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.dot.red { background: #f43f5e; }
+.dot.yellow { background: #f59e0b; }
+.dot.green { background: #10b981; }
+.ai-mockup-url { font-size: 11px; color: #52525b; margin: 0 8px; flex: 1; text-align: center; }
+.ai-badge-pill {
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  color: #fff; font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 12px;
+}
+.ai-mockup-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+/* Type chips */
+.ai-type-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.ai-type-chip {
+  font-size: 11px; font-weight: 600;
+  padding: 4px 10px; border-radius: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #71717a; cursor: pointer;
+}
+.ai-type-chip.active {
+  background: rgba(124,58,237,0.2);
+  border-color: rgba(167,139,250,0.4);
+  color: #c4b5fd;
+}
+
+/* Form fields in mockup */
+.ai-field-group { display: flex; flex-direction: column; gap: 3px; }
+.ai-field-label { font-size: 10px; font-weight: 700; color: #71717a; display: flex; align-items: center; gap: 6px; }
+.ai-auto-badge {
+  font-size: 9px; font-weight: 700;
+  background: rgba(167,139,250,0.15);
+  color: #a78bfa; padding: 1px 6px; border-radius: 4px;
+}
+.ai-field-value {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px; color: #d4d4d8;
+}
+.ai-tp-value { font-size: 10px; color: #a78bfa; border-color: rgba(167,139,250,0.2); background: rgba(124,58,237,0.06); }
+
+/* Loading button */
+.ai-mockup-btn {
+  display: flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  color: #fff; font-size: 12px; font-weight: 700;
+  padding: 10px 16px; border-radius: 8px;
+  justify-content: center;
+}
+.ai-spin {
+  animation: spin 1.2s linear infinite;
+  display: inline-block; font-size: 14px;
+}
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Result preview */
+.ai-result-preview {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(167,139,250,0.15);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.ai-result-header { display: flex; justify-content: space-between; align-items: center; }
+.ai-result-type { font-size: 11px; font-weight: 700; color: #a78bfa; }
+.ai-result-status { font-size: 10px; font-weight: 700; color: #10b981; background: rgba(16,185,129,0.1); padding: 2px 8px; border-radius: 4px; }
+.ai-result-section { display: flex; flex-direction: column; gap: 4px; }
+.ai-result-label { font-size: 9px; font-weight: 800; color: #52525b; text-transform: uppercase; letter-spacing: 0.5px; }
+.ai-result-text { font-size: 10px; color: #d4d4d8; line-height: 1.5; }
+.ai-result-steps { display: flex; flex-direction: column; gap: 3px; font-size: 10px; color: #a1a1aa; }
+.ai-result-actions { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px; }
+.ai-action-btn {
+  font-size: 10px; font-weight: 700;
+  padding: 4px 10px; border-radius: 6px; border: none; cursor: pointer;
+  background: rgba(255,255,255,0.06); color: #a1a1aa;
+}
+.ai-action-btn.primary { background: linear-gradient(135deg, #7c3aed, #ec4899); color: #fff; }
+
+/* Floating badge */
+.ai-float-badge {
+  position: absolute; bottom: -16px; right: -16px;
+  display: flex; align-items: center; gap: 10px;
+  background: linear-gradient(135deg, rgba(124,58,237,0.9), rgba(79,70,229,0.9));
+  border: 1px solid rgba(167,139,250,0.4);
+  border-radius: 12px;
+  padding: 10px 16px;
+  backdrop-filter: blur(8px);
+  font-size: 22px;
+  box-shadow: 0 8px 24px rgba(124,58,237,0.3);
+}
+.ai-float-title { font-size: 12px; font-weight: 700; color: #fff; }
+.ai-float-sub { font-size: 10px; color: rgba(255,255,255,0.7); }
+
+/* Feature list */
+.ai-features-list { display: flex; flex-direction: column; gap: 24px; padding-top: 8px; }
+.ai-feature-item { display: flex; gap: 14px; align-items: flex-start; }
+.ai-feat-icon {
+  font-size: 22px; width: 44px; height: 44px;
+  background: rgba(124,58,237,0.1); border: 1px solid rgba(167,139,250,0.2);
+  border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ai-feat-title { font-size: 15px; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; }
+.ai-feat-desc { font-size: 13px; color: #64748b; line-height: 1.6; }
+
+/* Document types */
+.ai-doc-types {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  margin-top: 56px;
+}
+.ai-doc-type-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px; padding: 20px;
+  display: flex; flex-direction: column; gap: 8px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.ai-doc-type-card:hover { border-color: rgba(167,139,250,0.3); transform: translateY(-4px); }
+.ai-doc-icon { font-size: 28px; }
+.ai-doc-name { font-size: 14px; font-weight: 700; color: #e2e8f0; }
+.ai-doc-desc { font-size: 12px; color: #475569; line-height: 1.6; flex: 1; }
+.ai-doc-export {
+  font-size: 11px; font-weight: 700; color: #7c3aed;
+  background: rgba(124,58,237,0.1); border-radius: 6px;
+  padding: 4px 10px; display: inline-block; width: fit-content;
+}
+
+/* VS Comparison */
+.ai-vs-wrap { margin-top: 56px; }
+.ai-vs-label {
+  text-align: center; font-size: 18px; font-weight: 800;
+  color: #e2e8f0; margin-bottom: 20px;
+}
+.ai-vs-grid {
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px; overflow: hidden;
+  font-size: 14px;
+}
+.ai-vs-header {
+  display: grid; grid-template-columns: 2fr 2fr 2fr;
+  background: rgba(124,58,237,0.1);
+  padding: 12px 20px; font-weight: 800;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  color: #c4b5fd;
+}
+.ai-vs-row {
+  display: grid; grid-template-columns: 2fr 2fr 2fr;
+  padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);
+  align-items: center; color: #94a3b8;
+  transition: background 0.15s;
+}
+.ai-vs-row:hover { background: rgba(255,255,255,0.02); }
+.ai-vs-row:last-child { border-bottom: none; }
+.ai-vs-yes { color: #10b981; font-weight: 600; }
+.ai-vs-no { color: #ef4444; font-weight: 600; }
+.ai-vs-col-edu { color: #a78bfa; }
+.ai-vs-col-other { color: #71717a; }
+
 </style>
