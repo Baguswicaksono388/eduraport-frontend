@@ -14,23 +14,23 @@ export const ROLES = {
 
 // Route-to-roles mapping (menu visibility)
 export const ROUTE_ROLES: Record<string, string[]> = {
-  '/dashboard':    ['super_admin', 'principal', 'vice_principal_curriculum', 'treasurer'],
-  '/teacher':      ['super_admin', 'principal', 'tu'],
-  '/student':      ['super_admin', 'principal', 'teacher', 'tu'],
-  '/class':        ['super_admin', 'principal', 'vice_principal_curriculum', 'tu', 'teacher'],
-  '/schedule':     ['super_admin', 'principal', 'vice_principal_curriculum', 'tu', 'teacher'],
-  '/subject':      ['super_admin', 'principal', 'vice_principal_curriculum', 'teacher', 'tu'],
-  '/gradebook':    ['super_admin', 'principal', 'vice_principal_curriculum', 'teacher'],
-  '/homeroom':     ['super_admin', 'principal', 'teacher', 'tu'],
-  '/leave':        ['super_admin', 'principal', 'teacher', 'tu'],
-  '/report':       ['super_admin', 'principal', 'teacher'],
-  '/financial':    ['super_admin', 'principal', 'treasurer', 'tu'],
-  '/ppdb':         ['super_admin', 'principal', 'tu'],
-  '/wa':           ['super_admin', 'principal', 'tu'],
-  '/school':       ['super_admin', 'principal'],
-  '/academic-year':['super_admin', 'principal'],
-  '/attendance-settings': ['super_admin', 'principal', 'tu'],
-  '/extracurricular': ['super_admin', 'principal', 'tu', 'teacher']
+  '/dashboard':    ['super_admin', 'principal', 'vice_principal_curriculum', 'treasurer', 'user'],
+  '/teacher':      ['super_admin', 'principal', 'tu', 'user'],
+  '/student':      ['super_admin', 'principal', 'teacher', 'tu', 'user'],
+  '/class':        ['super_admin', 'principal', 'vice_principal_curriculum', 'tu', 'teacher', 'user'],
+  '/schedule':     ['super_admin', 'principal', 'vice_principal_curriculum', 'tu', 'teacher', 'user'],
+  '/subject':      ['super_admin', 'principal', 'vice_principal_curriculum', 'teacher', 'tu', 'user'],
+  '/gradebook':    ['super_admin', 'principal', 'vice_principal_curriculum', 'teacher', 'user'],
+  '/homeroom':     ['super_admin', 'principal', 'teacher', 'tu', 'user'],
+  '/leave':        ['super_admin', 'principal', 'teacher', 'tu', 'user'],
+  '/report':       ['super_admin', 'principal', 'teacher', 'user'],
+  '/financial':    ['super_admin', 'principal', 'treasurer', 'tu', 'user'],
+  '/ppdb':         ['super_admin', 'principal', 'tu', 'user'],
+  '/wa':           ['super_admin', 'principal', 'tu', 'user'],
+  '/school':       ['super_admin', 'principal', 'user'],
+  '/academic-year':['super_admin', 'principal', 'user'],
+  '/attendance-settings': ['super_admin', 'principal', 'tu', 'user'],
+  '/extracurricular': ['super_admin', 'principal', 'tu', 'teacher', 'user']
 }
 
 export const useRbac = () => {
@@ -48,8 +48,8 @@ export const useRbac = () => {
     return hasRole(...allowed)
   }
 
-  const isAdmin = computed(() => hasRole('super_admin', 'principal', 'tu'))
-  const isManagement = computed(() => hasRole('super_admin', 'principal'))
+  const isAdmin = computed(() => hasRole('super_admin', 'principal', 'tu', 'user'))
+  const isManagement = computed(() => hasRole('super_admin', 'principal', 'user'))
   const isTeacher = computed(() => hasRole('teacher'))
   const isTreasurer = computed(() => hasRole('treasurer'))
   const isWaAdmin = computed(() => hasRole('super_admin', 'principal', 'tu'))

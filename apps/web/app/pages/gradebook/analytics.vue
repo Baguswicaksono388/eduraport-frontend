@@ -68,16 +68,33 @@ onMounted(async () => {
 
 const loadSchoolData = async (schoolId: string) => {
   await Promise.all([
-    fetchClasses(schoolId),
     fetchAcademicYears(schoolId)
   ])
-  const activeYear = academicYears.value.find(y => y.is_active)
+  const activeYear = academicYears.value.find((y: any) => y.is_active)
   if (activeYear) {
     selectedAcademicYearId.value = activeYear.id
   } else if (academicYears.value.length > 0) {
     selectedAcademicYearId.value = academicYears.value[0].id
   }
+
+  if (selectedAcademicYearId.value) {
+    await fetchClasses(schoolId, selectedAcademicYearId.value)
+  } else {
+    await fetchClasses(schoolId)
+  }
 }
+
+watch(selectedAcademicYearId, async (newYearId, oldYearId) => {
+  if (newYearId !== oldYearId && newYearId && selectedSchoolId.value) {
+    await fetchClasses(selectedSchoolId.value, newYearId)
+    if (selectedClassId.value) {
+      const classExists = classes.value.find((c: any) => c.id === selectedClassId.value)
+      if (!classExists) {
+        selectedClassId.value = ''
+      }
+    }
+  }
+})
 
 watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
