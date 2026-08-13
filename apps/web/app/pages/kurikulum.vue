@@ -413,16 +413,6 @@ const confirmDeleteOutcome = async (tp: LearningOutcome) => {
 
 <style scoped>
 .kurikulum-page {
-  --bg: #0e0e13;
-  --panel: #1a1a22;
-  --panel2: #20202a;
-  --line: #2b2b37;
-  --text: #e9e9f1;
-  --muted: #8f8fa3;
-  --muted2: #6c6c7e;
-  --vio: #8b5cf6;
-  --blue: #5ca8f4;
-  --red: #f4645c;
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);

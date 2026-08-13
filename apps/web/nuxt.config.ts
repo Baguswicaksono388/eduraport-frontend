@@ -75,6 +75,7 @@ export default defineNuxtConfig({
 
   tailwindcss: {
     config: {
+      darkMode: 'class',
       content: [
         './app/**/*.{vue,js,ts}',
         '../../packages/ui/src/**/*.{vue,js,ts}',

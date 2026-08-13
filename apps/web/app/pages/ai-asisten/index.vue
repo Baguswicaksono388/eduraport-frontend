@@ -1307,23 +1307,6 @@ function showToast(msg: string) {
 <style scoped>
 /* ─── Variables ─────────────────────────────────────────────────────────── */
 .ai-asisten-page {
-  --bg: #0e0e13;
-  --panel: #1a1a22;
-  --panel2: #20202a;
-  --line: #2b2b37;
-  --text: #e9e9f1;
-  --muted: #8f8fa3;
-  --muted2: #6c6c7e;
-  --vio: #8b5cf6;
-  --vio-strong: #7c4dff;
-  --vio-soft: rgba(139,92,246,.14);
-  --green: #2dd4a7;
-  --green-soft: rgba(45,212,167,.13);
-  --red: #f4645c;
-  --amber: #f5b04c;
-  --amber-soft: rgba(245,176,76,.13);
-  --blue: #5ca8f4;
-  --r: 12px;
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
@@ -1513,18 +1496,13 @@ function showToast(msg: string) {
   font: inherit;
   font-size: 12.5px;
   font-weight: 600;
-  background: #101017;
+  background: var(--bg);
   border: 1px solid var(--line);
   color: var(--text);
   border-radius: 9px;
   padding: 9px 11px;
-  color-scheme: dark;
 }
-.field-input option {
-  background: #1a1a22;
-  color: #e9e9f1;
-}
-.field-input:focus { outline: none; border-color: var(--vio); }
+.field-input:focus { outline: none; border-color: var(--vio); box-shadow: 0 0 0 3px rgba(139,92,246,0.1); }
 .field-input:disabled { opacity: .5; cursor: not-allowed; }
 .field-hint {
   font-size: 10.5px;
@@ -1723,7 +1701,7 @@ function showToast(msg: string) {
   line-height: 1.5;
 }
 .doc-content {
-  background: #101017;
+  background: var(--bg);
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 18px;
@@ -1750,7 +1728,7 @@ function showToast(msg: string) {
 .rel-tag {
   font-size: 11px;
   font-weight: 600;
-  background: #101017;
+  background: var(--bg);
   border: 1px solid var(--line);
   border-radius: 7px;
   padding: 4px 9px;
@@ -1793,7 +1771,7 @@ function showToast(msg: string) {
   font: inherit;
   font-size: 12px;
   font-weight: 600;
-  background: #101017;
+  background: var(--bg);
   border: 1px solid var(--line);
   color: var(--text);
   border-radius: 9px;

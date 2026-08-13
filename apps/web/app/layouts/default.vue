@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange, Smartphone, Settings, Sparkles } from 'lucide-vue-next'
+import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange, Smartphone, Settings, Sparkles, Sun, Moon } from 'lucide-vue-next'
 import { BaseModal, BaseButton, BaseInput } from '@eduraport/ui'
 import { useAuth } from '../composables/useAuth'
 import { useToast } from '../composables/useToast'
@@ -11,6 +11,12 @@ const { user, logout, fetchUser, changePassword } = useAuth()
 const { currentSchoolId, currentSchool } = useSchool()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
 const { canAccess } = useRbac()
+import { useColorMode } from '@vueuse/core'
+
+const colorMode = useColorMode()
+const toggleTheme = () => {
+  colorMode.value = colorMode.value === 'dark' ? 'light' : 'dark'
+}
 
 const showChangePasswordModal = ref(false)
 const isMobileMenuOpen = ref(false)
@@ -169,11 +175,11 @@ const filteredMenuGroups = computed(() => {
       ></div>
 
       <!-- Drawer Content -->
-      <aside class="relative flex flex-col w-72 max-w-[85vw] h-full bg-slate-900 text-slate-200 p-6 shadow-2xl z-50 border-r border-slate-800 transition-transform duration-300">
+      <aside class="relative flex flex-col w-72 max-w-[85vw] h-full bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 p-6 shadow-2xl z-50 border-r border-slate-200 dark:border-slate-800 transition-transform duration-300">
         <!-- Close Button -->
         <button 
           @click="isMobileMenuOpen = false" 
-          class="absolute top-5 right-5 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
+          class="absolute top-5 right-5 p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
         >
           <X :size="18" />
         </button>
@@ -184,7 +190,7 @@ const filteredMenuGroups = computed(() => {
             <GraduationCap class="text-white" :size="20" />
           </div>
           <div>
-            <h1 class="text-lg font-bold tracking-tight text-white leading-tight">EduRaport</h1>
+            <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-tight">EduRaport</h1>
             <span class="text-[9px] uppercase tracking-wider text-amber-500 font-bold">Portal E-Raport</span>
           </div>
         </div>
@@ -202,7 +208,7 @@ const filteredMenuGroups = computed(() => {
                   :target="item.external ? '_blank' : undefined"
                   @click="isMobileMenuOpen = false"
                   class="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200"
-                  :class="item.customClass || 'text-slate-400 hover:text-white hover:bg-slate-800/60'"
+                  :class="item.customClass || 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60'"
                   active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
                 >
                   <component :is="item.icon" :size="16" /> 
@@ -214,10 +220,10 @@ const filteredMenuGroups = computed(() => {
         </nav>
 
         <!-- Sidebar Footer -->
-        <div class="pt-6 border-t border-slate-800">
+        <div class="pt-6 border-t border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-4 px-2">
             <div class="truncate pr-2">
-              <p class="text-xs font-bold text-white truncate">{{ user?.full_name || 'Guest User' }}</p>
+              <p class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ user?.full_name || 'Guest User' }}</p>
               <p class="text-[9px] uppercase tracking-wider text-slate-500 font-bold">{{ user?.role || 'Guest' }}</p>
             </div>
             <div class="w-8 h-8 rounded-full bg-violet-600/10 border border-violet-500/30 flex items-center justify-center text-[10px] font-bold text-violet-400 uppercase">
@@ -226,14 +232,14 @@ const filteredMenuGroups = computed(() => {
           </div>
           <button 
             @click="showChangePasswordModal = true; isMobileMenuOpen = false" 
-            class="flex w-full items-center gap-3 px-4 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors text-xs font-bold mb-1"
+            class="flex w-full items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60 transition-colors text-xs font-bold mb-1"
           >
             <Key :size="16" />
             <span>Ubah Password</span>
           </button>
           <button 
             @click="logout(); isMobileMenuOpen = false" 
-            class="flex w-full items-center gap-3 px-4 py-2.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors text-xs font-bold"
+            class="flex w-full items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 transition-colors text-xs font-bold"
           >
             <LogOut :size="16" />
             <span>Keluar Portal</span>
@@ -243,14 +249,14 @@ const filteredMenuGroups = computed(() => {
     </div>
 
     <!-- Sidebar for Desktop -->
-    <aside class="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 bg-slate-900 text-slate-200 flex-col p-6 z-50 border-r border-slate-800">
+    <aside class="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 flex-col p-6 z-50 border-r border-slate-200 dark:border-slate-800">
       <!-- Logo / School Branding -->
       <div class="flex items-center gap-3 mb-10 px-2">
         <div class="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-violet-600/20">
           <GraduationCap class="text-white" :size="20" />
         </div>
         <div>
-          <h1 class="text-lg font-bold tracking-tight text-white leading-tight">EduRaport</h1>
+          <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-tight">EduRaport</h1>
           <span class="text-[9px] uppercase tracking-wider text-amber-500 font-bold">Portal E-Raport</span>
         </div>
       </div>
@@ -267,7 +273,7 @@ const filteredMenuGroups = computed(() => {
                 :to="item.to"
                 :target="item.external ? '_blank' : undefined"
                 class="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200"
-                :class="item.customClass || 'text-slate-400 hover:text-white hover:bg-slate-800/60'"
+                :class="item.customClass || 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60'"
                 active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
               >
                 <component :is="item.icon" :size="16" /> 
@@ -279,10 +285,10 @@ const filteredMenuGroups = computed(() => {
       </nav>
 
       <!-- Sidebar Footer (User Info & Logout) -->
-      <div class="pt-6 border-t border-slate-800">
+      <div class="pt-6 border-t border-slate-200 dark:border-slate-800">
         <div class="flex items-center justify-between mb-4 px-2">
           <div class="truncate pr-2">
-            <p class="text-xs font-bold text-white truncate">{{ user?.full_name || 'Guest User' }}</p>
+            <p class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ user?.full_name || 'Guest User' }}</p>
             <p class="text-[9px] uppercase tracking-wider text-slate-500 font-bold">{{ user?.role || 'Guest' }}</p>
           </div>
           <div class="w-8 h-8 rounded-full bg-violet-600/10 border border-violet-500/30 flex items-center justify-center text-[10px] font-bold text-violet-400 uppercase">
@@ -291,14 +297,14 @@ const filteredMenuGroups = computed(() => {
         </div>
         <button 
           @click="showChangePasswordModal = true" 
-          class="flex w-full items-center gap-3 px-4 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors text-xs font-bold mb-1"
+          class="flex w-full items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60 transition-colors text-xs font-bold mb-1"
         >
           <Key :size="16" />
           <span>Ubah Password</span>
         </button>
         <button 
           @click="logout" 
-          class="flex w-full items-center gap-3 px-4 py-2.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors text-xs font-bold"
+          class="flex w-full items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 transition-colors text-xs font-bold"
         >
           <LogOut :size="16" />
           <span>Keluar Portal</span>
@@ -322,6 +328,17 @@ const filteredMenuGroups = computed(() => {
           <h2 class="text-xs font-bold tracking-widest text-slate-400 dark:text-zinc-500 uppercase">EduRaport Terintegrasi</h2>
         </div>
         <div class="flex items-center gap-3">
+          <ClientOnly>
+            <button 
+              @click="toggleTheme" 
+              class="p-2 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors border border-slate-200 dark:border-zinc-700"
+              title="Toggle Tema"
+            >
+              <Sun v-if="colorMode === 'dark'" :size="16" />
+              <Moon v-else :size="16" />
+            </button>
+          </ClientOnly>
+          
           <span v-if="activeAcademicYear" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
             <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
             Tahun Ajaran {{ activeAcademicYear.name }}

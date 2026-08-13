@@ -3,8 +3,52 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --bg: #f8fafc;
+    --panel: #ffffff;
+    --panel2: #f1f5f9;
+    --line: #e2e8f0;
+    --text: #0f172a;
+    --muted: #64748b;
+    --muted2: #94a3b8;
+    --vio: #8b5cf6;
+    --blue: #3b82f6;
+    --red: #ef4444;
+    --fg: #0f172a;
+    --vio-strong: #6d28d9;
+    --vio-soft: rgba(139,92,246,.14);
+    --green: #10b981;
+    --green-soft: rgba(45,212,167,.13);
+    --amber: #f59e0b;
+    --amber-soft: rgba(245,176,76,.13);
+    --r: 12px;
+  }
+  
+  .dark {
+    --bg: #0e0e13;
+    --panel: #1a1a22;
+    --panel2: #20202a;
+    --line: #2b2b37;
+    --text: #e9e9f1;
+    --muted: #8f8fa3;
+    --muted2: #6c6c7e;
+    --vio: #8b5cf6;
+    --blue: #5ca8f4;
+    --red: #f4645c;
+    --fg: #ffffff;
+    --vio-strong: #7c4dff;
+    --vio-soft: rgba(139,92,246,.14);
+    --green: #2dd4a7;
+    --green-soft: rgba(45,212,167,.13);
+    --amber: #f5b04c;
+    --amber-soft: rgba(245,176,76,.13);
+    --r: 12px;
+  }
+
   body {
-    @apply antialiased bg-slate-50/50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 font-sans;
+    @apply antialiased font-sans transition-colors duration-200;
+    background-color: var(--bg);
+    color: var(--text);
   }
 }
 
