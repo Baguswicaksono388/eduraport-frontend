@@ -42,7 +42,9 @@ const schoolRows = computed(() => {
       collectSpp: findValue('fin.collect.month'),
       readiness: findValue('acad.report.readiness'),
       occupancy: findValue('growth.occupancy'),
-      healthBadge: badge
+      healthBadge: badge,
+      sppPayload: findPayload('fin.collect.month') || { billed: 0, collected: 0 },
+      occupancyPayload: findPayload('growth.occupancy') || { total_students: 0, total_capacity: 0 }
     }
   })
 })
@@ -121,8 +123,57 @@ const getMetricValue = (key: string) => {
 
     </div>
 
+    <!-- Visual Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in duration-500 delay-100">
+      
+      <!-- Chart 1: Kolektibilitas SPP (Billed vs Collected) -->
+      <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden p-5 space-y-4">
+        <h3 class="text-sm font-black tracking-tight text-slate-800 dark:text-zinc-200">
+          Grafik Arus Kas (SPP Terkumpul vs Tagihan)
+        </h3>
+        <div class="space-y-4 mt-4">
+          <div v-for="r in schoolRows" :key="'cf-'+r.id" class="space-y-1.5">
+            <div class="flex justify-between items-end text-[10px] font-bold text-slate-500">
+              <span class="text-slate-700 dark:text-zinc-300 truncate pr-2">{{ r.name }}</span>
+              <span class="shrink-0">Rp {{ (r.sppPayload.collected || 0).toLocaleString('id-ID') }} / Rp {{ (r.sppPayload.billed || 0).toLocaleString('id-ID') }}</span>
+            </div>
+            <div class="w-full bg-slate-100 dark:bg-zinc-800 h-2.5 rounded-full overflow-hidden relative">
+              <div 
+                class="bg-emerald-500 h-full rounded-full transition-all duration-1000 ease-out"
+                :style="{ width: Math.min(100, (r.sppPayload.collected / (r.sppPayload.billed || 1)) * 100) + '%' }"
+              ></div>
+            </div>
+          </div>
+          <div v-if="schoolRows.length === 0" class="text-xs text-slate-400 italic py-4 text-center">Data tidak tersedia</div>
+        </div>
+      </div>
+
+      <!-- Chart 2: Okupansi Siswa -->
+      <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden p-5 space-y-4">
+        <h3 class="text-sm font-black tracking-tight text-slate-800 dark:text-zinc-200">
+          Grafik Keterisian Siswa (Aktif vs Kapasitas)
+        </h3>
+        <div class="space-y-4 mt-4">
+          <div v-for="r in schoolRows" :key="'occ-'+r.id" class="space-y-1.5">
+            <div class="flex justify-between items-end text-[10px] font-bold text-slate-500">
+              <span class="text-slate-700 dark:text-zinc-300 truncate pr-2">{{ r.name }}</span>
+              <span class="shrink-0">{{ r.occupancyPayload.total_students || 0 }} / {{ r.occupancyPayload.total_capacity || 0 }} Kursi</span>
+            </div>
+            <div class="w-full bg-slate-100 dark:bg-zinc-800 h-2.5 rounded-full overflow-hidden relative">
+              <div 
+                class="bg-violet-500 h-full rounded-full transition-all duration-1000 ease-out"
+                :style="{ width: Math.min(100, ((r.occupancyPayload.total_students || 0) / (r.occupancyPayload.total_capacity || 1)) * 100) + '%' }"
+              ></div>
+            </div>
+          </div>
+          <div v-if="schoolRows.length === 0" class="text-xs text-slate-400 italic py-4 text-center">Data tidak tersedia</div>
+        </div>
+      </div>
+
+    </div>
+
     <!-- School Unit Performance Comparison Table -->
-    <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden space-y-4">
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden space-y-4 animate-in fade-in duration-500 delay-200">
       <div class="p-5 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between">
         <div>
           <h3 class="text-sm font-black tracking-tight text-slate-800 dark:text-zinc-200">
