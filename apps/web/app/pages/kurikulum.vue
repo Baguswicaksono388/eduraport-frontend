@@ -340,12 +340,15 @@ const openEditElementModal = (el: CurriculumElement) => {
 }
 
 const submitElement = async () => {
+  let res;
   if (editingElementId.value) {
-    await updateElement(selectedSchoolId.value, editingElementId.value, elementForm.value)
+    res = await updateElement(selectedSchoolId.value, editingElementId.value, elementForm.value)
   } else {
-    await createElement(selectedSchoolId.value, elementForm.value)
+    res = await createElement(selectedSchoolId.value, elementForm.value)
   }
-  showElementModal.value = false
+  if (res.success) {
+    showElementModal.value = false
+  }
 }
 
 const confirmDeleteElement = async (el: CurriculumElement) => {
@@ -369,7 +372,7 @@ const openCreateOutcomeModal = () => {
     outcome_text: '', 
     code: '', 
     element_id: selectedElementId.value, 
-    subject_id: el?.subject_id || '',
+    subject_id: null,
     phase: el?.level || '', 
     is_active: true 
   }
@@ -382,7 +385,7 @@ const openEditOutcomeModal = (tp: LearningOutcome) => {
     outcome_text: tp.outcome_text,
     code: tp.code || '',
     element_id: tp.element_id || selectedElementId.value,
-    subject_id: tp.subject_id || elements.value.find(e => e.id === tp.element_id)?.subject_id || '',
+    subject_id: tp.element_id ? null : (tp.subject_id || null),
     phase: tp.phase || '',
     is_active: tp.is_active
   }
@@ -390,12 +393,15 @@ const openEditOutcomeModal = (tp: LearningOutcome) => {
 }
 
 const submitOutcome = async () => {
+  let res;
   if (editingOutcomeId.value) {
-    await updateOutcome(selectedSchoolId.value, editingOutcomeId.value, outcomeForm.value)
+    res = await updateOutcome(selectedSchoolId.value, editingOutcomeId.value, outcomeForm.value)
   } else {
-    await createOutcome(selectedSchoolId.value, outcomeForm.value)
+    res = await createOutcome(selectedSchoolId.value, outcomeForm.value)
   }
-  showOutcomeModal.value = false
+  if (res.success) {
+    showOutcomeModal.value = false
+  }
 }
 
 const confirmDeleteOutcome = async (tp: LearningOutcome) => {

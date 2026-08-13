@@ -78,6 +78,7 @@ export const useCurriculum = () => {
       await fetchElements(schoolId)
       return { success: true, data: res.data }
     } catch (e: any) {
+      toast.error(e?.message || 'Gagal menambahkan elemen', 'Error')
       return { success: false, error: e }
     }
   }
@@ -119,6 +120,7 @@ export const useCurriculum = () => {
       if (data.element_id) await fetchOutcomes(schoolId, data.element_id)
       return { success: true, data: res.data }
     } catch (e: any) {
+      toast.error(e?.message || 'Gagal menambahkan tujuan pembelajaran', 'Error')
       return { success: false, error: e }
     }
   }
@@ -133,6 +135,7 @@ export const useCurriculum = () => {
       if (data.element_id) await fetchOutcomes(schoolId, data.element_id)
       return { success: true, data: res.data }
     } catch (e: any) {
+      toast.error(e?.message || 'Gagal mengubah tujuan pembelajaran', 'Error')
       return { success: false, error: e }
     }
   }
