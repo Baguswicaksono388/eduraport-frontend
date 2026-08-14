@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ClipboardCheck, Users, Check, AlertCircle, Save, CheckCircle2, RefreshCw } from 'lucide-vue-next'
 import { BaseCard, BaseButton } from '@eduraport/ui'
 import { useTeacher } from '../../composables/useTeacher'
@@ -52,13 +52,16 @@ const adjustDate = (days: number) => {
 // Teacher attendance input states
 interface AttendanceState {
   status: 'hadir' | 'sakit' | 'izin' | 'dinas' | 'alpha'
+  note: string
 }
 const attendanceMap = ref<Record<string, AttendanceState>>({})
 
-// Load initial selections
 onMounted(async () => {
   const schoolId = await initContext()
-  if (schoolId) selectedSchoolId.value = schoolId
+  if (schoolId) {
+    selectedSchoolId.value = schoolId
+    loadData()
+  }
 })
 
 // Load teachers and attendance records
@@ -85,11 +88,13 @@ const loadData = async () => {
       const exist = existingMap.get(teach.id)
       if (exist) {
         tempMap[teach.id] = {
-          status: exist.status
+          status: exist.status,
+          note: exist.note || ''
         }
       } else {
         tempMap[teach.id] = {
-          status: 'hadir'
+          status: 'hadir',
+          note: ''
         }
       }
     }
@@ -106,7 +111,6 @@ const loadData = async () => {
 // Watch school or date change
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {
-    currentSchoolId.value = newVal
     loadData()
   } else {
     teachers.value = []
@@ -136,11 +140,12 @@ const handleSave = async () => {
 
   try {
     const list = teachers.value.map((t) => {
-      const state = attendanceMap.value[t.id] || { status: 'hadir' }
+      const state = attendanceMap.value[t.id] || { status: 'hadir', note: '' }
       return {
         employee_id: t.id,
         date: selectedDate.value,
         status: state.status,
+        note: state.note || null,
         leave_request_id: null
       }
     })
@@ -159,18 +164,21 @@ const handleSave = async () => {
 
 <template>
   <div class="space-y-6 max-w-7xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
-    <!-- Super Admin School Filter -->
-    <div v-if="user?.role === 'super_admin'" class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white dark:bg-zinc-900 p-4 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm animate-in fade-in duration-200">
+    <!-- Filters and Selection -->
+    <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
-        <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 pl-1">Yayasan</label>
-        <select v-model="selectedFoundationId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600">
-          <option v-for="f in foundations" :key="f.id" :value="f.id">{{ f.name }}</option>
+        <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
+        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10">
+          <option value="" disabled>Pilih Yayasan</option>
+          <option v-for="found in foundations" :key="found.id" :value="found.id">{{ found.name }}</option>
         </select>
       </div>
+
       <div class="flex flex-col gap-1.5">
-        <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 pl-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600">
-          <option v-for="s in schools" :key="s.id" :value="s.id">{{ s.name }} ({{ s.level }})</option>
+        <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
+        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10">
+          <option value="" disabled>Pilih Unit Sekolah</option>
+          <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
       </div>
     </div>
@@ -263,21 +271,22 @@ const handleSave = async () => {
       <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
         <div class="min-w-full divide-y divide-slate-200 dark:divide-zinc-800">
           <!-- Table Header -->
-          <div class="bg-slate-50/80 dark:bg-zinc-950/40 p-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
-            <div class="md:col-span-2">Nama Guru / NIP</div>
-            <div>Status Kehadiran</div>
+          <div class="bg-slate-50/80 dark:bg-zinc-950/40 p-4 grid grid-cols-1 md:grid-cols-12 gap-4 text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+            <div class="md:col-span-4">Nama Guru / NIP</div>
+            <div class="md:col-span-5">Status Kehadiran</div>
+            <div class="md:col-span-3">Catatan / Keterangan</div>
           </div>
 
           <!-- Table Body -->
           <div class="divide-y divide-slate-100 dark:divide-zinc-800">
-            <div v-for="t in teachers" :key="t.id" class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-center text-sm">
-              <div class="md:col-span-2">
+            <div v-for="t in teachers" :key="t.id" class="p-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center text-sm">
+              <div class="md:col-span-4">
                 <p class="font-bold text-slate-900 dark:text-zinc-100">{{ t.full_name }}</p>
                 <p class="text-[10px] text-slate-400 font-semibold mt-0.5">NIP: {{ t.employee_number || '-' }}</p>
               </div>
 
               <!-- Options -->
-              <div>
+              <div class="md:col-span-5">
                 <div v-if="attendanceMap[t.id]" class="flex items-center gap-1.5 flex-wrap">
                   <button
                     v-for="st in (['hadir', 'dinas', 'sakit', 'izin', 'alpha'] as const)"
@@ -299,6 +308,16 @@ const handleSave = async () => {
                     {{ st }}
                   </button>
                 </div>
+              </div>
+
+              <!-- Note -->
+              <div v-if="attendanceMap[t.id]" class="md:col-span-3">
+                <input
+                  v-model="attendanceMap[t.id].note"
+                  type="text"
+                  placeholder="Tambah alasan/keterangan..."
+                  class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded px-2.5 py-1 text-xs outline-none focus:border-violet-500"
+                />
               </div>
             </div>
           </div>
