@@ -18,6 +18,10 @@ const toggleTheme = () => {
   colorMode.value = colorMode.value === 'dark' ? 'light' : 'dark'
 }
 
+import { useRoute } from 'vue-router'
+const route = useRoute()
+const isFullScreenPage = computed(() => route.path.includes('/ai-asisten'))
+
 const showChangePasswordModal = ref(false)
 const isMobileMenuOpen = ref(false)
 const changePasswordForm = ref({
@@ -350,7 +354,7 @@ const filteredMenuGroups = computed(() => {
       </header>
 
       <!-- Main Content Area -->
-      <main class="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto pb-24 lg:pb-8">
+      <main :class="['flex-1 p-6 md:p-8 w-full pb-24 lg:pb-8', isFullScreenPage ? '' : 'max-w-7xl mx-auto']">
         <slot />
       </main>
     </div>

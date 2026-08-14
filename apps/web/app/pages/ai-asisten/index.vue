@@ -1588,6 +1588,7 @@ function showToast(msg: string) {
   border-radius: var(--r);
   padding: 20px;
   min-height: 400px;
+  height: 100%;
 }
 
 .output-empty {

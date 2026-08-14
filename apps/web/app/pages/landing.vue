@@ -1037,6 +1037,7 @@ const chartHeights = [65,80,55,90,70,85,60,95]
 </template>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
   --bg-main: #f8fafc;
@@ -1125,7 +1126,6 @@ html.dark {
   color: var(--text-main);
   background: var(--card-bg);
 }
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 

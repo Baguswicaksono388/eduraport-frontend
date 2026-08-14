@@ -225,35 +225,35 @@ function getImageForSubBab(index: number) {
 .section {
   margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #22222c;
+  border-bottom: 1px solid var(--line);
 }
 .section:last-child { border-bottom: none; }
 .section-title {
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 1px;
-  color: #8f8fa3;
+  color: var(--muted);
   text-transform: uppercase;
   margin-bottom: 10px;
 }
 
 /* Info grid */
 .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.info-item { background: #0e0e13; border: 1px solid #2b2b37; border-radius: 8px; padding: 8px 12px; }
-.info-key { display: block; font-size: 9.5px; font-weight: 700; color: #6c6c7e; text-transform: uppercase; margin-bottom: 3px; }
-.info-val { font-weight: 700; font-size: 12.5px; }
+.info-item { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+.info-key { display: block; font-size: 9.5px; font-weight: 700; color: var(--muted2); text-transform: uppercase; margin-bottom: 3px; }
+.info-val { font-weight: 700; font-size: 12.5px; color: var(--text); }
 
 /* CP/TP */
 .cp-tp { display: flex; flex-direction: column; gap: 10px; }
-.cp-box, .tp-list, .dimensi-list { background: #0e0e13; border: 1px solid #2b2b37; border-radius: 8px; padding: 10px 12px; }
-.cp-label { font-size: 9.5px; font-weight: 800; color: #8b5cf6; display: block; margin-bottom: 4px; }
-.cp-box p, .tp-list ol { font-size: 12.5px; margin: 0; padding-left: 16px; line-height: 1.6; }
+.cp-box, .tp-list, .dimensi-list { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.cp-label { font-size: 9.5px; font-weight: 800; color: var(--vio); display: block; margin-bottom: 4px; }
+.cp-box p, .tp-list ol { font-size: 12.5px; margin: 0; padding-left: 16px; line-height: 1.6; color: var(--text); }
 .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
 .tag-chip {
   font-size: 10.5px;
   font-weight: 700;
-  background: rgba(139,92,246,.13);
-  color: #8b5cf6;
+  background: var(--vio-soft);
+  color: var(--vio);
   border-radius: 6px;
   padding: 2px 9px;
 }
@@ -264,66 +264,67 @@ function getImageForSubBab(index: number) {
   font: inherit;
   font-size: 11px;
   font-weight: 700;
-  background: #0e0e13;
-  border: 1px solid #2b2b37;
-  color: #8f8fa3;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--muted);
   border-radius: 7px;
   padding: 5px 12px;
   cursor: pointer;
 }
-.langkah-tab.active { background: rgba(139,92,246,.13); color: #8b5cf6; border-color: rgba(139,92,246,.3); }
-.langkah-list { padding-left: 18px; }
+.langkah-tab.active { background: var(--vio-soft); color: var(--vio); border-color: var(--vio-soft); }
+.langkah-list { padding-left: 18px; color: var(--text); }
 .langkah-list li { font-size: 12.5px; line-height: 1.7; margin-bottom: 4px; }
 
 /* Asesmen */
 .asesmen-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
-.asesmen-card { background: #0e0e13; border: 1px solid #2b2b37; border-radius: 8px; padding: 10px; }
+.asesmen-card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px; color: var(--text); }
 .asesmen-jenis {
   font-size: 9.5px;
   font-weight: 800;
   text-transform: uppercase;
-  color: #2dd4a7;
+  color: var(--green);
   margin-bottom: 4px;
 }
 .asesmen-bentuk { font-weight: 700; font-size: 12px; margin-bottom: 4px; }
-.asesmen-instrumen { font-size: 11px; color: #8f8fa3; }
+.asesmen-instrumen { font-size: 11px; color: var(--muted); }
 
 /* Lampiran */
-.lampiran-item { background: #0e0e13; border: 1px solid #2b2b37; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
-.lampiran-label { font-size: 9.5px; font-weight: 800; color: #6c6c7e; display: block; margin-bottom: 4px; }
-.lampiran-item p { margin: 0; font-size: 12px; line-height: 1.5; }
+.lampiran-item { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+.lampiran-label { font-size: 9.5px; font-weight: 800; color: var(--muted2); display: block; margin-bottom: 4px; }
+.lampiran-item p { margin: 0; font-size: 12px; line-height: 1.5; color: var(--text); }
 
 /* Soal */
 .kisi-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-.kisi-item { background: #0e0e13; border: 1px solid #2b2b37; border-radius: 8px; padding: 8px 12px; }
+.kisi-item { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
 .kisi-item.full { grid-column: 1/-1; }
-.kisi-label { display: block; font-size: 9.5px; font-weight: 800; color: #6c6c7e; text-transform: uppercase; margin-bottom: 4px; }
-.kisi-val { font-weight: 700; font-size: 13px; }
-.hots { background: rgba(245,176,76,.13); color: #f5b04c; }
-.hots-high { background: rgba(244,100,92,.13); color: #f4645c; }
+.kisi-label { display: block; font-size: 9.5px; font-weight: 800; color: var(--muted2); text-transform: uppercase; margin-bottom: 4px; }
+.kisi-val { font-weight: 700; font-size: 13px; color: var(--text); }
+.hots { background: var(--amber-soft); color: var(--amber); }
+.hots-high { background: rgba(244,100,92,.13); color: var(--red); }
 .count-badge {
   font-size: 10px;
   font-weight: 700;
-  background: rgba(139,92,246,.13);
-  color: #8b5cf6;
+  background: var(--vio-soft);
+  color: var(--vio);
   border-radius: 6px;
   padding: 2px 8px;
   margin-left: 6px;
 }
 
 .question-card {
-  background: #0e0e13;
-  border: 1px solid #2b2b37;
+  background: var(--panel);
+  border: 1px solid var(--line);
   border-radius: 10px;
   padding: 13px 14px;
   margin-bottom: 10px;
+  color: var(--text);
 }
 .question-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .question-no {
   width: 26px; height: 26px;
   border-radius: 50%;
-  background: rgba(139,92,246,.2);
-  color: #8b5cf6;
+  background: var(--vio-soft);
+  color: var(--vio);
   font-weight: 800;
   font-size: 12px;
   display: flex;
@@ -335,7 +336,7 @@ function getImageForSubBab(index: number) {
   font-weight: 800;
   letter-spacing: .5px;
   background: rgba(92,168,244,.13);
-  color: #5ca8f4;
+  color: var(--blue);
   border-radius: 6px;
   padding: 2px 8px;
 }
@@ -350,59 +351,59 @@ function getImageForSubBab(index: number) {
   padding: 5px 8px;
   border-radius: 7px;
 }
-.option-item.correct { background: rgba(45,212,167,.1); color: #2dd4a7; font-weight: 600; }
-.option-key { font-weight: 800; color: #8f8fa3; min-width: 16px; }
+.option-item.correct { background: var(--green-soft); color: var(--green); font-weight: 600; }
+.option-key { font-weight: 800; color: var(--muted); min-width: 16px; }
 .correct-mark { margin-left: auto; font-weight: 800; }
 
 .pembahasan {
   font-size: 11.5px;
-  color: #8f8fa3;
+  color: var(--muted);
   line-height: 1.5;
-  background: #16161f;
+  background: var(--panel2);
   border-radius: 7px;
   padding: 7px 10px;
 }
-.pembahasan-label { font-weight: 800; color: #6c6c7e; }
+.pembahasan-label { font-weight: 800; color: var(--muted2); }
 
 .pedoman {
   font-size: 12px;
-  color: #8f8fa3;
-  background: #16161f;
+  color: var(--muted);
+  background: var(--panel2);
   border-radius: 7px;
   padding: 8px 10px;
   margin-top: 8px;
 }
-.pedoman p { margin: 4px 0 0; line-height: 1.5; }
+.pedoman p { margin: 4px 0 0; line-height: 1.5; color: var(--text); }
 
 /* Rubrik */
-.rubrik-card { background: #0e0e13; border: 1px solid #2b2b37; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+.rubrik-card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 10px; color: var(--text); }
 .rubrik-kriteria { font-weight: 800; margin-bottom: 8px; }
 .rubrik-skala { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-.skala-item { background: #16161f; border-radius: 7px; padding: 7px 9px; }
-.skala-skor { display: block; font-size: 18px; font-weight: 800; text-align: center; color: #8b5cf6; margin-bottom: 3px; }
-.skala-deskripsi { font-size: 10.5px; color: #8f8fa3; line-height: 1.4; display: block; }
+.skala-item { background: var(--panel2); border-radius: 7px; padding: 7px 9px; }
+.skala-skor { display: block; font-size: 18px; font-weight: 800; text-align: center; color: var(--vio); margin-bottom: 3px; }
+.skala-deskripsi { font-size: 10.5px; color: var(--muted); line-height: 1.4; display: block; }
 
 /* Edit */
-.edit-actions { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid #2b2b37; }
+.edit-actions { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
 .save-btn {
   font: inherit;
   font-weight: 700;
   font-size: 13px;
-  background: #8b5cf6;
+  background: var(--vio);
   border: none;
   color: #fff;
   border-radius: 9px;
   padding: 9px 18px;
   cursor: pointer;
 }
-.edit-note { font-size: 11px; color: #6c6c7e; }
+.edit-note { font-size: 11px; color: var(--muted2); }
 .field-input-sm {
   font: inherit;
   font-size: 12.5px;
   font-weight: 600;
-  background: #101017;
-  border: 1px solid #2b2b37;
-  color: #e9e9f1;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
   border-radius: 8px;
   padding: 6px 10px;
   width: 100%;
@@ -413,7 +414,7 @@ function getImageForSubBab(index: number) {
 .json-fallback pre {
   font-family: monospace;
   font-size: 11px;
-  color: #8f8fa3;
+  color: var(--muted);
   line-height: 1.5;
   overflow-x: auto;
 }
