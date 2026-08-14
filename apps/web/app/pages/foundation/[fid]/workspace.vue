@@ -33,6 +33,18 @@ const promoteForm = reactive({
   promotion_type: 'naik_jenjang'
 })
 
+// Assignment Modal State
+const showAssignmentModal = ref(false)
+const selectedUser = ref<any>(null)
+const userAssignments = ref<any[]>([])
+const loadingAssignments = ref(false)
+
+const assignForm = reactive({
+  school_id: '',
+  role: ''
+})
+const assignLoading = ref(false)
+
 const fetchUsers = async () => {
   loading.value = true
   try {
@@ -98,6 +110,68 @@ const handlePromote = async () => {
   }
 }
 
+const openAssignmentModal = async (user: any) => {
+  selectedUser.value = user
+  showAssignmentModal.value = true
+  await fetchUserAssignments(user.id)
+}
+
+const fetchUserAssignments = async (userId: string) => {
+  loadingAssignments.value = true
+  try {
+    const res: any = await fetcher(`/foundation/${fid}/workspace/users/${userId}/schools`)
+    if (res.success) {
+      userAssignments.value = res.data
+    }
+  } catch (err: any) {
+    toast.error('Gagal memuat penugasan staf')
+  } finally {
+    loadingAssignments.value = false
+  }
+}
+
+const handleAssignSchool = async () => {
+  if (!assignForm.school_id || !assignForm.role) {
+    toast.error('Mohon lengkapi pilihan sekolah dan role')
+    return
+  }
+  assignLoading.value = true
+  try {
+    const res: any = await fetcher(`/foundation/${fid}/workspace/users/${selectedUser.value.id}/schools`, {
+      method: 'POST',
+      body: {
+        school_id: assignForm.school_id,
+        role: assignForm.role
+      }
+    })
+    if (res.success) {
+      toast.success('Staf berhasil ditugaskan ke sekolah baru')
+      assignForm.school_id = ''
+      assignForm.role = ''
+      await fetchUserAssignments(selectedUser.value.id)
+    }
+  } catch (err: any) {
+    toast.error(err.data?.error?.message || 'Gagal menambahkan penugasan')
+  } finally {
+    assignLoading.value = false
+  }
+}
+
+const handleRemoveAssignment = async (schoolId: string) => {
+  if (!confirm('Cabut penugasan staf dari sekolah ini?')) return
+  try {
+    const res: any = await fetcher(`/foundation/${fid}/workspace/users/${selectedUser.value.id}/schools/${schoolId}`, {
+      method: 'DELETE'
+    })
+    if (res.success) {
+      toast.success('Penugasan berhasil dicabut')
+      await fetchUserAssignments(selectedUser.value.id)
+    }
+  } catch (err: any) {
+    toast.error(err.data?.error?.message || 'Gagal mencabut penugasan')
+  }
+}
+
 onMounted(() => {
   fetchUsers()
   fetchSchools(fid)
@@ -146,9 +220,9 @@ onMounted(() => {
           <div v-for="u in users" :key="u.id" class="p-3 bg-slate-50 dark:bg-zinc-900 rounded-lg border border-slate-100 dark:border-zinc-800 flex justify-between items-center">
             <div>
               <p class="font-bold text-sm text-slate-900 dark:text-zinc-100">{{ u.full_name }}</p>
-              <p class="text-xs text-slate-500 capitalize">{{ u.role.replace('_', ' ') }} • {{ u.main_school_name }}</p>
+              <p class="text-xs text-slate-500 capitalize">{{ u.role.replace('_', ' ') }} <span v-if="u.main_school_name">• {{ u.main_school_name }}</span></p>
             </div>
-            <BaseButton variant="outline" size="sm" class="text-xs">
+            <BaseButton variant="outline" size="sm" class="text-xs" @click="openAssignmentModal(u)">
               Kelola Penugasan
             </BaseButton>
           </div>
@@ -248,6 +322,72 @@ onMounted(() => {
           </BaseButton>
         </div>
       </form>
+    </BaseModal>
+
+    <!-- Modal Kelola Penugasan -->
+    <BaseModal :show="showAssignmentModal" title="Kelola Penugasan Unit Sekolah" @close="showAssignmentModal = false">
+      <div v-if="selectedUser" class="space-y-6">
+        <div class="p-4 bg-slate-50 dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 flex items-center gap-4">
+          <div class="w-12 h-12 bg-violet-100 dark:bg-violet-900/50 text-violet-600 rounded-full flex items-center justify-center font-bold text-xl shrink-0">
+            {{ selectedUser.full_name.charAt(0).toUpperCase() }}
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 dark:text-zinc-100">{{ selectedUser.full_name }}</h3>
+            <p class="text-sm text-slate-500">{{ selectedUser.email }}</p>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-sm font-bold text-slate-900 dark:text-zinc-100 mb-3">Unit Terdaftar Saat Ini</h4>
+          <div v-if="loadingAssignments" class="text-center py-4 text-slate-500 text-sm">Memuat data...</div>
+          <div v-else-if="userAssignments.length === 0" class="text-center py-4 bg-slate-50 dark:bg-zinc-900 rounded-lg text-slate-500 text-sm border border-slate-100 dark:border-zinc-800">
+            Belum ada penugasan unit sekolah
+          </div>
+          <div v-else class="space-y-2">
+            <div v-for="assign in userAssignments" :key="assign.id" class="p-3 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg flex justify-between items-center">
+              <div>
+                <p class="font-bold text-sm text-slate-900 dark:text-zinc-100">{{ assign.school_name }} <span v-if="assign.is_primary" class="ml-2 text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Utama</span></p>
+                <p class="text-xs text-slate-500 capitalize">Role: {{ assign.role.replace('_', ' ') }}</p>
+              </div>
+              <BaseButton v-if="!assign.is_primary" variant="ghost" size="sm" class="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950" @click="handleRemoveAssignment(assign.school_id)">
+                Cabut
+              </BaseButton>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-200 dark:border-zinc-800">
+          <h4 class="text-sm font-bold text-slate-900 dark:text-zinc-100 mb-3">Tambah Penugasan Unit</h4>
+          <form @submit.prevent="handleAssignSchool" class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[10px] font-bold text-slate-500 uppercase">Pilih Sekolah</label>
+                <select v-model="assignForm.school_id" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/20">
+                  <option value="">-- Pilih Sekolah --</option>
+                  <template v-for="s in schools" :key="s.id">
+                    <option v-if="!userAssignments.find(a => a.school_id === s.id)" :value="s.id">{{ s.name }}</option>
+                  </template>
+                </select>
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[10px] font-bold text-slate-500 uppercase">Pilih Role</label>
+                <select v-model="assignForm.role" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/20">
+                  <option value="">-- Pilih Role --</option>
+                  <option value="principal">Kepala Sekolah (Principal)</option>
+                  <option value="teacher">Guru (Teacher)</option>
+                  <option value="treasurer">Bendahara (Treasurer)</option>
+                  <option value="tu">Admin Sekolah (TU)</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex justify-end pt-2">
+              <BaseButton type="submit" variant="primary" :disabled="assignLoading" class="bg-violet-600 hover:bg-violet-700">
+                {{ assignLoading ? 'Menyimpan...' : 'Tambahkan' }}
+              </BaseButton>
+            </div>
+          </form>
+        </div>
+      </div>
     </BaseModal>
 
   </div>

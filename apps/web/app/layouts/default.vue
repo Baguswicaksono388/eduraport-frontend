@@ -8,7 +8,7 @@ import { useAcademicYear } from '../composables/useAcademicYear'
 import { useRbac } from '../composables/useRbac'
 
 const { user, logout, fetchUser, changePassword } = useAuth()
-const { currentSchoolId, currentSchool } = useSchool()
+const { currentSchoolId, currentSchool, foundations } = useSchool()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
 const { canAccess } = useRbac()
 import { useColorMode } from '@vueuse/core'
@@ -87,11 +87,13 @@ watch(currentSchoolId, async (newVal) => {
 const menuGroups = computed(() => {
   const groups: any[] = []
 
-  if (currentSchool.value?.foundation_id && ['super_admin', 'principal', 'tu'].includes(user.value?.role)) {
+  const foundationId = currentSchool.value?.foundation_id || (foundations.value?.length > 0 ? foundations.value[0].id : null)
+
+  if (foundationId && ['super_admin', 'principal', 'tu', 'user', 'owner', 'admin'].includes(user.value?.role)) {
     groups.push({
       title: 'Yayasan / Workspace',
       items: [
-        { to: `/foundation/${currentSchool.value.foundation_id}/workspace`, label: 'Foundation Workspace', icon: Landmark, access: '/' }
+        { to: `/foundation/${foundationId}/workspace`, label: 'Foundation Workspace', icon: Landmark, access: '/' }
       ]
     })
   }
