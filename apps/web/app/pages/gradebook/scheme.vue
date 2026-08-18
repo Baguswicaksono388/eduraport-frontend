@@ -825,6 +825,26 @@ const getAggregationLabel = (method: string) => {
             <option value="mode">Modus (Untuk TK - BB/MB/BSH/BSB)</option>
             <option value="drop_lowest">Rata-rata setelah drop 1 nilai terendah</option>
           </select>
+          <p class="text-[10px] text-slate-500 dark:text-zinc-400 px-1 mt-0.5 leading-relaxed bg-slate-50 dark:bg-zinc-900/50 p-2 rounded border border-slate-100 dark:border-zinc-800">
+            <span v-if="groupForm.aggregation_method === 'simple_avg'">
+              <strong class="text-slate-700 dark:text-zinc-200">Rata-rata Sederhana:</strong> Menjumlahkan seluruh komponen nilai dan membaginya sama rata. Cocok untuk perhitungan ulangan/tugas yang bobotnya dianggap sama.
+            </span>
+            <span v-else-if="groupForm.aggregation_method === 'weighted_avg'">
+              <strong class="text-slate-700 dark:text-zinc-200">Rata-rata Tertimbang:</strong> Nilai ditentukan berdasarkan pengaturan persen bobot per komponen. Komponen dengan bobot lebih besar akan lebih memengaruhi nilai akhir kelompok.
+            </span>
+            <span v-else-if="groupForm.aggregation_method === 'highest'">
+              <strong class="text-slate-700 dark:text-zinc-200">Nilai Tertinggi:</strong> Hanya mengambil satu nilai angka paling besar dari semua komponen dalam kelompok ini. Biasa dikonfigurasi untuk menangani nilai percobaan/remedial.
+            </span>
+            <span v-else-if="groupForm.aggregation_method === 'latest'">
+              <strong class="text-slate-700 dark:text-zinc-200">Nilai Terakhir:</strong> Mengabaikan komponen-komponen sebelumnya, murni hanya menggunakan nilai input paling akhir (berdasarkan urutan).
+            </span>
+            <span v-else-if="groupForm.aggregation_method === 'mode'">
+              <strong class="text-slate-700 dark:text-zinc-200">Modus (Mayoritas):</strong> <strong>Khusus untuk Rapor TK/PAUD</strong> yang memakai huruf (BB, MB, BSH, BSB). Otomatis mengambil predikat yang paling dominan / paling sering dicapai.
+            </span>
+            <span v-else-if="groupForm.aggregation_method === 'drop_lowest'">
+              <strong class="text-slate-700 dark:text-zinc-200">Drop Lowest:</strong> Secara otomatis mencoret (membuang) 1 nilai siswa yang paling kecil/jelek, lalu merata-rata sisa nilainya.
+            </span>
+          </p>
         </div>
 
         <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
@@ -854,6 +874,18 @@ const getAggregationLabel = (method: string) => {
               <option value="p5">P5 (Kokurikuler)</option>
               <option value="custom">Custom</option>
             </select>
+            <p class="text-[10px] text-slate-500 dark:text-zinc-400 px-1 mt-0.5 leading-relaxed bg-slate-50 dark:bg-zinc-900/50 p-2 rounded border border-slate-100 dark:border-zinc-800">
+              <span v-if="componentForm.type === 'nilai_harian'"><strong>Ulangan Harian:</strong> Evaluasi rutin per-bab atau per-KD (Kompetensi Dasar).</span>
+              <span v-else-if="componentForm.type === 'tugas'"><strong>Tugas/PR:</strong> Penilaian dari pekerjaan rumah atau penugasan individu/kelompok.</span>
+              <span v-else-if="componentForm.type === 'pts'"><strong>PTS/UTS:</strong> Penilaian Tengah Semester (Sumatif Tengah Semester).</span>
+              <span v-else-if="componentForm.type === 'pas'"><strong>PAS/UAS:</strong> Penilaian Akhir Semester (Sumatif Akhir Semester).</span>
+              <span v-else-if="componentForm.type === 'praktikum'"><strong>Praktikum:</strong> Nilai kinerja di lab atau demonstrasi keterampilan teknis.</span>
+              <span v-else-if="componentForm.type === 'portofolio'"><strong>Portofolio:</strong> Kumpulan karya siswa yang dievaluasi secara kumulatif.</span>
+              <span v-else-if="componentForm.type === 'observasi'"><strong>Observasi:</strong> Pengamatan keseharian siswa. Sangat cocok untuk PAUD/TK (nilai naratif/predikat).</span>
+              <span v-else-if="componentForm.type === 'sikap'"><strong>Sikap:</strong> Penilaian karakter, budi pekerti, dan spiritual.</span>
+              <span v-else-if="componentForm.type === 'p5'"><strong>P5:</strong> Projek Penguatan Profil Pelajar Pancasila (Kurikulum Merdeka).</span>
+              <span v-else-if="componentForm.type === 'custom'"><strong>Custom:</strong> Tipe nilai bebas sesuai kebijakan sekolah atau guru mata pelajaran.</span>
+            </p>
           </div>
           <BaseInput v-model="componentForm.max_score" label="Batas Nilai Maksimal" type="number" step="0.01" required />
         </div>
