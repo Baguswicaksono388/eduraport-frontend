@@ -15,6 +15,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'recalculate', key: string): void
   (e: 'action', route: string): void
+  (e: 'quick-action', payload: { action: string; metric: string }): void
   (e: 'send-reminder', payload: { recipient_id: string; metric_key: string; message_body: string; phone?: string }): void
 }>()
 
@@ -72,6 +73,7 @@ const handleWaReminder = (student: any) => {
           :recalculating="!!recalculatingKeys[m.metric_key]"
           @recalculate="emit('recalculate', $event)"
           @action="emit('action', $event)"
+          @quick-action="emit('quick-action', $event)"
         />
       </div>
     </div>

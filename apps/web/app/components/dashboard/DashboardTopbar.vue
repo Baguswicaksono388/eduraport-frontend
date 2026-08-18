@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { RefreshCw, SlidersHorizontal, CalendarDays, ShieldAlert, Printer } from 'lucide-vue-next'
 
 const props = defineProps<{
-  currentRole: string
+  role: string
   roles: Array<{ value: string; label: string }>
   date: string
   loading: boolean
@@ -62,7 +62,7 @@ const setToday = () => {
         <ShieldAlert class="text-violet-500" :size="15" />
         <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tampilan:</span>
         <select
-          :value="currentRole"
+          :value="role"
           @change="emit('update:role', ($event.target as HTMLSelectElement).value)"
           class="bg-transparent text-xs font-bold text-slate-700 dark:text-zinc-250 outline-none cursor-pointer focus:ring-0 border-none p-0 pr-6"
         >

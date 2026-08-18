@@ -9,6 +9,7 @@ import PrincipalDashboard from '../components/dashboard/variants/PrincipalDashbo
 import TreasurerDashboard from '../components/dashboard/variants/TreasurerDashboard.vue'
 import CurriculumDashboard from '../components/dashboard/variants/CurriculumDashboard.vue'
 import FoundationDashboard from '../components/dashboard/variants/FoundationDashboard.vue'
+import ConfirmModal from '../components/dashboard/ConfirmModal.vue'
 
 definePageMeta({
   middleware: [
@@ -32,6 +33,7 @@ const {
   fetchThresholds,
   updateThresholds,
   remindTeacher,
+  remindArrears,
   fetchWorkReminders,
   fetchConsolidatedMetrics,
   fetchPreferences,
@@ -51,6 +53,16 @@ const period = ref(new Date().toISOString().slice(0, 7))
 const recalculatingKeys = ref<Record<string, boolean>>({})
 const savingThreshold = ref(false)
 const sendingReminder = ref(false)
+
+// Confirm Modal state
+const isConfirmModalOpen = ref(false)
+const confirmModalConfig = ref({
+  title: '',
+  message: '',
+  action: '',
+  payload: null as any
+})
+const confirmActionLoading = ref(false)
 
 const catalog = ref<any[]>([])
 const metrics = ref<any[]>([])
@@ -272,6 +284,42 @@ const handleAction = (route: string) => {
   navigateTo(route)
 }
 
+const handleQuickAction = async (payload: { action: string; metric: string }) => {
+  if (!selectedSchoolId.value) return
+
+  if (payload.action === 'remind_arrears') {
+    confirmModalConfig.value = {
+      title: 'Konfirmasi Tagihan Massal',
+      message: 'Apakah Anda yakin ingin mengirim pengingat SPP massal ke seluruh siswa penunggak? Laporan akan dieksekusi oleh mesin notifikasi.',
+      action: 'remind_arrears',
+      payload: payload
+    }
+    isConfirmModalOpen.value = true
+  } else if (payload.action === 'open_substitute_finder') {
+    navigateTo('/schedule')
+  } else {
+    toast.info(`Aksi cepat ${payload.action} belum dikonfigurasi.`, 'Info')
+  }
+}
+
+const executeConfirmAction = async () => {
+  if (!selectedSchoolId.value) return
+  
+  if (confirmModalConfig.value.action === 'remind_arrears') {
+    confirmActionLoading.value = true
+    try {
+      await remindArrears(selectedSchoolId.value, 'all')
+      toast.success('Pengingat SPP massal berhasil diinisiasi.', 'Sukses')
+      isConfirmModalOpen.value = false
+    } catch (err: any) {
+      console.error('Gagal mengirim pengingat massal:', err)
+      toast.error(err.message || 'Gagal mengirim pengingat', 'Error')
+    } finally {
+      confirmActionLoading.value = false
+    }
+  }
+}
+
 const handleExportPdf = async () => {
   if (!selectedSchoolId.value) return
   exportingPdf.value = true
@@ -408,6 +456,7 @@ watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
         @recalculate="handleRecalculate"
         @save-threshold="handleSaveThreshold"
         @action="handleAction"
+        @quick-action="handleQuickAction"
       />
 
       <TreasurerDashboard
@@ -420,6 +469,7 @@ watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
         @recalculate="handleRecalculate"
         @send-reminder="handleSendReminder"
         @action="handleAction"
+        @quick-action="handleQuickAction"
       />
 
       <CurriculumDashboard
@@ -441,5 +491,15 @@ watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
         :loading="loading"
       />
     </div>
+
+    <!-- Confirm Modal -->
+    <ConfirmModal
+      v-model:isOpen="isConfirmModalOpen"
+      :title="confirmModalConfig.title"
+      :message="confirmModalConfig.message"
+      :loading="confirmActionLoading"
+      confirmText="Ya, Tagih Sekarang"
+      @confirm="executeConfirmAction"
+    />
   </div>
 </template>

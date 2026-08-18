@@ -89,6 +89,13 @@ export const useDashboard = () => {
     })
   }
 
+  const remindArrears = async (schoolId: string, bucket: string) => {
+    return await fetcher(`/school/${schoolId}/dashboard/actions/remind-arrears`, {
+      method: 'POST',
+      body: { bucket }
+    })
+  }
+
   const fetchWorkReminders = async (schoolId: string, teacherId?: string) => {
     const query = teacherId ? `?teacher_id=${teacherId}` : ''
     return await fetcher(`/school/${schoolId}/dashboard/work-reminders${query}`)
@@ -142,6 +149,7 @@ export const useDashboard = () => {
     deleteDigest,
     sendDigestNow,
     remindTeacher,
+    remindArrears,
     fetchWorkReminders,
     fetchDailyAttendances,
     recordDailyAttendancesBulk,

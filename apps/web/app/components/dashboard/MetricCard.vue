@@ -18,6 +18,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'recalculate', key: string): void
   (e: 'action', route: string): void
+  (e: 'quick-action', payload: { action: string; metric: string }): void
 }>()
 
 // Format metric values nicely
@@ -184,6 +185,19 @@ const freshnessLabel = computed(() => {
       >
         <RefreshCw :class="{ 'animate-spin': recalculating }" :size="12" />
         <span>Hitung Ulang</span>
+      </button>
+
+      <!-- Quick Action -->
+      <button
+        v-if="metric.quick_action"
+        @click="emit('quick-action', { action: metric.quick_action, metric: metric.metric_key })"
+        class="inline-flex items-center gap-1.5 text-[10px] font-bold text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 transition-colors bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded"
+      >
+        <Zap :size="13" />
+        <span v-if="metric.quick_action === 'remind_arrears'">Tagih SPP</span>
+        <span v-else-if="metric.quick_action === 'open_substitute_finder'">Cari Pengganti</span>
+        <span v-else-if="metric.quick_action === 'mark_planned_empty'">Tandai Selesai</span>
+        <span v-else>Aksi</span>
       </button>
 
       <!-- Action link -->
