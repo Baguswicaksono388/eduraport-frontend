@@ -1424,6 +1424,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                     <span class="text-[8px] text-slate-400">
                       (w: {{ Number(comp.weight_in_group) }}%)
                     </span>
+                    <span v-if="comp.is_remedial_slot" class="mt-0.5 inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20" title="Remedial Slot">Remedial</span>
                     <div class="flex gap-1 mt-1">
                       <button @click="openBulkModal(comp.id)" :disabled="comp.status === 'final'" class="px-1 py-0.5 bg-slate-200 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 hover:text-violet-600 rounded text-[8px] font-bold disabled:opacity-50" title="Input Massal">
                         Bulk

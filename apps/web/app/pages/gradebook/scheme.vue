@@ -62,6 +62,10 @@ const schemeForm = reactive({
 })
 
 const activeGroupId = ref('')
+const isActiveGroupWeighted = computed(() => {
+  const group = scheme.value?.groups?.find((g: any) => g.id === activeGroupId.value)
+  return group?.aggregation_method === 'weighted_avg'
+})
 const groupForm = reactive({
   id: '',
   name: '',
@@ -376,6 +380,7 @@ const openAddComponent = (groupId: string) => {
 }
 
 const openEditComponent = (comp: any) => {
+  activeGroupId.value = comp.group_id
   Object.assign(componentForm, {
     id: comp.id,
     name: comp.name,
@@ -890,19 +895,31 @@ const getAggregationLabel = (method: string) => {
           <BaseInput v-model="componentForm.max_score" label="Batas Nilai Maksimal" type="number" step="0.01" required />
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <BaseInput v-model="componentForm.weight_in_group" label="Bobot dalam Kelompok (%)" type="number" step="0.01" min="0" max="100" required />
+        <div class="grid grid-cols-2 gap-4 items-start">
+          <div>
+            <BaseInput v-model="componentForm.weight_in_group" label="Bobot dalam Kelompok (%)" type="number" step="0.01" min="0" max="100" required />
+            <p v-if="!isActiveGroupWeighted" class="mt-1.5 text-[9px] font-medium text-amber-600/90 dark:text-amber-500/90 leading-relaxed bg-amber-500/10 p-2 rounded border border-amber-500/20">
+              <strong class="block mb-0.5">Kelompok Sederhana/Tertinggi:</strong>
+              Biarkan bobot tetap <strong>100</strong> agar Anda dapat menambah komponen lain tanpa terblokir validasi bobot.
+            </p>
+          </div>
           <BaseInput v-model="componentForm.sort_order" label="Urutan Tampilan" type="number" required />
         </div>
 
-        <div class="flex items-center gap-2 px-1 py-0.5">
-          <input type="checkbox" id="is_remedial_slot" v-model="componentForm.is_remedial_slot" class="rounded border-slate-350 dark:border-zinc-800 text-violet-600" />
-          <label for="is_remedial_slot" class="text-xs font-semibold text-slate-600 dark:text-zinc-400">Komponen ini adalah slot nilai remedial (perbaikan)</label>
+        <div class="flex items-start gap-2.5 px-1 py-1 mt-2">
+          <input type="checkbox" id="is_remedial_slot" v-model="componentForm.is_remedial_slot" class="rounded border-slate-350 dark:border-zinc-800 text-violet-600 mt-0.5" />
+          <div>
+            <label for="is_remedial_slot" class="text-xs font-semibold text-slate-700 dark:text-zinc-300">Komponen ini adalah slot nilai remedial (perbaikan)</label>
+            <p class="text-[9.5px] text-slate-500 dark:text-zinc-450 mt-0.5 leading-relaxed">Kolom nilai ini opsional (hanya diisi untuk siswa yang belum tuntas). Sangat disarankan untuk <strong>TIDAK mencentang</strong> kotak Wajib Diisi di bawah.</p>
+          </div>
         </div>
 
-        <div class="flex items-center gap-2 px-1 py-0.5">
-          <input type="checkbox" id="is_required" v-model="componentForm.is_required" class="rounded border-slate-350 dark:border-zinc-800 text-violet-600" />
-          <label for="is_required" class="text-xs font-semibold text-slate-600 dark:text-zinc-400">Komponen ini wajib diisi oleh guru</label>
+        <div class="flex items-start gap-2.5 px-1 py-1">
+          <input type="checkbox" id="is_required" v-model="componentForm.is_required" class="rounded border-slate-350 dark:border-zinc-800 text-violet-600 mt-0.5" />
+          <div>
+            <label for="is_required" class="text-xs font-semibold text-slate-700 dark:text-zinc-300">Komponen wajib diisi (Wajib Ada Nilai)</label>
+            <p class="text-[9.5px] text-slate-500 dark:text-zinc-450 mt-0.5 leading-relaxed">Jika dicentang, sistem (Strict Mode) dapat menolak penguncian nilai apabila masih ada kotak siswa yang dibiarkan kosong.</p>
+          </div>
         </div>
 
         <BaseInput v-model="componentForm.description" label="Keterangan / Deskripsi Komponen" placeholder="Contoh: Kompetensi Dasar perkalian dan pembagian" />
