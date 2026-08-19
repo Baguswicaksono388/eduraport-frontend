@@ -66,14 +66,6 @@ const isActiveGroupWeighted = computed(() => {
   const group = scheme.value?.groups?.find((g: any) => g.id === activeGroupId.value)
   return group?.aggregation_method === 'weighted_avg'
 })
-const groupForm = reactive({
-  id: '',
-  name: '',
-  weight_percent: '50.00',
-  aggregation_method: 'simple_avg',
-  sort_order: 0
-})
-
 const activeComponentId = ref('')
 const componentForm = reactive({
   id: '',
@@ -83,8 +75,35 @@ const componentForm = reactive({
   max_score: '100.00',
   is_required: true,
   is_remedial_slot: false,
+  parent_component_id: '',
   sort_order: 0,
   description: ''
+})
+
+const activeGroupBaseComponents = computed(() => {
+  return components.value.filter((c: any) => 
+    c.group_id === activeGroupId.value && 
+    !c.is_remedial_slot && 
+    c.id !== componentForm.id
+  )
+})
+
+watch(() => componentForm.parent_component_id, (newParentId) => {
+  if (componentForm.is_remedial_slot && newParentId) {
+    const parent = components.value.find((c: any) => c.id === newParentId)
+    if (parent) {
+      componentForm.weight_in_group = parent.weight_in_group
+      componentForm.max_score = parent.max_score
+    }
+  }
+})
+
+const groupForm = reactive({
+  id: '',
+  name: '',
+  weight_percent: '50.00',
+  aggregation_method: 'simple_avg',
+  sort_order: 0
 })
 
 onMounted(async () => {
@@ -373,6 +392,7 @@ const openAddComponent = (groupId: string) => {
     max_score: '100.00',
     is_required: true,
     is_remedial_slot: false,
+    parent_component_id: '',
     sort_order: groupComps.length,
     description: ''
   })
@@ -389,6 +409,7 @@ const openEditComponent = (comp: any) => {
     max_score: comp.max_score,
     is_required: !!comp.is_required,
     is_remedial_slot: !!comp.is_remedial_slot,
+    parent_component_id: comp.parent_component_id || '',
     sort_order: comp.sort_order,
     description: comp.description || ''
   })
@@ -406,6 +427,7 @@ const handleSaveComponent = async () => {
         max_score: componentForm.max_score,
         is_required: componentForm.is_required,
         is_remedial_slot: componentForm.is_remedial_slot,
+        parent_component_id: componentForm.is_remedial_slot ? (componentForm.parent_component_id || null) : null,
         sort_order: componentForm.sort_order,
         description: componentForm.description
       })
@@ -417,6 +439,7 @@ const handleSaveComponent = async () => {
         max_score: componentForm.max_score,
         is_required: componentForm.is_required,
         is_remedial_slot: componentForm.is_remedial_slot,
+        parent_component_id: componentForm.is_remedial_slot ? (componentForm.parent_component_id || null) : null,
         sort_order: componentForm.sort_order,
         description: componentForm.description
       })
@@ -774,8 +797,14 @@ const getAggregationLabel = (method: string) => {
                     <span class="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-slate-100 dark:bg-zinc-900 text-slate-500 border border-slate-200/60 dark:border-zinc-800">
                       Tipe: {{ comp.type }}
                     </span>
-                    <span v-if="comp.is_remedial_slot" class="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                    <span v-if="comp.is_remedial_slot" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
                       Remedial Slot
+                      <template v-if="comp.parent_component_id">
+                        <span class="opacity-60 font-normal ml-0.5">→</span>
+                        <span class="max-w-[80px] truncate" :title="'Terikat ke: ' + (components.find(c => c.id === comp.parent_component_id)?.name || 'Unknown')">
+                          {{ components.find(c => c.id === comp.parent_component_id)?.name || 'Unknown' }}
+                        </span>
+                      </template>
                     </span>
                   </div>
 
@@ -892,12 +921,12 @@ const getAggregationLabel = (method: string) => {
               <span v-else-if="componentForm.type === 'custom'"><strong>Custom:</strong> Tipe nilai bebas sesuai kebijakan sekolah atau guru mata pelajaran.</span>
             </p>
           </div>
-          <BaseInput v-model="componentForm.max_score" label="Batas Nilai Maksimal" type="number" step="0.01" required />
+          <BaseInput v-model="componentForm.max_score" label="Batas Nilai Maksimal" type="number" step="0.01" required :disabled="componentForm.is_remedial_slot" />
         </div>
 
         <div class="grid grid-cols-2 gap-4 items-start">
           <div>
-            <BaseInput v-model="componentForm.weight_in_group" label="Bobot dalam Kelompok (%)" type="number" step="0.01" min="0" max="100" required />
+            <BaseInput v-model="componentForm.weight_in_group" label="Bobot dalam Kelompok (%)" type="number" step="0.01" min="0" max="100" required :disabled="componentForm.is_remedial_slot" />
             <p v-if="!isActiveGroupWeighted" class="mt-1.5 text-[9px] font-medium text-amber-600/90 dark:text-amber-500/90 leading-relaxed bg-amber-500/10 p-2 rounded border border-amber-500/20">
               <strong class="block mb-0.5">Kelompok Sederhana/Tertinggi:</strong>
               Biarkan bobot tetap <strong>100</strong> agar Anda dapat menambah komponen lain tanpa terblokir validasi bobot.
@@ -906,11 +935,24 @@ const getAggregationLabel = (method: string) => {
           <BaseInput v-model="componentForm.sort_order" label="Urutan Tampilan" type="number" required />
         </div>
 
-        <div class="flex items-start gap-2.5 px-1 py-1 mt-2">
-          <input type="checkbox" id="is_remedial_slot" v-model="componentForm.is_remedial_slot" class="rounded border-slate-350 dark:border-zinc-800 text-violet-600 mt-0.5" />
-          <div>
-            <label for="is_remedial_slot" class="text-xs font-semibold text-slate-700 dark:text-zinc-300">Komponen ini adalah slot nilai remedial (perbaikan)</label>
-            <p class="text-[9.5px] text-slate-500 dark:text-zinc-450 mt-0.5 leading-relaxed">Kolom nilai ini opsional (hanya diisi untuk siswa yang belum tuntas). Sangat disarankan untuk <strong>TIDAK mencentang</strong> kotak Wajib Diisi di bawah.</p>
+        <div class="flex flex-col gap-2 px-1 py-1 mt-2">
+          <div class="flex items-start gap-2.5">
+            <input type="checkbox" id="is_remedial_slot" v-model="componentForm.is_remedial_slot" class="rounded border-slate-350 dark:border-zinc-800 text-violet-600 mt-0.5" />
+            <div>
+              <label for="is_remedial_slot" class="text-xs font-semibold text-slate-700 dark:text-zinc-300">Komponen ini adalah slot nilai remedial (perbaikan)</label>
+              <p class="text-[9.5px] text-slate-500 dark:text-zinc-450 mt-0.5 leading-relaxed">Kolom nilai ini opsional (hanya diisi untuk siswa yang belum tuntas). Sangat disarankan untuk <strong>TIDAK mencentang</strong> kotak Wajib Diisi di bawah.</p>
+            </div>
+          </div>
+
+          <div v-if="componentForm.is_remedial_slot" class="ml-6 mt-1 p-3 bg-violet-50/50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-900/30 rounded-lg">
+            <label class="block text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-1.5">Komponen Utama (Yang Diremidi)</label>
+            <select v-model="componentForm.parent_component_id" required class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs outline-none transition-all focus:border-violet-600">
+              <option value="" disabled selected>-- Pilih Komponen Utama --</option>
+              <option v-for="c in activeGroupBaseComponents" :key="c.id" :value="c.id">
+                {{ c.name }}
+              </option>
+            </select>
+            <p class="text-[9px] text-slate-500 mt-1.5">Wajib dipilih. Nilai Batas Maksimal & Bobot komponen ini akan disinkronkan otomatis sesuai induknya.</p>
           </div>
         </div>
 

@@ -229,14 +229,33 @@ const loadMatrix = async () => {
       const matrixRes: any = await gradebook.fetchSchemeScores(selectedSchoolId.value, schemeRes.data.id)
       if (matrixRes.success && matrixRes.data) {
         groups.value = matrixRes.data.groups
-        components.value = matrixRes.data.components
+
+        // Group and sort components to pair parent with its remedial children
+        const rawComponents = matrixRes.data.components
+        const sortedComponents: any[] = []
+        
+        const baseComps = rawComponents.filter((c: any) => !c.parent_component_id).sort((a: any, b: any) => a.sort_order - b.sort_order)
+        const remedialComps = rawComponents.filter((c: any) => c.parent_component_id)
+        
+        for (const base of baseComps) {
+          sortedComponents.push(base)
+          // Find children of this base, sort them by sort_order
+          const children = remedialComps.filter((c: any) => c.parent_component_id === base.id).sort((a: any, b: any) => a.sort_order - b.sort_order)
+          sortedComponents.push(...children)
+        }
+        
+        // Append any orphaned components just in case
+        const orphaned = remedialComps.filter((c: any) => !baseComps.find((b: any) => b.id === c.parent_component_id))
+        sortedComponents.push(...orphaned)
+        
+        components.value = sortedComponents
         kkm.value = matrixRes.data.kkm
         
         // Map scores inside the cells
         matrix.value = matrixRes.data.matrix.map((row: any) => {
           // Initialize scores as local reactive objects
           const scoresMap: Record<string, any> = {}
-          for (const comp of matrixRes.data.components) {
+          for (const comp of sortedComponents) {
             const scoreItem = row.scores[comp.id]
             scoresMap[comp.id] = {
               id: scoreItem?.id || '',
@@ -1424,7 +1443,14 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                     <span class="text-[8px] text-slate-400">
                       (w: {{ Number(comp.weight_in_group) }}%)
                     </span>
-                    <span v-if="comp.is_remedial_slot" class="mt-0.5 inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20" title="Remedial Slot">Remedial</span>
+                    <span v-if="comp.is_remedial_slot" class="mt-0.5 inline-flex flex-col items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20" title="Remedial Slot">
+                      <span>Remedial</span>
+                      <template v-if="comp.parent_component_id">
+                        <span class="max-w-[80px] truncate opacity-80" :title="'Terikat ke: ' + (components.find(c => c.id === comp.parent_component_id)?.name || 'Unknown')">
+                          (→ {{ components.find(c => c.id === comp.parent_component_id)?.name || '?' }})
+                        </span>
+                      </template>
+                    </span>
                     <div class="flex gap-1 mt-1">
                       <button @click="openBulkModal(comp.id)" :disabled="comp.status === 'final'" class="px-1 py-0.5 bg-slate-200 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 hover:text-violet-600 rounded text-[8px] font-bold disabled:opacity-50" title="Input Massal">
                         Bulk
