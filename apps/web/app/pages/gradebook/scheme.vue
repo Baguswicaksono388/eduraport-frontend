@@ -67,7 +67,7 @@ const isActiveGroupWeighted = computed(() => {
   return group?.aggregation_method === 'weighted_avg'
 })
 const activeComponentId = ref('')
-const componentForm = reactive({
+const componentForm = ref({
   id: '',
   name: '',
   type: 'custom',
@@ -84,16 +84,16 @@ const activeGroupBaseComponents = computed(() => {
   return components.value.filter((c: any) => 
     c.group_id === activeGroupId.value && 
     !c.is_remedial_slot && 
-    c.id !== componentForm.id
+    c.id !== componentForm.value.id
   )
 })
 
-watch(() => componentForm.parent_component_id, (newParentId) => {
-  if (componentForm.is_remedial_slot && newParentId) {
+watch(() => componentForm.value.parent_component_id, (newParentId) => {
+  if (componentForm.value.is_remedial_slot && newParentId) {
     const parent = components.value.find((c: any) => c.id === newParentId)
     if (parent) {
-      componentForm.weight_in_group = parent.weight_in_group
-      componentForm.max_score = parent.max_score
+      componentForm.value.weight_in_group = parent.weight_in_group
+      componentForm.value.max_score = parent.max_score
     }
   }
 })
@@ -384,7 +384,7 @@ const handleDeleteGroup = async (groupId: string) => {
 const openAddComponent = (groupId: string) => {
   activeGroupId.value = groupId
   const groupComps = components.value.filter(c => c.group_id === groupId)
-  Object.assign(componentForm, {
+  Object.assign(componentForm.value, {
     id: '',
     name: '',
     type: 'custom',
@@ -401,7 +401,7 @@ const openAddComponent = (groupId: string) => {
 
 const openEditComponent = (comp: any) => {
   activeGroupId.value = comp.group_id
-  Object.assign(componentForm, {
+  Object.assign(componentForm.value, {
     id: comp.id,
     name: comp.name,
     type: comp.type,
@@ -419,29 +419,29 @@ const openEditComponent = (comp: any) => {
 const handleSaveComponent = async () => {
   try {
     let res: any
-    if (componentForm.id) {
-      res = await gradebook.updateComponent(selectedSchoolId.value, componentForm.id, {
-        name: componentForm.name,
-        type: componentForm.type,
-        weight_in_group: componentForm.weight_in_group,
-        max_score: componentForm.max_score,
-        is_required: componentForm.is_required,
-        is_remedial_slot: componentForm.is_remedial_slot,
-        parent_component_id: componentForm.is_remedial_slot ? (componentForm.parent_component_id || null) : null,
-        sort_order: componentForm.sort_order,
-        description: componentForm.description
+    if (componentForm.value.id) {
+      res = await gradebook.updateComponent(selectedSchoolId.value, componentForm.value.id, {
+        name: componentForm.value.name,
+        type: componentForm.value.type,
+        weight_in_group: componentForm.value.weight_in_group,
+        max_score: componentForm.value.max_score,
+        is_required: componentForm.value.is_required,
+        is_remedial_slot: componentForm.value.is_remedial_slot,
+        parent_component_id: componentForm.value.is_remedial_slot ? (componentForm.value.parent_component_id || null) : null,
+        sort_order: componentForm.value.sort_order,
+        description: componentForm.value.description
       })
     } else {
       res = await gradebook.createComponent(selectedSchoolId.value, activeGroupId.value, {
-        name: componentForm.name,
-        type: componentForm.type,
-        weight_in_group: componentForm.weight_in_group,
-        max_score: componentForm.max_score,
-        is_required: componentForm.is_required,
-        is_remedial_slot: componentForm.is_remedial_slot,
-        parent_component_id: componentForm.is_remedial_slot ? (componentForm.parent_component_id || null) : null,
-        sort_order: componentForm.sort_order,
-        description: componentForm.description
+        name: componentForm.value.name,
+        type: componentForm.value.type,
+        weight_in_group: componentForm.value.weight_in_group,
+        max_score: componentForm.value.max_score,
+        is_required: componentForm.value.is_required,
+        is_remedial_slot: componentForm.value.is_remedial_slot,
+        parent_component_id: componentForm.value.is_remedial_slot ? (componentForm.value.parent_component_id || null) : null,
+        sort_order: componentForm.value.sort_order,
+        description: componentForm.value.description
       })
     }
 

@@ -234,18 +234,23 @@ const loadMatrix = async () => {
         const rawComponents = matrixRes.data.components
         const sortedComponents: any[] = []
         
-        const baseComps = rawComponents.filter((c: any) => !c.parent_component_id).sort((a: any, b: any) => a.sort_order - b.sort_order)
-        const remedialComps = rawComponents.filter((c: any) => c.parent_component_id)
-        
-        for (const base of baseComps) {
-          sortedComponents.push(base)
-          // Find children of this base, sort them by sort_order
-          const children = remedialComps.filter((c: any) => c.parent_component_id === base.id).sort((a: any, b: any) => a.sort_order - b.sort_order)
-          sortedComponents.push(...children)
+        for (const group of groups.value) {
+          const groupBaseComps = rawComponents
+            .filter((c: any) => c.group_id === group.id && !c.parent_component_id)
+            .sort((a: any, b: any) => a.sort_order - b.sort_order)
+            
+          for (const base of groupBaseComps) {
+            sortedComponents.push(base)
+            const children = rawComponents
+              .filter((c: any) => c.parent_component_id === base.id)
+              .sort((a: any, b: any) => a.sort_order - b.sort_order)
+            sortedComponents.push(...children)
+          }
         }
         
-        // Append any orphaned components just in case
-        const orphaned = remedialComps.filter((c: any) => !baseComps.find((b: any) => b.id === c.parent_component_id))
+        // Append orphaned components
+        const mappedIds = sortedComponents.map((c: any) => c.id)
+        const orphaned = rawComponents.filter((c: any) => !mappedIds.includes(c.id))
         sortedComponents.push(...orphaned)
         
         components.value = sortedComponents
@@ -1434,9 +1439,13 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
               <tr class="border-b border-slate-200/50 dark:border-zinc-850 bg-slate-50/20 dark:bg-zinc-900/20 text-[9px] font-bold text-slate-500 dark:text-zinc-450">
                 
                 <th 
-                  v-for="comp in components" 
+                  v-for="(comp, index) in components" 
                   :key="comp.id"
                   class="p-2 border-r border-slate-100 dark:border-zinc-850 text-center font-black"
+                  :class="[
+                    comp.is_remedial_slot ? 'bg-amber-50/20 dark:bg-amber-900/10' : '',
+                    (components[index + 1]?.is_remedial_slot && components[index + 1]?.parent_component_id === comp.id) ? 'border-r-0 border-r-transparent dark:border-r-transparent' : ''
+                  ]"
                 >
                   <div class="flex flex-col items-center gap-1">
                     <span class="text-[10px] text-slate-700 dark:text-zinc-300 truncate max-w-[80px]" :title="comp.name">{{ comp.name }}</span>
@@ -1490,9 +1499,13 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
 
                   <!-- Components inputs -->
                   <td 
-                    v-for="comp in components" 
+                    v-for="(comp, index) in components" 
                     :key="comp.id"
                     class="p-1.5 border-r border-slate-100 dark:border-zinc-855 text-center relative group"
+                    :class="[
+                      comp.is_remedial_slot ? 'bg-amber-50/10 dark:bg-amber-900/5' : '',
+                      (components[index + 1]?.is_remedial_slot && components[index + 1]?.parent_component_id === comp.id) ? 'border-r-0 border-r-transparent dark:border-r-transparent' : ''
+                    ]"
                   >
                     <div class="flex items-center justify-center gap-1.5" v-if="row.scores && row.scores[comp.id]">
                       <!-- Numeric input or Letter select based on TK level or component type -->

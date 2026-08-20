@@ -1,14 +1,16 @@
 <template>
   <!-- RPP / Modul Ajar -->
   <div v-if="document.document_type === 'rpp'" class="rpp-renderer">
-    <div v-if="rpp.informasi_umum" class="section">
+    <div v-if="rpp.identitas || rpp.informasi_umum" class="section">
       <div class="section-title">📋 Informasi Umum</div>
       <div class="info-grid">
-        <div v-for="(val, key) in rpp.informasi_umum" :key="key" class="info-item">
-          <span class="info-key">{{ formatKey(key) }}</span>
-          <span v-if="!editableSection('informasi_umum')" class="info-val">{{ val }}</span>
-          <input v-else v-model="rpp.informasi_umum[key]" class="field-input-sm" />
-        </div>
+        <template v-for="(val, key) in (rpp.identitas || rpp.informasi_umum)" :key="key">
+          <div v-if="key !== 'dimensi_profil_lulusan'" class="info-item">
+            <span class="info-key">{{ formatKey(key) }}</span>
+            <span v-if="!editableSection('informasi_umum')" class="info-val">{{ val }}</span>
+            <input v-else v-model="(rpp.identitas || rpp.informasi_umum)[key]" class="field-input-sm" />
+          </div>
+        </template>
       </div>
     </div>
 
@@ -28,28 +30,35 @@
         <div class="dimensi-list">
           <span class="cp-label">Dimensi Profil:</span>
           <div class="tags">
-            <span v-for="d in rpp.capaian.dimensi_profil" :key="d" class="tag-chip">{{ d }}</span>
+            <span v-for="d in (rpp.identitas?.dimensi_profil_lulusan || rpp.informasi_umum?.dimensi_profil_lulusan || rpp.capaian.dimensi_profil || [])" :key="d" class="tag-chip">{{ d }}</span>
           </div>
         </div>
       </div>
     </div>
 
-    <div v-if="rpp.langkah" class="section">
+    <div v-if="rpp.langkah_pembelajaran || rpp.langkah" class="section">
       <div class="section-title">📝 Langkah Pembelajaran</div>
       <div class="langkah-tabs">
         <button
           v-for="step in langkahSteps"
           :key="step.key"
+          v-show="(rpp.langkah_pembelajaran || rpp.langkah)[step.key]"
           class="langkah-tab"
           :class="{ active: activeLangkahTab === step.key }"
           @click="activeLangkahTab = step.key"
         >{{ step.label }}</button>
       </div>
-      <ul class="langkah-list">
-        <li v-for="(item, i) in rpp.langkah[activeLangkahTab]" :key="i">
-          {{ item }}
-        </li>
-      </ul>
+      <template v-if="(rpp.langkah_pembelajaran || rpp.langkah)[activeLangkahTab]">
+        <div v-if="(rpp.langkah_pembelajaran || rpp.langkah)[activeLangkahTab].prinsip_pembelajaran" style="margin-bottom: 12px; padding: 12px; background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 8px;">
+          <span style="display: block; font-size: 10px; font-weight: 800; color: #d97706; margin-bottom: 4px;">Prinsip Pembelajaran:</span>
+          <p style="font-size: 12px; color: var(--text); line-height: 1.5; margin: 0;">{{ (rpp.langkah_pembelajaran || rpp.langkah)[activeLangkahTab].prinsip_pembelajaran }}</p>
+        </div>
+        <ul class="langkah-list">
+          <li v-for="(item, i) in ((rpp.langkah_pembelajaran || rpp.langkah)[activeLangkahTab].aktivitas || (rpp.langkah_pembelajaran || rpp.langkah)[activeLangkahTab] || [])" :key="i">
+            {{ item }}
+          </li>
+        </ul>
+      </template>
     </div>
 
     <div v-if="rpp.asesmen" class="section">
@@ -97,6 +106,30 @@
         </div>
         <div class="kisi-item full"><span class="kisi-label">TP Rujukan</span><span class="kisi-val">{{ soal.kisi_kisi.tp_ref }}</span></div>
       </div>
+    </div>
+
+    <!-- KKTP Scheme -->
+    <div v-if="soal.kktp_scheme" class="section" style="background: rgba(92,168,244,0.05); padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+      <div class="section-title" style="color: var(--blue);">🎯 Kriteria Ketuntasan Tujuan Pembelajaran (KKTP)</div>
+      <div style="font-size: 13px; margin-bottom: 8px;"><strong>Deskripsi:</strong> {{ soal.kktp_scheme.deskripsi }}</div>
+      <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px;">
+        <thead>
+          <tr>
+            <th style="text-align: left; border-bottom: 1px solid var(--line); padding: 6px;">Interval</th>
+            <th style="text-align: left; border-bottom: 1px solid var(--line); padding: 6px;">Kategori</th>
+            <th style="text-align: left; border-bottom: 1px solid var(--line); padding: 6px;">Tindak Lanjut</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(t, idx) in soal.kktp_scheme.tindak_lanjut" :key="idx">
+            <td style="border-bottom: 1px solid var(--line); padding: 6px;">{{ t.interval }}</td>
+            <td style="border-bottom: 1px solid var(--line); padding: 6px;">
+              <span class="tag-chip" style="background: var(--bg); border: 1px solid var(--line);">{{ t.kategori }}</span>
+            </td>
+            <td style="border-bottom: 1px solid var(--line); padding: 6px;">{{ t.intervensi }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <div v-if="soal.pilihan_ganda?.length > 0" class="section">
@@ -152,6 +185,80 @@
         </div>
       </div>
     </div>
+
+    <!-- Rekomendasi Gradebook -->
+    <div v-if="soal.rekomendasi_penilaian_rapor" class="section" style="background: rgba(139,92,246,0.05); padding: 16px; border-radius: 8px;">
+      <div class="section-title" style="color: var(--vio);">📈 Rekomendasi Pengolahan Nilai Gradebook</div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+        <span style="font-size: 13px; font-weight: 700;">Opsi Disarankan:</span>
+        <span class="tag-chip" style="background: var(--vio); color: #fff; border: none; font-weight: 700;">
+          {{ soal.rekomendasi_penilaian_rapor.opsi_pengolahan.toUpperCase() }}
+        </span>
+      </div>
+      <p style="font-size: 12px; color: var(--muted2); line-height: 1.5; margin: 0;">
+        {{ soal.rekomendasi_penilaian_rapor.alasan }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Asesmen Alternatif -->
+  <div v-else-if="document.document_type === 'asesmen_alternatif'" class="asesmen-alt-renderer">
+    <div v-if="asesmenAlt.informasi_asesmen" class="section">
+      <div class="section-title">📋 Informasi Asesmen</div>
+      <div class="info-grid" style="grid-template-columns: 1fr;">
+        <div class="info-item">
+          <span class="info-key">Judul Penugasan</span>
+          <span class="info-val">{{ asesmenAlt.informasi_asesmen.judul_penugasan }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-key">Bentuk Asesmen</span>
+          <span class="info-val">{{ asesmenAlt.informasi_asesmen.bentuk_asesmen }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-key">Tujuan Pembelajaran</span>
+          <span class="info-val">{{ asesmenAlt.informasi_asesmen.tp_ref }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-key">Estimasi Waktu</span>
+          <span class="info-val">{{ asesmenAlt.informasi_asesmen.estimasi_waktu }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="asesmenAlt.instruksi_siswa" class="section">
+      <div class="section-title">📝 Instruksi Siswa</div>
+      <ul class="langkah-list">
+        <li v-for="(item, i) in asesmenAlt.instruksi_siswa" :key="i">
+          {{ item }}
+        </li>
+      </ul>
+    </div>
+
+    <div v-if="asesmenAlt.rubrik_penilaian?.length > 0" class="section">
+      <div class="section-title">⚖️ Rubrik Penilaian Khusus</div>
+      <div v-for="r in asesmenAlt.rubrik_penilaian" :key="r.kriteria" class="rubrik-card">
+        <div class="rubrik-kriteria">{{ r.kriteria }}</div>
+        <div class="rubrik-skala">
+          <div v-for="(deskripsi, skor) in r.skala" :key="skor" class="skala-item">
+            <span class="skala-skor">{{ skor }}</span>
+            <span class="skala-deskripsi">{{ deskripsi }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="asesmenAlt.rekomendasi_penilaian_rapor" class="section" style="background: rgba(139,92,246,0.05); padding: 16px; border-radius: 8px;">
+      <div class="section-title" style="color: var(--vio);">📈 Rekomendasi Pengolahan Nilai Gradebook</div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+        <span style="font-size: 13px; font-weight: 700;">Opsi Disarankan:</span>
+        <span class="tag-chip" style="background: var(--vio); color: #fff; border: none; font-weight: 700;">
+          {{ asesmenAlt.rekomendasi_penilaian_rapor.opsi_pengolahan.toUpperCase() }}
+        </span>
+      </div>
+      <p style="font-size: 12px; color: var(--muted2); line-height: 1.5; margin: 0;">
+        {{ asesmenAlt.rekomendasi_penilaian_rapor.alasan }}
+      </p>
+    </div>
   </div>
 
   <!-- Materi Ajar -->
@@ -199,11 +306,28 @@ const emit = defineEmits<{
 const rpp = ref<any>(typeof props.document.content === 'string' ? JSON.parse(props.document.content) : props.document.content)
 const soal = computed<any>(() => typeof props.document.content === 'string' ? JSON.parse(props.document.content) : props.document.content)
 const materi = computed<any>(() => typeof props.document.content === 'string' ? JSON.parse(props.document.content) : props.document.content)
+const asesmenAlt = computed<any>(() => typeof props.document.content === 'string' ? JSON.parse(props.document.content) : props.document.content)
 
-const activeLangkahTab = ref<'pendahuluan' | 'inti' | 'penutup'>('pendahuluan')
+const activeLangkahTab = ref<string>('pendahuluan')
+
+import { watchEffect } from 'vue'
+watchEffect(() => {
+  if (props.document.document_type === 'rpp') {
+    const steps = rpp.value?.langkah_pembelajaran || rpp.value?.langkah || {}
+    if (!steps[activeLangkahTab.value]) {
+      if (steps.pendahuluan) activeLangkahTab.value = 'pendahuluan'
+      else if (steps.memahami) activeLangkahTab.value = 'memahami'
+      else activeLangkahTab.value = Object.keys(steps)[0] || 'pendahuluan'
+    }
+  }
+})
+
 const langkahSteps = [
   { key: 'pendahuluan', label: '▶ Pendahuluan' },
-  { key: 'inti', label: '◉ Inti' },
+  { key: 'memahami', label: '💡 Memahami' },
+  { key: 'mengaplikasi', label: '⚙️ Mengaplikasi' },
+  { key: 'merefleksi', label: '🔍 Merefleksi' },
+  { key: 'inti', label: '◉ Inti (Lama)' },
   { key: 'penutup', label: '⏹ Penutup' },
 ]
 

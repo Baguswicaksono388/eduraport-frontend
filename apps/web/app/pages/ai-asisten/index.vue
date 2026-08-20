@@ -78,10 +78,10 @@
                 </button>
               </div>
             </div>
-            <template v-if="['soal', 'materi', 'ppt'].includes(form.document_type) && !generatedDoc">
+            <template v-if="['soal', 'asesmen_alternatif', 'materi', 'ppt'].includes(form.document_type) && !generatedDoc">
               <div class="empty-state" style="margin-top: 24px; padding: 24px 16px; text-align: center; border: 1px dashed var(--line); border-radius: 8px; background: rgba(0,0,0,0.1);">
                 <span style="font-size: 28px; margin-bottom: 12px; display: block;">🔗</span>
-                <strong style="font-size: 14px; color: var(--fg); display: block; margin-bottom: 8px;">Pembuatan {{ form.document_type === 'soal' ? 'Soal' : form.document_type === 'ppt' ? 'Bahan Tayang PPT' : 'Materi' }} Mandiri</strong>
+                <strong style="font-size: 14px; color: var(--fg); display: block; margin-bottom: 8px;">Pembuatan {{ form.document_type === 'soal' ? 'Soal' : form.document_type === 'asesmen_alternatif' ? 'Asesmen Alternatif' : form.document_type === 'ppt' ? 'Bahan Tayang PPT' : 'Materi' }} Mandiri</strong>
                 <p style="color: var(--muted2); line-height: 1.5; margin-bottom: 16px; font-size: 12px;">
                   Untuk hasil terbaik, buat dari Modul Ajar yang sudah ada. Atau buka terlebih dahulu Modul Ajar, lalu gunakan tab ✨ Lanjut Buat...
                 </p>
@@ -91,11 +91,11 @@
               </div>
             </template>
 
-            <!-- Form lengkap: tampil untuk RPP, dan untuk soal/materi/ppt jika ada generatedDoc -->
-            <template v-if="form.document_type === 'rpp' || (['soal', 'materi', 'ppt'].includes(form.document_type) && generatedDoc)">
+            <!-- Form lengkap: tampil untuk RPP, dan untuk soal/asesmen_alternatif/materi/ppt jika ada generatedDoc -->
+            <template v-if="form.document_type === 'rpp' || (['soal', 'asesmen_alternatif', 'materi', 'ppt'].includes(form.document_type) && generatedDoc)">
 
               <!-- Banner turunan dari Modul Ajar sesi ini -->
-              <div v-if="['soal', 'materi', 'ppt'].includes(form.document_type) && generatedDoc" style="margin-top: 12px; padding: 12px 16px; background: rgba(92,168,244,0.08); border: 1px solid rgba(92,168,244,0.25); border-radius: 8px; font-size: 12px;">
+              <div v-if="['soal', 'asesmen_alternatif', 'materi', 'ppt'].includes(form.document_type) && generatedDoc" style="margin-top: 12px; padding: 12px 16px; background: rgba(92,168,244,0.08); border: 1px solid rgba(92,168,244,0.25); border-radius: 8px; font-size: 12px;">
                 🔗 <strong>Diturunkan dari Modul Ajar:</strong> <em>{{ generatedDoc.title }}</em>
               </div>
 
@@ -191,6 +191,14 @@
                 <select id="ai-model-pembelajaran" v-model="form.model_pembelajaran" class="field-input" :disabled="form.document_type !== 'rpp'">
                   <option v-for="m in modelPembelajaranOptions" :key="m" :value="m">{{ m }}</option>
                 </select>
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">Dimensi Profil Pelajar Pancasila</label>
+                <select id="ai-dpl" v-model="form.selected_dpl_ids" multiple class="field-input" style="min-height: 80px;" :disabled="form.document_type !== 'rpp'">
+                  <option v-for="dpl in profileDimensions" :key="dpl.id" :value="dpl.id">{{ dpl.dimension_name }}</option>
+                </select>
+                <div class="field-hint">Tahan Ctrl / Cmd untuk memilih lebih dari satu (opsional).</div>
               </div>
 
               <!-- Soal options -->
@@ -581,6 +589,20 @@
                   <input type="number" v-model="relatedForm.soal_opts.jumlah_esai" class="field-input" min="0" max="20" />
                 </div>
               </div>
+              <div class="form-field" style="margin-top: 16px;">
+                <label class="field-label">Level Kognitif (Bloom)</label>
+                <div class="bloom-checkboxes">
+                  <label v-for="lvl in bloomLevels" :key="lvl.key" class="bloom-check">
+                    <input
+                      type="checkbox"
+                      :value="lvl.key"
+                      :checked="relatedForm.soal_opts.level_kognitif.includes(lvl.key)"
+                      @change="toggleRelatedBloom(lvl.key)"
+                    />
+                    <span :class="`bloom-${lvl.key.toLowerCase()}`">{{ lvl.label }}</span>
+                  </label>
+                </div>
+              </div>
             </div>
             
             <div class="flex justify-end mt-4">
@@ -709,6 +731,7 @@ const form = ref({
   academic_year_id: '',
   semester: 'ganjil' as 'ganjil' | 'genap',
   topic: '',
+  selected_dpl_ids: [] as string[],
   model_pembelajaran: 'Problem Based Learning',
   soal_opts: { jumlah_pg: 10, jumlah_esai: 5, level_kognitif: ['C2', 'C3', 'C4', 'C5'] },
   materi_opts: { jumlah_sub_bab: 3, with_images: true },
@@ -718,6 +741,7 @@ const form = ref({
 const subjects = ref<any[]>([])
 const availableClasses = ref<any[]>([])
 const learningOutcomes = ref<any[]>([])
+const profileDimensions = ref<any[]>([])
 const academicYears = ref<any[]>([])
 const contextLoaded = ref(false)
 
@@ -793,6 +817,7 @@ const tabs = [
 const documentTypes = [
   { key: 'rpp', icon: '📄', label: 'Modul Ajar / RPP', phase: 1 },
   { key: 'soal', icon: '🎯', label: 'Soal / Kuis + Rubrik', phase: 1 },
+  { key: 'asesmen_alternatif', icon: '💡', label: 'Asesmen Alternatif', phase: 1 },
   { key: 'materi', icon: '🖼️', label: 'Materi Ajar', phase: 1 },
   { key: 'ppt', icon: '📽️', label: 'Bahan Tayang PPT', phase: 1 },
 ]
@@ -944,6 +969,7 @@ async function onSubjectChange() {
   try {
     const ctx = await getContext(form.value.subject_id, form.value.class_id || undefined)
     learningOutcomes.value = ctx.learning_outcomes ?? []
+    profileDimensions.value = ctx.profile_dimensions ?? []
     contextLoaded.value = true
     if (ctx.classes?.length > 0 && !availableClasses.value.length) {
       availableClasses.value = ctx.classes
@@ -996,11 +1022,12 @@ async function handleGenerate() {
       academic_year_id: f.academic_year_id,
       semester: f.semester,
       topic: f.topic,
+      selected_dpl_ids: f.selected_dpl_ids,
       model_pembelajaran: f.model_pembelajaran,
     }
 
     // Auto-link ke Modul Ajar yang baru di-generate (RPP sesi ini)
-    if (['soal', 'materi', 'ppt'].includes(f.document_type) && prevDoc?.id) {
+    if (['soal', 'asesmen_alternatif', 'materi', 'ppt'].includes(f.document_type) && prevDoc?.id) {
       payload.derived_from = prevDoc.id
     }
 
@@ -1038,7 +1065,9 @@ async function handleGenerate() {
     } else if (errData?.error === 'SCHEMA_VALIDATION_FAILED') {
       generateError.value = '⚠️ AI gagal menghasilkan format yang valid. Coba generate ulang.'
     } else if (errData?.error === 'AI_PROVIDER_ERROR') {
-      generateError.value = '🔌 AI provider sedang tidak tersedia. Kuota tidak terpotong.'
+      generateError.value = errData?.message || '🔌 AI provider sedang tidak tersedia. Kuota tidak terpotong.'
+    } else if (errData?.error === 'WRITTEN_TEST_FORBIDDEN') {
+      generateError.value = `⚠️ ${errData.message}`
     } else {
       generateError.value = err?.message ?? 'Terjadi kesalahan. Silahkan coba lagi.'
     }
@@ -1080,6 +1109,15 @@ function toggleRegenerateBloom(key: string) {
     regenerateForm.value.soal_opts.level_kognitif = arr.filter((k: string) => k !== key)
   } else {
     regenerateForm.value.soal_opts.level_kognitif.push(key)
+  }
+}
+
+function toggleRelatedBloom(key: string) {
+  const arr = relatedForm.value.soal_opts.level_kognitif
+  if (arr.includes(key)) {
+    relatedForm.value.soal_opts.level_kognitif = arr.filter((k: string) => k !== key)
+  } else {
+    relatedForm.value.soal_opts.level_kognitif.push(key)
   }
 }
 
