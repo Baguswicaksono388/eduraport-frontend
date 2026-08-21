@@ -2,6 +2,8 @@
 import { computed } from 'vue'
 import { competitors } from '../../data/competitors'
 
+definePageMeta({ layout: false })
+
 const route = useRoute()
 const slug = computed(() => route.params.competitor as string)
 const data = computed(() => competitors.find(c => c.slug === slug.value))

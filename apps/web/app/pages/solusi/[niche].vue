@@ -2,6 +2,8 @@
 import { computed } from 'vue'
 import { niches } from '../../data/niches'
 
+definePageMeta({ layout: false })
+
 const route = useRoute()
 const slug = computed(() => route.params.niche as string)
 const data = computed(() => niches.find(n => n.slug === slug.value))
