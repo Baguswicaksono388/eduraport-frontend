@@ -25,6 +25,31 @@ export const useReport = () => {
     }
   }
 
+  const checkBlastStats = async (schoolId: string, academicYearId: string, semester: string, classId?: string) => {
+    try {
+      const query: any = { academic_year_id: academicYearId, semester }
+      if (classId) query.class_id = classId
+      return await fetcher(`/school/${schoolId}/report/blast-stats`, { query })
+    } catch (error) {
+      console.error('Failed to check blast stats:', error)
+      throw error
+    }
+  }
+
+  const executeWaBlast = async (schoolId: string, academicYearId: string, semester: string, classId?: string) => {
+    try {
+      const payload: any = { academic_year_id: academicYearId, semester }
+      if (classId) payload.class_id = classId
+      return await fetcher(`/school/${schoolId}/report/blast-wa`, {
+        method: 'POST',
+        body: payload
+      })
+    } catch (error) {
+      console.error('Failed to execute wa blast:', error)
+      throw error
+    }
+  }
+
   const generateReports = async (
     schoolId: string,
     payload: {
@@ -115,6 +140,8 @@ export const useReport = () => {
     updateReportStatus,
     fetchReportDetail,
     fetchReportAssessments,
-    saveReportAssessments
+    saveReportAssessments,
+    checkBlastStats,
+    executeWaBlast
   }
 }

@@ -1,0 +1,18 @@
+# EduRaport
+
+EduRaport is a B2B SaaS ERP Education platform and Smart School Assistant designed for private schools (TK, SD, SMP, SMA) and Yayasan (Foundations) in Indonesia. 
+It shifts school decision-making from intuition to data-driven by integrating e-Raport (following Kurikulum Merdeka PPA 2025 guidelines), academic management, and financial/SPP tracking into a single unified ecosystem.
+
+## Core Strategic Pillars
+- **Satu Identitas Lintas Jenjang (Data Silo Elimination)**: Persistent student identity from TK to SMA for Yayasan multi-unit. No re-entry needed when a student moves to a higher grade.
+- **Kepatuhan Kurikulum 2025 (AI Guardrails)**: Automatically blocks written cognitive tests for PAUD/Fase A and guides teachers to observational assessments to ensure government compliance.
+- **Mood Check-in & Churn Prevention**: QR attendance captures daily student emotions. A 3-day negative trend automatically alerts the homeroom teacher to intervene, increasing student retention and parent peace of mind.
+- **Executive Dashboard**: Delivers daily "Helicopter View" reports (teacher attendance, empty classes, cash flow) via WhatsApp at 06:00 AM to Principals.
+- **Financial Integration**: Auto-posting journal, SPP aging buckets, and automatic report card locks for students with unpaid tuition.
+- **Visual Template Builder**: Drag-and-drop report card designer for TK/PAUD requiring dynamic narratives.
+
+## Pricing
+Pricing details can be found in our pricing file: [pricing.md](/pricing.md). Subscriptions start at Rp 500.000 / month per school unit.
+
+## Target Audience
+Principals, Yayasan Owners, and School Treasurers in Indonesia looking to optimize operational expenses (OpEx), enforce teacher accountability, and achieve audit readiness.

@@ -6,6 +6,98 @@ import { Sun, Moon } from 'lucide-vue-next'
 
 definePageMeta({ layout: false })
 
+// ─── SEO Meta Tags ────────────────────────────────────────────────────────────
+useSeoMeta({
+  title: 'EduRaport — Smart School ERP & E-Raport Terbaik untuk Sekolah Swasta Indonesia',
+  description: 'EduRaport menyatukan E-Raport, SPP, absensi, dan keuangan yayasan dalam satu platform. Patuh Kurikulum Merdeka 2025. Mulai dari Rp 500.000/bulan. Demo gratis.',
+  ogTitle: 'EduRaport — Smart School ERP & E-Raport untuk Sekolah Swasta',
+  ogDescription: 'Platform SaaS yang menyatukan e-Raport, manajemen SPP, AI Asisten Guru, dan keuangan yayasan. Patuh regulasi PPA 2025. Identitas siswa tunggal dari TK hingga SMA.',
+  ogType: 'website',
+  ogUrl: 'https://eduraport.bagusw.biz.id/landing',
+  twitterCard: 'summary_large_image',
+  twitterTitle: 'EduRaport — Smart School ERP untuk Sekolah Swasta Indonesia',
+  twitterDescription: 'Lebih dari sekadar e-Rapor. AI Asisten Guru, SPP otomatis, Mood Check-in siswa, dan dashboard yayasan lintas jenjang. Mulai Rp 500.000/bulan.',
+})
+
+// ─── JSON-LD Structured Data (Schema.org) ─────────────────────────────────────
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'SoftwareApplication',
+            name: 'EduRaport',
+            applicationCategory: 'EducationalApplication',
+            operatingSystem: 'Web, Android, iOS',
+            description: 'Platform SaaS ERP Pendidikan untuk sekolah swasta Indonesia. Menyatukan e-Raport, manajemen SPP, AI Asisten Guru, absensi QR, Mood Check-in, dan keuangan yayasan dalam satu ekosistem.',
+            url: 'https://eduraport.bagusw.biz.id',
+            offers: {
+              '@type': 'Offer',
+              price: '500000',
+              priceCurrency: 'IDR',
+            },
+            featureList: [
+              'E-Raport Kurikulum Merdeka 2025',
+              'AI Asisten Guru (Generate RPP, Soal, Materi, PPT)',
+              'Manajemen SPP & Keuangan Sekolah',
+              'Absensi QR + Mood Check-in Emosi Siswa',
+              'Executive Dashboard via WhatsApp',
+              'Workspace Yayasan Multi-Unit',
+              'WhatsApp Gateway Otomatis',
+              'PPDB Online Terintegrasi',
+            ],
+          },
+          {
+            '@type': 'Organization',
+            name: 'EduRaport',
+            url: 'https://eduraport.bagusw.biz.id',
+            description: 'Penyedia platform SaaS ERP Pendidikan untuk sekolah swasta dan yayasan pendidikan di Indonesia.',
+            areaServed: 'ID',
+          },
+          {
+            '@type': 'FAQPage',
+            mainEntity: [
+              {
+                '@type': 'Question',
+                name: 'Apa itu EduRaport?',
+                acceptedAnswer: { '@type': 'Answer', text: 'EduRaport adalah platform SaaS ERP Pendidikan yang menyatukan e-Raport, manajemen SPP, AI Asisten Guru, absensi QR dengan Mood Check-in, dan keuangan yayasan dalam satu ekosistem terintegrasi untuk sekolah swasta Indonesia.' },
+              },
+              {
+                '@type': 'Question',
+                name: 'Berapa harga EduRaport?',
+                acceptedAnswer: { '@type': 'Answer', text: 'EduRaport tersedia mulai dari Rp 500.000 per bulan per unit sekolah. Untuk yayasan dengan multi-unit (TK, SD, SMP, SMA), tersedia paket Enterprise dengan harga kustom.' },
+              },
+              {
+                '@type': 'Question',
+                name: 'Apakah EduRaport mendukung Kurikulum Merdeka 2025?',
+                acceptedAnswer: { '@type': 'Answer', text: 'Ya. EduRaport sepenuhnya mendukung Kurikulum Merdeka 2024-2025 termasuk regulasi PPA 2025. AI Hard Guardrail secara otomatis memblokir tes kognitif tertulis untuk PAUD dan Fase A.' },
+              },
+              {
+                '@type': 'Question',
+                name: 'Apakah EduRaport cocok untuk pondok pesantren?',
+                acceptedAnswer: { '@type': 'Answer', text: 'Ya. EduRaport mendukung kurikulum kustom pesantren termasuk skala nilai Jayyid/Maqbul, modul tahfidz, dan mata pelajaran kepondokan berdampingan dengan Kurikulum Merdeka.' },
+              },
+              {
+                '@type': 'Question',
+                name: 'Apakah EduRaport bisa mengelola keuangan yayasan dengan banyak unit sekolah?',
+                acceptedAnswer: { '@type': 'Answer', text: 'Ya. Workspace Yayasan menyediakan dashboard konsolidasi keuangan lintas unit. Identitas siswa persisten dari TK hingga SMA. Pimpinan yayasan menerima laporan harian via WhatsApp setiap jam 06.00 pagi.' },
+              },
+              {
+                '@type': 'Question',
+                name: 'Bagaimana cara memulai trial EduRaport?',
+                acceptedAnswer: { '@type': 'Answer', text: 'Klik "Jadwalkan Demo Eksklusif" untuk sesi demo 1-on-1 gratis. Setup rata-rata membutuhkan kurang dari 7 hari kerja.' },
+              },
+            ],
+          },
+        ],
+      }),
+    },
+  ],
+})
+
 const colorMode = useColorMode()
 const toggleTheme = () => {
   colorMode.value = colorMode.value === 'dark' ? 'light' : 'dark'
@@ -22,64 +114,52 @@ onMounted(async () => {
 
 const features = [
   {
+    icon: '🏫',
+    title: 'Satu Identitas Lintas Jenjang',
+    desc: 'Siswa naik SD ke SMP tak perlu input ulang. Sinkronisasi otomatis data yayasan menghemat biaya operasional (OpEx) secara signifikan.',
+    color: 'violet'
+  },
+  {
+    icon: '❤️',
+    title: 'Cegah Siswa Pindah (Mood Check-in)',
+    desc: 'Absensi QR menangkap emosi harian siswa. Jika tren memburuk, wali kelas otomatis mendapat alarm intervensi untuk menjaga ketenangan orang tua.',
+    color: 'rose'
+  },
+  {
     icon: '✨',
-    title: 'AI Asisten Guru (Baru!)',
-    desc: 'Generate Modul Ajar/RPP, Soal Evaluasi, Materi Ajar berilustrasi, hingga Bahan Tayang PPT dalam hitungan detik. Konteks CP/TP otomatis dari kurikulum — guru tidak perlu mengetik ulang.',
+    title: 'Kepatuhan Kurikulum 2025',
+    desc: 'AI otomatis memblokir tes tertulis untuk PAUD/Fase A dan beralih ke asesmen observasi. Sekolah patuh aturan dinas tanpa membebani guru.',
     color: 'ai'
   },
   {
-    icon: '📋',
-    title: 'E-Raport Fleksibel',
-    desc: 'Generate raport PDF otomatis untuk semua jenjang. Mendukung format Kurikulum Merdeka, K-13, hingga kurikulum pesantren dan internasional.',
-    color: 'violet'
+    icon: '📈',
+    title: 'Laporan Pimpinan Tiap Jam 6 Pagi',
+    desc: 'Dapatkan Helicopter View harian. Dari jumlah guru absen, alarm kelas kosong, hingga arus kas SPP—semua masuk ke WA pimpinan sebelum bel berbunyi.',
+    color: 'indigo'
+  },
+  {
+    icon: '💰',
+    title: 'Keuangan Auto-Posting & SPP',
+    desc: 'Kelola SPP dengan pengelompokan usia piutang. Raport siswa otomatis terkunci (tidak bisa dicetak) jika masih ada tunggakan pembayaran.',
+    color: 'teal'
   },
   {
     icon: '🎨',
     title: 'Visual Template Builder',
-    desc: 'Desainer rapor drag-and-drop dengan 14 widget premium. Kustomisasi tata letak tanpa perlu coding — hasilkan raport sesuai identitas sekolah Anda.',
+    desc: 'Desainer rapor drag-and-drop. Sangat krusial untuk PAUD/TK yang butuh narasi dinamis dan instrumen KKTP sesuai identitas sekolah.',
     color: 'blue'
   },
   {
     icon: '📊',
     title: 'Gradebook Engine Cerdas',
-    desc: 'Sistem penilaian berbobot dinamis. Atur komponen nilai (UH, UTS, UAS, Proyek) dengan bobot fleksibel. Kalkulasi nilai akhir otomatis real-time.',
+    desc: 'Sistem penilaian berbobot dinamis yang terhubung langsung dengan AI Asisten Guru. Kalkulasi nilai akhir otomatis tanpa rumus Excel.',
     color: 'emerald'
   },
   {
-    icon: '🗓️',
-    title: 'Manajemen Jadwal',
-    desc: 'Kalender grid mingguan bergaya Microsoft Teams. Deteksi konflik jadwal guru & kelas secara real-time. Filter per guru, kelas, dan ruangan.',
-    color: 'amber'
-  },
-  {
-    icon: '🏫',
-    title: 'PPDB Online',
-    desc: 'Sistem penerimaan peserta didik baru terintegrasi. Form pendaftaran custom, verifikasi pembayaran, pengumuman, hingga konversi pendaftar menjadi siswa.',
-    color: 'rose'
-  },
-  {
-    icon: '💰',
-    title: 'Manajemen Keuangan',
-    desc: 'Kelola SPP, tagihan, dan pembayaran dalam satu platform. Laporan BOS otomatis, notifikasi tunggakan, dan rekap keuangan yayasan.',
-    color: 'teal'
-  },
-  {
-    icon: '📅',
-    title: 'Perizinan & Guru Pengganti',
-    desc: 'Ajukan izin guru secara digital dengan workflow persetujuan. Sistem otomatis mendeteksi jadwal kosong dan merekomendasikan guru pengganti terbaik.',
-    color: 'purple'
-  },
-  {
-    icon: '📈',
-    title: 'Executive Dashboard',
-    desc: 'Dashboard KPI real-time untuk kepala sekolah & pengurus yayasan. Monitor kehadiran, nilai, keuangan, dan performa seluruh unit sekolah.',
-    color: 'indigo'
-  },
-  {
     icon: '💬',
-    title: 'WhatsApp Gateway',
-    desc: 'Kirim notifikasi tagihan, nilai, dan pengumuman otomatis via WhatsApp ke orang tua dan grup kelas. Dilengkapi sistem anti-ban, smart routing, dan multi-device.',
-    color: 'blue'
+    title: 'WhatsApp Gateway Otomatis',
+    desc: 'Rantai nilai ketenangan orang tua: Scan QR Real-time -> Notifikasi WA Instan. Komunikasi sekolah terasa profesional dan sangat personal.',
+    color: 'purple'
   }
 ]
 
@@ -196,25 +276,25 @@ const chartHeights = [65,80,55,90,70,85,60,95]
       <div class="hero-content">
         <div class="hero-badge">
           <span class="badge-dot" />
-          Platform E-Raport & Manajemen Sekolah Terpadu · v1.4
+          Smart School ERP & Infrastruktur Diagnosis · v1.5
         </div>
         <h1 class="hero-title">
-          Raport Digital,
-          <span class="gradient-text">Keuangan Sekolah</span>,
-          &amp; Manajemen dalam
-          <span class="gradient-text">Satu Platform</span>
+          Hentikan Pemborosan Data. Satukan
+          <span class="gradient-text">Akademik & Keuangan</span>
+          Yayasan dalam
+          <span class="gradient-text">Satu Layar</span>
         </h1>
         <p class="hero-sub">
-          EduRaport adalah solusi SaaS cloud untuk sekolah swasta TK hingga SMA. Generate raport PDF otomatis, kelola nilai berbobot dinamis, pantau keuangan SPP, dan terima siswa baru — semuanya terintegrasi.
+          Lebih dari sekadar e-Rapor. EduRaport adalah asisten pintar yang mengunci kepatuhan Kurikulum 2025, mencegah siswa pindah, dan memantau tunggakan SPP—memberikan pimpinan sekolah kendali penuh setiap pagi.
         </p>
         <div class="hero-ctas">
-          <a href="/login" class="btn-hero-primary">🚀 Mulai Gratis 3 Bulan</a>
-          <a href="#fitur" class="btn-hero-outline">Lihat Fitur Lengkap ↓</a>
+          <a href="/login" class="btn-hero-primary">🚀 Jadwalkan Demo Eksklusif</a>
+          <a href="#fitur" class="btn-hero-outline">Lihat Cara Kerjanya ↓</a>
         </div>
         <div class="hero-trust">
-          <span>✅ Tanpa kartu kredit</span>
-          <span>✅ Setup &lt; 7 hari</span>
-          <span>✅ Support WhatsApp responsif</span>
+          <span>✅ Sesuai Regulasi PPA 2025</span>
+          <span>✅ Identitas Tunggal TK-SMA</span>
+          <span>✅ Auto-Kirim Tagihan via WA</span>
         </div>
 
         <!-- Executive Dashboard Preview -->

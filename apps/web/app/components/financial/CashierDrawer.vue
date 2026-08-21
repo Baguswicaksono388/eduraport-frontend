@@ -269,8 +269,8 @@ const formatDate = (dateStr: string) => {
       <!-- Header -->
       <div class="flex items-center justify-between p-4 border-b border-slate-100 dark:border-zinc-800">
         <div>
-          <h2 class="text-lg font-bold text-slate-800 dark:text-zinc-200">Kasir Pembayaran</h2>
-          <p class="text-xs text-slate-500">{{ studentName }}</p>
+          <h2 class="text-lg font-bold text-slate-800 dark:text-slate-200 dark:text-zinc-200">Kasir Pembayaran</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">{{ studentName }}</p>
         </div>
         <button @click="closeDrawer" class="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors">
           <X :size="20" />
@@ -288,8 +288,8 @@ const formatDate = (dateStr: string) => {
           <!-- Bills Selection -->
           <div class="space-y-3">
             <div class="flex justify-between items-end mb-2 border-b border-slate-100 dark:border-zinc-800 pb-2">
-              <h3 class="font-bold text-sm text-slate-700 dark:text-zinc-300">Pilih Tagihan</h3>
-              <label class="flex items-center gap-2 text-xs text-slate-500 cursor-pointer">
+              <h3 class="font-bold text-sm text-slate-700 dark:text-slate-300 dark:text-zinc-300">Pilih Tagihan</h3>
+              <label class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 cursor-pointer">
                 <input 
                   type="checkbox" 
                   class="rounded text-violet-600"
@@ -307,23 +307,23 @@ const formatDate = (dateStr: string) => {
             <template v-else>
               <div v-for="bill in bills" :key="bill.id" 
                  class="flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer"
-                 :class="selectedBillIds.includes(bill.id) ? 'border-violet-500 bg-violet-50 dark:bg-violet-500/10' : 'border-slate-200 dark:border-zinc-800'"
+                 :class="selectedBillIds.includes(bill.id) ? 'border-violet-500 bg-violet-50 dark:bg-violet-500/10' : 'border-slate-200 dark:border-slate-700 dark:border-zinc-800'"
                  @click="toggleBill(bill.id)">
               
               <input type="checkbox" :checked="selectedBillIds.includes(bill.id)" class="rounded text-violet-600 pointer-events-none">
               
               <div class="flex-1 min-w-0">
-                <div class="font-semibold text-sm text-slate-800 dark:text-zinc-200 truncate">{{ bill.name }}</div>
-                <div class="text-xs text-slate-500">Jatuh Tempo: {{ formatDate(bill.due_date) }}</div>
+                <div class="font-semibold text-sm text-slate-800 dark:text-slate-200 dark:text-zinc-200 truncate">{{ bill.name }}</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400">Jatuh Tempo: {{ formatDate(bill.due_date) }}</div>
               </div>
               
-              <div class="text-right font-mono font-bold text-slate-700 dark:text-zinc-300">
+              <div class="text-right font-mono font-bold text-slate-700 dark:text-slate-300 dark:text-zinc-300">
                 {{ formatNumber(Number(bill.amount) - (Number(bill.amount_paid) || 0)) }}
               </div>
             </div>
             </template>
             
-            <div class="flex justify-between font-bold p-3 bg-slate-50 dark:bg-zinc-950 rounded-xl mt-2">
+            <div class="flex justify-between font-bold p-3 bg-slate-50 dark:bg-slate-800/50 dark:bg-zinc-950 rounded-xl mt-2">
               <span class="text-sm">Total Terpilih</span>
               <span class="font-mono text-violet-600">{{ formatNumber(totalSelectedAmount) }}</span>
             </div>
@@ -331,7 +331,7 @@ const formatDate = (dateStr: string) => {
 
           <!-- Payment Form -->
           <div class="space-y-4 pt-4 border-t border-slate-100 dark:border-zinc-800">
-            <h3 class="font-bold text-sm text-slate-700 dark:text-zinc-300">Detail Pembayaran</h3>
+            <h3 class="font-bold text-sm text-slate-700 dark:text-slate-300 dark:text-zinc-300">Detail Pembayaran</h3>
             
             <div>
               <label class="block text-xs font-semibold mb-1">Nominal Pembayaran (Rp)</label>
@@ -341,7 +341,7 @@ const formatDate = (dateStr: string) => {
 
             <div>
               <label class="block text-xs font-semibold mb-1">Metode Pembayaran</label>
-              <select v-model="paymentMethod" class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-sm">
+              <select v-model="paymentMethod" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-sm">
                 <option value="tunai">Tunai / Cash</option>
                 <option value="transfer_manual">Transfer Bank Manual</option>
               </select>
@@ -349,7 +349,7 @@ const formatDate = (dateStr: string) => {
 
             <div v-if="cashAccounts.length > 0">
               <label class="block text-xs font-semibold mb-1">Diterima Di Rekening (Kredit Kas)</label>
-              <select v-model="cashAccountId" class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-sm">
+              <select v-model="cashAccountId" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-sm">
                 <option :value="null">-- Gunakan Rekening Default Sistem --</option>
                 <option v-for="acc in cashAccounts" :key="acc.id" :value="acc.id">
                   {{ acc.account_code }} - {{ acc.name }}{{ acc.bank_account_number ? ` (${acc.bank_account_number}${acc.bank_account_name ? ` - a.n. ${acc.bank_account_name}` : ''})` : '' }}
@@ -361,8 +361,8 @@ const formatDate = (dateStr: string) => {
               <label class="block text-xs font-semibold mb-1">Bukti Transfer (Opsional)</label>
               
               <!-- Preview gambar jika sudah dipilih -->
-              <div v-if="proofPreviewUrl" class="relative mb-2 rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-700">
-                <img :src="proofPreviewUrl" alt="Preview Bukti Transfer" class="w-full max-h-48 object-contain bg-slate-50 dark:bg-zinc-900" />
+              <div v-if="proofPreviewUrl" class="relative mb-2 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 dark:border-zinc-700">
+                <img :src="proofPreviewUrl" alt="Preview Bukti Transfer" class="w-full max-h-48 object-contain bg-slate-50 dark:bg-slate-800/50 dark:bg-zinc-900" />
                 <button
                   type="button"
                   @click="proofFile = null; proofBase64 = ''; proofPreviewUrl = ''"
@@ -370,17 +370,17 @@ const formatDate = (dateStr: string) => {
                 >
                   <X :size="12" />
                 </button>
-                <div class="px-3 py-1.5 bg-slate-50 dark:bg-zinc-900 border-t border-slate-100 dark:border-zinc-800">
-                  <span class="text-[10px] text-slate-500 truncate block">{{ proofFile?.name }}</span>
+                <div class="px-3 py-1.5 bg-slate-50 dark:bg-slate-800/50 dark:bg-zinc-900 border-t border-slate-100 dark:border-zinc-800">
+                  <span class="text-[10px] text-slate-500 dark:text-slate-400 truncate block">{{ proofFile?.name }}</span>
                 </div>
               </div>
 
               <!-- Upload area jika belum ada file -->
-              <div v-else class="border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-lg p-4 text-center hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer relative">
+              <div v-else class="border-2 border-dashed border-slate-200 dark:border-slate-700 dark:border-zinc-800 rounded-lg p-4 text-center hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer relative">
                 <input type="file" @change="handleFileChange" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                 <div class="flex flex-col items-center gap-2">
                   <UploadCloud :size="24" class="text-slate-400" />
-                  <span class="text-xs text-slate-500">Pilih gambar atau drop disini</span>
+                  <span class="text-xs text-slate-500 dark:text-slate-400">Pilih gambar atau drop disini</span>
                   <span class="text-[10px] text-slate-400">JPG, PNG, WEBP</span>
                 </div>
               </div>
@@ -399,8 +399,8 @@ const formatDate = (dateStr: string) => {
             <Receipt :size="32" />
           </div>
           <div class="text-center">
-            <h3 class="text-xl font-bold text-slate-800 dark:text-zinc-200 mb-2">Pembayaran Berhasil!</h3>
-            <p class="text-sm text-slate-500">Kwitansi telah di-generate: <br><span class="font-mono font-bold text-slate-700 dark:text-zinc-300">{{ receiptData.receipt_number }}</span></p>
+            <h3 class="text-xl font-bold text-slate-800 dark:text-slate-200 dark:text-zinc-200 mb-2">Pembayaran Berhasil!</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Kwitansi telah di-generate: <br><span class="font-mono font-bold text-slate-700 dark:text-slate-300 dark:text-zinc-300">{{ receiptData.receipt_number }}</span></p>
           </div>
           
           <BaseButton @click="downloadReceipt" variant="outline" class="w-full gap-2 justify-center border-violet-200 text-violet-700 hover:bg-violet-50">
@@ -414,7 +414,7 @@ const formatDate = (dateStr: string) => {
       </div>
 
       <!-- Footer -->
-      <div v-if="!receiptData" class="p-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
+      <div v-if="!receiptData" class="p-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-slate-800/50 dark:bg-zinc-950">
         <BaseButton @click="submitPayment" :disabled="processing || selectedBillIds.length === 0" variant="primary" class="w-full justify-center font-bold">
           {{ processing ? 'Memproses...' : 'Proses Pembayaran' }}
         </BaseButton>
@@ -423,3 +423,4 @@ const formatDate = (dateStr: string) => {
     </div>
   </div>
 </template>
+

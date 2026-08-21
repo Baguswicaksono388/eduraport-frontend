@@ -14,6 +14,12 @@ export const useFinancial = () => {
   }))
   const categoriesList = useState<any[]>('categories_list', () => [])
   const assetsList = useState<any[]>('assets_list', () => [])
+  const assetsMeta = useState<any>('assets_meta', () => ({
+    total: 0,
+    page: 1,
+    limit: 10,
+    total_pages: 1
+  }))
   const settings = useState<any>('settings', () => null)
   const bosComponentsList = useState<any[]>('bos_components_list', () => [])
 
@@ -263,11 +269,23 @@ export const useFinancial = () => {
   }
 
   // --- School Assets API Callers ---
-  const fetchAssets = async (schoolId: string) => {
+  const fetchAssets = async (schoolId: string, filters: { category?: string; condition?: string; search?: string; includeDisposed?: boolean; page?: number; limit?: number } = {}) => {
     try {
-      const res: any = await fetcher(`/school/${schoolId}/financial/assets`)
+      const params = new URLSearchParams()
+      if (filters.category) params.append('category', filters.category)
+      if (filters.condition) params.append('condition', filters.condition)
+      if (filters.search) params.append('search', filters.search)
+      if (filters.includeDisposed) params.append('includeDisposed', 'true')
+      if (filters.page) params.append('page', filters.page.toString())
+      if (filters.limit) params.append('limit', filters.limit.toString())
+      
+      const query = params.toString() ? `?${params.toString()}` : ''
+      const res: any = await fetcher(`/school/${schoolId}/financial/assets${query}`)
       if (res.success) {
-        assetsList.value = res.data
+        assetsList.value = res.data?.data || res.data || []
+        if (res.data?.meta) {
+          assetsMeta.value = res.data.meta
+        }
       }
       return res
     } catch (error) {
@@ -289,6 +307,99 @@ export const useFinancial = () => {
       return res
     } catch (error) {
       console.error('Failed to create asset:', error)
+      throw error
+    }
+  }
+
+  const updateAsset = async (schoolId: string, assetId: string, payload: any) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/assets/${assetId}`, {
+        method: 'PATCH',
+        body: payload
+      })
+      if (res.success) {
+        await fetchAssets(schoolId)
+      }
+      return res
+    } catch (error) {
+      console.error('Failed to update asset:', error)
+      throw error
+    }
+  }
+
+  const disposeAsset = async (schoolId: string, assetId: string, payload: any) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/financial/assets/${assetId}/dispose`, {
+        method: 'POST',
+        body: payload
+      })
+      if (res.success) {
+        await fetchAssets(schoolId)
+      }
+      return res
+    } catch (error) {
+      console.error('Failed to dispose asset:', error)
+      throw error
+    }
+  }
+
+  const getAssetConditionLogs = async (schoolId: string, assetId: string) => {
+    try {
+      return await fetcher(`/school/${schoolId}/financial/assets/${assetId}/logs`)
+    } catch (error) {
+      console.error('Failed to fetch asset logs:', error)
+      throw error
+    }
+  }
+
+  const uploadAssetPhoto = async (schoolId: string, assetId: string, file: File) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = async (e) => {
+        try {
+          const base64Data = (e.target?.result as string).split(',')[1]
+          const res: any = await fetcher(`/school/${schoolId}/financial/assets/${assetId}/photo`, {
+            method: 'POST',
+            body: {
+              data: base64Data,
+              file_name: file.name,
+              mime_type: file.type
+            }
+          })
+          resolve(res)
+        } catch (error) {
+          reject(error)
+        }
+      }
+      reader.onerror = (error) => reject(error)
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const deleteAssetPhoto = async (schoolId: string, assetId: string) => {
+    try {
+      return await fetcher(`/school/${schoolId}/financial/assets/${assetId}/photo`, {
+        method: 'DELETE'
+      })
+    } catch (error) {
+      console.error('Failed to delete asset photo:', error)
+      throw error
+    }
+  }
+
+  const exportAssets = async (schoolId: string, format: 'xlsx' | 'pdf' = 'xlsx') => {
+    try {
+      const blob: any = await fetcher(`/school/${schoolId}/financial/assets/export?format=${format}`, {
+        responseType: 'blob'
+      })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Laporan_Inventaris_Aset.${format}`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Failed to export assets:', error)
       throw error
     }
   }
@@ -547,7 +658,14 @@ export const useFinancial = () => {
     fetchFeeCategories,
     updateFeeCategoryMapping,
     fetchAssets,
+    assetsMeta,
     createAsset,
+    updateAsset,
+    disposeAsset,
+    getAssetConditionLogs,
+    uploadAssetPhoto,
+    deleteAssetPhoto,
+    exportAssets,
     deleteAsset,
     downloadTemplate,
     importAssets,

@@ -1125,13 +1125,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         >
           <Scale :size="14" /> Laporan Keuangan
         </button>
-        <button 
-          @click="activeTab = 'assets'" 
-          class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap"
-          :class="[activeTab === 'assets' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300']"
-        >
-          <Wrench :size="14" /> Manajemen Aset
-        </button>
+
         <button 
           @click="activeTab = 'settings'" 
           class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap"
@@ -1562,76 +1556,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
           <FoundationReport v-else-if="activeReportSubTab === 'foundation'" :data="foundationReportData" />
         </div>
 
-        <!-- Tab Content 5: Manajemen Aset -->
-        <div v-else-if="activeTab === 'assets'" class="space-y-6 animate-in fade-in duration-300">
-          <!-- Assets Statistics -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm space-y-1">
-              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Nilai Perolehan Aset</span>
-              <p class="text-xl font-extrabold text-slate-900 dark:text-zinc-100 font-mono">{{ formatNumber(assetTotals.value) }}</p>
-            </div>
-            <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm space-y-1">
-              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Kuantitas Fisik</span>
-              <p class="text-xl font-extrabold text-slate-900 dark:text-zinc-100">{{ assetTotals.qty }} Unit</p>
-            </div>
-            <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm space-y-1">
-              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Kondisi Baik</span>
-              <p class="text-xl font-extrabold text-emerald-600 dark:text-emerald-450">{{ assetTotals.good }} Unit</p>
-            </div>
-          </div>
 
-          <!-- Assets Table -->
-          <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr class="border-b border-slate-100 dark:border-zinc-800 bg-slate-50/30 dark:bg-zinc-900/20 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                    <th class="p-4 pl-6">Kode Aset (auto)</th>
-                    <th class="p-4">Nama Barang</th>
-                    <th class="p-4">Kategori</th>
-                    <th class="p-4">Tgl Perolehan</th>
-                    <th class="p-4">Nilai Perolehan</th>
-                    <th class="p-4 text-center">Jumlah</th>
-                    <th class="p-4">Kondisi</th>
-                    <th class="p-4">Lokasi</th>
-                    <th class="p-4 text-center pr-6">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-zinc-800 font-medium">
-                  <tr v-for="asset in assetsList" :key="asset.id" class="hover:bg-slate-50/30 dark:hover:bg-zinc-950/20 text-slate-700 dark:text-zinc-300">
-                    <td class="p-4 pl-6 font-mono font-extrabold text-violet-600 dark:text-violet-400">{{ asset.code }}</td>
-                    <td class="p-4 font-bold text-slate-800 dark:text-zinc-200">{{ asset.name }}</td>
-                    <td class="p-4 text-[10px] text-slate-550">{{ ASSET_CATEGORIES.find(c => c.value === asset.category)?.label || asset.category }}</td>
-                    <td class="p-4 text-slate-500">{{ formatDate(asset.purchase_date) }}</td>
-                    <td class="p-4 font-mono font-semibold">{{ formatNumber(asset.purchase_cost) }}</td>
-                    <td class="p-4 text-center font-bold">{{ asset.quantity }}</td>
-                    <td class="p-4">
-                      <span 
-                        class="px-2 py-0.5 rounded-full text-[9px] font-extrabold border uppercase"
-                        :class="[
-                          asset.condition === 'good' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
-                          asset.condition === 'repair_needed' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
-                          'bg-rose-500/10 text-rose-600 border-rose-500/20'
-                        ]"
-                      >
-                        {{ asset.condition === 'good' ? 'Baik' : asset.condition === 'repair_needed' ? 'Perlu Perbaikan' : 'Rusak' }}
-                      </span>
-                    </td>
-                    <td class="p-4 text-slate-500">{{ asset.location || '-' }}</td>
-                    <td class="p-4 text-center pr-6">
-                      <button @click="handleDeleteAsset(asset.id)" class="text-slate-400 hover:text-rose-600 transition-all">
-                        <Trash2 :size="15" />
-                      </button>
-                    </td>
-                  </tr>
-                  <tr v-if="assetsList.length === 0">
-                    <td colspan="9" class="p-8 text-center text-slate-400">Belum ada aset sekolah terdaftar. Silakan tambah aset baru.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
     <!-- Tab Content 6: Setelan Keuangan -->
     <div v-else-if="activeTab === 'settings'" class="space-y-6 animate-in fade-in duration-300">
       
