@@ -426,7 +426,7 @@ const getStatusLabel = (status: string) => {
 
 
     <!-- Blast Modal -->
-    <BaseModal :is-open="isBlastModalOpen" @close="isBlastModalOpen = false" title="Blast Notifikasi Rapor via WA">
+    <BaseModal :show="isBlastModalOpen" @close="isBlastModalOpen = false" title="Blast Notifikasi Rapor via WA">
       <div class="p-6">
         <div class="flex items-start gap-4 mb-6 p-4 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-500 rounded-xl border border-amber-200/50 dark:border-amber-900/50">
           <AlertCircle class="mt-0.5 shrink-0" :size="20" />
