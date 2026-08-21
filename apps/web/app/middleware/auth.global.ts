@@ -6,6 +6,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
     to.path === '/login' ||
     to.path === '/register' ||
     to.path === '/landing' ||
+    to.path.startsWith('/vs/') ||
+    to.path.startsWith('/solusi/') ||
     to.path.startsWith('/ppdb/public') ||
     to.path.includes('/public/status') ||
     to.path.includes('/public/batches') ||

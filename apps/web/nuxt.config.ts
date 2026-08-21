@@ -27,6 +27,13 @@ export default defineNuxtConfig({
       '/solusi/tk-paud',
       '/solusi/yayasan-multi-unit',
       '/solusi/kurikulum-merdeka'
+    ],
+    exclude: [
+      '/login', '/register', '/unauthorized', '/dashboard', '/academic-year',
+      '/attendance-settings', '/class/**', '/financial/**', '/foundation/**',
+      '/gradebook/**', '/homeroom', '/index', '/kurikulum', '/leave',
+      '/parent/**', '/ppdb/**', '/report/**', '/scanner', '/schedule',
+      '/school', '/student/**', '/subject', '/teacher/**', '/wa/**'
     ]
   },
 
