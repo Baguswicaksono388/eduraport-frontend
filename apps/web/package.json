@@ -13,6 +13,7 @@
   "dependencies": {
     "@eduraport/shared": "workspace:*",
     "@eduraport/ui": "workspace:*",
+    "@nuxtjs/sitemap": "^8.3.4",
     "@vueuse/core": "^14.3.0",
     "dexie": "^4.4.4",
     "lucide-vue-next": "^0.470.0",

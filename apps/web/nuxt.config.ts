@@ -10,7 +10,25 @@ export default defineNuxtConfig({
     host: useHttps ? '0.0.0.0' : 'localhost', 
     https: useHttps 
   },
-  modules: ['@nuxtjs/tailwindcss', '@vite-pwa/nuxt'],
+  modules: ['@nuxtjs/tailwindcss', '@vite-pwa/nuxt', '@nuxtjs/sitemap'],
+
+  site: {
+    url: 'https://eduraport.bagusw.biz.id',
+  },
+  
+  sitemap: {
+    urls: [
+      '/landing',
+      '/vs/e-rapor-kemendikbud',
+      '/vs/adminsekolah',
+      '/vs/skoola',
+      '/vs/simsch',
+      '/solusi/pesantren',
+      '/solusi/tk-paud',
+      '/solusi/yayasan-multi-unit',
+      '/solusi/kurikulum-merdeka'
+    ]
+  },
 
   vite: {
     plugins: useHttps ? [basicSsl()] : []
