@@ -329,7 +329,8 @@ const notificationTypes = [
   { id: 'billing_invoice', name: 'Tagihan SPP / Keuangan', desc: 'Pemberitahuan tagihan SPP bulanan' },
   { id: 'billing_receipt', name: 'Kuitansi Pembayaran SPP', desc: 'Kuitansi bukti bayar tagihan keuangan' },
   { id: 'grade_published', name: 'Raport / Nilai Rapor Ready', desc: 'Pemberitahuan hasil ujian / rapor siap' },
-  { id: 'otp', name: 'OTP Keamanan / Login', desc: 'Kode OTP masuk akun (OTP Darurat)' }
+  { id: 'otp', name: 'OTP Keamanan / Login', desc: 'Kode OTP masuk akun (OTP Darurat)' },
+  { id: 'executive_digest', name: 'Executive Dashboard Digest', desc: 'Laporan ringkasan eksekutif harian untuk pimpinan' }
 ]
 
 // Edit States
@@ -481,6 +482,12 @@ const templateVariables: Record<string, { var: string, desc: string }[]> = {
     { var: '{{name}}', desc: 'Nama pengguna' },
     { var: '{{otp_code}}', desc: 'Kode OTP 6 digit' },
     { var: '{{expired_in}}', desc: 'Waktu kadaluarsa (menit)' }
+  ],
+  executive_digest: [
+    { var: '{{name}}', desc: 'Nama Pimpinan / Penerima' },
+    { var: '{{digest_name}}', desc: 'Nama Laporan (Misal: Laporan Harian)' },
+    { var: '{{date}}', desc: 'Tanggal dan Waktu laporan' },
+    { var: '{{body_content}}', desc: 'Isi ringkasan otomatis (Metrik & Briefing)' }
   ]
 }
 

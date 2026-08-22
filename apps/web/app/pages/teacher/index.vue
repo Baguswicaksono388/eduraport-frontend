@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { Users, Plus, Trash2, Edit2, ShieldAlert, CheckCircle2, User, Key, Download, Upload, FileSpreadsheet, X, CheckCircle, AlertCircle } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
 import { useTeacher } from '../../composables/useTeacher'
@@ -118,7 +118,11 @@ watch([page, itemPerPage], () => {
 
 const handleCreateTeacher = async () => {
   try {
-    const res = await createTeacher(selectedSchoolId.value, { ...teacherForm })
+    const payload = { ...teacherForm }
+    if (!payload.password) {
+      delete (payload as any).password
+    }
+    const res = await createTeacher(selectedSchoolId.value, payload)
     if (res.success) {
       showCreateModal.value = false
       Object.assign(teacherForm, {
@@ -157,7 +161,11 @@ const openEditModal = (t: any) => {
 
 const handleUpdateTeacher = async () => {
   try {
-    const res = await updateTeacher(selectedSchoolId.value, editingTeacherId.value, { ...editForm })
+    const payload = { ...editForm }
+    if (!payload.password) {
+      delete (payload as any).password
+    }
+    const res = await updateTeacher(selectedSchoolId.value, editingTeacherId.value, payload)
     if (res.success) {
       showEditModal.value = false
     }

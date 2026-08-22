@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { X, Check, Trash2, Mail, Send, Calendar, Clock, Plus, Info, ToggleLeft, ToggleRight } from 'lucide-vue-next'
 import { useDashboard } from '../../composables/useDashboard'
 import { useToast } from '../../composables/useToast'
+import { useAuth } from '../../composables/useAuth'
 
 const props = defineProps<{
   isOpen: boolean
@@ -22,6 +23,7 @@ const {
   sendDigestNow
 } = useDashboard()
 
+const { user } = useAuth()
 const toast = useToast()
 
 // Tab navigation state
@@ -41,7 +43,8 @@ const form = ref({
   schedule_day: '',
   recipient_roles: [] as string[],
   metric_keys: [] as string[],
-  is_active: true
+  is_active: true,
+  send_to_me: false
 })
 
 const weekdayList = [
@@ -85,7 +88,8 @@ const resetForm = () => {
     schedule_day: '',
     recipient_roles: ['principal'],
     metric_keys: props.catalog.slice(0, 3).map(c => c.metric_key),
-    is_active: true
+    is_active: true,
+    send_to_me: true
   }
 }
 
@@ -146,8 +150,12 @@ const handleSave = async () => {
     const payload = {
       ...form.value,
       // Format schedule_day constraints
-      schedule_day: form.value.schedule_type === 'daily' ? null : form.value.schedule_day
+      schedule_day: form.value.schedule_type === 'daily' ? null : form.value.schedule_day,
+      recipient_user_ids: form.value.send_to_me && user.value ? [user.value.id] : []
     }
+    
+    // Clean up purely frontend UI state from payload
+    delete (payload as any).send_to_me
 
     if (editingId.value) {
       await updateDigest(props.schoolId, editingId.value, payload)
@@ -177,7 +185,8 @@ const handleEdit = (digest: any) => {
     schedule_day: digest.schedule_day || '',
     recipient_roles: Array.isArray(digest.recipient_roles) ? [...digest.recipient_roles] : [],
     metric_keys: Array.isArray(digest.metric_keys) ? [...digest.metric_keys] : [],
-    is_active: digest.is_active !== undefined ? !!digest.is_active : true
+    is_active: digest.is_active !== undefined ? !!digest.is_active : true,
+    send_to_me: Array.isArray(digest.recipient_user_ids) && user.value ? digest.recipient_user_ids.includes(user.value.id) : false
   }
   activeTab.value = 'form'
 }
@@ -315,7 +324,11 @@ const getMetricName = (key: string) => {
                 </div>
                 <div class="flex items-center gap-1.5">
                   <Mail :size="11" />
-                  <span>Metode: {{ d.channel === 'in_app' ? 'Notifikasi In-App' : 'Email' }}</span>
+                  <span>Metode: {{ 
+                    d.channel === 'in_app' ? 'Notifikasi In-App' 
+                    : d.channel === 'whatsapp' ? '📱 WhatsApp' 
+                    : 'Email' 
+                  }}</span>
                 </div>
                 <div class="flex items-center gap-1.5">
                   <Info :size="11" />
@@ -380,6 +393,7 @@ const getMetricName = (key: string) => {
                 >
                   <option value="in_app">Notifikasi In-App</option>
                   <option value="email">Email</option>
+                  <option value="whatsapp">WhatsApp 📱 (ke nomor HP terdaftar)</option>
                 </select>
               </div>
 
@@ -394,6 +408,11 @@ const getMetricName = (key: string) => {
                   <option value="monthly">Bulanan</option>
                 </select>
               </div>
+            </div>
+
+            <div v-if="form.channel === 'whatsapp'" class="p-3 rounded-lg bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-900 text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold flex items-start gap-2">
+              <Info :size="12" class="mt-0.5 flex-shrink-0" />
+              <span>Digest akan dikirim ke nomor WhatsApp pengguna penerima. Template pesan diatur melalui menu konfigurasi WA Devices (Tipe: Executive Dashboard Digest).</span>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
@@ -447,6 +466,16 @@ const getMetricName = (key: string) => {
                   {{ r.label }}
                 </button>
               </div>
+              <label class="flex items-center gap-2 mt-3 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  v-model="form.send_to_me"
+                  class="rounded border-slate-300 dark:border-zinc-700 text-violet-600 focus:ring-violet-600 w-3.5 h-3.5"
+                />
+                <span class="text-[10px] font-bold text-slate-600 dark:text-zinc-400">
+                  Tembuskan laporan ke nomor WhatsApp saya ({{ user?.full_name }})
+                </span>
+              </label>
             </div>
           </div>
 
