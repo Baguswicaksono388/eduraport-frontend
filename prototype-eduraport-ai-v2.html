@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduRaport — AI Asisten Guru (Premium UI)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root {
+  --bg: #F3F4F6;
+  --surface: #FFFFFF;
+  --surface-hover: #F9FAFB;
+  --border: #E5E7EB;
+  --text-main: #111827;
+  --text-muted: #6B7280;
+  --text-light: #9CA3AF;
+  
+  --primary: #7C3AED;
+  --primary-hover: #6D28D9;
+  --primary-soft: #EDE9FE;
+  
+  --success: #10B981;
+  --success-soft: #D1FAE5;
+  --warning: #F59E0B;
+  --warning-soft: #FEF3C7;
+  --info: #3B82F6;
+  --info-soft: #DBEAFE;
+  
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-primary: 0 4px 14px 0 rgba(124, 58, 237, 0.3);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text-main); font-size: 14px; -webkit-font-smoothing: antialiased; }
+.mono { font-family: 'JetBrains Mono', monospace; font-size: 0.9em; }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+/* Layout */
+.app-container { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+.sidebar { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; z-index: 10; }
+.main-content { min-width: 0; display: flex; flex-direction: column; }
+
+/* Sidebar Elements */
+.brand { padding: 24px; display: flex; align-items: center; gap: 12px; }
+.brand-icon { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #8B5CF6, #6D28D9); display: grid; place-items: center; color: white; }
+.brand-text h2 { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+.brand-text span { font-size: 10px; font-weight: 700; color: var(--primary); letter-spacing: 1px; text-transform: uppercase; }
+
+.nav-section { padding: 12px 24px; display: flex; flex-direction: column; gap: 4px; }
+.nav-label { font-size: 11px; font-weight: 800; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; margin-top: 8px; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-sm); color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 13px; transition: all 0.2s; cursor: pointer; }
+.nav-item:hover { background: var(--surface-hover); color: var(--text-main); }
+.nav-item.active { background: var(--primary-soft); color: var(--primary); font-weight: 700; }
+.nav-item i { width: 18px; height: 18px; }
+
+.user-profile { margin-top: auto; padding: 20px 24px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 12px; background: var(--surface-hover); }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #FDBA74, #F97316); color: white; display: grid; place-items: center; font-weight: 700; font-size: 13px; }
+.user-info h4 { font-size: 13px; font-weight: 700; }
+.user-info p { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+
+/* Top Header */
+.header { height: 64px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 32px; justify-content: space-between; position: sticky; top: 0; z-index: 5; }
+.header-title { font-weight: 700; color: var(--text-muted); font-size: 14px; }
+.quota-badge { display: flex; align-items: center; gap: 8px; background: var(--warning-soft); color: #B45309; padding: 6px 16px; border-radius: 99px; font-size: 12px; font-weight: 700; border: 1px solid rgba(245, 158, 11, 0.2); }
+.quota-dot { width: 8px; height: 8px; background: var(--warning); border-radius: 50%; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2); animation: pulse 2s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); } 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); } }
+
+/* Main Content Area */
+.page-container { padding: 32px; max-width: 1400px; margin: 0 auto; width: 100%; }
+.page-header { margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-start; }
+.page-header h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-main); display: flex; align-items: center; gap: 12px; }
+.page-header p { color: var(--text-muted); margin-top: 8px; font-size: 15px; max-width: 600px; line-height: 1.5; }
+
+.btn { font-family: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text-main); cursor: pointer; transition: all 0.2s; }
+.btn:hover { background: var(--surface-hover); border-color: #D1D5DB; }
+.btn-primary { background: var(--primary); color: white; border-color: var(--primary); box-shadow: var(--shadow-sm); }
+.btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); box-shadow: var(--shadow-primary); transform: translateY(-1px); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+/* Tabs */
+.tabs-container { display: flex; gap: 32px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+.tab-btn { background: none; border: none; font-family: inherit; font-size: 14px; font-weight: 700; color: var(--text-muted); padding: 12px 4px; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+.tab-btn:hover { color: var(--text-main); }
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+/* Generator Layout */
+.workspace { display: grid; grid-template-columns: 400px 1fr; gap: 24px; }
+@media (max-width: 1024px) { .workspace { grid-template-columns: 1fr; } }
+
+/* Form Panel */
+.panel { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow-sm); overflow: hidden; display: flex; flex-direction: column; }
+.panel-header { padding: 20px 24px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.panel-header h3 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.panel-body { padding: 24px; flex: 1; overflow-y: auto; }
+
+/* Form Controls */
+.form-group { margin-bottom: 20px; }
+.form-label { display: block; font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; display: flex; justify-content: space-between; }
+.form-hint { font-size: 11px; color: var(--text-light); font-weight: 500; }
+.form-control { width: 100%; font-family: inherit; font-size: 14px; background: #F8FAFC; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; color: var(--text-main); transition: all 0.2s; }
+.form-control:focus { outline: none; border-color: var(--primary); background: var(--surface); box-shadow: 0 0 0 3px var(--primary-soft); }
+select.form-control { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 40px; }
+
+.doc-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.doc-type-card { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; cursor: pointer; text-align: center; transition: all 0.2s; position: relative; background: var(--surface); }
+.doc-type-card:hover { border-color: #C4B5FD; background: var(--surface-hover); transform: translateY(-2px); }
+.doc-type-card.active { border-color: var(--primary); background: var(--primary-soft); box-shadow: 0 4px 12px rgba(124, 58, 237, 0.1); }
+.doc-type-icon { width: 40px; height: 40px; border-radius: 10px; background: white; display: grid; place-items: center; margin: 0 auto 12px; color: var(--primary); box-shadow: var(--shadow-sm); }
+.doc-type-card.active .doc-type-icon { background: var(--primary); color: white; }
+.doc-type-title { font-weight: 700; font-size: 13px; }
+.badge-soon { position: absolute; top: -6px; right: -6px; background: var(--text-main); color: white; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.5px; }
+
+.info-box { background: var(--info-soft); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: var(--radius-sm); padding: 12px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 20px; }
+.info-box i { color: var(--info); flex-shrink: 0; }
+.info-box p { font-size: 12px; color: #1E3A8A; line-height: 1.5; }
+
+/* Output Panel */
+.output-panel { background: #F8FAFC; position: relative; }
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 40px; color: var(--text-muted); }
+.empty-state-icon { width: 64px; height: 64px; background: white; border-radius: 16px; display: grid; place-items: center; color: var(--primary); box-shadow: var(--shadow-md); margin-bottom: 24px; }
+.empty-state h3 { font-size: 18px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
+.empty-state p { font-size: 14px; max-width: 300px; line-height: 1.5; }
+
+/* Loading State */
+.loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 40px; }
+.scanner-container { width: 100px; height: 100px; position: relative; margin-bottom: 32px; }
+.document-icon { width: 100%; height: 100%; background: white; border-radius: 12px; border: 2px solid var(--border); box-shadow: var(--shadow-md); position: relative; overflow: hidden; }
+.document-line { height: 4px; background: var(--border); margin: 12px; border-radius: 2px; }
+.document-line:nth-child(2) { width: 60%; }
+.document-line:nth-child(3) { width: 80%; }
+.scanner-beam { position: absolute; top: 0; left: 0; width: 100%; height: 20px; background: linear-gradient(to bottom, transparent, rgba(124, 58, 237, 0.2), var(--primary)); opacity: 0.8; animation: scan 2s infinite ease-in-out alternate; }
+@keyframes scan { 0% { top: -20px; } 100% { top: 100%; } }
+.loading-steps { font-size: 14px; font-weight: 600; color: var(--text-main); }
+.loading-subtext { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+
+/* Document Result */
+.result-header { padding: 16px 24px; background: white; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.result-title { display: flex; flex-direction: column; gap: 4px; }
+.result-title h3 { font-size: 16px; font-weight: 700; }
+.status-badges { display: flex; gap: 8px; }
+.badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.5px; }
+.badge-green { background: var(--success-soft); color: var(--success); }
+.badge-purple { background: var(--primary-soft); color: var(--primary); }
+.result-actions { display: flex; gap: 8px; }
+
+.document-paper { background: white; max-width: 800px; margin: 24px auto; padding: 48px; box-shadow: var(--shadow-md); border-radius: 4px; border: 1px solid var(--border); position: relative; }
+.document-paper::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, var(--primary), #3B82F6); }
+.doc-content h2 { font-size: 20px; font-weight: 800; color: var(--text-main); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--border); }
+.doc-content h3 { font-size: 16px; font-weight: 700; color: var(--primary); margin: 24px 0 12px; }
+.doc-grid { display: grid; grid-template-columns: 140px 1fr; gap: 8px 16px; margin-bottom: 24px; font-size: 13px; }
+.doc-grid .label { color: var(--text-muted); font-weight: 600; }
+.doc-grid .value { font-weight: 500; color: var(--text-main); }
+.doc-content p { font-size: 14px; line-height: 1.6; color: #374151; margin-bottom: 12px; }
+.doc-content ul { margin: 0 0 16px 24px; font-size: 14px; line-height: 1.6; color: #374151; }
+.doc-content li { margin-bottom: 6px; }
+.doc-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+.doc-table th, .doc-table td { border: 1px solid var(--border); padding: 10px 12px; text-align: left; }
+.doc-table th { background: #F8FAFC; font-weight: 700; color: var(--text-muted); }
+
+.ai-metadata { margin-top: 32px; padding-top: 16px; border-top: 1px dashed var(--border); font-size: 11px; color: var(--text-light); display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; }
+
+/* Toast */
+.toast-container { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast { background: #1F2937; color: white; padding: 12px 20px; border-radius: 99px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 10px; opacity: 0; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast-icon { color: var(--success); }
+
+/* Utility */
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon"><i data-lucide="graduation-cap"></i></div>
+      <div class="brand-text">
+        <h2>EduRaport</h2>
+        <span>Platform Sekolah Cerdas</span>
+      </div>
+    </div>
+    
+    <div class="nav-section">
+      <a href="#" class="nav-item"><i data-lucide="users"></i> PPDB Online</a>
+    </div>
+    
+    <div class="nav-section">
+      <span class="nav-label">Kepegawaian</span>
+      <a href="#" class="nav-item"><i data-lucide="contact"></i> Guru & Staf</a>
+      <a href="#" class="nav-item"><i data-lucide="calendar-clock"></i> Absensi</a>
+      <a href="#" class="nav-item"><i data-lucide="calendar-days"></i> Jadwal Pelajaran</a>
+    </div>
+    
+    <div class="nav-section">
+      <span class="nav-label">Akademik & Penilaian</span>
+      <a href="#" class="nav-item active"><i data-lucide="sparkles"></i> AI Asisten Guru</a>
+      <a href="#" class="nav-item"><i data-lucide="book-open-check"></i> Skema Penilaian</a>
+      <a href="#" class="nav-item"><i data-lucide="file-pen-line"></i> Input Nilai</a>
+      <a href="#" class="nav-item"><i data-lucide="pie-chart"></i> Analitik & Rekap</a>
+      <a href="#" class="nav-item"><i data-lucide="book-marked"></i> Cetak Rapor</a>
+    </div>
+    
+    <div class="user-profile">
+      <div class="avatar">RW</div>
+      <div class="user-info">
+        <h4>Bu Rina Wijaya</h4>
+        <p>Guru · Wali Kelas 4B</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="header">
+      <div class="header-title">EduRaport Terintegrasi / Akademik</div>
+      <div class="quota-badge">
+        <div class="quota-dot"></div>
+        Kuota AI Hari Ini: 7 / 10
+      </div>
+    </header>
+    
+    <div class="page-container">
+      <div class="page-header">
+        <div>
+          <h1><i data-lucide="sparkles" style="color: var(--primary); width: 32px; height: 32px;"></i> AI Asisten Guru</h1>
+          <p>Susun Modul Ajar (RPP), Soal Evaluasi, dan Materi sesuai standar Kurikulum Merdeka 2025 secara otomatis. Data Konteks CP/TP di-load langsung dari database sekolah.</p>
+        </div>
+        <button class="btn btn-primary" onclick="showToast('Membuka Bank Materi...')"><i data-lucide="library"></i> Bank Materi Saya</button>
+      </div>
+      
+      <div class="tabs-container">
+        <button class="tab-btn active"><i data-lucide="file-plus-2"></i> Buat Dokumen Baru</button>
+        <button class="tab-btn"><i data-lucide="library"></i> Riwayat & Bank Materi</button>
+      </div>
+      
+      <div class="workspace">
+        <!-- Form Panel -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3><i data-lucide="settings-2" style="width: 18px; height: 18px; color: var(--primary);"></i> Konfigurasi AI</h3>
+          </div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label class="form-label">1. Pilih Jenis Dokumen</label>
+              <div class="doc-type-grid">
+                <div class="doc-type-card active" id="btnTypeRPP" onclick="selectType('rpp')">
+                  <div class="doc-type-icon"><i data-lucide="file-text"></i></div>
+                  <div class="doc-type-title">Modul Ajar / RPP</div>
+                </div>
+                <div class="doc-type-card" id="btnTypeSoal" onclick="selectType('soal')">
+                  <div class="doc-type-icon"><i data-lucide="check-square"></i></div>
+                  <div class="doc-type-title">Soal & Kuis</div>
+                </div>
+                <div class="doc-type-card" onclick="showToast('Materi Ajar segera hadir di Fase 2')">
+                  <span class="badge-soon">FASE 2</span>
+                  <div class="doc-type-icon" style="color: var(--text-light);"><i data-lucide="image"></i></div>
+                  <div class="doc-type-title" style="color: var(--text-muted);">Materi Ajar</div>
+                </div>
+                <div class="doc-type-card" onclick="showToast('Bahan Tayang PPT segera hadir di Fase 3')">
+                  <span class="badge-soon">FASE 3</span>
+                  <div class="doc-type-icon" style="color: var(--text-light);"><i data-lucide="presentation"></i></div>
+                  <div class="doc-type-title" style="color: var(--text-muted);">Slide PPT</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="info-box">
+              <i data-lucide="info" style="width: 20px; height: 20px;"></i>
+              <p>Sistem akan menggunakan PPA Edisi Revisi 2025. Alur pembelajaran 3M otomatis diterapkan untuk RPP.</p>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Mata Pelajaran</label>
+              <select class="form-control"><option>Matematika</option><option>IPAS</option><option>Bahasa Indonesia</option></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Kelas / Fase <span class="form-hint">Otomatis Terhubung</span></label>
+              <select class="form-control"><option>Kelas 4B (Fase B)</option><option>Kelas 1A (Fase A - Transisi)</option></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tujuan Pembelajaran (TP) <span class="form-hint" style="color: var(--primary);">Dari Database</span></label>
+              <select class="form-control"><option>Mengenal & membandingkan pecahan senilai</option><option>Operasi penjumlahan pecahan</option></select>
+            </div>
+            
+            <div id="soalOptions" class="hidden">
+              <div class="form-group">
+                <label class="form-label">Format Soal</label>
+                <select class="form-control"><option>10 Pilihan Ganda + 5 Esai HOTS</option><option>20 Pilihan Ganda</option></select>
+              </div>
+            </div>
+            
+          </div>
+          <div class="panel-header" style="border-bottom: none; border-top: 1px solid var(--border); padding: 16px 24px;">
+            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="generateDocument()">
+              <i data-lucide="wand-2"></i> Generate Dokumen
+            </button>
+          </div>
+        </div>
+        
+        <!-- Output Panel -->
+        <div class="panel output-panel" id="outputPanel">
+          <!-- Initial Empty State -->
+          <div class="empty-state" id="stateEmpty">
+            <div class="empty-state-icon"><i data-lucide="bot" style="width: 32px; height: 32px;"></i></div>
+            <h3>Siap Menulis Untuk Anda</h3>
+            <p>Atur konfigurasi di panel sebelah kiri lalu klik "Generate Dokumen". AI akan menyusun dokumen yang sesuai dengan standar Kurikulum Merdeka secara instan.</p>
+          </div>
+          
+          <!-- Loading State -->
+          <div class="loading-state hidden" id="stateLoading">
+            <div class="scanner-container">
+              <div class="document-icon">
+                <div class="document-line" style="margin-top: 20px;"></div>
+                <div class="document-line"></div>
+                <div class="document-line"></div>
+                <div class="document-line"></div>
+              </div>
+              <div class="scanner-beam"></div>
+            </div>
+            <div class="loading-steps" id="loadingText">Menghubungkan ke Database Kurikulum...</div>
+            <div class="loading-subtext">Menggunakan Model: Gemini 1.5 Pro · Menganalisis Guardrails</div>
+          </div>
+          
+          <!-- Result State -->
+          <div class="hidden" id="stateResult" style="height: 100%; display: flex; flex-direction: column; overflow: hidden;">
+            <div class="result-header">
+              <div class="result-title">
+                <h3 id="resTitle">Modul Ajar: Pecahan Senilai</h3>
+                <div class="status-badges">
+                  <span class="badge badge-purple">RPP 3M (PPA 2025)</span>
+                  <span class="badge badge-green">Tersimpan Otomatis</span>
+                </div>
+              </div>
+              <div class="result-actions">
+                <button class="btn btn-sm" onclick="showToast('Mode Edit diaktifkan')"><i data-lucide="pencil" style="width: 14px; height: 14px;"></i> Edit</button>
+                <button class="btn btn-sm" onclick="showToast('Mengunduh format PDF...')"><i data-lucide="download" style="width: 14px; height: 14px;"></i> PDF</button>
+              </div>
+            </div>
+            <div style="flex: 1; overflow-y: auto; padding: 0 24px 24px;">
+              <div class="document-paper">
+                <div class="doc-content" id="docContent">
+                  <!-- Content injected via JS -->
+                </div>
+                <div class="ai-metadata">
+                  <span>Tokens: ~2.4k (Input) / ~1.8k (Output)</span>
+                  <span>Trace ID: ai_gen_98f2a1b</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  // Initialize Icons
+  lucide.createIcons();
+
+  let currentType = 'rpp';
+  
+  function selectType(type) {
+    currentType = type;
+    document.getElementById('btnTypeRPP').classList.remove('active');
+    document.getElementById('btnTypeSoal').classList.remove('active');
+    
+    if (type === 'rpp') {
+      document.getElementById('btnTypeRPP').classList.add('active');
+      document.getElementById('soalOptions').classList.add('hidden');
+    } else {
+      document.getElementById('btnTypeSoal').classList.add('active');
+      document.getElementById('soalOptions').classList.remove('hidden');
+    }
+  }
+
+  function showToast(message) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `<i data-lucide="check-circle" class="toast-icon" style="width: 18px; height: 18px;"></i> ${message}`;
+    container.appendChild(toast);
+    lucide.createIcons();
+    
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  function generateDocument() {
+    // UI Transitions
+    document.getElementById('stateEmpty').classList.add('hidden');
+    document.getElementById('stateResult').classList.add('hidden');
+    document.getElementById('stateResult').style.display = 'none'; // Fix flex issue
+    document.getElementById('stateLoading').classList.remove('hidden');
+    
+    const steps = [
+      "Mengekstrak CP/TP dari kurikulum...",
+      "Memvalidasi Guardrails Transisi PAUD-SD...",
+      "Menyusun alur pembelajaran 3M...",
+      "Memformat dokumen output akhir..."
+    ];
+    
+    let stepIndex = 0;
+    const textEl = document.getElementById('loadingText');
+    textEl.textContent = steps[0];
+    
+    const interval = setInterval(() => {
+      stepIndex++;
+      if (stepIndex < steps.length) {
+        textEl.textContent = steps[stepIndex];
+      } else {
+        clearInterval(interval);
+        finishGeneration();
+      }
+    }, 800);
+  }
+
+  function finishGeneration() {
+    document.getElementById('stateLoading').classList.add('hidden');
+    document.getElementById('stateResult').classList.remove('hidden');
+    document.getElementById('stateResult').style.display = 'flex';
+    
+    const content = document.getElementById('docContent');
+    const title = document.getElementById('resTitle');
+    
+    if (currentType === 'rpp') {
+      title.textContent = 'Modul Ajar: Pecahan Senilai';
+      content.innerHTML = `
+        <h2>Modul Ajar (RPP) - Pecahan Senilai</h2>
+        <div class="doc-grid">
+          <div class="label">Mata Pelajaran</div><div class="value">Matematika</div>
+          <div class="label">Fase / Kelas</div><div class="value">B / 4B</div>
+          <div class="label">Alokasi Waktu</div><div class="value">2 JP (2 x 35 menit)</div>
+          <div class="label">Model Pembelajaran</div><div class="value">Problem Based Learning</div>
+        </div>
+        
+        <h3>1. Tujuan Pembelajaran</h3>
+        <p>Peserta didik mampu mengidentifikasi, membandingkan, dan mengurutkan pecahan senilai dengan menggunakan representasi visual garis bilangan secara tepat.</p>
+        
+        <h3>2. Langkah Pembelajaran (Alur 3M)</h3>
+        <p><strong>A. Memahami (15 Menit)</strong></p>
+        <ul>
+          <li>Guru memantik rasa ingin tahu siswa dengan membawa dua buah pizza bohongan (kertas), satu dipotong 2, satu dipotong 4.</li>
+          <li>Siswa berdiskusi menyadari bahwa 1/2 potong pizza sama besar dengan 2/4 potong.</li>
+        </ul>
+        
+        <p><strong>B. Mengaplikasikan (40 Menit)</strong></p>
+        <ul>
+          <li>Siswa dibagi dalam kelompok kecil dan diberikan media alat peraga garis bilangan.</li>
+          <li>Siswa secara kolaboratif memecahkan tantangan LKPD untuk menemukan pasangan pecahan senilai lainnya (misal: 2/3 dan 4/6).</li>
+        </ul>
+        
+        <p><strong>C. Merefleksikan (15 Menit)</strong></p>
+        <ul>
+          <li>Siswa menyampaikan apa yang terasa sulit dalam menemukan pecahan senilai.</li>
+          <li>Guru memberikan penguatan positif dan mengaitkan konsep pecahan dengan kehidupan sehari-hari (berbagi makanan).</li>
+        </ul>
+        
+        <h3>3. Asesmen Pembelajaran</h3>
+        <table class="doc-table">
+          <tr>
+            <th>Jenis Asesmen</th>
+            <th>Teknik</th>
+            <th>Instrumen</th>
+          </tr>
+          <tr>
+            <td>Formatif</td>
+            <td>Observasi Kinerja</td>
+            <td>Rubrik Kolaborasi Kelompok</td>
+          </tr>
+          <tr>
+            <td>Sumatif</td>
+            <td>Tertulis</td>
+            <td>Soal HOTS (Dapat di-generate terpisah)</td>
+          </tr>
+        </table>
+      `;
+    } else {
+      title.textContent = 'Soal Evaluasi: Pecahan Senilai';
+      content.innerHTML = `
+        <h2>Instrumen Evaluasi - Pecahan Senilai</h2>
+        <div class="doc-grid">
+          <div class="label">Mata Pelajaran</div><div class="value">Matematika</div>
+          <div class="label">Fase / Kelas</div><div class="value">B / 4B</div>
+          <div class="label">Format Soal</div><div class="value">10 PG, 5 Esai HOTS</div>
+          <div class="label">Rekomendasi Rapor</div><div class="value">Pembobotan (Materi Progresif)</div>
+        </div>
+        
+        <h3>A. Pilihan Ganda</h3>
+        <p><strong>1.</strong> Perhatikan pecahan berikut: 2/3. Pecahan mana di bawah ini yang senilai dengan pecahan tersebut?</p>
+        <ul>
+          <li>A. 3/4</li>
+          <li><strong>B. 4/6 (Kunci Jawaban)</strong></li>
+          <li>C. 5/6</li>
+          <li>D. 2/6</li>
+        </ul>
+        <p style="color: var(--text-muted); font-size: 12px; margin-top: -8px; margin-bottom: 16px;"><em>Pembahasan: Untuk mencari pecahan senilai, kalikan pembilang dan penyebut dengan angka yang sama. 2x2=4, 3x2=6. Maka hasilnya 4/6.</em></p>
+        
+        <h3>B. Esai HOTS</h3>
+        <p><strong>11.</strong> Bu Ani memotong sebuah kue tart menjadi 8 bagian sama besar dan memberikan 4 potong kepada Budi. Di tempat lain, Bu Siti memotong kue tart berukuran sama menjadi 2 bagian dan memberikan 1 potong kepada Caca. Apakah Budi dan Caca mendapat kue yang sama besar? Buktikan dengan garis bilangan!</p>
+        
+        <h3 style="margin-top: 32px;">Rubrik Penilaian Esai (KKTP)</h3>
+        <table class="doc-table">
+          <tr>
+            <th>Kriteria (Interval)</th>
+            <th>Deskripsi Capaian</th>
+          </tr>
+          <tr>
+            <td><strong>Sangat Baik (85-100)</strong></td>
+            <td>Siswa menjawab "Sama Besar", menggambar garis bilangan dengan akurat, dan menjelaskan konsep 4/8 = 1/2 dengan logis.</td>
+          </tr>
+          <tr>
+            <td><strong>Baik (70-84)</strong></td>
+            <td>Siswa menjawab benar dan menggambar visualisasi, namun penjelasan logika matematikanya kurang lengkap.</td>
+          </tr>
+          <tr>
+            <td><strong>Perlu Bimbingan (<70)</strong></td>
+            <td>Siswa tidak dapat membuktikan kesamaan nilai pecahan menggunakan alat bantu visual atau logika matematika.</td>
+          </tr>
+        </table>
+      `;
+    }
+    
+    showToast('Dokumen berhasil digenerate & disimpan!');
+  }
+</script>
+</body>
+</html>
