@@ -13,7 +13,7 @@ const form = reactive({
   email: '',
   password: '',
   phone: '',
-  role: 'super_admin'
+  role: 'user'
 })
 const loading = ref(false)
 const error = ref('')

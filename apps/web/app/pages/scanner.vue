@@ -18,7 +18,7 @@
       
       <div class="flex flex-1 sm:justify-end items-center gap-3">
         <!-- School Selector (Visible only if not locked to a specific school) -->
-        <select v-if="!isSchoolLocked" v-model="currentSchoolId" class="flex-1 sm:flex-none sm:w-64 bg-slate-700 text-white border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <select v-if="!isSchoolLocked" v-model="currentSchoolId" class="flex-1 sm:flex-none sm:w-64 bg-slate-700 text-white border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-zinc-100">
           <option v-for="school in schools" :key="school.id" :value="school.id">
             {{ school.name }}
           </option>

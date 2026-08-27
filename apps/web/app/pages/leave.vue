@@ -879,7 +879,7 @@ const filteredTeachersForQuota = computed(() => {
     <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white/70 dark:bg-zinc-900/60 backdrop-blur-md border border-slate-200/70 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
-        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-500/5">
+        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-500/5 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Yayasan</option>
           <option v-for="found in foundations" :key="found.id" :value="found.id">{{ found.name }}</option>
         </select>
@@ -887,7 +887,7 @@ const filteredTeachersForQuota = computed(() => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-500/5">
+        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-500/5 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Unit Sekolah</option>
           <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
@@ -895,7 +895,7 @@ const filteredTeachersForQuota = computed(() => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tahun Ajaran</label>
-        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-500/5">
+        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-500/5 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Tahun Ajaran</option>
           <option v-for="ay in academicYears" :key="ay.id" :value="ay.id">{{ ay.name }} (Semester {{ ay.semester }})</option>
         </select>
@@ -943,7 +943,7 @@ const filteredTeachersForQuota = computed(() => {
         <div class="flex flex-wrap items-center gap-4 bg-white/40 dark:bg-zinc-900/30 p-4 border border-slate-200/50 dark:border-zinc-800/50 rounded-xl">
           <div class="flex items-center gap-2 text-xs">
             <span class="font-bold text-slate-500 uppercase">Status:</span>
-            <select v-model="filterRequestStatus" @change="handleFilterRequests" class="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 font-semibold text-xs outline-none">
+            <select v-model="filterRequestStatus" @change="handleFilterRequests" class="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 font-semibold text-xs outline-none text-slate-900 dark:text-zinc-100">
               <option value="">Semua Status</option>
               <option value="pending">Menunggu</option>
               <option value="approved">Disetujui</option>
@@ -955,7 +955,7 @@ const filteredTeachersForQuota = computed(() => {
 
           <div class="flex items-center gap-2 text-xs">
             <span class="font-bold text-slate-500 uppercase">Guru:</span>
-            <select v-model="filterRequestTeacherId" @change="handleFilterRequests" class="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 font-semibold text-xs outline-none max-w-[200px]">
+            <select v-model="filterRequestTeacherId" @change="handleFilterRequests" class="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 font-semibold text-xs outline-none max-w-[200px] text-slate-900 dark:text-zinc-100">
               <option value="">Semua Guru</option>
               <option v-for="t in teachers" :key="t.id" :value="t.id">{{ t.full_name }}</option>
             </select>
@@ -1221,7 +1221,7 @@ const filteredTeachersForQuota = computed(() => {
             </div>
             <div class="flex items-center gap-2 text-xs">
               <span class="font-bold text-slate-500 uppercase">Pilih Guru:</span>
-              <select v-model="selectedRecapTeacherId" @change="loadRecapData" class="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 font-semibold text-xs outline-none max-w-[200px]">
+              <select v-model="selectedRecapTeacherId" @change="loadRecapData" class="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 font-semibold text-xs outline-none max-w-[200px] text-slate-900 dark:text-zinc-100">
                 <option value="">Semua Guru</option>
                 <option v-for="t in teachers" :key="t.id" :value="t.id">{{ t.full_name }}</option>
               </select>
@@ -1401,7 +1401,7 @@ const filteredTeachersForQuota = computed(() => {
         <!-- Teacher select -->
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Nama Guru</label>
-          <select v-model="requestForm.employee_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-500/5">
+          <select v-model="requestForm.employee_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-500/5 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>Pilih Guru</option>
             <option v-for="t in teachers" :key="t.id" :value="t.id">{{ t.full_name }}</option>
           </select>
@@ -1410,7 +1410,7 @@ const filteredTeachersForQuota = computed(() => {
         <!-- Leave Type select -->
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Jenis Izin</label>
-          <select v-model="requestForm.leave_type_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-500/5">
+          <select v-model="requestForm.leave_type_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-500/5 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>Pilih Jenis Izin</option>
             <option v-for="type in leaveTypes" :key="type.id" :value="type.id">{{ type.name }} (Default: {{ type.quota_default }} hari)</option>
           </select>
@@ -1471,7 +1471,7 @@ const filteredTeachersForQuota = computed(() => {
         <!-- Leave Type select -->
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Jenis Izin</label>
-          <select v-model="editRequestForm.leave_type_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-500/5">
+          <select v-model="editRequestForm.leave_type_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-500/5 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>Pilih Jenis Izin</option>
             <option v-for="type in leaveTypes" :key="type.id" :value="type.id">{{ type.name }} (Default: {{ type.quota_default }} hari)</option>
           </select>
@@ -1672,7 +1672,7 @@ const filteredTeachersForQuota = computed(() => {
         <!-- Mode Pengisian Kuota -->
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Mode Pengisian Kuota</label>
-          <select v-model="initQuotaForm.prorate_mode" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-500/5">
+          <select v-model="initQuotaForm.prorate_mode" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-500/5 text-slate-900 dark:text-zinc-100">
             <option value="full">Kuota Penuh (Default)</option>
             <option value="prorate">Kalkulasi Prorata (Kustom Tanggal Masuk)</option>
             <option value="custom">Kustom Manual</option>

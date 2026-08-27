@@ -43,13 +43,13 @@
     <div v-if="!isSchoolLocked" class="admin-school-selectors" style="margin: 20px 28px 0; margin-bottom: 0;">
       <div class="selector-field">
         <label>Yayasan</label>
-        <select v-model="selectedFoundationId" class="field-input">
+        <select v-model="selectedFoundationId" class="field-input text-slate-900 dark:text-zinc-100">
           <option v-for="f in foundations" :key="f.id" :value="f.id">{{ f.name }}</option>
         </select>
       </div>
       <div class="selector-field">
         <label>Unit Sekolah</label>
-        <select v-model="selectedSchoolId" class="field-input">
+        <select v-model="selectedSchoolId" class="field-input text-slate-900 dark:text-zinc-100">
           <option v-for="s in schools" :key="s.id" :value="s.id">{{ s.name }} ({{ s.level }})</option>
         </select>
       </div>
@@ -105,7 +105,7 @@
 
               <div class="form-field">
                 <label class="field-label">Kurikulum</label>
-                <select id="ai-curriculum" v-model="form.curriculum_id" class="field-input" :disabled="form.document_type !== 'rpp'">
+                <select id="ai-curriculum" v-model="form.curriculum_id" class="field-input text-slate-900 dark:text-zinc-100" :disabled="form.document_type !== 'rpp'">
                   <option value="">— Pilih Kurikulum —</option>
                   <option v-for="c in schoolCurriculums" :key="c.id" :value="c.id">{{ c.name }}</option>
                 </select>
@@ -113,7 +113,7 @@
 
               <div class="form-field">
                 <label class="field-label">Mata Pelajaran</label>
-                <select id="ai-subject" v-model="form.subject_id" class="field-input" @change="onSubjectChange" :disabled="form.document_type !== 'rpp'">
+                <select id="ai-subject" v-model="form.subject_id" class="field-input text-slate-900 dark:text-zinc-100" @change="onSubjectChange" :disabled="form.document_type !== 'rpp'">
                   <option value="">— Pilih Mapel —</option>
                   <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
                 </select>
@@ -121,7 +121,7 @@
 
               <div class="form-field">
                 <label class="field-label">Tahun Ajaran</label>
-                <select id="ai-academic-year" v-model="form.academic_year_id" class="field-input" :disabled="form.document_type !== 'rpp'">
+                <select id="ai-academic-year" v-model="form.academic_year_id" class="field-input text-slate-900 dark:text-zinc-100" :disabled="form.document_type !== 'rpp'">
                   <option value="">— Pilih Tahun Ajaran —</option>
                   <option v-for="ay in academicYears" :key="ay.id" :value="ay.id">{{ ay.name }}</option>
                 </select>
@@ -129,7 +129,7 @@
 
               <div class="form-field">
                 <label class="field-label">Kelas / Rombel</label>
-                <select id="ai-class" v-model="form.class_id" class="field-input" :disabled="form.document_type !== 'rpp'">
+                <select id="ai-class" v-model="form.class_id" class="field-input text-slate-900 dark:text-zinc-100" :disabled="form.document_type !== 'rpp'">
                   <option value="">— Pilih Kelas —</option>
                   <option v-for="c in filteredClasses" :key="c.id" :value="c.id">{{ c.class_name }}</option>
                 </select>
@@ -140,7 +140,7 @@
                   Tujuan Pembelajaran
                   <span class="field-label-hint">· dari kurikulum</span>
                 </label>
-                <select id="ai-tp" v-model="form.learning_outcome_id" class="field-input" :disabled="!contextLoaded || form.document_type !== 'rpp'">
+                <select id="ai-tp" v-model="form.learning_outcome_id" class="field-input text-slate-900 dark:text-zinc-100" :disabled="!contextLoaded || form.document_type !== 'rpp'">
                   <option value="">— Pilih TP dari kurikulum —</option>
                   <option v-for="lo in filteredLearningOutcomes" :key="lo.id" :value="lo.id">
                     [{{ lo.element_name || 'CP' }}] {{ lo.code ? `${lo.code} - ` : '' }}{{ lo.outcome_text }}
@@ -163,7 +163,7 @@
 
               <div class="form-field">
                 <label class="field-label">Semester</label>
-                <select id="ai-semester" v-model="form.semester" class="field-input" :disabled="form.document_type !== 'rpp'">
+                <select id="ai-semester" v-model="form.semester" class="field-input text-slate-900 dark:text-zinc-100" :disabled="form.document_type !== 'rpp'">
                   <option value="ganjil">Ganjil</option>
                   <option value="genap">Genap</option>
                 </select>
@@ -188,14 +188,14 @@
 
               <div class="form-field">
                 <label class="field-label">Model Pembelajaran</label>
-                <select id="ai-model-pembelajaran" v-model="form.model_pembelajaran" class="field-input" :disabled="form.document_type !== 'rpp'">
+                <select id="ai-model-pembelajaran" v-model="form.model_pembelajaran" class="field-input text-slate-900 dark:text-zinc-100" :disabled="form.document_type !== 'rpp'">
                   <option v-for="m in modelPembelajaranOptions" :key="m" :value="m">{{ m }}</option>
                 </select>
               </div>
 
               <div class="form-field">
                 <label class="field-label">Dimensi Profil Pelajar Pancasila</label>
-                <select id="ai-dpl" v-model="form.selected_dpl_ids" multiple class="field-input" style="min-height: 80px;" :disabled="form.document_type !== 'rpp'">
+                <select id="ai-dpl" v-model="form.selected_dpl_ids" multiple class="field-input text-slate-900 dark:text-zinc-100" style="min-height: 80px;" :disabled="form.document_type !== 'rpp'">
                   <option v-for="dpl in profileDimensions" :key="dpl.id" :value="dpl.id">{{ dpl.dimension_name }}</option>
                 </select>
                 <div class="field-hint">Tahan Ctrl / Cmd untuk memilih lebih dari satu (opsional).</div>
@@ -358,21 +358,21 @@
     <div v-if="activeTab === 'library'" class="tab-content">
       <!-- Filter bar -->
       <div class="library-filters">
-        <select v-model="libraryFilter.type" class="filter-select" @change="loadLibrary">
+        <select v-model="libraryFilter.type" class="filter-select text-slate-900 dark:text-zinc-100" @change="loadLibrary">
           <option value="">Semua Jenis</option>
           <option value="rpp">Modul Ajar / RPP</option>
           <option value="soal">Soal / Kuis</option>
           <option value="materi">Materi Ajar</option>
         </select>
-        <select v-model="libraryFilter.subject_id" class="filter-select" @change="loadLibrary">
+        <select v-model="libraryFilter.subject_id" class="filter-select text-slate-900 dark:text-zinc-100" @change="loadLibrary">
           <option value="">Semua Mapel</option>
           <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
         </select>
-        <select v-model="libraryFilter.academic_year_id" class="filter-select">
+        <select v-model="libraryFilter.academic_year_id" class="filter-select text-slate-900 dark:text-zinc-100">
           <option value="">Semua Tahun Ajaran</option>
           <option v-for="ay in academicYears" :key="ay.id" :value="ay.id">{{ ay.name }}</option>
         </select>
-        <select v-model="libraryFilter.class_id" class="filter-select" @change="loadLibrary">
+        <select v-model="libraryFilter.class_id" class="filter-select text-slate-900 dark:text-zinc-100" @change="loadLibrary">
           <option value="">Semua Kelas</option>
           <option v-for="c in filteredLibraryClasses" :key="c.id" :value="c.id">{{ c.class_name }}</option>
         </select>
@@ -570,7 +570,7 @@
             </p>
             <div class="form-field mb-4">
               <label class="field-label">Jenis Dokumen</label>
-              <select v-model="relatedForm.document_type" class="field-input">
+              <select v-model="relatedForm.document_type" class="field-input text-slate-900 dark:text-zinc-100">
                 <option v-for="dt in documentTypes.filter(d => d.key !== selectedDoc?.document_type && d.key !== 'rpp')" :key="dt.key" :value="dt.key">
                   {{ dt.icon }} {{ dt.label }}
                 </option>
@@ -633,7 +633,7 @@
               <!-- RPP Options -->
               <template v-if="regenerateTargetDoc.document_type === 'rpp'">
                 <label class="field-label" style="display: block; margin-bottom: 8px;">Model Pembelajaran</label>
-                <select v-model="regenerateForm.model_pembelajaran" class="field-input" style="width: 100%; box-sizing: border-box; margin-bottom: 16px;">
+                <select v-model="regenerateForm.model_pembelajaran" class="field-input text-slate-900 dark:text-zinc-100" style="width: 100%; box-sizing: border-box; margin-bottom: 16px;">
                   <option v-for="m in modelPembelajaranOptions" :key="m" :value="m">{{ m }}</option>
                 </select>
               </template>

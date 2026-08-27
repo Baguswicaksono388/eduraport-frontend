@@ -547,7 +547,7 @@ const copyRegNumber = () => {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="flex flex-col gap-1 text-left">
                 <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Jenis Dokumen</label>
-                <select v-model="docType" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-bold outline-none focus:border-violet-600">
+                <select v-model="docType" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-bold outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
                   <option value="kartu_keluarga">Kartu Keluarga (KK)</option>
                   <option value="akte_kelahiran">Akta Kelahiran</option>
                   <option value="ijazah">Ijazah / SKL</option>

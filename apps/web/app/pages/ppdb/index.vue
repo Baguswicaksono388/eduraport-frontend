@@ -753,7 +753,7 @@ const copyActiveAnnouncementLink = () => {
     <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
-        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10">
+        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Yayasan</option>
           <option v-for="found in foundations" :key="found.id" :value="found.id">{{ found.name }}</option>
         </select>
@@ -761,7 +761,7 @@ const copyActiveAnnouncementLink = () => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10">
+        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Unit Sekolah</option>
           <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
@@ -943,13 +943,13 @@ const copyActiveAnnouncementLink = () => {
         <div class="flex flex-wrap items-center gap-4 w-full md:w-auto">
           <div class="flex items-center gap-2">
             <label class="text-xs font-bold text-slate-500 uppercase shrink-0">Gelombang:</label>
-            <select v-model="selectedBatchId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600">
+            <select v-model="selectedBatchId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
               <option v-for="b in ppdbBatches" :key="b.id" :value="b.id">{{ b.name }} ({{ b.level }})</option>
             </select>
           </div>
           <div class="flex items-center gap-2">
             <label class="text-xs font-bold text-slate-500 uppercase shrink-0">Status:</label>
-            <select v-model="selectedStatusFilter" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600">
+            <select v-model="selectedStatusFilter" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
               <option value="">Semua Status</option>
               <option value="pending">Menunggu Pembayaran</option>
               <option value="payment_review">Review Pembayaran</option>
@@ -1067,7 +1067,7 @@ const copyActiveAnnouncementLink = () => {
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
         <div class="lg:col-span-1 flex flex-col gap-1.5 justify-center">
           <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Pilih Gelombang PPDB</label>
-          <select v-model="selectedBatchId" class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2.5 text-xs font-semibold outline-none focus:border-violet-600">
+          <select v-model="selectedBatchId" class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2.5 text-xs font-semibold outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
             <option v-for="b in ppdbBatches" :key="b.id" :value="b.id">{{ b.name }} ({{ b.level }})</option>
           </select>
         </div>
@@ -1173,7 +1173,7 @@ const copyActiveAnnouncementLink = () => {
       <div class="flex justify-between items-center bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-4 shadow-sm">
         <div class="flex items-center gap-3">
           <label class="text-xs font-bold text-slate-500 uppercase shrink-0">Gelombang:</label>
-          <select v-model="selectedBatchId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600">
+          <select v-model="selectedBatchId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
             <option v-for="b in ppdbBatches" :key="b.id" :value="b.id">{{ b.name }} ({{ b.level }})</option>
           </select>
         </div>
@@ -1258,7 +1258,7 @@ const copyActiveAnnouncementLink = () => {
       <!-- Selector Batch -->
       <div class="flex items-center gap-3 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-4 shadow-sm">
         <label class="text-xs font-bold text-slate-500 uppercase shrink-0">Gelombang:</label>
-        <select v-model="selectedBatchId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600">
+        <select v-model="selectedBatchId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option v-for="b in ppdbBatches" :key="b.id" :value="b.id">{{ b.name }} ({{ b.level }})</option>
         </select>
       </div>
@@ -1474,7 +1474,7 @@ const copyActiveAnnouncementLink = () => {
           
           <div class="flex flex-col gap-1.5 border-t border-slate-200/50 dark:border-zinc-800 pt-3">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Status Pengumuman</label>
-            <select v-model="announcementForm.status" class="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded px-2.5 py-1.5 text-xs font-semibold">
+            <select v-model="announcementForm.status" class="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded px-2.5 py-1.5 text-xs font-semibold text-slate-900 dark:text-zinc-100">
               <option value="draft">Draft (Simpan saja, belum tampil ke publik)</option>
               <option value="published">Terbit (Published - Tampil ke halaman pengumuman publik)</option>
             </select>
@@ -1698,7 +1698,7 @@ const copyActiveAnnouncementLink = () => {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="flex flex-col gap-1.5">
               <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pilih Status Baru</label>
-              <select v-model="statusUpdateVal" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600">
+              <select v-model="statusUpdateVal" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
                 <option value="pending">Menunggu Pembayaran (Pending)</option>
                 <option value="payment_review">Review Pembayaran</option>
                 <option value="reviewing">Berkas / Seleksi Direview (Reviewing)</option>
@@ -1767,7 +1767,7 @@ const copyActiveAnnouncementLink = () => {
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tahun Akademik Target</label>
-            <select v-model="batchForm.academic_year_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none" required>
+            <select v-model="batchForm.academic_year_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none text-slate-900 dark:text-zinc-100" required>
               <option value="" disabled>Pilih Tahun Ajaran</option>
               <option v-for="year in academicYears" :key="year.id" :value="year.id">{{ year.name }}</option>
             </select>
@@ -1775,7 +1775,7 @@ const copyActiveAnnouncementLink = () => {
           
           <div class="flex flex-col gap-1.5">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Jenjang PPDB</label>
-            <select v-model="batchForm.level" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none" required>
+            <select v-model="batchForm.level" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none text-slate-900 dark:text-zinc-100" required>
               <option value="TK">TK / PAUD</option>
               <option value="SD">SD (Sekolah Dasar)</option>
               <option value="SMP">SMP (Sekolah Menengah Pertama)</option>
@@ -1830,14 +1830,14 @@ const copyActiveAnnouncementLink = () => {
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tahun Akademik Target</label>
-            <select v-model="editBatchForm.academic_year_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none" required>
+            <select v-model="editBatchForm.academic_year_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none text-slate-900 dark:text-zinc-100" required>
               <option v-for="year in academicYears" :key="year.id" :value="year.id">{{ year.name }}</option>
             </select>
           </div>
           
           <div class="flex flex-col gap-1.5">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Jenjang PPDB</label>
-            <select v-model="editBatchForm.level" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none" required>
+            <select v-model="editBatchForm.level" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none text-slate-900 dark:text-zinc-100" required>
               <option value="TK">TK / PAUD</option>
               <option value="SD">SD (Sekolah Dasar)</option>
               <option value="SMP">SMP (Sekolah Menengah Pertama)</option>
@@ -1869,7 +1869,7 @@ const copyActiveAnnouncementLink = () => {
         <div class="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-zinc-900/60 p-4 rounded-xl">
           <div class="flex flex-col gap-1.5">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Status Gelombang</label>
-            <select v-model="editBatchForm.status" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold">
+            <select v-model="editBatchForm.status" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold text-slate-900 dark:text-zinc-100">
               <option value="draft">Draft</option>
               <option value="open">Buka (Open)</option>
               <option value="closed">Tutup (Closed)</option>
@@ -1946,7 +1946,7 @@ const copyActiveAnnouncementLink = () => {
 
               <div class="md:col-span-4 flex flex-col gap-1">
                 <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Tipe Input</label>
-                <select v-model="field.field_type" class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none">
+                <select v-model="field.field_type" class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none text-slate-900 dark:text-zinc-100">
                   <option value="text">Text (Satu Baris)</option>
                   <option value="textarea">Textarea (Banyak Baris)</option>
                   <option value="number">Angka (Number)</option>

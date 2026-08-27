@@ -1055,7 +1055,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
     <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
-        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600">
+        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Yayasan</option>
           <option v-for="found in foundations" :key="found.id" :value="found.id">{{ found.name }}</option>
         </select>
@@ -1063,7 +1063,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600">
+        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Unit Sekolah</option>
           <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
@@ -1071,7 +1071,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
 
       <div class="flex flex-col gap-1.5" v-if="activeTab === 'bills'">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Kelas</label>
-        <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600">
+        <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option value="">Semua Kelas</option>
           <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.class_name }}</option>
         </select>
@@ -1079,7 +1079,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
 
       <div class="flex flex-col gap-1.5" v-if="activeTab === 'bills'">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Status Tagihan</label>
-        <select v-model="filterStatus" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600">
+        <select v-model="filterStatus" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option value="">Semua Status</option>
           <option value="pending">Belum Lunas (Pending)</option>
           <option value="paid">Lunas (Paid)</option>
@@ -1698,7 +1698,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
                 <td class="py-3 px-4">
                   <select 
                     v-model="cat.revenue_account_id" 
-                    class="w-full max-w-sm bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600 transition-all"
+                    class="w-full max-w-sm bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600 transition-all text-slate-900 dark:text-zinc-100"
                   >
                     <option :value="null">-- Pilih Akun Pendapatan --</option>
                     <option v-for="acc in revenueAccounts" :key="acc.id" :value="acc.id">
@@ -1818,7 +1818,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
       <div class="space-y-4">
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Rombel Kelas (boleh lebih dari satu)</label>
-          <select v-model="sppForm.class_ids" multiple size="4" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
+          <select v-model="sppForm.class_ids" multiple size="4" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
             <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.class_name }}</option>
           </select>
         </div>
@@ -1830,7 +1830,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
               <Info :size="14" class="text-slate-400 cursor-help" />
             </span>
           </div>
-          <select v-model="sppForm.category_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
+          <select v-model="sppForm.category_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>Pilih Struktur Biaya</option>
             <option v-for="cat in categoriesList" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
           </select>
@@ -1846,7 +1846,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
                 <Info :size="14" class="text-slate-400 cursor-help" />
               </span>
             </div>
-            <select v-model="sppForm.period" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
+            <select v-model="sppForm.period" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
               <option v-for="opt in periodOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
             </select>
           </div>
@@ -1884,7 +1884,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Kategori Aset</label>
-          <select v-model="assetForm.category" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
+          <select v-model="assetForm.category" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
             <option v-for="cat in ASSET_CATEGORIES" :key="cat.value" :value="cat.value">{{ cat.label }}</option>
           </select>
         </div>
@@ -1898,7 +1898,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
           <BaseInput v-model="assetForm.quantity" label="Kuantitas (Pcs/Unit)" type="number" required />
           <div class="flex flex-col gap-1.5 w-full">
             <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Kondisi Fisik</label>
-            <select v-model="assetForm.condition" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
+            <select v-model="assetForm.condition" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
               <option value="good">Baik (Good)</option>
               <option value="repair_needed">Perlu Perbaikan (Repair Needed)</option>
               <option value="broken">Rusak (Broken)</option>
@@ -1911,7 +1911,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5 w-full">
             <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Metode Penyusutan</label>
-            <select v-model="assetForm.depreciation_method" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
+            <select v-model="assetForm.depreciation_method" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
               <option v-for="method in DEPRECIATION_METHODS" :key="method.value" :value="method.value">{{ method.label }}</option>
             </select>
           </div>
@@ -1933,7 +1933,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Akun Debit (Penggunaan Dana / Beban / Aset)</label>
-          <select v-model="journalForm.debit_account_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
+          <select v-model="journalForm.debit_account_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>Pilih Akun Debit</option>
             <template v-for="(accounts, groupName) in debitAccountGroups" :key="'debgrp-'+groupName">
               <optgroup :label="String(groupName)" v-if="accounts.length > 0">
@@ -1948,7 +1948,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
 
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Akun Kredit (Sumber Dana / Kas / Pendapatan)</label>
-          <select v-model="journalForm.credit_account_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
+          <select v-model="journalForm.credit_account_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>Pilih Akun Kredit</option>
             <template v-for="(accounts, groupName) in creditAccountGroups" :key="'credgrp-'+groupName">
               <optgroup :label="String(groupName)" v-if="accounts.length > 0">
@@ -1971,7 +1971,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
 
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Sumber Dana</label>
-          <select v-model="journalForm.funding_source" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
+          <select v-model="journalForm.funding_source" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
             <option value="yayasan">Dana Yayasan / Pribadi</option>
             <option value="spp">Dana SPP</option>
             <option value="bos_reguler">Dana BOS Reguler</option>
@@ -1983,7 +1983,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
 
         <div class="flex flex-col gap-1.5 w-full" v-if="journalForm.funding_source.startsWith('bos_')">
           <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Komponen Pembiayaan BOS</label>
-          <select v-model="journalForm.bos_component_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
+          <select v-model="journalForm.bos_component_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>Pilih Komponen BOS</option>
             <option v-for="comp in bosComponentsList" :key="comp.id" :value="comp.code">
               {{ comp.code }} - {{ comp.name }}
@@ -2202,7 +2202,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
           <div class="flex gap-3">
             <div class="w-1/2 flex flex-col gap-1.5">
               <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Induk Rekening</label>
-              <select v-model="newAccount.parent_code" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600">
+              <select v-model="newAccount.parent_code" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
                 <option value="101">101 - Kas Tunai</option>
                 <option value="102">102 - Bank</option>
               </select>
@@ -2236,7 +2236,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
                 <Info :size="14" class="text-slate-400 cursor-help" />
               </span>
             </div>
-            <select v-model="newAccount.type" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10" required>
+            <select v-model="newAccount.type" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100" required>
               <option value="" disabled>Pilih Tipe</option>
               <option value="asset">Aset (Harta)</option>
               <option value="liability">Kewajiban (Hutang)</option>

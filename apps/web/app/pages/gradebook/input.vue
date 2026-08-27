@@ -951,14 +951,14 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5" :class="isTKSchool ? 'lg:col-span-3' : 'lg:col-span-2'">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
+        <select v-model="selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option v-for="school in filteredSchools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
       </div>
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Kelas</label>
-        <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
+        <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Kelas</option>
           <option v-for="c in filteredClasses" :key="c.id" :value="c.id">{{ c.class_name }}</option>
         </select>
@@ -967,7 +967,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
       <!-- If TK: Template select filter -->
       <div v-if="isTKSchool" class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Template Rapor</label>
-        <select v-model="selectedTemplateId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
+        <select v-model="selectedTemplateId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Template</option>
           <option v-for="temp in reportTemplates" :key="temp.id" :value="temp.id">{{ temp.name }}</option>
         </select>
@@ -976,7 +976,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
       <!-- If non-TK: Mata Pelajaran select filter -->
       <div v-else class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Mata Pelajaran</label>
-        <select v-model="selectedSubjectId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
+        <select v-model="selectedSubjectId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Mapel</option>
           <option v-for="sub in subjects" :key="sub.id" :value="sub.id">{{ sub.name }}</option>
         </select>
@@ -984,14 +984,14 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tahun Ajaran</label>
-        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
+        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option v-for="y in academicYears" :key="y.id" :value="y.id">{{ y.name }}</option>
         </select>
       </div>
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Semester</label>
-        <select v-model="selectedSemester" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
+        <select v-model="selectedSemester" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option value="odd">Ganjil</option>
           <option value="even">Genap</option>
         </select>
@@ -1169,7 +1169,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                   <!-- Skala Kurikulum Merdeka Fase Fondasi (BB/MB/BSH/BSB) -->
                   <select 
                     v-model="item.letter_grade" 
-                    class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-1 text-xs font-black outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600"
+                    class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-1 text-xs font-black outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600 text-slate-900 dark:text-zinc-100"
                   >
                     <option :value="null">- Pilih Capaian -</option>
                     <option value="BB">BB — Belum Berkembang</option>
@@ -1530,7 +1530,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                         v-model="row.scores[comp.id].grade_letter"
                         @change="handleCellSave(row.student.id, comp.id)"
                         :disabled="row.scores[comp.id].status === 'final'"
-                        class="w-16 bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded px-1 py-1 text-[10px] font-bold text-center outline-none focus:border-violet-600 disabled:opacity-75"
+                        class="w-16 bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded px-1 py-1 text-[10px] font-bold text-center outline-none focus:border-violet-600 disabled:opacity-75 text-slate-900 dark:text-zinc-100"
                       >
                         <option :value="null">-</option>
                         <option value="BB">BB</option>

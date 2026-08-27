@@ -321,14 +321,14 @@ const getTKGradeLabel = (grade: string) => {
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5 lg:col-span-2">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
+        <select v-model="selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
       </div>
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Kelas</label>
-        <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
+        <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Kelas</option>
           <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.class_name }}</option>
         </select>
@@ -336,14 +336,14 @@ const getTKGradeLabel = (grade: string) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tahun Ajaran</label>
-        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
+        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option v-for="y in academicYears" :key="y.id" :value="y.id">{{ y.name }}</option>
         </select>
       </div>
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Semester</label>
-        <select v-model="selectedSemester" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
+        <select v-model="selectedSemester" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option value="odd">Ganjil</option>
           <option value="even">Genap</option>
         </select>
@@ -600,7 +600,7 @@ const getTKGradeLabel = (grade: string) => {
           <label class="text-xs font-bold text-slate-600 dark:text-zinc-400">
             {{ recapData.level === 'TK' ? 'Pilih Elemen Perkembangan:' : 'Pilih Mata Pelajaran:' }}
           </label>
-          <select v-model="selectedSchemeId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 min-w-[200px]">
+          <select v-model="selectedSchemeId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 min-w-[200px] text-slate-900 dark:text-zinc-100">
             <template v-if="recapData.level === 'TK'">
               <option v-for="el in recapData.elements" :key="el.id" :value="el.id">
                 {{ el.name }}
@@ -696,7 +696,7 @@ const getTKGradeLabel = (grade: string) => {
               <div class="flex justify-between items-center">
                 <h4 class="text-xs font-black text-slate-900 dark:text-zinc-150 uppercase tracking-wider">Daftar Capaian Murid</h4>
                 <!-- Predicate Filter options -->
-                <select v-model="selectedDistributionPredicate" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1 text-[11px] font-bold outline-none">
+                <select v-model="selectedDistributionPredicate" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1 text-[11px] font-bold outline-none text-slate-900 dark:text-zinc-100">
                   <option value="all">Semua Nilai</option>
                   <option v-for="(_, pred) in distributionData.distribution" :key="pred" :value="pred">
                     {{ recapData.level === 'TK' ? pred : `Predikat ${pred}` }}
@@ -750,7 +750,7 @@ const getTKGradeLabel = (grade: string) => {
         <!-- Sub selector for students -->
         <div class="flex items-center gap-3 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 p-4 rounded-xl shadow-sm">
           <label class="text-xs font-bold text-slate-600 dark:text-zinc-400">Pilih Murid:</label>
-          <select v-model="selectedStudentId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 min-w-[200px]">
+          <select v-model="selectedStudentId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 min-w-[200px] text-slate-900 dark:text-zinc-100">
             <option v-for="std in recapData.students" :key="std.id" :value="std.id">
               {{ std.full_name }}
             </option>

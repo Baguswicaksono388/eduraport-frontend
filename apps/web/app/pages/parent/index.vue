@@ -200,7 +200,7 @@ const confirmDeleteParent = async () => {
           <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="flex flex-col gap-1.5" v-if="!isSchoolLocked">
               <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
-              <select v-model="selectedFoundationId" @change="onFoundationChange" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 disabled:opacity-50 disabled:cursor-not-allowed">
+              <select v-model="selectedFoundationId" @change="onFoundationChange" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 dark:text-zinc-100">
                 <option value="">Pilih Yayasan</option>
                 <option v-for="f in foundations" :key="f.id" :value="f.id">{{ f.name }}</option>
               </select>
@@ -212,7 +212,7 @@ const confirmDeleteParent = async () => {
                 <span>Seluruh Sekolah</span>
                 <span class="text-[9px] bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Global</span>
               </div>
-              <select v-else v-model="selectedSchoolId" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 disabled:opacity-50 disabled:cursor-not-allowed" :disabled="!selectedFoundationId">
+              <select v-else v-model="selectedSchoolId" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 dark:text-zinc-100" :disabled="!selectedFoundationId">
                 <option value="">Pilih Unit Sekolah</option>
                 <option v-for="s in schools" :key="s.id" :value="s.id">{{ s.name }} ({{ s.level }})</option>
               </select>
@@ -340,7 +340,7 @@ const confirmDeleteParent = async () => {
         
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Siswa / Anak</label>
-          <select v-model="parentForm.student_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10">
+          <select v-model="parentForm.student_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>— Pilih Siswa —</option>
             <option v-for="s in students" :key="s.id" :value="s.id">
               {{ s.full_name }} ({{ s.national_student_number || '-' }})
@@ -352,7 +352,7 @@ const confirmDeleteParent = async () => {
         
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Hubungan</label>
-          <select v-model="parentForm.relationship" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10">
+          <select v-model="parentForm.relationship" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
             <option value="Father">Ayah</option>
             <option value="Mother">Ibu</option>
             <option value="Guardian">Wali</option>

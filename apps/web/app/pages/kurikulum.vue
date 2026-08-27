@@ -13,13 +13,13 @@
     <div v-if="!isSchoolLocked" class="admin-school-selectors" style="margin: 20px 28px 0; margin-bottom: 0; background: var(--panel); padding: 16px; border-radius: 12px; border: 1px solid var(--line); display: flex; gap: 16px;">
       <div class="selector-field" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
         <label style="font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 1px;">Yayasan</label>
-        <select v-model="selectedFoundationId" class="field-input" style="width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.2); border: 1px solid var(--line); border-radius: 8px; color: var(--text);">
+        <select v-model="selectedFoundationId" class="field-input text-slate-900 dark:text-zinc-100" style="width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.2); border: 1px solid var(--line); border-radius: 8px; color: var(--text);">
           <option v-for="f in foundations" :key="f.id" :value="f.id" style="background: #1a1a22; color: #e9e9f1;">{{ f.name }}</option>
         </select>
       </div>
       <div class="selector-field" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
         <label style="font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 1px;">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" class="field-input" style="width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.2); border: 1px solid var(--line); border-radius: 8px; color: var(--text);">
+        <select v-model="selectedSchoolId" class="field-input text-slate-900 dark:text-zinc-100" style="width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.2); border: 1px solid var(--line); border-radius: 8px; color: var(--text);">
           <option v-for="s in filteredSchools" :key="s.id" :value="s.id" style="background: #1a1a22; color: #e9e9f1;">{{ s.name }} ({{ s.level }})</option>
         </select>
       </div>
@@ -122,14 +122,14 @@
       <div style="display: flex; flex-direction: column; gap: 16px;">
         <div class="form-group">
           <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px;">Kurikulum <span style="color: var(--red);">*</span></label>
-          <select v-model="elementForm.curriculum_id" class="field-input" style="width: 100%; padding: 10px 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--text);">
+          <select v-model="elementForm.curriculum_id" class="field-input text-slate-900 dark:text-zinc-100" style="width: 100%; padding: 10px 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--text);">
             <option value="" style="background: #1a1a22; color: #e9e9f1;">-- Pilih Kurikulum --</option>
             <option v-for="c in schoolCurriculums" :key="c.id" :value="c.id" style="background: #1a1a22; color: #e9e9f1;">{{ c.name }}</option>
           </select>
         </div>
         <div class="form-group">
           <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px;">Mata Pelajaran <span style="color: var(--red);">*</span></label>
-          <select v-model="elementForm.subject_id" class="field-input" style="width: 100%; padding: 10px 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--text);">
+          <select v-model="elementForm.subject_id" class="field-input text-slate-900 dark:text-zinc-100" style="width: 100%; padding: 10px 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--text);">
             <option value="" style="background: #1a1a22; color: #e9e9f1;">-- Pilih Mata Pelajaran --</option>
             <option v-for="s in subjects" :key="s.id" :value="s.id" style="background: #1a1a22; color: #e9e9f1;">{{ s.name }}</option>
           </select>
@@ -140,7 +140,7 @@
         </div>
         <div class="form-group">
           <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px;">Fase</label>
-          <select v-model="elementForm.level" class="field-input" style="width: 100%; padding: 10px 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--text);">
+          <select v-model="elementForm.level" class="field-input text-slate-900 dark:text-zinc-100" style="width: 100%; padding: 10px 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--text);">
             <option value="" style="background: #1a1a22; color: #e9e9f1;">-- Pilih Fase --</option>
             <option value="A" style="background: #1a1a22; color: #e9e9f1;">Fase A (Kelas 1-2)</option>
             <option value="B" style="background: #1a1a22; color: #e9e9f1;">Fase B (Kelas 3-4)</option>

@@ -400,10 +400,10 @@ const selectedTemplateId = computed({
     
     <!-- Topbar -->
     <div class="h-[52px] bg-white border-b border-[#dde5e4] flex items-center px-4 shrink-0 z-10 gap-3">
-      <select v-model="selectedSchoolId" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-semibold outline-none w-48">
+      <select v-model="selectedSchoolId" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-semibold outline-none w-48 text-slate-900 dark:text-zinc-100">
         <option v-for="school in filteredSchools" :key="school.id" :value="school.id">{{ school.name }}</option>
       </select>
-      <select v-if="selectedSchoolId" v-model="selectedTemplateId" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-semibold outline-none w-64">
+      <select v-if="selectedSchoolId" v-model="selectedTemplateId" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-semibold outline-none w-64 text-slate-900 dark:text-zinc-100">
         <option :value="null">-- Pilih Template --</option>
         <option v-for="tpl in reportTemplates" :key="tpl.id" :value="tpl.id">{{ tpl.name }}</option>
       </select>
@@ -589,7 +589,7 @@ const selectedTemplateId = computed({
 
           <template v-else-if="selectedWidgetProps.type === 'column_layout'">
              <div class="field"><label>Jumlah Kolom</label>
-               <select v-model.number="selectedWidgetProps.props.cols" @change="snapshot()" class="builder-input">
+               <select v-model.number="selectedWidgetProps.props.cols" @change="snapshot()" class="builder-input text-slate-900 dark:text-zinc-100">
                  <option :value="2">2</option><option :value="3">3</option>
                </select>
              </div>
@@ -634,7 +634,7 @@ const selectedTemplateId = computed({
             </div>
             <div class="divider"></div>
             <div class="field"><label>Skala Penilaian</label>
-              <select v-model="selectedWidgetProps.props.scale" @change="snapshot()" class="builder-input">
+              <select v-model="selectedWidgetProps.props.scale" @change="snapshot()" class="builder-input text-slate-900 dark:text-zinc-100">
                 <option value="BB/MB/BSH/BSB">BB/MB/BSH/BSB</option>
                 <option value="B/C/K">B/C/K</option>
               </select>

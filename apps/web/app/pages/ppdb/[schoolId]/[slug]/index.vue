@@ -278,7 +278,7 @@ const copyRegNumber = () => {
                   v-else-if="field.field_type === 'select'"
                   v-model="form.form_answers[field.field_key]"
                   :required="!!field.is_required"
-                  class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10"
+                  class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100"
                 >
                   <option value="" disabled>{{ field.placeholder || 'Pilih salah satu...' }}</option>
                   <option v-for="opt in field.options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>

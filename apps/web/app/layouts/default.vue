@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange, Smartphone, Settings, Sparkles, Sun, Moon, Boxes } from 'lucide-vue-next'
+import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange, Smartphone, Settings, Sparkles, Sun, Moon, Boxes, ShieldAlert, HeartHandshake, Scale, Activity } from 'lucide-vue-next'
 import { BaseModal, BaseButton, BaseInput } from '@eduraport/ui'
 import { useAuth } from '../composables/useAuth'
 import { useToast } from '../composables/useToast'
@@ -135,6 +135,16 @@ const menuGroups = computed(() => {
       { to: '/teacher/attendance', label: 'Absensi Guru & Staf', icon: ClipboardCheck, access: '/teacher' },
       { to: '/schedule', label: 'Jadwal Pelajaran', icon: Clock, access: '/schedule' },
       { to: '/leave', label: 'Cuti & Izin Guru', icon: CalendarRange, access: '/leave' }
+    ]
+  },
+  {
+    title: 'BK & Kedisiplinan',
+    items: [
+      { to: '/bk', label: 'Dashboard BK', icon: Activity, access: '/bk' },
+      { to: '/bk/counselors', label: 'Data Guru BK', icon: Users, access: '/bk' },
+      { to: '/bk/sessions', label: 'Sesi Konseling', icon: HeartHandshake, access: '/bk' },
+      { to: '/discipline', label: 'Rekap Poin Siswa', icon: ShieldAlert, access: '/discipline' },
+      { to: '/discipline/rules', label: 'Aturan Poin', icon: Scale, access: '/discipline' }
     ]
   },
   {

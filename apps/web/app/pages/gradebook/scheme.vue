@@ -543,14 +543,14 @@ const getAggregationLabel = (method: string) => {
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5 lg:col-span-2">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
+        <select v-model="selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
       </div>
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Kelas</label>
-        <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
+        <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Kelas</option>
           <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.class_name }}</option>
         </select>
@@ -558,7 +558,7 @@ const getAggregationLabel = (method: string) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Mata Pelajaran</label>
-        <select v-model="selectedSubjectId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
+        <select v-model="selectedSubjectId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Mapel</option>
           <option v-for="sub in subjects" :key="sub.id" :value="sub.id">{{ sub.name }}</option>
         </select>
@@ -566,14 +566,14 @@ const getAggregationLabel = (method: string) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tahun Ajaran</label>
-        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
+        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option v-for="y in academicYears" :key="y.id" :value="y.id">{{ y.name }}</option>
         </select>
       </div>
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Semester</label>
-        <select v-model="selectedSemester" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600">
+        <select v-model="selectedSemester" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
           <option value="odd">Ganjil</option>
           <option value="even">Genap</option>
         </select>
@@ -851,7 +851,7 @@ const getAggregationLabel = (method: string) => {
 
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Metode Agregasi Komponen</label>
-          <select v-model="groupForm.aggregation_method" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600">
+          <select v-model="groupForm.aggregation_method" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
             <option value="simple_avg">Rata-rata Sederhana</option>
             <option value="weighted_avg">Rata-rata Tertimbang (Berdasarkan bobot komponen)</option>
             <option value="highest">Ambil Nilai Tertinggi</option>
@@ -896,7 +896,7 @@ const getAggregationLabel = (method: string) => {
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5 w-full">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tipe Nilai</label>
-            <select v-model="componentForm.type" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600">
+            <select v-model="componentForm.type" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
               <option value="nilai_harian">Nilai Harian / Ulangan</option>
               <option value="tugas">Tugas / PR</option>
               <option value="pts">PTS / UTS</option>
@@ -946,7 +946,7 @@ const getAggregationLabel = (method: string) => {
 
           <div v-if="componentForm.is_remedial_slot" class="ml-6 mt-1 p-3 bg-violet-50/50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-900/30 rounded-lg">
             <label class="block text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-1.5">Komponen Utama (Yang Diremidi)</label>
-            <select v-model="componentForm.parent_component_id" required class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs outline-none transition-all focus:border-violet-600">
+            <select v-model="componentForm.parent_component_id" required class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
               <option value="" disabled selected>-- Pilih Komponen Utama --</option>
               <option v-for="c in activeGroupBaseComponents" :key="c.id" :value="c.id">
                 {{ c.name }}
@@ -983,7 +983,7 @@ const getAggregationLabel = (method: string) => {
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5">
             <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Tahun Ajaran Sumber</label>
-            <select v-model="selectedSourceAcademicYearId" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-violet-600 dark:bg-zinc-950 dark:border-zinc-800">
+            <select v-model="selectedSourceAcademicYearId" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-violet-600 dark:bg-zinc-950 dark:border-zinc-800 text-slate-900 dark:text-zinc-100">
               <option value="" disabled>Pilih Tahun Ajaran</option>
               <option v-for="y in academicYears" :key="y.id" :value="y.id">{{ y.name }}</option>
             </select>
@@ -991,7 +991,7 @@ const getAggregationLabel = (method: string) => {
 
           <div class="flex flex-col gap-1.5">
             <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Semester Sumber</label>
-            <select v-model="selectedSourceSemester" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-violet-600 dark:bg-zinc-950 dark:border-zinc-800">
+            <select v-model="selectedSourceSemester" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-violet-600 dark:bg-zinc-950 dark:border-zinc-800 text-slate-900 dark:text-zinc-100">
               <option value="odd">Ganjil</option>
               <option value="even">Genap</option>
             </select>
@@ -1000,7 +1000,7 @@ const getAggregationLabel = (method: string) => {
 
         <div class="flex flex-col gap-1.5">
           <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Kelas Sumber</label>
-          <select v-model="selectedSourceClassId" required class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-violet-600 dark:bg-zinc-950 dark:border-zinc-800">
+          <select v-model="selectedSourceClassId" required class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-violet-600 dark:bg-zinc-950 dark:border-zinc-800 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>Pilih Kelas Sumber</option>
             <option v-for="c in (sourceClasses.length ? sourceClasses : classes).filter((cls: any) => cls.id !== selectedClassId)" :key="c.id" :value="c.id">{{ c.class_name }}</option>
           </select>

@@ -260,7 +260,7 @@ onMounted(() => {
           
           <div class="flex flex-col gap-1.5">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase">Unit Sekolah Asal</label>
-            <select v-model="fromSchoolId" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/20">
+            <select v-model="fromSchoolId" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/20 text-slate-900 dark:text-zinc-100">
               <option value="">-- Pilih Sekolah --</option>
               <option v-for="s in schools" :key="s.id" :value="s.id">{{ s.name }}</option>
             </select>
@@ -268,7 +268,7 @@ onMounted(() => {
 
           <div class="flex flex-col gap-1.5">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase">Pilih Siswa</label>
-            <select v-model="promoteForm.student_id" :disabled="!fromSchoolId" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/20 disabled:opacity-50">
+            <select v-model="promoteForm.student_id" :disabled="!fromSchoolId" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/20 disabled:opacity-50 text-slate-900 dark:text-zinc-100">
               <option value="">-- Cari / Pilih Siswa --</option>
               <option v-for="st in studentsInSource" :key="st.id" :value="st.id">{{ st.full_name }} (NIS: {{ st.student_number || '-' }})</option>
             </select>
@@ -290,7 +290,7 @@ onMounted(() => {
           <div class="grid grid-cols-2 gap-4">
             <div class="flex flex-col gap-1.5 col-span-2">
               <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase">Unit Sekolah Tujuan</label>
-              <select v-model="toSchoolId" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/20">
+              <select v-model="toSchoolId" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/20 text-slate-900 dark:text-zinc-100">
                 <option value="">-- Pilih Sekolah --</option>
                 <option v-for="s in schools" :key="s.id" :value="s.id">{{ s.name }}</option>
               </select>
@@ -298,7 +298,7 @@ onMounted(() => {
 
             <div class="flex flex-col gap-1.5">
               <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase">Kelas Tujuan</label>
-              <select v-model="promoteForm.to_class_id" :disabled="!toSchoolId" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/20 disabled:opacity-50">
+              <select v-model="promoteForm.to_class_id" :disabled="!toSchoolId" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/20 disabled:opacity-50 text-slate-900 dark:text-zinc-100">
                 <option value="">-- Pilih Kelas --</option>
                 <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.class_name }} ({{ c.level }}) - TA {{ c.academic_year_name || '-' }}</option>
               </select>
@@ -306,7 +306,7 @@ onMounted(() => {
 
             <div class="flex flex-col gap-1.5">
               <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase">Jenis Mutasi</label>
-              <select v-model="promoteForm.promotion_type" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/20">
+              <select v-model="promoteForm.promotion_type" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/20 text-slate-900 dark:text-zinc-100">
                 <option value="naik_jenjang">Lulus / Naik Jenjang</option>
                 <option value="pindah_unit">Mutasi / Pindah Sekolah</option>
                 <option value="tinggal_kelas_lintas_unit">Tinggal Kelas Lintas Unit</option>
@@ -362,7 +362,7 @@ onMounted(() => {
             <div class="grid grid-cols-2 gap-3">
               <div class="flex flex-col gap-1.5">
                 <label class="text-[10px] font-bold text-slate-500 uppercase">Pilih Sekolah</label>
-                <select v-model="assignForm.school_id" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/20">
+                <select v-model="assignForm.school_id" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/20 text-slate-900 dark:text-zinc-100">
                   <option value="">-- Pilih Sekolah --</option>
                   <template v-for="s in schools" :key="s.id">
                     <option v-if="!userAssignments.find(a => a.school_id === s.id)" :value="s.id">{{ s.name }}</option>
@@ -371,7 +371,7 @@ onMounted(() => {
               </div>
               <div class="flex flex-col gap-1.5">
                 <label class="text-[10px] font-bold text-slate-500 uppercase">Pilih Role</label>
-                <select v-model="assignForm.role" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/20">
+                <select v-model="assignForm.role" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/20 text-slate-900 dark:text-zinc-100">
                   <option value="">-- Pilih Role --</option>
                   <option value="principal">Kepala Sekolah (Principal)</option>
                   <option value="teacher">Guru (Teacher)</option>
