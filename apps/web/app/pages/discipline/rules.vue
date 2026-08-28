@@ -28,9 +28,9 @@ const editingRuleId = ref('')
 
 const ruleForm = reactive({
   rule_code: '',
-  description: '',
-  rule_type: 'violation',
-  points: 1
+  name: '',
+  category: 'violation',
+  point_value: 1
 })
 
 watch(selectedFoundationId, onFoundationChange)
@@ -62,9 +62,9 @@ const handleCreateRule = async () => {
       showCreateModal.value = false
       Object.assign(ruleForm, {
         rule_code: '',
-        description: '',
-        rule_type: 'violation',
-        points: 1
+        name: '',
+        category: 'violation',
+        point_value: 1
       })
     }
   } catch (e: any) {
@@ -76,9 +76,9 @@ const openEditModal = (rule: any) => {
   editingRuleId.value = rule.id
   Object.assign(ruleForm, {
     rule_code: rule.rule_code,
-    description: rule.description,
-    rule_type: rule.rule_type,
-    points: rule.points
+    name: rule.name,
+    category: rule.category,
+    point_value: rule.point_value
   })
   showEditModal.value = true
 }
@@ -155,7 +155,7 @@ const handleDeleteRule = async (id: string) => {
             <tr v-for="rule in pointRules" :key="rule.id" class="hover:bg-slate-50/80 dark:hover:bg-zinc-900/30 transition-colors">
               <td class="px-6 py-4 font-mono text-xs">{{ rule.rule_code }}</td>
               <td class="px-6 py-4">
-                <span v-if="rule.rule_type === 'violation'" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20">
+                <span v-if="rule.category === 'violation'" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20">
                   <AlertTriangle class="w-3 h-3 mr-1" /> Pelanggaran
                 </span>
                 <span v-else class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
@@ -163,10 +163,10 @@ const handleDeleteRule = async (id: string) => {
                 </span>
               </td>
               <td class="px-6 py-4 font-medium text-slate-900 dark:text-zinc-100">
-                {{ rule.description }}
+                {{ rule.name }}
               </td>
-              <td class="px-6 py-4 font-bold" :class="rule.rule_type === 'violation' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'">
-                {{ rule.rule_type === 'violation' ? '-' : '+' }}{{ rule.points }}
+              <td class="px-6 py-4 font-bold" :class="rule.category === 'violation' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'">
+                {{ rule.category === 'violation' ? '-' : '+' }}{{ rule.point_value }}
               </td>
               <td class="px-6 py-4 text-right">
                 <div class="flex items-center justify-end gap-2">
@@ -204,7 +204,7 @@ const handleDeleteRule = async (id: string) => {
         
         <div class="space-y-1.5">
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">Tipe Aturan</label>
-          <select v-model="ruleForm.rule_type" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="ruleForm.category" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
             <option value="violation">Pelanggaran (Poin Negatif)</option>
             <option value="achievement">Prestasi (Poin Positif)</option>
           </select>
@@ -212,12 +212,12 @@ const handleDeleteRule = async (id: string) => {
 
         <div class="space-y-1.5">
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">Deskripsi Aturan</label>
-          <textarea v-model="ruleForm.description" rows="3" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10"></textarea>
+          <textarea v-model="ruleForm.name" rows="3" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10"></textarea>
         </div>
 
         <div class="space-y-1.5">
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">Jumlah Poin (Angka Positif)</label>
-          <BaseInput type="number" v-model="ruleForm.points" min="1" />
+          <BaseInput type="number" v-model="ruleForm.point_value" min="1" />
           <p class="text-xs text-slate-500 mt-1">Sistem akan otomatis memberi tanda minus (-) jika tipe adalah pelanggaran.</p>
         </div>
       </div>
@@ -240,7 +240,7 @@ const handleDeleteRule = async (id: string) => {
         
         <div class="space-y-1.5">
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">Tipe Aturan</label>
-          <select v-model="ruleForm.rule_type" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="ruleForm.category" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
             <option value="violation">Pelanggaran (Poin Negatif)</option>
             <option value="achievement">Prestasi (Poin Positif)</option>
           </select>
@@ -248,12 +248,12 @@ const handleDeleteRule = async (id: string) => {
 
         <div class="space-y-1.5">
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">Deskripsi Aturan</label>
-          <textarea v-model="ruleForm.description" rows="3" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10"></textarea>
+          <textarea v-model="ruleForm.name" rows="3" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10"></textarea>
         </div>
 
         <div class="space-y-1.5">
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">Jumlah Poin</label>
-          <BaseInput type="number" v-model="ruleForm.points" min="1" />
+          <BaseInput type="number" v-model="ruleForm.point_value" min="1" />
         </div>
       </div>
       

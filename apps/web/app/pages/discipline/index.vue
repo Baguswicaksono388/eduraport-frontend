@@ -125,7 +125,7 @@ const handleCreateRecord = async () => {
 const totalPoints = computed(() => {
   if (!studentRecords.value) return 0
   return studentRecords.value.reduce((sum, r) => {
-    return sum + (r.rule?.rule_type === 'violation' ? -r.points_applied : r.points_applied)
+    return sum + (r.rule_category === 'violation' ? -r.points_applied : r.points_applied)
   }, 0)
 })
 
@@ -211,17 +211,17 @@ const totalPoints = computed(() => {
               {{ formatDateTime(record.created_at) }}
             </div>
             <h3 class="font-bold text-slate-900 dark:text-white text-base leading-tight">
-              {{ record.rule?.description || 'Aturan tidak ditemukan' }}
+              {{ record.rule_name || 'Aturan tidak ditemukan' }}
             </h3>
             <p class="text-xs font-mono text-slate-500 mt-1 border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/50 inline-block px-1.5 py-0.5 rounded">
-              {{ record.rule?.rule_code }}
+              {{ record.rule_code }}
             </p>
           </div>
           <div class="flex flex-col items-end gap-1.5">
-            <span class="text-lg font-black" :class="record.rule?.rule_type === 'violation' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'">
-              {{ record.rule?.rule_type === 'violation' ? '-' : '+' }}{{ record.points_applied }}
+            <span class="text-lg font-black" :class="record.rule_category === 'violation' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'">
+              {{ record.rule_category === 'violation' ? '-' : '+' }}{{ record.points_applied }}
             </span>
-            <span v-if="record.rule?.rule_type === 'violation'" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20">
+            <span v-if="record.rule_category === 'violation'" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20">
               <AlertTriangle class="w-3 h-3 mr-1" /> Pelanggaran
             </span>
             <span v-else class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
@@ -249,13 +249,13 @@ const totalPoints = computed(() => {
           <select v-model="recordForm.rule_id" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>-- Cari Aturan --</option>
             <optgroup label="Pelanggaran (Poin Negatif)">
-              <option v-for="rule in pointRules.filter(r => r.rule_type === 'violation')" :key="rule.id" :value="rule.id">
-                [{{ rule.rule_code }}] -{{ rule.points }} Poin - {{ rule.description }}
+              <option v-for="rule in pointRules.filter(r => r.category === 'violation')" :key="rule.id" :value="rule.id">
+                [{{ rule.rule_code }}] {{ rule.point_value }} Poin - {{ rule.name }}
               </option>
             </optgroup>
             <optgroup label="Prestasi (Poin Positif)">
-              <option v-for="rule in pointRules.filter(r => r.rule_type === 'achievement')" :key="rule.id" :value="rule.id">
-                [{{ rule.rule_code }}] +{{ rule.points }} Poin - {{ rule.description }}
+              <option v-for="rule in pointRules.filter(r => r.category === 'achievement')" :key="rule.id" :value="rule.id">
+                [{{ rule.rule_code }}] +{{ rule.point_value }} Poin - {{ rule.name }}
               </option>
             </optgroup>
           </select>

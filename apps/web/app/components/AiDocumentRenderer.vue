@@ -203,47 +203,90 @@
 
   <!-- Asesmen Alternatif -->
   <div v-else-if="document.document_type === 'asesmen_alternatif'" class="asesmen-alt-renderer">
-    <div v-if="asesmenAlt.informasi_asesmen" class="section">
+    <div v-if="asesmenAlt.metadata" class="section">
       <div class="section-title">📋 Informasi Asesmen</div>
-      <div class="info-grid" style="grid-template-columns: 1fr;">
+      <div class="info-grid">
         <div class="info-item">
-          <span class="info-key">Judul Penugasan</span>
-          <span class="info-val">{{ asesmenAlt.informasi_asesmen.judul_penugasan }}</span>
+          <span class="info-key">Tipe Asesmen</span>
+          <span class="info-val" style="text-transform: capitalize;">{{ asesmenAlt.tipe_asesmen?.replace(/_/g, ' ') }}</span>
         </div>
         <div class="info-item">
-          <span class="info-key">Bentuk Asesmen</span>
-          <span class="info-val">{{ asesmenAlt.informasi_asesmen.bentuk_asesmen }}</span>
+          <span class="info-key">Fase / Kelas</span>
+          <span class="info-val">Fase {{ asesmenAlt.metadata.fase }} ({{ asesmenAlt.metadata.usia_kelas }})</span>
         </div>
-        <div class="info-item">
-          <span class="info-key">Tujuan Pembelajaran</span>
-          <span class="info-val">{{ asesmenAlt.informasi_asesmen.tp_ref }}</span>
+        <div class="info-item" style="grid-column: 1 / -1;">
+          <span class="info-key">Tujuan Pembelajaran (TP)</span>
+          <span class="info-val">{{ asesmenAlt.metadata.tp_ref }}</span>
         </div>
-        <div class="info-item">
-          <span class="info-key">Estimasi Waktu</span>
-          <span class="info-val">{{ asesmenAlt.informasi_asesmen.estimasi_waktu }}</span>
+        <div class="info-item" style="grid-column: 1 / -1;" v-if="asesmenAlt.metadata.dimensi_profil_lulusan?.length">
+          <span class="info-key">Dimensi Profil Lulusan</span>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;">
+            <span v-for="(dimensi, idx) in asesmenAlt.metadata.dimensi_profil_lulusan" :key="idx" class="tag-chip">
+              {{ dimensi }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
 
-    <div v-if="asesmenAlt.instruksi_siswa" class="section">
-      <div class="section-title">📝 Instruksi Siswa</div>
-      <ul class="langkah-list">
-        <li v-for="(item, i) in asesmenAlt.instruksi_siswa" :key="i">
-          {{ item }}
-        </li>
-      </ul>
+    <div v-if="asesmenAlt.instrumen_detail?.length > 0" class="section">
+      <div class="section-title">📝 Instrumen Detail</div>
+      <div v-for="(item, i) in asesmenAlt.instrumen_detail" :key="i" class="rubrik-card" style="margin-bottom: 12px;">
+        <div class="rubrik-kriteria">{{ item.indikator }}</div>
+        <div style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">
+          <strong>Cara Mengukur:</strong> {{ item.cara_mengukur }}
+        </div>
+        <div style="font-size: 13px;">
+          <strong>Contoh Perilaku:</strong>
+          <ul style="margin: 4px 0 0 0; padding-left: 20px;">
+            <li v-for="(perilaku, pIdx) in item.contoh_perilaku" :key="pIdx">{{ perilaku }}</li>
+          </ul>
+        </div>
+      </div>
     </div>
 
-    <div v-if="asesmenAlt.rubrik_penilaian?.length > 0" class="section">
-      <div class="section-title">⚖️ Rubrik Penilaian Khusus</div>
-      <div v-for="r in asesmenAlt.rubrik_penilaian" :key="r.kriteria" class="rubrik-card">
-        <div class="rubrik-kriteria">{{ r.kriteria }}</div>
-        <div class="rubrik-skala">
-          <div v-for="(deskripsi, skor) in r.skala" :key="skor" class="skala-item">
-            <span class="skala-skor">{{ skor }}</span>
-            <span class="skala-deskripsi">{{ deskripsi }}</span>
+    <div v-if="asesmenAlt.kktp_kualitatif?.length > 0" class="section">
+      <div class="section-title">⚖️ KKTP Kualitatif (Rubrik)</div>
+      <div v-for="(kktp, kIdx) in asesmenAlt.kktp_kualitatif" :key="kIdx" class="rubrik-card" style="margin-bottom: 12px;">
+        <div class="rubrik-kriteria">{{ kktp.indikator }}</div>
+        <div class="rubrik-skala" style="grid-template-columns: 1fr 1fr;">
+          <div class="skala-item">
+            <span class="skala-skor" style="background: rgba(34,197,94,0.1); color: #16a34a;">Muncul</span>
+            <span class="skala-deskripsi">{{ kktp.skala.muncul }}</span>
+          </div>
+          <div class="skala-item">
+            <span class="skala-skor" style="background: rgba(239,68,68,0.1); color: #dc2626;">Belum Muncul</span>
+            <span class="skala-deskripsi">{{ kktp.skala.belum_muncul }}</span>
           </div>
         </div>
+        <div v-if="kktp.skala.catatan" style="font-size: 12px; font-style: italic; color: var(--muted); margin-top: 8px;">
+          *Catatan: {{ kktp.skala.catatan }}
+        </div>
+      </div>
+    </div>
+
+    <div v-if="asesmenAlt.panduan_guru" class="section">
+      <div class="section-title">💡 Panduan Guru</div>
+      
+      <div v-if="asesmenAlt.panduan_guru.persiapan?.length" style="margin-bottom: 12px;">
+        <div style="font-weight: 600; font-size: 13px; color: var(--fg); margin-bottom: 4px;">Persiapan:</div>
+        <ul class="langkah-list">
+          <li v-for="(item, i) in asesmenAlt.panduan_guru.persiapan" :key="i">{{ item }}</li>
+        </ul>
+      </div>
+
+      <div v-if="asesmenAlt.panduan_guru.tips_observasi?.length" style="margin-bottom: 12px;">
+        <div style="font-weight: 600; font-size: 13px; color: var(--fg); margin-bottom: 4px;">Tips Observasi:</div>
+        <ul class="langkah-list">
+          <li v-for="(item, i) in asesmenAlt.panduan_guru.tips_observasi" :key="i">{{ item }}</li>
+        </ul>
+      </div>
+
+      <div v-if="asesmenAlt.panduan_guru.tindak_lanjut?.length">
+        <div style="font-weight: 600; font-size: 13px; color: var(--fg); margin-bottom: 4px;">Tindak Lanjut:</div>
+        <ul class="langkah-list">
+          <li v-for="(item, i) in asesmenAlt.panduan_guru.tindak_lanjut" :key="i">{{ item }}</li>
+        </ul>
       </div>
     </div>
 
@@ -256,7 +299,7 @@
         </span>
       </div>
       <p style="font-size: 12px; color: var(--muted2); line-height: 1.5; margin: 0;">
-        {{ asesmenAlt.rekomendasi_penilaian_rapor.alasan }}
+        {{ asesmenAlt.rekomendasi_penilaian_rapor.alasan_metodologis || asesmenAlt.rekomendasi_penilaian_rapor.alasan }}
       </p>
     </div>
   </div>
