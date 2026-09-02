@@ -25,6 +25,8 @@ const filteredSchools = computed(() => {
 })
 
 const showCreateModal = ref(false)
+const showDeleteModal = ref(false)
+const counselorToDelete = ref<any>(null)
 
 const counselorForm = reactive({
   teacher_id: '',
@@ -44,6 +46,9 @@ onMounted(async () => {
     await fetchCounselors(selectedSchoolId.value)
     // Fetch teachers up to 100 to show in dropdown
     await fetchTeachers(selectedSchoolId.value, 1, 100)
+  } else {
+    counselors.value = []
+    teachers.value = []
   }
 })
 
@@ -83,13 +88,20 @@ const handleToggleStatus = async (counselor: any) => {
   }
 }
 
-const handleDeleteCounselor = async (id: string) => {
-  if (confirm('Apakah Anda yakin ingin menghapus Guru BK ini?')) {
-    try {
-      await deleteCounselor(selectedSchoolId.value, id)
-    } catch (e: any) {
-      alert(e?.message ?? 'Gagal menghapus guru BK')
-    }
+const handleDeleteCounselor = (counselor: any) => {
+  counselorToDelete.value = counselor
+  showDeleteModal.value = true
+}
+
+const confirmDeleteCounselor = async () => {
+  if (!counselorToDelete.value) return
+  
+  try {
+    await deleteCounselor(selectedSchoolId.value, counselorToDelete.value.id)
+    showDeleteModal.value = false
+    counselorToDelete.value = null
+  } catch (e: any) {
+    alert(e?.message ?? 'Gagal menghapus guru BK')
   }
 }
 </script>
@@ -141,8 +153,8 @@ const handleDeleteCounselor = async (id: string) => {
           <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/50">
             <tr v-for="counselor in counselors" :key="counselor.id" class="hover:bg-slate-50/80 dark:hover:bg-zinc-900/30 transition-colors">
               <td class="px-6 py-4">
-                <div class="font-semibold text-slate-900 dark:text-zinc-100">{{ counselor.teacher?.name || '-' }}</div>
-                <div class="text-xs text-slate-500">{{ counselor.teacher?.nip || 'No NIP' }}</div>
+                <div class="font-semibold text-slate-900 dark:text-zinc-100">{{ counselor.teacher_name || '-' }}</div>
+                <div class="text-xs text-slate-500">{{ counselor.nip || 'No NIP' }}</div>
               </td>
               <td class="px-6 py-4">
                 <span 
@@ -156,11 +168,9 @@ const handleDeleteCounselor = async (id: string) => {
                 </span>
               </td>
               <td class="px-6 py-4 text-right">
-                <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity" style="opacity: 1">
-                  <button @click="handleDeleteCounselor(counselor.id)" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors" title="Hapus">
-                    <Trash2 :size="16" />
-                  </button>
-                </div>
+                <button @click="handleDeleteCounselor(counselor)" class="text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 p-2 rounded-lg transition-colors border border-transparent hover:border-rose-200 dark:hover:border-rose-500/20" title="Hapus">
+                  <Trash2 class="w-4 h-4" />
+                </button>
               </td>
             </tr>
             <tr v-if="counselors.length === 0">
@@ -185,7 +195,7 @@ const handleDeleteCounselor = async (id: string) => {
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">Pilih Guru</label>
           <select v-model="counselorForm.teacher_id" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>-- Pilih Guru --</option>
-            <option v-for="teacher in teachers" :key="teacher.id" :value="teacher.id">{{ teacher.name }}</option>
+            <option v-for="teacher in teachers" :key="teacher.id" :value="teacher.id">{{ teacher.full_name }}</option>
           </select>
         </div>
         
@@ -199,6 +209,20 @@ const handleDeleteCounselor = async (id: string) => {
         <div class="flex justify-end gap-3 w-full">
           <BaseButton variant="outline" @click="showCreateModal = false">Batal</BaseButton>
           <BaseButton variant="primary" @click="handleCreateCounselor">Simpan</BaseButton>
+        </div>
+      </template>
+    </BaseModal>
+
+    <!-- Delete Modal -->
+    <BaseModal :show="showDeleteModal" title="Hapus Guru BK" size="sm" @close="showDeleteModal = false">
+      <div class="text-slate-600 dark:text-zinc-400 text-sm">
+        Apakah Anda yakin ingin menghapus <strong>{{ counselorToDelete?.teacher_name }}</strong> dari daftar Guru BK? Data yang sudah dihapus tidak dapat dikembalikan.
+      </div>
+      
+      <template #footer>
+        <div class="flex justify-end gap-3 w-full">
+          <BaseButton variant="outline" @click="showDeleteModal = false">Batal</BaseButton>
+          <BaseButton variant="primary" class="bg-rose-600 hover:bg-rose-700 ring-rose-600/20" @click="confirmDeleteCounselor">Ya, Hapus</BaseButton>
         </div>
       </template>
     </BaseModal>

@@ -34,6 +34,7 @@ const { academicYears, fetchAcademicYears } = useAcademicYear()
 const filteredSchools = computed(() => schools.value.filter(s => s.level !== 'TK'))
 const activeAcademicYear = computed(() => academicYears.value.find(y => y.is_active))
 
+const selectedAcademicYearId = ref('')
 const selectedClassId = ref('')
 const selectedStudentId = ref('')
 
@@ -53,26 +54,43 @@ onMounted(async () => {
   }
   
   if (selectedSchoolId.value) {
-    await fetchPointRules()
+    await fetchPointRules(selectedSchoolId.value)
     await fetchAcademicYears(selectedSchoolId.value)
     if (activeAcademicYear.value) {
-      await fetchClasses(selectedSchoolId.value, activeAcademicYear.value.id)
+      selectedAcademicYearId.value = activeAcademicYear.value.id
+    }
+    if (selectedAcademicYearId.value) {
+      await fetchClasses(selectedSchoolId.value, selectedAcademicYearId.value)
     }
   }
 })
 
 watch(selectedSchoolId, async (newVal) => {
+  selectedAcademicYearId.value = ''
   selectedClassId.value = ''
   selectedStudentId.value = ''
   students.value = []
   studentRecords.value = []
   
   if (newVal) {
-    await fetchPointRules()
+    await fetchPointRules(newVal)
     await fetchAcademicYears(newVal)
     if (activeAcademicYear.value) {
-      await fetchClasses(newVal, activeAcademicYear.value.id)
+      selectedAcademicYearId.value = activeAcademicYear.value.id
     }
+  } else {
+    classes.value = []
+  }
+})
+
+watch(selectedAcademicYearId, async (newVal) => {
+  selectedClassId.value = ''
+  selectedStudentId.value = ''
+  students.value = []
+  studentRecords.value = []
+  
+  if (newVal && selectedSchoolId.value) {
+    await fetchClasses(selectedSchoolId.value, newVal)
   } else {
     classes.value = []
   }
@@ -82,23 +100,23 @@ watch(selectedClassId, async (newVal) => {
   selectedStudentId.value = ''
   studentRecords.value = []
   
-  if (newVal && selectedSchoolId.value && activeAcademicYear.value) {
-    await fetchStudents(selectedSchoolId.value, 1, 100, undefined, newVal, activeAcademicYear.value.id)
+  if (newVal && selectedSchoolId.value && selectedAcademicYearId.value) {
+    await fetchStudents(selectedSchoolId.value, 1, 100, undefined, newVal, selectedAcademicYearId.value)
   } else {
     students.value = []
   }
 })
 
 watch(selectedStudentId, async (newVal) => {
-  if (newVal && activeAcademicYear.value) {
-    await fetchStudentRecords(newVal, activeAcademicYear.value.id)
+  if (newVal && selectedAcademicYearId.value && selectedSchoolId.value) {
+    await fetchStudentRecords(selectedSchoolId.value, newVal, selectedAcademicYearId.value)
   } else {
     studentRecords.value = []
   }
 })
 
 const handleCreateRecord = async () => {
-  if (!selectedStudentId.value || !activeAcademicYear.value) return
+  if (!selectedStudentId.value || !selectedAcademicYearId.value) return
   if (!recordForm.rule_id) {
     alert('Pilih aturan pelanggaran/prestasi')
     return
@@ -108,14 +126,14 @@ const handleCreateRecord = async () => {
     const payload = {
       ...recordForm,
       student_id: selectedStudentId.value,
-      academic_year_id: activeAcademicYear.value.id
+      academic_year_id: selectedAcademicYearId.value
     }
-    const res = await createStudentRecord(payload)
+    const res = await createStudentRecord(selectedSchoolId.value, payload)
     if (res.success) {
       showCreateModal.value = false
       recordForm.rule_id = ''
       recordForm.notes = ''
-      await fetchStudentRecords(selectedStudentId.value, activeAcademicYear.value.id)
+      await fetchStudentRecords(selectedSchoolId.value, selectedStudentId.value, selectedAcademicYearId.value)
     }
   } catch (e: any) {
     alert(e?.message ?? 'Gagal mencatat poin')
@@ -147,7 +165,7 @@ const totalPoints = computed(() => {
     </div>
 
     <!-- Filters -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
+    <div :class="['grid grid-cols-1 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm', !isSchoolLocked ? 'md:grid-cols-5' : 'md:grid-cols-3']">
       <div v-if="!isSchoolLocked" class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
         <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none text-slate-900 dark:text-zinc-100">
@@ -164,17 +182,25 @@ const totalPoints = computed(() => {
       </div>
       
       <div class="flex flex-col gap-1.5">
+        <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tahun Ajaran</label>
+        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none text-slate-900 dark:text-zinc-100">
+          <option value="" disabled>Pilih Tahun Ajaran</option>
+          <option v-for="year in academicYears" :key="year.id" :value="year.id">{{ year.name }} {{ year.is_active ? '(Aktif)' : '' }}</option>
+        </select>
+      </div>
+      
+      <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Kelas</label>
         <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Kelas</option>
-          <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
+          <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.class_name }}</option>
         </select>
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Siswa</label>
         <select v-model="selectedStudentId" :disabled="!selectedClassId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Siswa</option>
-          <option v-for="std in students" :key="std.id" :value="std.id">{{ std.name }} ({{ std.nis }})</option>
+          <option v-for="std in students" :key="std.id" :value="std.id">{{ std.full_name }} ({{ std.nis || std.student_number }})</option>
         </select>
       </div>
     </div>
@@ -249,12 +275,18 @@ const totalPoints = computed(() => {
           <select v-model="recordForm.rule_id" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>-- Cari Aturan --</option>
             <optgroup label="Pelanggaran (Poin Negatif)">
-              <option v-for="rule in pointRules.filter(r => r.category === 'violation')" :key="rule.id" :value="rule.id">
+              <option v-if="pointRules.filter(r => r.category === 'violation').length === 0" disabled value="">
+                (Belum ada aturan pelanggaran dibuat)
+              </option>
+              <option v-else v-for="rule in pointRules.filter(r => r.category === 'violation')" :key="rule.id" :value="rule.id">
                 [{{ rule.rule_code }}] {{ rule.point_value }} Poin - {{ rule.name }}
               </option>
             </optgroup>
             <optgroup label="Prestasi (Poin Positif)">
-              <option v-for="rule in pointRules.filter(r => r.category === 'achievement')" :key="rule.id" :value="rule.id">
+              <option v-if="pointRules.filter(r => r.category === 'achievement').length === 0" disabled value="">
+                (Belum ada aturan prestasi dibuat)
+              </option>
+              <option v-else v-for="rule in pointRules.filter(r => r.category === 'achievement')" :key="rule.id" :value="rule.id">
                 [{{ rule.rule_code }}] +{{ rule.point_value }} Poin - {{ rule.name }}
               </option>
             </optgroup>

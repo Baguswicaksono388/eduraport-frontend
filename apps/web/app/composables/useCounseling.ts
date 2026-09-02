@@ -9,7 +9,7 @@ export const useCounseling = () => {
 
   const fetchCounselors = async (schoolId: string) => {
     try {
-      const res: any = await fetcher(`/counseling/counselors`)
+      const res: any = await fetcher(`/school/${schoolId}/counseling/counselors`)
       if (res.success) {
         counselors.value = res.data
       }
@@ -19,7 +19,7 @@ export const useCounseling = () => {
   }
 
   const createCounselor = async (schoolId: string, data: any) => {
-    const res: any = await fetcher(`/counseling/counselors`, {
+    const res: any = await fetcher(`/school/${schoolId}/counseling/counselors`, {
       method: 'POST',
       body: data
     })
@@ -28,7 +28,7 @@ export const useCounseling = () => {
   }
 
   const updateCounselor = async (schoolId: string, id: string, data: any) => {
-    const res: any = await fetcher(`/counseling/counselors/${id}`, {
+    const res: any = await fetcher(`/school/${schoolId}/counseling/counselors/${id}`, {
       method: 'PUT',
       body: data
     })
@@ -37,7 +37,7 @@ export const useCounseling = () => {
   }
 
   const deleteCounselor = async (schoolId: string, id: string) => {
-    const res = await fetcher(`/counseling/counselors/${id}`, {
+    const res = await fetcher(`/school/${schoolId}/counseling/counselors/${id}`, {
       method: 'DELETE'
     })
     await fetchCounselors(schoolId)
@@ -48,7 +48,7 @@ export const useCounseling = () => {
 
   const fetchSessions = async (schoolId: string, studentId: string, academicYearId: string) => {
     try {
-      const res: any = await fetcher(`/counseling/sessions?student_id=${studentId}&academic_year_id=${academicYearId}`)
+      const res: any = await fetcher(`/school/${schoolId}/counseling/sessions?student_id=${studentId}&academic_year_id=${academicYearId}`)
       if (res.success) {
         sessions.value = res.data
       }
@@ -58,7 +58,7 @@ export const useCounseling = () => {
   }
 
   const createSession = async (schoolId: string, data: any) => {
-    const res: any = await fetcher(`/counseling/sessions`, {
+    const res: any = await fetcher(`/school/${schoolId}/counseling/sessions`, {
       method: 'POST',
       body: data
     })
@@ -66,7 +66,7 @@ export const useCounseling = () => {
   }
 
   const updateSession = async (schoolId: string, id: string, data: any) => {
-    const res: any = await fetcher(`/counseling/sessions/${id}`, {
+    const res: any = await fetcher(`/school/${schoolId}/counseling/sessions/${id}`, {
       method: 'PUT',
       body: data
     })
@@ -74,7 +74,7 @@ export const useCounseling = () => {
   }
 
   const deleteSession = async (schoolId: string, id: string) => {
-    const res = await fetcher(`/counseling/sessions/${id}`, {
+    const res = await fetcher(`/school/${schoolId}/counseling/sessions/${id}`, {
       method: 'DELETE'
     })
     return res

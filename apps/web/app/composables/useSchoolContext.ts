@@ -67,6 +67,14 @@ export const useSchoolContext = () => {
   /** Call when foundation changes (only relevant for foundation-level users). */
   const onFoundationChange = async (newFoundationId: string) => {
     if (!newFoundationId || isSchoolLocked.value) return
+    
+    if (schools.value.length > 0 && schools.value[0].foundation_id === newFoundationId) {
+      if (!selectedSchoolId.value || !schools.value.find(s => s.id === selectedSchoolId.value)) {
+        selectedSchoolId.value = schools.value[0].id
+      }
+      return
+    }
+
     await fetchSchools(newFoundationId)
     selectedSchoolId.value = schools.value.length > 0 ? schools.value[0].id : ''
   }

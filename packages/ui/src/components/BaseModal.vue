@@ -60,6 +60,11 @@ defineEmits(['close'])
           <div class="p-6">
             <slot />
           </div>
+
+          <!-- Footer -->
+          <div v-if="$slots.footer" class="px-6 py-4 bg-slate-50 dark:bg-zinc-900/50 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-end rounded-b-xl">
+            <slot name="footer" />
+          </div>
         </div>
       </div>
     </Transition>

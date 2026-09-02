@@ -30,12 +30,15 @@ const { academicYears, fetchAcademicYears } = useAcademicYear()
 
 const filteredSchools = computed(() => schools.value.filter(s => s.level !== 'TK'))
 const activeAcademicYear = computed(() => academicYears.value.find(y => y.is_active))
+const selectedAcademicYearId = ref('')
 const selectedClassId = ref('')
 const selectedStudentId = ref('')
 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
+const showDeleteModal = ref(false)
 const editingSessionId = ref('')
+const sessionToDelete = ref<any>(null)
 
 const sessionForm = reactive({
   session_date: '',
@@ -55,13 +58,22 @@ onMounted(async () => {
   
   if (selectedSchoolId.value) {
     await fetchAcademicYears(selectedSchoolId.value)
-    if (activeAcademicYear.value) {
-      await fetchClasses(selectedSchoolId.value, activeAcademicYear.value.id)
+    if (activeAcademicYear.value && !selectedAcademicYearId.value) {
+      selectedAcademicYearId.value = activeAcademicYear.value.id
     }
+    if (selectedAcademicYearId.value) {
+      await fetchClasses(selectedSchoolId.value, selectedAcademicYearId.value)
+    }
+  } else {
+    academicYears.value = []
+    classes.value = []
+    students.value = []
+    sessions.value = []
   }
 })
 
 watch(selectedSchoolId, async (newVal) => {
+  selectedAcademicYearId.value = ''
   selectedClassId.value = ''
   selectedStudentId.value = ''
   students.value = []
@@ -70,8 +82,22 @@ watch(selectedSchoolId, async (newVal) => {
   if (newVal) {
     await fetchAcademicYears(newVal)
     if (activeAcademicYear.value) {
-      await fetchClasses(newVal, activeAcademicYear.value.id)
+      selectedAcademicYearId.value = activeAcademicYear.value.id
     }
+  } else {
+    academicYears.value = []
+    classes.value = []
+  }
+})
+
+watch(selectedAcademicYearId, async (newVal) => {
+  selectedClassId.value = ''
+  selectedStudentId.value = ''
+  students.value = []
+  sessions.value = []
+  
+  if (newVal && selectedSchoolId.value) {
+    await fetchClasses(selectedSchoolId.value, newVal)
   } else {
     classes.value = []
   }
@@ -81,29 +107,29 @@ watch(selectedClassId, async (newVal) => {
   selectedStudentId.value = ''
   sessions.value = []
   
-  if (newVal && selectedSchoolId.value && activeAcademicYear.value) {
-    await fetchStudents(selectedSchoolId.value, 1, 100, undefined, newVal, activeAcademicYear.value.id)
+  if (newVal && selectedSchoolId.value && selectedAcademicYearId.value) {
+    await fetchStudents(selectedSchoolId.value, 1, 100, undefined, newVal, selectedAcademicYearId.value)
   } else {
     students.value = []
   }
 })
 
 watch(selectedStudentId, async (newVal) => {
-  if (newVal && selectedSchoolId.value && activeAcademicYear.value) {
-    await fetchSessions(selectedSchoolId.value, newVal, activeAcademicYear.value.id)
+  if (newVal && selectedSchoolId.value && selectedAcademicYearId.value) {
+    await fetchSessions(selectedSchoolId.value, newVal, selectedAcademicYearId.value)
   } else {
     sessions.value = []
   }
 })
 
 const handleCreateSession = async () => {
-  if (!selectedStudentId.value || !activeAcademicYear.value) return
+  if (!selectedStudentId.value || !selectedAcademicYearId.value) return
 
   try {
     const payload = {
       ...sessionForm,
       student_id: selectedStudentId.value,
-      academic_year_id: activeAcademicYear.value.id
+      academic_year_id: selectedAcademicYearId.value
     }
     const res = await createSession(selectedSchoolId.value, payload)
     if (res.success) {
@@ -115,7 +141,7 @@ const handleCreateSession = async () => {
         follow_up_date: '',
         confidential_notes: ''
       })
-      await fetchSessions(selectedSchoolId.value, selectedStudentId.value, activeAcademicYear.value.id)
+      await fetchSessions(selectedSchoolId.value, selectedStudentId.value, selectedAcademicYearId.value)
     }
   } catch (e: any) {
     alert(e?.message ?? 'Gagal membuat sesi konseling')
@@ -135,29 +161,38 @@ const openEditModal = (session: any) => {
 }
 
 const handleUpdateSession = async () => {
-  if (!selectedStudentId.value || !activeAcademicYear.value) return
+  if (!selectedStudentId.value || !selectedAcademicYearId.value) return
 
   try {
     const res = await updateSession(selectedSchoolId.value, editingSessionId.value, { ...sessionForm })
     if (res.success) {
       showEditModal.value = false
-      await fetchSessions(selectedSchoolId.value, selectedStudentId.value, activeAcademicYear.value.id)
+      await fetchSessions(selectedSchoolId.value, selectedStudentId.value, selectedAcademicYearId.value)
     }
   } catch (e: any) {
     alert(e?.message ?? 'Gagal memperbarui sesi')
   }
 }
 
-const handleDeleteSession = async (id: string) => {
-  if (confirm('Apakah Anda yakin ingin menghapus sesi konseling ini?')) {
-    try {
-      await deleteSession(selectedSchoolId.value, id)
-      if (selectedStudentId.value && activeAcademicYear.value) {
-        await fetchSessions(selectedSchoolId.value, selectedStudentId.value, activeAcademicYear.value.id)
-      }
-    } catch (e: any) {
-      alert(e?.message ?? 'Gagal menghapus sesi')
+const handleDeleteSession = (session: any) => {
+  sessionToDelete.value = session
+  showDeleteModal.value = true
+}
+
+const confirmDeleteSession = async () => {
+  if (!sessionToDelete.value) return
+  
+  try {
+    await deleteSession(selectedSchoolId.value, sessionToDelete.value.id)
+    showDeleteModal.value = false
+    
+    if (selectedStudentId.value && selectedAcademicYearId.value) {
+      await fetchSessions(selectedSchoolId.value, selectedStudentId.value, selectedAcademicYearId.value)
     }
+    
+    sessionToDelete.value = null
+  } catch (e: any) {
+    alert(e?.message ?? 'Gagal menghapus sesi')
   }
 }
 
@@ -192,7 +227,7 @@ const getStatusBadge = (status: string) => {
     </div>
 
     <!-- Filters -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
+    <div :class="['grid grid-cols-1 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm', !isSchoolLocked ? 'md:grid-cols-5' : 'md:grid-cols-3']">
       <div v-if="!isSchoolLocked" class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
         <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none text-slate-900 dark:text-zinc-100">
@@ -209,17 +244,25 @@ const getStatusBadge = (status: string) => {
       </div>
       
       <div class="flex flex-col gap-1.5">
+        <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tahun Ajaran</label>
+        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none text-slate-900 dark:text-zinc-100">
+          <option value="" disabled>Pilih Tahun Ajaran</option>
+          <option v-for="year in academicYears" :key="year.id" :value="year.id">{{ year.name }} {{ year.is_active ? '(Aktif)' : '' }}</option>
+        </select>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Kelas</label>
-        <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedClassId" :disabled="!selectedAcademicYearId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Kelas</option>
-          <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
+          <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.class_name }}</option>
         </select>
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Siswa</label>
         <select v-model="selectedStudentId" :disabled="!selectedClassId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Siswa</option>
-          <option v-for="std in students" :key="std.id" :value="std.id">{{ std.name }} ({{ std.nis }})</option>
+          <option v-for="std in students" :key="std.id" :value="std.id">{{ std.full_name }} ({{ std.nis || std.student_number }})</option>
         </select>
       </div>
     </div>
@@ -248,7 +291,7 @@ const getStatusBadge = (status: string) => {
               {{ session.issue_category || 'Sesi Umum' }}
             </h3>
             <p class="text-xs text-slate-500 mt-1">
-              Konselor: {{ session.counselor?.name || '-' }}
+              Konselor: {{ session.counselor_name || '-' }}
             </p>
           </div>
           <span :class="['px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider', getStatusBadge(session.status).class]">
@@ -277,7 +320,7 @@ const getStatusBadge = (status: string) => {
           <BaseButton variant="outline" size="sm" @click="openEditModal(session)">
             <Edit2 :size="14" class="mr-1.5" /> Edit
           </BaseButton>
-          <BaseButton variant="outline" size="sm" class="text-rose-600 hover:bg-rose-50 border-rose-200" @click="handleDeleteSession(session.id)">
+          <BaseButton variant="outline" size="sm" class="text-rose-600 hover:bg-rose-50 border-rose-200" @click="handleDeleteSession(session)">
             <Trash2 :size="14" class="mr-1.5" /> Hapus
           </BaseButton>
         </div>
@@ -344,6 +387,20 @@ const getStatusBadge = (status: string) => {
         <div class="flex justify-end gap-3 w-full">
           <BaseButton variant="outline" @click="showEditModal = false">Batal</BaseButton>
           <BaseButton variant="primary" @click="handleUpdateSession">Simpan Perubahan</BaseButton>
+        </div>
+      </template>
+    </BaseModal>
+
+    <!-- Delete Modal -->
+    <BaseModal :show="showDeleteModal" title="Hapus Sesi Konseling" size="sm" @close="showDeleteModal = false">
+      <div class="text-slate-600 dark:text-zinc-400 text-sm">
+        Apakah Anda yakin ingin menghapus sesi konseling tanggal <strong>{{ formatDate(sessionToDelete?.session_date) }}</strong>? Data yang sudah dihapus tidak dapat dikembalikan.
+      </div>
+      
+      <template #footer>
+        <div class="flex justify-end gap-3 w-full">
+          <BaseButton variant="outline" @click="showDeleteModal = false">Batal</BaseButton>
+          <BaseButton variant="primary" class="bg-rose-600 hover:bg-rose-700 ring-rose-600/20" @click="confirmDeleteSession">Ya, Hapus</BaseButton>
         </div>
       </template>
     </BaseModal>
