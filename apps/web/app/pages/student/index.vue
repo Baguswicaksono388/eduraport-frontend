@@ -7,6 +7,7 @@ import { useClass } from '../../composables/useClass'
 import { useAcademicYear } from '../../composables/useAcademicYear'
 import { useToast } from '../../composables/useToast'
 import { useApi } from '../../composables/useApi'
+import { useAuth } from '../../composables/useAuth'
 
 definePageMeta({
   middleware: [
@@ -20,6 +21,7 @@ definePageMeta({
 })
 
 const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
+const { isSoloTeacher } = useAuth()
 const { students, totalStudents, studentsMeta, fetchStudents, createStudent, updateStudent, deleteStudent, downloadTemplate, importStudents, promoteClass } = useStudent()
 const { classes, fetchClasses } = useClass()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
@@ -133,7 +135,9 @@ const studentForm = reactive({
   status: 'active',
   weight: 0,
   height: 0,
-  class_id: ''
+  class_id: '',
+  parent_name: '',
+  parent_phone_number: ''
 })
 
 const editingStudentId = ref('')
@@ -148,7 +152,9 @@ const editForm = reactive({
   status: 'active',
   weight: 0,
   height: 0,
-  class_id: ''
+  class_id: '',
+  parent_name: '',
+  parent_phone_number: ''
 })
 
 
@@ -235,7 +241,9 @@ const resetCreateForm = () => {
     status: 'active',
     weight: 0,
     height: 0,
-    class_id: ''
+    class_id: '',
+    parent_name: '',
+    parent_phone_number: ''
   })
 }
 
@@ -274,7 +282,9 @@ const openEditModal = (student: any) => {
     status: student.status || 'active',
     weight: student.weight ? Number(student.weight) : 0,
     height: student.height ? Number(student.height) : 0,
-    class_id: student.class_id || ''
+    class_id: student.class_id || '',
+    parent_name: student.parent_name || '',
+    parent_phone_number: student.parent_phone_number || ''
   })
   showEditModal.value = true
 }
@@ -563,6 +573,10 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
       <form @submit.prevent="handleCreateStudent" class="space-y-4">
         <BaseInput v-model="studentForm.full_name" label="Nama Lengkap" placeholder="Budi Santoso" required />
         <div class="grid grid-cols-2 gap-4">
+          <BaseInput v-model="studentForm.parent_name" label="Nama Orang Tua" placeholder="Bapak Budi" />
+          <BaseInput v-model="studentForm.parent_phone_number" label="No. WA Orang Tua" placeholder="081234567890" :required="isSoloTeacher" />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
           <BaseInput v-model="studentForm.student_number" label="NIS" placeholder="10293" />
           <BaseInput v-model="studentForm.national_student_number" label="NISN" placeholder="0098765432" />
         </div>
@@ -619,6 +633,10 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
     <BaseModal :show="showEditModal" title="Edit Profil Siswa" @close="showEditModal = false">
       <form @submit.prevent="handleUpdateStudent" class="space-y-4">
         <BaseInput v-model="editForm.full_name" label="Nama Lengkap" placeholder="Budi Santoso" required />
+        <div class="grid grid-cols-2 gap-4">
+          <BaseInput v-model="editForm.parent_name" label="Nama Orang Tua" placeholder="Bapak Budi" />
+          <BaseInput v-model="editForm.parent_phone_number" label="No. WA Orang Tua" placeholder="081234567890" :required="isSoloTeacher" />
+        </div>
         <div class="grid grid-cols-2 gap-4">
           <BaseInput v-model="editForm.student_number" label="NIS" placeholder="10293" />
           <BaseInput v-model="editForm.national_student_number" label="NISN" placeholder="0098765432" />

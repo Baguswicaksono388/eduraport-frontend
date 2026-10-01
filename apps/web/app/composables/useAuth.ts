@@ -75,6 +75,28 @@ export const useAuth = () => {
     }
   }
 
+  const registerSolo = async (data: any) => {
+    loading.value = true
+    try {
+      const response: any = await fetcher('/b2c/register', {
+        method: 'POST',
+        body: data
+      })
+      
+      if (response.success) {
+        return { success: true }
+      }
+
+      return { success: false, error: response.message || 'Registrasi gagal' }
+    } catch (error: any) {
+      return { success: false, error: error.data?.error?.message || 'Registrasi gagal' }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const isSoloTeacher = computed(() => user.value?.role === 'solo_teacher')
+
   const changePassword = async (data: any) => {
     try {
       const response: any = await fetcher('/auth/change-password', {
@@ -96,6 +118,8 @@ export const useAuth = () => {
     loading,
     login,
     register,
+    registerSolo,
+    isSoloTeacher,
     logout,
     fetchUser,
     changePassword,

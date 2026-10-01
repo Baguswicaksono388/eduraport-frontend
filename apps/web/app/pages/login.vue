@@ -102,10 +102,14 @@ const handleLogin = async () => {
         </form>
 
         <div class="mt-8 text-center border-t border-slate-100 dark:border-zinc-800 pt-6">
-          <p class="text-xs text-slate-500 dark:text-zinc-400 font-medium">
-            Belum terdaftar? 
-            <NuxtLink to="/register" class="text-violet-600 dark:text-violet-400 font-bold hover:underline ml-1">Daftar Akun Yayasan</NuxtLink>
-          </p>
+          <div class="text-xs text-slate-500 dark:text-zinc-400 font-medium flex flex-col gap-2 items-center">
+            <div>
+              Belum terdaftar? 
+              <NuxtLink to="/register" class="text-violet-600 dark:text-violet-400 font-bold hover:underline ml-1">Daftar Akun Yayasan</NuxtLink>
+            </div>
+            <div class="text-slate-400">atau</div>
+            <NuxtLink to="/register-solo" class="text-violet-600 dark:text-violet-400 font-bold hover:underline">Daftar sebagai Guru Mandiri (B2C)</NuxtLink>
+          </div>
         </div>
       </BaseCard>
 

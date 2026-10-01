@@ -269,7 +269,19 @@ const totalPoints = computed(() => {
 
     <!-- Create Modal -->
     <BaseModal :show="showCreateModal" title="Catat Pelanggaran / Prestasi" size="md" @close="showCreateModal = false">
-      <div class="space-y-4">
+      <div v-if="pointRules.length === 0" class="p-4 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 rounded-lg text-sm mb-4 border border-amber-200 dark:border-amber-800">
+        <div class="flex items-start gap-3">
+          <AlertTriangle class="w-5 h-5 mt-0.5 shrink-0" />
+          <div>
+            <p class="font-bold mb-1">Belum Ada Aturan Poin</p>
+            <p>Anda harus membuat master data aturan poin terlebih dahulu sebelum dapat mencatat pelanggaran atau prestasi.</p>
+            <NuxtLink to="/discipline/rules" class="inline-block mt-2 font-bold underline hover:text-amber-900 dark:hover:text-amber-100 transition-colors">
+              Buat Aturan Sekarang &rarr;
+            </NuxtLink>
+          </div>
+        </div>
+      </div>
+      <div v-else class="space-y-4">
         <div class="space-y-1.5">
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">Pilih Aturan</label>
           <select v-model="recordForm.rule_id" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
@@ -300,7 +312,7 @@ const totalPoints = computed(() => {
       <template #footer>
         <div class="flex justify-end gap-3 w-full">
           <BaseButton variant="outline" @click="showCreateModal = false">Batal</BaseButton>
-          <BaseButton variant="primary" @click="handleCreateRecord">Simpan Poin</BaseButton>
+          <BaseButton v-if="pointRules.length > 0" variant="primary" @click="handleCreateRecord">Simpan Poin</BaseButton>
         </div>
       </template>
     </BaseModal>

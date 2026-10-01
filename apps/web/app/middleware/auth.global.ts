@@ -5,6 +5,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (
     to.path === '/login' ||
     to.path === '/register' ||
+    to.path === '/register-solo' ||
     to.path === '/landing' ||
     to.path.startsWith('/vs/') ||
     to.path.startsWith('/solusi/') ||
@@ -57,8 +58,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // Enforce role guards
   if (allowedRoles && allowedRoles.length > 0) {
-    if (!allowedRoles.includes(user.value.role)) {
-      return navigateTo('/unauthorized')
+    // super_admin and solo_teacher inherently have full access in most views, but let's just 
+    // mirror the useRbac behavior here:
+    if (user.value.role !== 'super_admin') {
+      if (!allowedRoles.includes(user.value.role)) {
+        return navigateTo('/unauthorized')
+      }
     }
   }
 })

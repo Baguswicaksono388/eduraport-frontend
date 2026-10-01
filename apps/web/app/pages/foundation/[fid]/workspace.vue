@@ -12,6 +12,18 @@ const route = useRoute()
 const fid = route.params.fid as string
 const { fetcher } = useApi()
 const toast = useToast()
+const { user } = useAuth()
+
+definePageMeta({
+  middleware: [
+    function (to, from) {
+      const { isSoloTeacher } = useAuth()
+      if (isSoloTeacher.value) {
+        return navigateTo('/')
+      }
+    }
+  ]
+})
 
 const { schools, fetchSchools } = useSchool()
 const { classes, fetchClasses } = useClass()

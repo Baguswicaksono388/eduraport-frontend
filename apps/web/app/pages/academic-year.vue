@@ -77,8 +77,8 @@ const handleCreateYear = async () => {
     }
   } catch (e: any) {
     if (e.data?.errors) {
-      const errorMsg = Object.entries(e.data.errors)
-        .map(([field, msgs]: any) => `${field}: ${msgs.join(', ')}`)
+      const errorMsg = Object.values(e.data.errors)
+        .map((msgs: any) => msgs.join(', '))
         .join('\n')
       toast.error(`Gagal menambah tahun ajaran:\n${errorMsg}`)
     } else {
@@ -106,8 +106,8 @@ const handleUpdateYear = async () => {
     }
   } catch (e: any) {
     if (e.data?.errors) {
-      const errorMsg = Object.entries(e.data.errors)
-        .map(([field, msgs]: any) => `${field}: ${msgs.join(', ')}`)
+      const errorMsg = Object.values(e.data.errors)
+        .map((msgs: any) => msgs.join(', '))
         .join('\n')
       toast.error(`Gagal memperbarui tahun ajaran:\n${errorMsg}`)
     } else {

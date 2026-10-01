@@ -6,6 +6,7 @@ import { useStudent } from '../../composables/useStudent'
 import { useSchoolContext } from '../../composables/useSchoolContext'
 import { useToast } from '../../composables/useToast'
 import { usePagination } from '../../composables/usePagination'
+import { useAuth } from '../../composables/useAuth'
 
 definePageMeta({
   middleware: [
@@ -23,6 +24,7 @@ const { allParents, allParentsMeta, fetchAllParents, createParent, updateParent,
 const { students, fetchStudents } = useStudent()
 const { page, itemPerPage } = usePagination(10)
 const toast = useToast()
+const { isSoloTeacher } = useAuth()
 
 const searchQuery = ref('')
 const activeTab = ref<'linked' | 'unlinked'>('linked')
@@ -365,7 +367,7 @@ const confirmDeleteParent = async () => {
         </div>
 
         <!-- Akun Login Section -->
-        <div class="mt-6 pt-4 border-t border-slate-100 dark:border-zinc-800">
+        <div v-if="!isSoloTeacher" class="mt-6 pt-4 border-t border-slate-100 dark:border-zinc-800">
           <h4 class="text-xs font-bold text-slate-800 dark:text-zinc-200 mb-3 uppercase tracking-wider">Info Akun Login (Opsional)</h4>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <BaseInput v-model="parentForm.email" type="email" label="Email Login" placeholder="parent@email.com" />

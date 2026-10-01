@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange, Smartphone, Settings, Sparkles, Sun, Moon, Boxes, ShieldAlert, HeartHandshake, Scale, Activity } from 'lucide-vue-next'
+import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange, Smartphone, Settings, Sparkles, Sun, Moon, Boxes, ShieldAlert, HeartHandshake, Scale, Activity, Crown } from 'lucide-vue-next'
 import { BaseModal, BaseButton, BaseInput } from '@eduraport/ui'
+import B2cSoloBadge from '../components/b2c/SoloBadge.vue'
 import { useAuth } from '../composables/useAuth'
 import { useToast } from '../composables/useToast'
 import { useSchool } from '../composables/useSchool'
 import { useAcademicYear } from '../composables/useAcademicYear'
 import { useRbac } from '../composables/useRbac'
 
-const { user, logout, fetchUser, changePassword } = useAuth()
+const { user, isSoloTeacher, logout, fetchUser, changePassword } = useAuth()
 const { currentSchoolId, currentSchool, foundations } = useSchool()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
 const { canAccess } = useRbac()
@@ -103,8 +104,13 @@ const menuGroups = computed(() => {
       title: 'Utama / Dashboard',
     items: [
       { to: '/', label: user.value?.role === 'parent' ? 'Portal Orang Tua' : 'Dashboard', icon: LayoutDashboard, access: '/' },
-      { to: '/dashboard', label: 'Dashboard Eksekutif', icon: BarChart3, access: '/dashboard' },
-      { to: '/scanner', label: 'QR Scanner PWA', icon: Smartphone, access: '/dashboard', external: true, customClass: 'text-amber-400 hover:text-amber-300 hover:bg-amber-900/30' }
+      ...(isSoloTeacher.value ? [] : [
+        { to: '/dashboard', label: 'Dashboard Eksekutif', icon: BarChart3, access: '/dashboard' }
+      ]),
+      ...(isSoloTeacher.value ? [{ to: '/b2c/subscription', label: 'Kelola Paket & Layanan', icon: Crown, access: '/', customClass: 'text-violet-500 hover:text-violet-400 hover:bg-violet-900/30 font-semibold' }] : []),
+      ...(isSoloTeacher.value ? [] : [
+        { to: '/scanner', label: 'QR Scanner PWA', icon: Smartphone, access: '/dashboard', external: true, customClass: 'text-amber-400 hover:text-amber-300 hover:bg-amber-900/30' }
+      ])
     ]
   },
   {
@@ -115,7 +121,7 @@ const menuGroups = computed(() => {
       { to: '/class', label: 'Data Kelas', icon: LayoutGrid, access: '/class' },
       { to: '/subject', label: 'Mata Pelajaran', icon: BookOpen, access: '/subject' },
       { to: '/kurikulum', label: 'Manajemen Kurikulum', icon: BookOpen, access: '/subject' },
-      { to: '/extracurricular', label: 'Ekstrakurikuler', icon: Trophy, access: '/extracurricular' }
+      ...(isSoloTeacher.value ? [] : [{ to: '/extracurricular', label: 'Ekstrakurikuler', icon: Trophy, access: '/extracurricular' }])
     ]
   },
   {
@@ -125,7 +131,7 @@ const menuGroups = computed(() => {
       { to: '/parent', label: 'Data Orang Tua', icon: Users, access: '/student' },
       { to: '/student/attendance', label: 'Absensi Siswa', icon: ClipboardCheck, access: '/student' },
       { to: '/attendance-settings', label: 'Pengaturan Absensi', icon: Settings, access: '/attendance-settings' },
-      { to: '/ppdb', label: 'PPDB Online', icon: UserPlus, access: '/ppdb' }
+      ...(isSoloTeacher.value ? [] : [{ to: '/ppdb', label: 'PPDB Online', icon: UserPlus, access: '/ppdb' }])
     ]
   },
   {
@@ -208,7 +214,8 @@ const filteredMenuGroups = computed(() => {
           </div>
           <div>
             <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-tight">EduRaport</h1>
-            <span class="text-[9px] uppercase tracking-wider text-amber-500 font-bold">Portal E-Raport</span>
+            <span v-if="!isSoloTeacher" class="text-[9px] uppercase tracking-wider text-amber-500 font-bold">Portal E-Raport</span>
+            <B2cSoloBadge v-if="isSoloTeacher" class="mt-1" />
           </div>
         </div>
 
@@ -219,7 +226,7 @@ const filteredMenuGroups = computed(() => {
               <h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest">{{ group.title }}</h3>
             </div>
             <div class="space-y-1">
-              <template v-for="(item, iIdx) in group.items" :key="iIdx">
+              <template v-for="(item, iIdx) in group.items" :key="item.to">
                 <NuxtLink 
                   :to="item.to"
                   :target="item.external ? '_blank' : undefined"
@@ -274,7 +281,8 @@ const filteredMenuGroups = computed(() => {
         </div>
         <div>
           <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-tight">EduRaport</h1>
-          <span class="text-[9px] uppercase tracking-wider text-amber-500 font-bold">Portal E-Raport</span>
+          <span v-if="!isSoloTeacher" class="text-[9px] uppercase tracking-wider text-amber-500 font-bold">Portal E-Raport</span>
+          <B2cSoloBadge v-if="isSoloTeacher" class="mt-1" />
         </div>
       </div>
 
@@ -285,7 +293,7 @@ const filteredMenuGroups = computed(() => {
             <h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest">{{ group.title }}</h3>
           </div>
           <div class="space-y-1">
-            <template v-for="(item, iIdx) in group.items" :key="iIdx">
+            <template v-for="(item, iIdx) in group.items" :key="item.to">
               <NuxtLink 
                 :to="item.to"
                 :target="item.external ? '_blank' : undefined"

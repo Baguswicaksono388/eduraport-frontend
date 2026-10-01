@@ -16,27 +16,30 @@ export const ROLES = {
 export const ROUTE_ROLES: Record<string, string[]> = {
   '/dashboard':    ['super_admin', 'principal', 'vice_principal_curriculum', 'treasurer', 'user'],
   '/teacher':      ['super_admin', 'principal', 'tu', 'user'],
-  '/student':      ['super_admin', 'principal', 'teacher', 'tu', 'user'],
-  '/class':        ['super_admin', 'principal', 'vice_principal_curriculum', 'tu', 'teacher', 'user'],
-  '/schedule':     ['super_admin', 'principal', 'vice_principal_curriculum', 'tu', 'teacher', 'user'],
-  '/subject':      ['super_admin', 'principal', 'vice_principal_curriculum', 'teacher', 'tu', 'user'],
-  '/gradebook':    ['super_admin', 'principal', 'vice_principal_curriculum', 'teacher', 'user'],
-  '/homeroom':     ['super_admin', 'principal', 'teacher', 'tu', 'user'],
+  '/student':      ['super_admin', 'principal', 'teacher', 'tu', 'user', 'solo_teacher'],
+  '/class':        ['super_admin', 'principal', 'vice_principal_curriculum', 'tu', 'teacher', 'user', 'solo_teacher'],
+  '/schedule':     ['super_admin', 'principal', 'vice_principal_curriculum', 'tu', 'teacher', 'user', 'solo_teacher'],
+  '/subject':      ['super_admin', 'principal', 'vice_principal_curriculum', 'teacher', 'tu', 'user', 'solo_teacher'],
+  '/gradebook':    ['super_admin', 'principal', 'vice_principal_curriculum', 'teacher', 'user', 'solo_teacher'],
+  '/homeroom':     ['super_admin', 'principal', 'teacher', 'tu', 'user', 'solo_teacher'],
   '/leave':        ['super_admin', 'principal', 'teacher', 'tu', 'user'],
-  '/report':       ['super_admin', 'principal', 'teacher', 'user'],
+  '/report':       ['super_admin', 'principal', 'teacher', 'user', 'solo_teacher'],
   '/financial':    ['super_admin', 'principal', 'treasurer', 'tu', 'user'],
   '/ppdb':         ['super_admin', 'principal', 'tu', 'user'],
-  '/wa':           ['super_admin', 'principal', 'tu', 'user'],
-  '/school':       ['super_admin', 'principal', 'user'],
-  '/academic-year':['super_admin', 'principal', 'user'],
-  '/attendance-settings': ['super_admin', 'principal', 'tu', 'user'],
-  '/extracurricular': ['super_admin', 'principal', 'tu', 'teacher', 'user']
+  '/wa':           ['super_admin', 'principal', 'tu', 'user', 'solo_teacher'],
+  '/school':       ['super_admin', 'principal', 'user', 'solo_teacher'],
+  '/academic-year':['super_admin', 'principal', 'user', 'solo_teacher'],
+  '/attendance-settings': ['super_admin', 'principal', 'tu', 'user', 'solo_teacher'],
+  '/extracurricular': ['super_admin', 'principal', 'tu', 'teacher', 'user'],
+  '/bk':           ['super_admin', 'principal', 'teacher', 'user', 'solo_teacher'],
+  '/discipline':   ['super_admin', 'principal', 'teacher', 'user', 'solo_teacher']
 }
 
 export const useRbac = () => {
   const { user } = useAuth()
 
   const hasRole = (...roles: string[]) => {
+    if (user.value?.role === 'super_admin') return true
     return roles.length === 0 || (user.value?.role && roles.includes(user.value.role))
   }
 

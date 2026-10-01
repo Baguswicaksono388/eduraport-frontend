@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ClipboardCheck, Users, Check, AlertCircle, Save, CheckCircle2, RefreshCw } from 'lucide-vue-next'
+import { ClipboardCheck, Users, Check, AlertCircle, Save, CheckCircle2, RefreshCw, ChevronDown } from 'lucide-vue-next'
 import { BaseCard, BaseButton } from '@eduraport/ui'
 import { useClass } from '../../composables/useClass'
 import { useStudent } from '../../composables/useStudent'
@@ -261,11 +261,11 @@ const handleSave = async () => {
 
       <div class="flex flex-wrap items-center gap-3">
         <!-- Class Selector -->
-        <div class="flex items-center gap-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 shadow-sm">
-          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kelas:</span>
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider shrink-0">Kelas:</span>
           <select
             v-model="selectedClassId"
-            class="bg-transparent text-xs font-bold text-slate-700 dark:text-zinc-200 outline-none cursor-pointer focus:ring-0 w-[120px] sm:w-[150px]"
+            class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-zinc-200 outline-none cursor-pointer focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all w-[120px] sm:w-[150px] shadow-sm"
           >
             <option v-for="c in classes" :key="c.id" :value="c.id" class="bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200">{{ c.class_name }}</option>
           </select>

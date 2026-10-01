@@ -2,6 +2,7 @@
 import { GraduationCap, School, Users, ArrowRight, Clock } from 'lucide-vue-next'
 import { BaseCard } from '@eduraport/ui'
 import { useAuth } from '../composables/useAuth'
+import SoloDashboard from '../components/dashboard/variants/SoloDashboard.vue'
 import { useStudent } from '../composables/useStudent'
 import { useParent } from '../composables/useParent'
 import { useRbac } from '../composables/useRbac'
@@ -17,7 +18,7 @@ definePageMeta({
   ]
 })
 
-const { user } = useAuth()
+const { user, isSoloTeacher } = useAuth()
 const { isAdmin } = useRbac()
 const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
 const { totalStudents, fetchStudents } = useStudent()
@@ -37,8 +38,11 @@ onMounted(async () => {
 
 <template>
   <div class="space-y-8 animate-in fade-in duration-500">
-    <!-- Greet User -->
-    <div class="bg-gradient-to-br from-violet-900 via-indigo-950 to-slate-950 text-white rounded-xl p-8 md:p-10 border border-slate-800 shadow-xl relative overflow-hidden">
+    <SoloDashboard v-if="isSoloTeacher" />
+    
+    <template v-else>
+      <!-- Greet User -->
+      <div class="bg-gradient-to-br from-violet-900 via-indigo-950 to-slate-950 text-white rounded-xl p-8 md:p-10 border border-slate-800 shadow-xl relative overflow-hidden">
       <!-- Sophisticated decorative gradient glow -->
       <div class="absolute -right-20 -top-20 w-80 h-80 bg-violet-600/10 rounded-full blur-2xl"></div>
       <div class="absolute -left-20 -bottom-20 w-80 h-80 bg-amber-500/5 rounded-full blur-2xl"></div>
@@ -283,5 +287,6 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>

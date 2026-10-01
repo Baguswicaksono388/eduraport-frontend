@@ -13,6 +13,7 @@ definePageMeta({
     }
   ]
 })
+const { isSoloTeacher } = useAuth()
 
 const {
   foundations,
@@ -329,11 +330,20 @@ const handleSaveSchool = async () => {
   }
 
   schoolForm.foundation_id = selectedFoundationId.value
+  
+  const payload: Record<string, any> = { ...schoolForm }
+  // Hapus key yang value-nya string kosong agar tidak error di validasi backend (terutama UUID)
+  Object.keys(payload).forEach(key => {
+    if (payload[key] === '') {
+      delete payload[key]
+    }
+  })
+
   let res
   if (isEditingSchool.value) {
-    res = await updateSchool(editingSchoolId.value, { ...schoolForm })
+    res = await updateSchool(editingSchoolId.value, payload)
   } else {
-    res = await createSchool({ ...schoolForm })
+    res = await createSchool(payload)
   }
 
   if (res.success) {
@@ -380,10 +390,10 @@ const handleDeleteSchool = async (id: string) => {
         <p class="text-xs text-slate-500 dark:text-zinc-400">Atur unit Yayasan dan Unit Sekolah di bawahnya.</p>
       </div>
       <div class="flex gap-2">
-        <BaseButton variant="outline" @click="openCreateFoundationModal" class="py-2.5 px-4 text-xs font-bold">
+        <BaseButton v-if="!isSoloTeacher" variant="outline" @click="openCreateFoundationModal" class="py-2.5 px-4 text-xs font-bold">
           <Plus class="mr-1.5" :size="14" /> Yayasan Baru
         </BaseButton>
-        <BaseButton variant="primary" @click="openCreateSchoolModal" :disabled="!selectedFoundationId" class="py-2.5 px-4 text-xs font-bold">
+        <BaseButton v-if="!isSoloTeacher" variant="primary" @click="openCreateSchoolModal" :disabled="!selectedFoundationId" class="py-2.5 px-4 text-xs font-bold">
           <Plus class="mr-1.5" :size="14" /> Unit Sekolah Baru
         </BaseButton>
       </div>
@@ -414,6 +424,7 @@ const handleDeleteSchool = async (id: string) => {
               </div>
             </div>
             <button
+              v-if="!isSoloTeacher"
               @click.stop="handleDeleteFoundation(foundation.id)"
               class="p-1 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
             >
@@ -442,7 +453,7 @@ const handleDeleteSchool = async (id: string) => {
               </div>
               <p class="text-[10px] text-slate-400 dark:text-zinc-500 font-medium">ID: {{ selectedFoundation.id }}</p>
             </div>
-            <BaseButton variant="outline" @click="openEditFoundationModal" class="py-1.5 px-2.5 text-[11px] font-bold flex items-center gap-1 shrink-0">
+            <BaseButton v-if="!isSoloTeacher" variant="outline" @click="openEditFoundationModal" class="py-1.5 px-2.5 text-[11px] font-bold flex items-center gap-1 shrink-0">
               <Edit2 :size="11" /> Edit Detail
             </BaseButton>
           </div>
@@ -536,10 +547,12 @@ const handleDeleteSchool = async (id: string) => {
                   <button
                     @click="openEditSchoolModal(school)"
                     class="p-1.5 text-slate-300 hover:text-violet-500 transition-colors"
+                    title="Edit Detail"
                   >
                     <Edit2 :size="16" />
                   </button>
                   <button
+                    v-if="!isSoloTeacher"
                     @click="handleDeleteSchool(school.id)"
                     class="p-1.5 text-slate-300 hover:text-rose-500 transition-colors"
                   >
