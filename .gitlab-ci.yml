@@ -1,0 +1,53 @@
+image: node:20
+
+stages:
+  - install
+  - lint
+  - test
+  - build
+
+variables:
+  PNPM_CACHE_FOLDER: "$CI_PROJECT_DIR/.pnpm-store"
+
+cache:
+  key:
+    files:
+      - pnpm-lock.yaml
+  paths:
+    - .pnpm-store
+    - node_modules/
+
+install_dependencies:
+  stage: install
+  script:
+    - corepack enable
+    - corepack prepare pnpm@latest-9 --activate
+    - pnpm config set store-dir $PNPM_CACHE_FOLDER
+    - pnpm install --no-frozen-lockfile
+
+lint:
+  stage: lint
+  script:
+    - corepack enable
+    - corepack prepare pnpm@latest-9 --activate
+    - pnpm lint
+  allow_failure: true
+
+test:
+  stage: test
+  script:
+    - corepack enable
+    - corepack prepare pnpm@latest-9 --activate
+    - pnpm test
+  allow_failure: true
+
+build:
+  stage: build
+  script:
+    - corepack enable
+    - corepack prepare pnpm@latest-9 --activate
+    - pnpm build
+  artifacts:
+    paths:
+      - apps/*/dist/
+      - packages/*/dist/
