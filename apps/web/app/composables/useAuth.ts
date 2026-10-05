@@ -1,11 +1,22 @@
 import { useApi } from './useApi'
+import { useAuthStore } from '~/stores/auth'
 
 export const useAuth = () => {
   const { fetcher } = useApi()
+  const authStore = useAuthStore()
+  
   const token = useCookie('auth_token', { maxAge: 60 * 60 * 24 * 7 }) // 1 week
   const refreshToken = useCookie('refresh_token', { maxAge: 60 * 60 * 24 * 30 }) // 30 days
   const user = useState<any>('user', () => null)
   const loading = useState('auth_loading', () => false)
+
+  // Sync initial state if token cookie exists
+  if (token.value && !authStore.token) {
+    authStore.setToken(token.value as string)
+  }
+  if (user.value && !authStore.user) {
+    authStore.setUser(user.value)
+  }
 
   const login = async (credentials: any) => {
     loading.value = true
@@ -19,6 +30,9 @@ export const useAuth = () => {
         token.value = response.data.accessToken
         refreshToken.value = response.data.refreshToken
         user.value = response.data.user
+        
+        authStore.setToken(response.data.accessToken)
+        authStore.setUser(response.data.user)
         
         // Ensure cookie state is propagated before making authenticated requests
         await new Promise(resolve => setTimeout(resolve, 50))
@@ -58,6 +72,7 @@ export const useAuth = () => {
     token.value = null
     refreshToken.value = null
     user.value = null
+    authStore.logout()
     navigateTo('/login')
   }
 
@@ -67,11 +82,13 @@ export const useAuth = () => {
       const response: any = await fetcher('/auth/me')
       if (response.success) {
         user.value = response.data
+        authStore.setUser(response.data)
       }
     } catch (error) {
       token.value = null
       refreshToken.value = null
       user.value = null
+      authStore.logout()
     }
   }
 

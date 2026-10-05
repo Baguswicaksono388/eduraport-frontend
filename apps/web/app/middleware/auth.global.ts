@@ -37,6 +37,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo('/login')
   }
 
+  // B2C Subscription state check (used by default layout for global paywall block)
+  if (user.value && user.value.role === 'solo_teacher') {
+    const { subscription, fetchSubscription } = useB2CSubscription()
+    if (!subscription.value) {
+      await fetchSubscription()
+    }
+  }
+
   // Auto-set currentSchoolId based on user's school assignment.
   // Users with a school_id (teacher, TU, treasurer, etc.) are locked to their assigned school.
   // Users without school_id (super_admin / foundation level) can pick schools manually.

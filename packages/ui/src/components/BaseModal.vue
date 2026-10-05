@@ -5,10 +5,13 @@ import { computed } from 'vue'
 
 const props = withDefaults(defineProps<{
   show: boolean
-  title: string
+  title?: string
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | 'full'
+  hideClose?: boolean
 }>(), {
-  size: 'lg'
+  size: 'lg',
+  hideClose: false,
+  title: ''
 })
 
 const sizeClass = computed(() => {
@@ -46,9 +49,10 @@ defineEmits(['close'])
           @click.stop
         >
           <!-- Header -->
-          <div class="px-6 py-4 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between">
+          <div v-if="title || !hideClose" class="px-6 py-4 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between">
             <h3 class="font-bold text-base tracking-tight text-slate-900 dark:text-zinc-100">{{ title }}</h3>
             <button 
+              v-if="!hideClose"
               @click="$emit('close')" 
               class="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-slate-400 hover:text-slate-950 dark:hover:text-zinc-100"
             >

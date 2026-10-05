@@ -10,7 +10,7 @@ export default defineNuxtConfig({
     host: useHttps ? '0.0.0.0' : 'localhost', 
     https: useHttps 
   },
-  modules: ['@nuxtjs/tailwindcss', '@vite-pwa/nuxt', '@nuxtjs/sitemap'],
+  modules: ['@nuxtjs/tailwindcss', '@vite-pwa/nuxt', '@nuxtjs/sitemap', '@pinia/nuxt'],
 
   site: {
     url: 'https://eduraport.bagusw.biz.id',
@@ -76,9 +76,9 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    '/api/v1/**': { proxy: 'http://127.0.0.1:3000/api/v1/**' },
-    '/uploads/**': { proxy: 'http://127.0.0.1:3000/uploads/**' },
-    '/ai-images/**': { proxy: 'http://127.0.0.1:3000/ai-images/**' }
+    '/api/v1/**': { proxy: 'http://eduraport_backend_staging:3002/api/v1/**' },
+    '/uploads/**': { proxy: 'http://eduraport_backend_staging:3002/uploads/**' },
+    '/ai-images/**': { proxy: 'http://eduraport_backend_staging:3002/ai-images/**' }
   },
   
   css: ['./app/assets/css/main.css'],

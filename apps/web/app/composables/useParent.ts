@@ -105,6 +105,39 @@ export const useParent = () => {
     return res
   }
 
+  const fetchParentDashboard = async (parentId: string) => {
+    try {
+      const res: any = await fetcher(`/parents/${parentId}/dashboard`)
+      return res.success ? res.data : null
+    } catch (error) {
+      console.error('Failed to fetch parent dashboard:', error)
+      return null
+    }
+  }
+
+  const fetchDigitalRaport = async (parentId: string, studentId: string, reportId: string) => {
+    try {
+      const res: any = await fetcher(`/parents/${parentId}/students/${studentId}/reports/${reportId}`)
+      return res.success ? res.data : null
+    } catch (error) {
+      console.error('Failed to fetch digital raport:', error)
+      return null
+    }
+  }
+
+  const approveReport = async (parentId: string, studentId: string, reportId: string, payload: { agree_to_terms: boolean; signature_text: string }) => {
+    try {
+      const res: any = await fetcher(`/parents/${parentId}/students/${studentId}/reports/${reportId}/approve`, {
+        method: 'POST',
+        body: payload
+      })
+      return res
+    } catch (error) {
+      console.error('Failed to approve report:', error)
+      throw error
+    }
+  }
+
   return {
     parents,
     allParents,
@@ -116,6 +149,9 @@ export const useParent = () => {
     fetchAllParents,
     createParent,
     updateParent,
-    deleteParent
+    deleteParent,
+    fetchParentDashboard,
+    fetchDigitalRaport,
+    approveReport
   }
 }

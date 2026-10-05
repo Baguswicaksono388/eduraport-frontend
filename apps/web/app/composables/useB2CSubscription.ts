@@ -3,8 +3,8 @@ import { useApi } from './useApi'
 
 export const useB2CSubscription = () => {
   const { fetcher } = useApi()
-  const subscription = ref<any>(null)
-  const loading = ref(false)
+  const subscription = useState<any>('b2c_subscription', () => null)
+  const loading = useState<boolean>('b2c_subscription_loading', () => false)
 
   const fetchSubscription = async () => {
     loading.value = true

@@ -1,17 +1,22 @@
 <script setup lang="ts">
-import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange, Smartphone, Settings, Sparkles, Sun, Moon, Boxes, ShieldAlert, HeartHandshake, Scale, Activity, Crown } from 'lucide-vue-next'
+import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange, Smartphone, Settings, Sparkles, Sun, Moon, Boxes, ShieldAlert, HeartHandshake, Scale, Activity, Crown, Library } from 'lucide-vue-next'
 import { BaseModal, BaseButton, BaseInput } from '@eduraport/ui'
 import B2cSoloBadge from '../components/b2c/SoloBadge.vue'
+import B2cPaywallModal from '../components/b2c/PaywallModal.vue'
+import { useB2CSubscription } from '../composables/useB2CSubscription'
 import { useAuth } from '../composables/useAuth'
 import { useToast } from '../composables/useToast'
 import { useSchool } from '../composables/useSchool'
 import { useAcademicYear } from '../composables/useAcademicYear'
 import { useRbac } from '../composables/useRbac'
+import { usePaywallStore } from '../stores/paywall'
 
 const { user, isSoloTeacher, logout, fetchUser, changePassword } = useAuth()
 const { currentSchoolId, currentSchool, foundations } = useSchool()
+const { subscription, fetchSubscription } = useB2CSubscription()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
 const { canAccess } = useRbac()
+const paywallStore = usePaywallStore()
 import { useColorMode } from '@vueuse/core'
 
 const colorMode = useColorMode()
@@ -22,6 +27,11 @@ const toggleTheme = () => {
 import { useRoute } from 'vue-router'
 const route = useRoute()
 const isFullScreenPage = computed(() => route.path.includes('/ai-asisten'))
+const isPaywallVisible = computed(() => {
+  if (!isSoloTeacher.value || !subscription.value) return false;
+  if (route.path.startsWith('/b2c/subscription')) return false;
+  return subscription.value.status === 'expired';
+})
 
 const showChangePasswordModal = ref(false)
 const isMobileMenuOpen = ref(false)
@@ -71,6 +81,9 @@ onMounted(async () => {
   if (!user.value) {
     await fetchUser()
   }
+  if (isSoloTeacher.value) {
+    await fetchSubscription()
+  }
   if (currentSchoolId.value && user.value?.role !== 'parent') {
     await fetchAcademicYears(currentSchoolId.value)
   }
@@ -117,11 +130,7 @@ const menuGroups = computed(() => {
     title: 'Master Data',
     items: [
       { to: '/school', label: 'Unit Sekolah', icon: School, access: '/school' },
-      { to: '/academic-year', label: 'Tahun Ajaran', icon: Calendar, access: '/academic-year' },
-      { to: '/class', label: 'Data Kelas', icon: LayoutGrid, access: '/class' },
-      { to: '/subject', label: 'Mata Pelajaran', icon: BookOpen, access: '/subject' },
-      { to: '/kurikulum', label: 'Manajemen Kurikulum', icon: BookOpen, access: '/subject' },
-      ...(isSoloTeacher.value ? [] : [{ to: '/extracurricular', label: 'Ekstrakurikuler', icon: Trophy, access: '/extracurricular' }])
+      { to: '/master-akademik', label: 'Master Akademik', icon: Library, access: '/academic-year' }
     ]
   },
   {
@@ -376,7 +385,12 @@ const filteredMenuGroups = computed(() => {
 
       <!-- Main Content Area -->
       <main :class="['flex-1 p-6 md:p-8 w-full pb-24 lg:pb-8', isFullScreenPage ? '' : 'max-w-7xl mx-auto']">
-        <slot />
+        <template v-if="!isPaywallVisible">
+          <slot />
+        </template>
+        <div v-else class="flex items-center justify-center h-[60vh] opacity-50">
+          <!-- Background placeholder when Paywall is active -->
+        </div>
       </main>
     </div>
 
@@ -456,6 +470,19 @@ const filteredMenuGroups = computed(() => {
         <span class="text-[8px] font-bold text-violet-400">Lainnya</span>
       </button>
     </nav>
+
+    <!-- B2C Paywall Modal for Subscription -->
+    <B2cPaywallModal :model-value="isPaywallVisible" :forceUpgrade="true" title="Langganan Berakhir" message="Masa trial/langganan Anda telah berakhir. Anda harus memperpanjang paket untuk dapat terus menggunakan EduRaport." requiredPlan="PRO / BASIC" />
+
+    <!-- B2C Paywall Modal for Quota Exceeded (from Store) -->
+    <B2cPaywallModal 
+      :model-value="paywallStore.isVisible" 
+      @update:model-value="paywallStore.isVisible = $event"
+      :forceUpgrade="paywallStore.forceUpgrade" 
+      :title="paywallStore.title" 
+      :message="paywallStore.message" 
+      :requiredPlan="paywallStore.requiredPlan" 
+    />
 
     <!-- Global Toast Notifications -->
     <BaseToastContainer />

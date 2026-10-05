@@ -19,6 +19,10 @@ const props = defineProps({
   requiredPlan: {
     type: String,
     default: 'PRO'
+  },
+  forceUpgrade: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -36,7 +40,7 @@ const goToUpgrade = () => {
 </script>
 
 <template>
-  <BaseModal :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="md">
+  <BaseModal :show="modelValue" @close="closeModal" max-width="md" :hideClose="forceUpgrade">
     <div class="p-8 text-center relative overflow-hidden">
       <!-- Decor -->
       <div class="absolute -right-12 -top-12 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl"></div>
@@ -60,7 +64,7 @@ const goToUpgrade = () => {
         </div>
 
         <div class="flex gap-3">
-          <BaseButton variant="outline" class="flex-1 justify-center" @click="closeModal">Nanti Saja</BaseButton>
+          <BaseButton v-if="!forceUpgrade" variant="outline" class="flex-1 justify-center" @click="closeModal">Nanti Saja</BaseButton>
           <BaseButton variant="primary" class="flex-1 justify-center" @click="goToUpgrade">
             Upgrade Sekarang
             <ArrowRight class="ml-1" :size="16"/>
