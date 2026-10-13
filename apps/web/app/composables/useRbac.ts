@@ -15,7 +15,7 @@ export const ROLES = {
 // Route-to-roles mapping (menu visibility)
 export const ROUTE_ROLES: Record<string, string[]> = {
   '/dashboard':    ['super_admin', 'principal', 'vice_principal_curriculum', 'treasurer', 'user'],
-  '/teacher':      ['super_admin', 'principal', 'tu', 'user'],
+  '/teacher':      ['super_admin', 'principal', 'tu', 'teacher', 'user', 'solo_teacher'],
   '/student':      ['super_admin', 'principal', 'teacher', 'tu', 'user', 'solo_teacher'],
   '/class':        ['super_admin', 'principal', 'vice_principal_curriculum', 'tu', 'teacher', 'user', 'solo_teacher'],
   '/schedule':     ['super_admin', 'principal', 'vice_principal_curriculum', 'tu', 'teacher', 'user', 'solo_teacher'],

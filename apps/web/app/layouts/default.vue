@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange, Smartphone, Settings, Sparkles, Sun, Moon, Boxes, ShieldAlert, HeartHandshake, Scale, Activity, Crown, Library } from 'lucide-vue-next'
+import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange, Smartphone, Settings, Sparkles, Sun, Moon, Boxes, ShieldAlert, HeartHandshake, Scale, Activity, Crown, Library, MessageSquare, FileText, Wallet, BookMarked, Bell, ShieldCheck, CalendarCheck } from 'lucide-vue-next'
 import { BaseModal, BaseButton, BaseInput } from '@eduraport/ui'
 import B2cSoloBadge from '../components/b2c/SoloBadge.vue'
 import B2cPaywallModal from '../components/b2c/PaywallModal.vue'
@@ -101,6 +101,39 @@ watch(currentSchoolId, async (newVal) => {
 const menuGroups = computed(() => {
   const groups: any[] = []
 
+  if (user.value?.role === 'parent') {
+    return [
+      {
+        title: 'Portal Orang Tua',
+        items: [
+          { to: '/', label: 'Beranda Portal', icon: LayoutDashboard, access: '/' },
+          { to: '/parent/attendance', label: 'Kehadiran Anak', icon: CalendarCheck, access: '/' },
+          { to: '/parent/grades', label: 'Nilai & Akademik', icon: Trophy, access: '/' },
+          { to: '/parent/schedule', label: 'Jadwal Pelajaran', icon: Clock, access: '/' },
+          { to: '/parent/pesantren', label: 'Tahfidz & Ibadah', icon: BookMarked, access: '/' }
+        ]
+      },
+      {
+        title: 'Administrasi & Keuangan',
+        items: [
+          { to: '/parent/bills', label: 'Tagihan & SPP', icon: DollarSign, access: '/' },
+          { to: '/parent/wallet', label: 'Dompet Digital', icon: Wallet, access: '/' },
+          { to: '/parent/leave', label: 'Permohonan Izin / Sakit', icon: CalendarRange, access: '/' },
+          { to: '/parent/meetings', label: 'Konsultasi Guru (PTM)', icon: HeartHandshake, access: '/' }
+        ]
+      },
+      {
+        title: 'Komunikasi & Keamanan',
+        items: [
+          { to: '/parent/announcements', label: 'Pengumuman Sekolah', icon: Bell, access: '/' },
+          { to: '/parent/messages', label: 'Pesan Guru', icon: MessageSquare, access: '/' },
+          { to: '/parent/notification-preferences', label: 'Pengaturan Notifikasi', icon: Settings, access: '/' },
+          { to: '/parent/security-log', label: 'Log Keamanan', icon: ShieldCheck, access: '/' }
+        ]
+      }
+    ]
+  }
+
   const foundationId = currentSchool.value?.foundation_id || (foundations.value?.length > 0 ? foundations.value[0].id : null)
 
   if (foundationId && ['super_admin', 'principal', 'tu', 'user', 'owner', 'admin'].includes(user.value?.role)) {
@@ -170,6 +203,7 @@ const menuGroups = computed(() => {
       { to: '/gradebook/input', label: 'Input Nilai', icon: ClipboardCheck, access: '/gradebook' },
       { to: '/gradebook/analytics', label: 'Analitik & Rekap', icon: BarChart3, access: '/gradebook' },
       { to: '/homeroom', label: 'Rapor Wali Kelas', icon: ClipboardCheck, access: '/homeroom' },
+      { to: '/teacher/pesantren', label: 'Tahfidz & Pesantren', icon: BookMarked, access: '/teacher' },
       { to: '/report/template', label: 'Template Rapor', icon: LayoutTemplate, access: '/report' },
       { to: '/report', label: 'Cetak Rapor', icon: ClipboardCheck, access: '/report' }
     ]

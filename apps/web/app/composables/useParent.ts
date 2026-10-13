@@ -138,6 +138,173 @@ export const useParent = () => {
     }
   }
 
+  const fetchAttendance = async (childId: string, month?: string, type?: string) => {
+    const params = new URLSearchParams()
+    if (month) params.append('month', month)
+    if (type) params.append('type', type)
+    const res: any = await fetcher(`/parents/children/${childId}/attendance?${params.toString()}`)
+    return res.success ? res.data : null
+  }
+
+  const fetchBills = async () => {
+    const res: any = await fetcher('/parents/bills')
+    return res.success ? res.data : []
+  }
+
+  const fetchBillDetail = async (billId: string) => {
+    const res: any = await fetcher(`/parents/bills/${billId}`)
+    return res.success ? res.data : null
+  }
+
+  const submitPayment = async (payload: any) => {
+    return await fetcher('/parents/payments', {
+      method: 'POST',
+      body: payload
+    })
+  }
+
+  const fetchAnnouncements = async (page: number = 1, limit: number = 20, unread: boolean = false) => {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() })
+    if (unread) params.append('unread', 'true')
+    const res: any = await fetcher(`/parents/announcements?${params.toString()}`)
+    return res.success ? res.data : { data: [], total: 0 }
+  }
+
+  const markAnnouncementRead = async (id: string) => {
+    return await fetcher(`/parents/announcements/${id}/read`, { method: 'POST' })
+  }
+
+  const fetchGrades = async (studentId?: string, semester?: number, type?: string) => {
+    const params = new URLSearchParams()
+    if (studentId) params.append('student_id', studentId)
+    if (semester) params.append('semester', semester.toString())
+    if (type) params.append('type', type)
+    const res: any = await fetcher(`/parents/grades?${params.toString()}`)
+    return res.success ? res.data : { grades: [], ranking: null }
+  }
+
+  const fetchBehavior = async (studentId?: string, academicYearId?: string) => {
+    const params = new URLSearchParams()
+    if (studentId) params.append('student_id', studentId)
+    if (academicYearId) params.append('academic_year_id', academicYearId)
+    const res: any = await fetcher(`/parents/behavior?${params.toString()}`)
+    return res.success ? res.data : { bk_points: null, attitude_records: [] }
+  }
+
+  const fetchSchedule = async (childId: string) => {
+    const res: any = await fetcher(`/parents/children/${childId}/schedule`)
+    return res.success ? res.data : {}
+  }
+
+  const fetchMessages = async (page: number = 1, limit: number = 20) => {
+    const res: any = await fetcher(`/parents/messages?page=${page}&limit=${limit}`)
+    return res.success ? res.data : { data: [], total: 0 }
+  }
+
+  const sendMessage = async (payload: any) => {
+    return await fetcher('/parents/messages', {
+      method: 'POST',
+      body: payload
+    })
+  }
+
+  const markMessageRead = async (id: string) => {
+    return await fetcher(`/parents/messages/${id}/read`, { method: 'PATCH' })
+  }
+
+  const submitLeaveRequest = async (payload: any) => {
+    return await fetcher('/parents/leave-request', {
+      method: 'POST',
+      body: payload
+    })
+  }
+
+  const fetchLeaveRequests = async (studentId?: string) => {
+    const params = studentId ? `?student_id=${studentId}` : ''
+    const res: any = await fetcher(`/parents/leave-requests${params}`)
+    return res.success ? res.data : []
+  }
+
+  const fetchNotificationPreferences = async () => {
+    const res: any = await fetcher('/parents/notification-preferences')
+    return res.success ? res.data : null
+  }
+
+  const updateNotificationPreferences = async (payload: any) => {
+    return await fetcher('/parents/notification-preferences', {
+      method: 'PATCH',
+      body: payload
+    })
+  }
+
+  const fetchAccessLogs = async (page: number = 1, limit: number = 10) => {
+    const res: any = await fetcher(`/parents/access-log?page=${page}&limit=${limit}`)
+    return res.success ? res.data : { data: [], total: 0 }
+  }
+
+  const chatAiAssistant = async (studentId: string, message: string) => {
+    const res: any = await fetcher('/parents/ai-assistant/chat', {
+      method: 'POST',
+      body: { student_id: studentId, message }
+    })
+    return res
+  }
+
+  const fetchWallet = async (studentId: string) => {
+    const res: any = await fetcher(`/parents/wallet?student_id=${studentId}`)
+    return res.success ? res.data : null
+  }
+
+  const fetchWalletTransactions = async (studentId: string, page: number = 1, limit: number = 20) => {
+    const res: any = await fetcher(`/parents/wallet/transactions?student_id=${studentId}&page=${page}&limit=${limit}`)
+    return res.success ? res.data : []
+  }
+
+  const topupWallet = async (studentId: string, amount: number, paymentMethod: string) => {
+    return await fetcher('/parents/wallet/topup', {
+      method: 'POST',
+      body: { student_id: studentId, amount, payment_method: paymentMethod }
+    })
+  }
+
+  const updateWalletLimits = async (payload: any) => {
+    return await fetcher('/parents/wallet/limits', {
+      method: 'PATCH',
+      body: payload
+    })
+  }
+
+  const fetchPesantrenProgress = async (childId: string) => {
+    const res: any = await fetcher(`/parents/children/${childId}/pesantren`)
+    return res.success ? res.data : null
+  }
+
+  const fetchMeetings = async () => {
+    const res: any = await fetcher('/parents/meetings')
+    return res.success ? res.data : []
+  }
+
+  const fetchMeetingSlots = async (teacherId: string, date: string) => {
+    const res: any = await fetcher(`/parents/meetings/slots?teacher_id=${teacherId}&date=${date}`)
+    return res.success ? res.data : []
+  }
+
+  const bookMeeting = async (payload: any) => {
+    return await fetcher('/parents/meetings/book', {
+      method: 'POST',
+      body: payload
+    })
+  }
+
+  const cancelMeeting = async (id: string) => {
+    return await fetcher(`/parents/meetings/${id}/cancel`, { method: 'PATCH' })
+  }
+
+  const fetchYayasanOverview = async () => {
+    const res: any = await fetcher('/parents/yayasan/overview')
+    return res.success ? res.data : { schools: [], summary: {} }
+  }
+
   return {
     parents,
     allParents,
@@ -152,6 +319,35 @@ export const useParent = () => {
     deleteParent,
     fetchParentDashboard,
     fetchDigitalRaport,
-    approveReport
+    approveReport,
+    fetchAttendance,
+    fetchBills,
+    fetchBillDetail,
+    submitPayment,
+    fetchAnnouncements,
+    markAnnouncementRead,
+    fetchGrades,
+    fetchBehavior,
+    fetchSchedule,
+    fetchMessages,
+    sendMessage,
+    markMessageRead,
+    submitLeaveRequest,
+    fetchLeaveRequests,
+    fetchNotificationPreferences,
+    updateNotificationPreferences,
+    fetchAccessLogs,
+    chatAiAssistant,
+    fetchWallet,
+    fetchWalletTransactions,
+    topupWallet,
+    updateWalletLimits,
+    fetchPesantrenProgress,
+    fetchMeetings,
+    fetchMeetingSlots,
+    bookMeeting,
+    cancelMeeting,
+    fetchYayasanOverview
   }
 }
+
