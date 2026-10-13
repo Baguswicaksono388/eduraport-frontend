@@ -171,7 +171,9 @@ const menuGroups = computed(() => {
     items: [
       { to: '/student', label: 'Data Siswa', icon: Users, access: '/student' },
       { to: '/parent', label: 'Data Orang Tua', icon: Users, access: '/student' },
+      { to: '/announcement', label: 'Pengumuman Sekolah', icon: Bell, access: '/student' },
       { to: '/student/attendance', label: 'Absensi Siswa', icon: ClipboardCheck, access: '/student' },
+      { to: '/homeroom?tab=leave_requests', label: 'Izin Siswa (Wali Murid)', icon: CalendarRange, access: '/homeroom' },
       { to: '/attendance-settings', label: 'Pengaturan Absensi', icon: Settings, access: '/attendance-settings' },
       ...(isSoloTeacher.value ? [] : [{ to: '/ppdb', label: 'PPDB Online', icon: UserPlus, access: '/ppdb' }])
     ]

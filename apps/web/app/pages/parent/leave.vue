@@ -47,6 +47,13 @@ onMounted(() => {
   loadData()
 })
 
+const openFormModal = () => {
+  if (myChildren.value.length > 0 && !form.value.student_id) {
+    form.value.student_id = myChildren.value[0].student_id
+  }
+  isFormModalOpen.value = true
+}
+
 const handleFileUpload = (e: any) => {
   const file = e.target.files[0]
   if (file) {
@@ -98,7 +105,7 @@ const handleSubmit = async () => {
         </div>
       </div>
 
-      <BaseButton size="sm" class="bg-violet-600 hover:bg-violet-700 text-white font-semibold text-xs flex items-center gap-1.5" @click="isFormModalOpen = true">
+      <BaseButton size="sm" class="bg-violet-600 hover:bg-violet-700 text-white font-semibold text-xs flex items-center gap-1.5" @click="openFormModal">
         <Plus :size="16" /> Ajukan Izin Baru
       </BaseButton>
     </div>
@@ -155,7 +162,7 @@ const handleSubmit = async () => {
     </div>
 
     <!-- Modal Form Izin -->
-    <BaseModal v-model="isFormModalOpen" title="Form Pengajuan Izin / Sakit">
+    <BaseModal :show="isFormModalOpen" title="Form Pengajuan Izin / Sakit" @close="isFormModalOpen = false">
       <div class="space-y-4 text-xs">
         <div>
           <label class="block font-bold text-slate-700 dark:text-zinc-300 mb-1">Pilih Siswa</label>

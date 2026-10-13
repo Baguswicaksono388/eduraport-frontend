@@ -4,14 +4,23 @@ import { X } from 'lucide-vue-next'
 import { computed } from 'vue'
 
 const props = withDefaults(defineProps<{
-  show: boolean
+  show?: boolean
+  modelValue?: boolean
   title?: string
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | 'full'
   hideClose?: boolean
 }>(), {
+  show: undefined,
+  modelValue: undefined,
   size: 'lg',
   hideClose: false,
   title: ''
+})
+
+const isOpen = computed(() => {
+  if (props.show !== undefined) return props.show
+  if (props.modelValue !== undefined) return props.modelValue
+  return false
 })
 
 const sizeClass = computed(() => {
@@ -29,7 +38,12 @@ const sizeClass = computed(() => {
   return sizes[props.size] || sizes.lg
 })
 
-defineEmits(['close'])
+const emit = defineEmits(['close', 'update:modelValue'])
+
+const handleClose = () => {
+  emit('close')
+  emit('update:modelValue', false)
+}
 </script>
 
 <template>
@@ -42,7 +56,7 @@ defineEmits(['close'])
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="show" class="fixed inset-0 bg-slate-950/40 backdrop-blur-[2px] z-[100] flex items-center justify-center p-4">
+      <div v-if="isOpen" class="fixed inset-0 bg-slate-950/40 backdrop-blur-[2px] z-[100] flex items-center justify-center p-4" @click.self="handleClose">
         <div 
           class="bg-white dark:bg-zinc-900 w-full rounded-xl border border-slate-200/60 dark:border-zinc-800 shadow-xl overflow-hidden animate-in zoom-in-95 duration-300"
           :class="sizeClass"
@@ -53,7 +67,7 @@ defineEmits(['close'])
             <h3 class="font-bold text-base tracking-tight text-slate-900 dark:text-zinc-100">{{ title }}</h3>
             <button 
               v-if="!hideClose"
-              @click="$emit('close')" 
+              @click="handleClose" 
               class="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-slate-400 hover:text-slate-950 dark:hover:text-zinc-100"
             >
               <X :size="18" />

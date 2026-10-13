@@ -101,12 +101,76 @@ export const useHomeroom = () => {
     }
   }
 
+  const leaveRequests = useState<any[]>('homeroom_leave_requests', () => [])
+
+  const fetchClassLeaveRequests = async (schoolId: string, classId: string) => {
+    try {
+      const res: any = await fetcher(`/school/${schoolId}/class/${classId}/homeroom/leave-requests`)
+      if (res.success) {
+        leaveRequests.value = res.data || []
+      }
+      return res.data || []
+    } catch (error) {
+      console.error('Failed to fetch class leave requests:', error)
+      return []
+    }
+  }
+
+  const fetchSchoolLeaveRequests = async (schoolId: string, options: { status?: string; classId?: string } = {}) => {
+    try {
+      const params = new URLSearchParams()
+      if (options.status) params.append('status', options.status)
+      if (options.classId) params.append('class_id', options.classId)
+      const queryStr = params.toString() ? `?${params.toString()}` : ''
+
+      const res: any = await fetcher(`/school/${schoolId}/homeroom/leave-requests${queryStr}`)
+      if (res.success) {
+        leaveRequests.value = res.data || []
+      }
+      return res.data || []
+    } catch (error) {
+      console.error('Failed to fetch school leave requests:', error)
+      return []
+    }
+  }
+
+  const approveLeaveRequest = async (schoolId: string, id: string, classId?: string) => {
+    try {
+      const url = classId 
+        ? `/school/${schoolId}/class/${classId}/homeroom/leave-requests/${id}/approve`
+        : `/school/${schoolId}/homeroom/leave-requests/${id}/approve`
+      const res: any = await fetcher(url, { method: 'POST' })
+      return res
+    } catch (error) {
+      console.error('Failed to approve leave request:', error)
+      throw error
+    }
+  }
+
+  const rejectLeaveRequest = async (schoolId: string, id: string, classId?: string) => {
+    try {
+      const url = classId 
+        ? `/school/${schoolId}/class/${classId}/homeroom/leave-requests/${id}/reject`
+        : `/school/${schoolId}/homeroom/leave-requests/${id}/reject`
+      const res: any = await fetcher(url, { method: 'POST' })
+      return res
+    } catch (error) {
+      console.error('Failed to reject leave request:', error)
+      throw error
+    }
+  }
+
   return {
     homeroomStudents,
     activeExtracurriculars,
+    leaveRequests,
     fetchHomeroomData,
     saveHomeroomData,
     downloadTemplate,
-    importTemplate
+    importTemplate,
+    fetchClassLeaveRequests,
+    fetchSchoolLeaveRequests,
+    approveLeaveRequest,
+    rejectLeaveRequest
   }
 }

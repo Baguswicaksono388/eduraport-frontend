@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { 
   Users, 
   Calendar, 
@@ -14,7 +14,13 @@ import {
   Award, 
   FileText,
   X,
-  Camera
+  Camera,
+  CalendarRange,
+  Check,
+  CheckCircle2,
+  Paperclip,
+  Eye,
+  Clock
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal } from '@eduraport/ui'
 import { useAcademicYear } from '../composables/useAcademicYear'
@@ -41,19 +47,25 @@ const { classes, fetchClasses } = useClass()
 const { 
   homeroomStudents, 
   activeExtracurriculars, 
+  leaveRequests,
   fetchHomeroomData, 
   saveHomeroomData, 
   downloadTemplate, 
-  importTemplate 
+  importTemplate,
+  fetchClassLeaveRequests,
+  fetchSchoolLeaveRequests,
+  approveLeaveRequest,
+  rejectLeaveRequest
 } = useHomeroom()
 const { user: currentUser } = useAuth()
 const toast = useToast()
+const route = useRoute()
 
 const selectedAcademicYearId = ref('')
 const selectedClassId = ref('')
 const selectedSemester = ref('odd') // odd, even
 
-const activeTab = ref('attendance') // attendance, extracurricular, notes, photos
+const activeTab = ref(route.query.tab === 'leave_requests' ? 'leave_requests' : 'attendance') // attendance, extracurricular, notes, photos, leave_requests
 const loading = ref(false)
 const saving = ref(false)
 
@@ -114,6 +126,9 @@ onMounted(async () => {
   const schoolId = await initContext()
   if (schoolId) {
     await loadSchoolData(schoolId)
+    if (activeTab.value === 'leave_requests') {
+      await loadLeaves()
+    }
   }
 })
 
@@ -122,7 +137,8 @@ const loadSchoolData = async (schoolId: string) => {
   try {
     await Promise.all([
       fetchAcademicYears(schoolId),
-      fetchClasses(schoolId)
+      fetchClasses(schoolId),
+      fetchSchoolLeaveRequests(schoolId)
     ])
     
     if (academicYears.value.length > 0) {
@@ -131,8 +147,6 @@ const loadSchoolData = async (schoolId: string) => {
     } else {
       selectedAcademicYearId.value = ''
     }
-    selectedClassId.value = ''
-    studentDataList.value = []
   } catch (error) {
     console.error('Failed loading school details:', error)
   } finally {
@@ -154,36 +168,48 @@ watch(selectedSchoolId, async (newVal) => {
   }
 })
 
+watch(() => route.query.tab, (newTab) => {
+  if (newTab === 'leave_requests') {
+    activeTab.value = 'leave_requests'
+    loadLeaves()
+  }
+})
+
 // Filter classes based on role and active years
 const filteredClassesList = computed(() => {
-  if (!classes.value) return []
+  if (!classes.value || classes.value.length === 0) return []
   let list = classes.value
   
-  // Filter by selected academic year
+  // Filter by selected academic year if matched
   if (selectedAcademicYearId.value) {
-    list = list.filter(c => c.academic_year_id === selectedAcademicYearId.value)
-  } else {
-    return []
+    const yearFiltered = list.filter(c => c.academic_year_id === selectedAcademicYearId.value)
+    if (yearFiltered.length > 0) {
+      list = yearFiltered
+    }
   }
 
-  // Filter based on role permissions
-  if (['super_admin', 'principal', 'tu'].includes(currentUser.value?.role)) {
+  // Staff and admin roles see all classes
+  const adminRoles = ['super_admin', 'principal', 'tu', 'treasurer', 'user', 'solo_teacher', 'vice_principal_curriculum']
+  if (adminRoles.includes(currentUser.value?.role)) {
     return list
   }
   
-  // Teachers only see their assigned class
-  return list.filter(c => c.homeroom_teacher_id === currentUser.value?.id)
+  // Teachers prefer assigned homeroom classes, but fallback to all classes if unassigned
+  const homeroomList = list.filter(c => c.homeroom_teacher_id === currentUser.value?.id)
+  return homeroomList.length > 0 ? homeroomList : list
 })
 
 // Automatically pick first available class for user
 watch(filteredClassesList, (newVal) => {
   if (newVal.length > 0) {
-    selectedClassId.value = newVal[0].id
+    if (!newVal.some(c => c.id === selectedClassId.value)) {
+      selectedClassId.value = newVal[0].id
+    }
   } else {
     selectedClassId.value = ''
     studentDataList.value = []
   }
-})
+}, { immediate: true })
 
 const loadHomeroomDataList = async () => {
   if (!selectedSchoolId.value || !selectedClassId.value || !selectedAcademicYearId.value) return
@@ -202,8 +228,71 @@ const loadHomeroomDataList = async () => {
   }
 }
 
+const leaveFilterStatus = ref('all') // all, pending, approved, rejected
+const leaveProcessingId = ref<string | null>(null)
+const selectedLeaveAttachment = ref<string | null>(null)
+const leaveLoading = ref(false)
+
+const pendingLeaveCount = computed(() => {
+  return leaveRequests.value.filter(r => r.status === 'pending').length
+})
+
+const filteredLeaveRequests = computed(() => {
+  if (leaveFilterStatus.value === 'all') return leaveRequests.value
+  return leaveRequests.value.filter(r => r.status === leaveFilterStatus.value)
+})
+
+const loadLeaves = async () => {
+  if (!selectedSchoolId.value) return
+  leaveLoading.value = true
+  try {
+    if (selectedClassId.value) {
+      await fetchClassLeaveRequests(selectedSchoolId.value, selectedClassId.value)
+    } else {
+      await fetchSchoolLeaveRequests(selectedSchoolId.value)
+    }
+  } finally {
+    leaveLoading.value = false
+  }
+}
+
+const handleApproveLeave = async (req: any) => {
+  if (!selectedSchoolId.value) return
+  leaveProcessingId.value = req.id
+  try {
+    const res = await approveLeaveRequest(selectedSchoolId.value, req.id, selectedClassId.value || undefined)
+    if (res.success) {
+      toast.success(`Pengajuan izin untuk ${req.student_name} telah disetujui.`, 'Disetujui')
+      await loadLeaves()
+    }
+  } catch (err: any) {
+    toast.error(err.message || 'Gagal menyetujui izin.', 'Error')
+  } finally {
+    leaveProcessingId.value = null
+  }
+}
+
+const handleRejectLeave = async (req: any) => {
+  if (!selectedSchoolId.value) return
+  leaveProcessingId.value = req.id
+  try {
+    const res = await rejectLeaveRequest(selectedSchoolId.value, req.id, selectedClassId.value || undefined)
+    if (res.success) {
+      toast.info(`Pengajuan izin untuk ${req.student_name} ditolak.`, 'Ditolak')
+      await loadLeaves()
+    }
+  } catch (err: any) {
+    toast.error(err.message || 'Gagal menolak izin.', 'Error')
+  } finally {
+    leaveProcessingId.value = null
+  }
+}
+
 watch([selectedClassId, selectedSemester], async () => {
-  await loadHomeroomDataList()
+  await Promise.all([
+    loadHomeroomDataList(),
+    loadLeaves()
+  ])
 })
 
 const handleSave = async () => {
@@ -408,7 +497,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
         <select v-model="selectedClassId" :disabled="filteredClassesList.length === 0" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Kelas</option>
           <option v-for="c in filteredClassesList" :key="c.id" :value="c.id">
-            {{ c.class_name }}
+            {{ c.class_name || c.name }}
           </option>
         </select>
       </div>
@@ -422,63 +511,253 @@ const removePhoto = (studentId: string, slotIndex: number) => {
       </div>
     </div>
 
-    <!-- Empty State -->
-    <div v-if="!selectedClassId" class="bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-16 text-center text-slate-400 dark:text-zinc-500">
-      <LayoutGrid class="mx-auto mb-3 opacity-40 animate-pulse text-violet-600 dark:text-violet-400" :size="40" />
-      <h3 class="font-bold text-slate-700 dark:text-zinc-300 text-sm">Belum Ada Kelas yang Dipilih</h3>
-      <p class="text-xs mt-1 max-w-sm mx-auto">Silakan pilih Unit Sekolah, Tahun Ajaran, dan Kelas untuk memuat formulir input akademik.</p>
+    <!-- Navigation Tabs (Always Visible) -->
+    <div class="flex border-b border-slate-200 dark:border-zinc-800/80 gap-6 overflow-x-auto">
+      <button 
+        @click="activeTab = 'attendance'" 
+        class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5 shrink-0"
+        :class="[
+          activeTab === 'attendance'
+            ? 'border-violet-600 text-violet-600 dark:text-violet-400'
+            : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'
+        ]"
+      >
+        <ClipboardCheck :size="14" /> Kehadiran (Absensi)
+      </button>
+      <button 
+        @click="activeTab = 'extracurricular'" 
+        class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5 shrink-0"
+        :class="[
+          activeTab === 'extracurricular'
+            ? 'border-violet-600 text-violet-600 dark:text-violet-400'
+            : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'
+        ]"
+      >
+        <Award :size="14" /> Nilai Ekstrakurikuler
+      </button>
+      <button 
+        @click="activeTab = 'notes'" 
+        class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5 shrink-0"
+        :class="[
+          activeTab === 'notes'
+            ? 'border-violet-600 text-violet-600 dark:text-violet-400'
+            : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'
+        ]"
+      >
+        <FileText :size="14" /> Catatan Wali Kelas
+      </button>
+      <button 
+        v-if="isTKSchool"
+        @click="activeTab = 'photos'" 
+        class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5 shrink-0"
+        :class="[
+          activeTab === 'photos'
+            ? 'border-violet-600 text-violet-600 dark:text-violet-400'
+            : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'
+        ]"
+      >
+        <Camera :size="14" /> Foto Kegiatan (TK)
+      </button>
+      <button 
+        @click="activeTab = 'leave_requests'; loadLeaves()" 
+        class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5 shrink-0"
+        :class="[
+          activeTab === 'leave_requests'
+            ? 'border-violet-600 text-violet-600 dark:text-violet-400'
+            : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'
+        ]"
+      >
+        <CalendarRange :size="14" /> Izin Siswa (Wali Murid)
+        <span 
+          v-if="pendingLeaveCount > 0" 
+          class="ml-1 px-1.5 py-0.2 bg-amber-500 text-white rounded-full text-[10px] font-bold animate-pulse"
+        >
+          {{ pendingLeaveCount }}
+        </span>
+      </button>
     </div>
 
-    <!-- Main Grid Content -->
-    <div v-else class="space-y-6">
-      <!-- Tabs -->
-      <div class="flex border-b border-slate-200 dark:border-zinc-800/80 gap-6">
-        <button 
-          @click="activeTab = 'attendance'" 
-          class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5"
-          :class="[
-            activeTab === 'attendance'
-              ? 'border-violet-600 text-violet-600 dark:text-violet-400'
-              : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'
-          ]"
-        >
-          <ClipboardCheck :size="14" /> Kehadiran (Absensi)
-        </button>
-        <button 
-          @click="activeTab = 'extracurricular'" 
-          class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5"
-          :class="[
-            activeTab === 'extracurricular'
-              ? 'border-violet-600 text-violet-600 dark:text-violet-400'
-              : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'
-          ]"
-        >
-          <Award :size="14" /> Nilai Ekstrakurikuler
-        </button>
-        <button 
-          @click="activeTab = 'notes'" 
-          class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5"
-          :class="[
-            activeTab === 'notes'
-              ? 'border-violet-600 text-violet-600 dark:text-violet-400'
-              : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'
-          ]"
-        >
-          <FileText :size="14" /> Catatan Wali Kelas
-        </button>
-        <button 
-          v-if="isTKSchool"
-          @click="activeTab = 'photos'" 
-          class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5"
-          :class="[
-            activeTab === 'photos'
-              ? 'border-violet-600 text-violet-600 dark:text-violet-400'
-              : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'
-          ]"
-        >
-          <Camera :size="14" /> Foto Kegiatan (TK)
-        </button>
+    <!-- Tab 5: Leave Requests Container (Always Accessible) -->
+    <div v-if="activeTab === 'leave_requests'" class="bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl overflow-hidden shadow-sm">
+      <div class="p-5 space-y-4">
+        <!-- Filter & Header Summary -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-slate-100 dark:border-zinc-800">
+          <div>
+            <h4 class="text-sm font-bold text-slate-800 dark:text-zinc-100 flex items-center gap-2">
+              <CalendarRange class="text-violet-500" :size="18" />
+              Permohonan Izin & Sakit Siswa
+              <span v-if="!selectedClassId" class="text-[10px] bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 px-2 py-0.5 rounded-full font-semibold">Semua Kelas</span>
+              <span v-else class="text-[10px] bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 px-2 py-0.5 rounded-full font-semibold">Kelas Terpilih</span>
+            </h4>
+            <p class="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
+              Tinjau dan setujui/tolak permohonan izin atau sakit yang diajukan wali murid secara real-time.
+            </p>
+          </div>
+
+          <!-- Status Filter Pills -->
+          <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800 p-1 rounded-lg text-xs font-semibold">
+            <button
+              @click="leaveFilterStatus = 'all'"
+              class="px-2.5 py-1 rounded-md transition"
+              :class="leaveFilterStatus === 'all' ? 'bg-white dark:bg-zinc-900 shadow-sm text-slate-900 dark:text-zinc-100' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400'"
+            >
+              Semua ({{ leaveRequests.length }})
+            </button>
+            <button
+              @click="leaveFilterStatus = 'pending'"
+              class="px-2.5 py-1 rounded-md transition flex items-center gap-1"
+              :class="leaveFilterStatus === 'pending' ? 'bg-white dark:bg-zinc-900 shadow-sm text-amber-600 dark:text-amber-400' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400'"
+            >
+              Menunggu
+              <span v-if="pendingLeaveCount > 0" class="px-1.5 py-0.2 bg-amber-500 text-white rounded-full text-[10px]">
+                {{ pendingLeaveCount }}
+              </span>
+            </button>
+            <button
+              @click="leaveFilterStatus = 'approved'"
+              class="px-2.5 py-1 rounded-md transition"
+              :class="leaveFilterStatus === 'approved' ? 'bg-white dark:bg-zinc-900 shadow-sm text-emerald-600 dark:text-emerald-400' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400'"
+            >
+              Disetujui
+            </button>
+            <button
+              @click="leaveFilterStatus = 'rejected'"
+              class="px-2.5 py-1 rounded-md transition"
+              :class="leaveFilterStatus === 'rejected' ? 'bg-white dark:bg-zinc-900 shadow-sm text-rose-600 dark:text-rose-400' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400'"
+            >
+              Ditolak
+            </button>
+          </div>
+        </div>
+
+        <!-- Loading state -->
+        <div v-if="leaveLoading" class="py-12 text-center text-slate-400">
+          <div class="w-6 h-6 border-2 border-violet-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+          <p class="text-xs">Memuat permohonan izin...</p>
+        </div>
+
+        <!-- Empty state -->
+        <div v-else-if="filteredLeaveRequests.length === 0" class="py-16 text-center text-slate-400 dark:text-zinc-500">
+          <CheckCircle2 class="mx-auto mb-2 text-emerald-500/70" :size="32" />
+          <p class="text-xs font-bold text-slate-700 dark:text-zinc-300">Tidak ada pengajuan izin dengan status ini.</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">Seluruh permohonan dari wali murid telah tertangani atau belum ada yang diajukan.</p>
+        </div>
+
+        <!-- Leave Requests Table -->
+        <div v-else class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/40 dark:bg-zinc-900/30 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
+                <th class="p-3.5 pl-4">Siswa</th>
+                <th class="p-3.5">Kelas</th>
+                <th class="p-3.5">Rentang Tanggal</th>
+                <th class="p-3.5">Alasan / Keterangan</th>
+                <th class="p-3.5 text-center">Dokumen / Surat</th>
+                <th class="p-3.5 text-center">Status</th>
+                <th class="p-3.5 text-right pr-4">Aksi / Tindakan</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="item in filteredLeaveRequests"
+                :key="item.id"
+                class="border-b border-slate-100 dark:border-zinc-800/80 last:border-0 hover:bg-slate-50/30 dark:hover:bg-zinc-900/30 transition-colors"
+              >
+                <td class="p-3.5 pl-4">
+                  <span class="font-bold text-slate-800 dark:text-zinc-200 text-xs block leading-snug">{{ item.student_name }}</span>
+                  <span class="text-[10px] text-slate-400 dark:text-zinc-500">NIS/NISN: {{ item.student_number || '-' }} / {{ item.national_student_number || '-' }}</span>
+                </td>
+                <td class="p-3.5">
+                  <span class="text-xs font-semibold text-slate-700 dark:text-zinc-300">{{ item.class_name || '-' }}</span>
+                </td>
+                <td class="p-3.5">
+                  <div class="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-zinc-300">
+                    <Calendar :size="13" class="text-violet-500 shrink-0" />
+                    <span>{{ item.start_date }} <span class="text-slate-400">s/d</span> {{ item.end_date }}</span>
+                  </div>
+                </td>
+                <td class="p-3.5 max-w-xs">
+                  <p class="text-xs text-slate-700 dark:text-zinc-300 line-clamp-2" :title="item.reason">
+                    {{ item.reason }}
+                  </p>
+                </td>
+                <td class="p-3.5 text-center">
+                  <button
+                    v-if="item.attachment_url"
+                    @click="selectedLeaveAttachment = item.attachment_url"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-violet-50 text-violet-600 hover:bg-violet-100 dark:bg-violet-950/40 dark:text-violet-300 transition"
+                  >
+                    <Paperclip :size="12" /> Lihat Surat
+                  </button>
+                  <span v-else class="text-[10px] text-slate-400 italic">Tanpa lampiran</span>
+                </td>
+                <td class="p-3.5 text-center">
+                  <span
+                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
+                    :class="{
+                      'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50': item.status === 'pending',
+                      'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50': item.status === 'approved',
+                      'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50': item.status === 'rejected'
+                    }"
+                  >
+                    {{ item.status === 'pending' ? 'Menunggu' : (item.status === 'approved' ? 'Disetujui' : 'Ditolak') }}
+                  </span>
+                </td>
+                <td class="p-3.5 text-right pr-4">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <template v-if="item.status === 'pending'">
+                      <button
+                        @click="handleApproveLeave(item)"
+                        :disabled="leaveProcessingId === item.id"
+                        class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center gap-1 disabled:opacity-50"
+                      >
+                        <Check :size="13" /> Setujui
+                      </button>
+                      <button
+                        @click="handleRejectLeave(item)"
+                        :disabled="leaveProcessingId === item.id"
+                        class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50 transition flex items-center gap-1 disabled:opacity-50"
+                      >
+                        <X :size="13" /> Tolak
+                      </button>
+                    </template>
+                    <template v-else>
+                      <span class="text-[10px] text-slate-400 font-medium mr-2">Selesai diproses</span>
+                      <button
+                        v-if="item.status === 'rejected'"
+                        @click="handleApproveLeave(item)"
+                        :disabled="leaveProcessingId === item.id"
+                        class="px-2 py-0.5 text-[10px] font-semibold text-emerald-600 hover:underline"
+                      >
+                        Ubah ke Setuju
+                      </button>
+                      <button
+                        v-if="item.status === 'approved'"
+                        @click="handleRejectLeave(item)"
+                        :disabled="leaveProcessingId === item.id"
+                        class="px-2 py-0.5 text-[10px] font-semibold text-rose-600 hover:underline"
+                      >
+                        Ubah ke Tolak
+                      </button>
+                    </template>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
+    </div>
+
+    <!-- Empty State for Academic Tabs when no class is selected -->
+    <div v-else-if="!selectedClassId" class="bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-16 text-center text-slate-400 dark:text-zinc-500">
+      <LayoutGrid class="mx-auto mb-3 opacity-40 animate-pulse text-violet-600 dark:text-violet-400" :size="40" />
+      <h3 class="font-bold text-slate-700 dark:text-zinc-300 text-sm">Belum Ada Kelas yang Dipilih</h3>
+      <p class="text-xs mt-1 max-w-sm mx-auto">Silakan pilih Unit Sekolah, Tahun Ajaran, dan Kelas Rombel untuk memuat formulir input akademik.</p>
+    </div>
+
+    <!-- Main Grid Content for Academic Tabs -->
+    <div v-else class="space-y-6">
 
       <!-- Loading Overlay -->
       <div v-if="loading" class="py-20 text-center text-slate-400">
@@ -664,7 +943,6 @@ const removePhoto = (studentId: string, slotIndex: number) => {
             </tbody>
           </table>
         </div>
-
       </div>
     </div>
 
@@ -737,6 +1015,25 @@ const removePhoto = (studentId: string, slotIndex: number) => {
             <Upload class="mr-1.5" :size="14" />
             {{ importLoading ? 'Sedang Import...' : 'Mulai Import' }}
           </BaseButton>
+        </div>
+      </div>
+    </BaseModal>
+
+    <!-- Modal Lampiran Surat Izin Siswa -->
+    <BaseModal :show="!!selectedLeaveAttachment" title="Lampiran Surat Dokter / Keterangan" @close="selectedLeaveAttachment = null">
+      <div class="space-y-4 text-center">
+        <div class="max-h-[70vh] overflow-auto rounded-lg border border-slate-200 dark:border-zinc-800 p-2 bg-slate-50 dark:bg-zinc-950">
+          <img 
+            :src="selectedLeaveAttachment || ''" 
+            alt="Lampiran Surat" 
+            class="max-w-full h-auto mx-auto rounded shadow-sm"
+          />
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
+          <a :href="selectedLeaveAttachment || '#'" target="_blank" class="px-3 py-1.5 text-xs font-semibold text-violet-600 hover:underline flex items-center gap-1">
+            <Eye :size="13" /> Buka Tab Baru
+          </a>
+          <BaseButton variant="outline" size="sm" @click="selectedLeaveAttachment = null">Tutup</BaseButton>
         </div>
       </div>
     </BaseModal>
