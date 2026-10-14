@@ -23,7 +23,15 @@ import {
   ShieldCheck,
   Filter,
   FileText,
-  Search
+  Search,
+  BarChart3,
+  TrendingUp,
+  UserCheck,
+  Trophy,
+  Activity,
+  Percent,
+  Building2,
+  Layers
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton } from '@eduraport/ui'
 import AppPagination from '../../components/AppPagination.vue'
@@ -55,7 +63,8 @@ const {
   fetchTahfidzPaginated,
   deleteTahfidz,
   recordIbadahBulk,
-  fetchIbadahByDate
+  fetchIbadahByDate,
+  fetchPesantrenAnalytics
 } = usePesantren()
 
 // Date Picker Helpers & Shortcuts
@@ -126,9 +135,55 @@ const searchQuery = ref('')
 const tahfidzMeta = ref<any>(null)
 
 // View & Loading States
-const activeTab = ref<'tahfidz' | 'ibadah'>('tahfidz')
+const activeTab = ref<'tahfidz' | 'ibadah' | 'analytics'>('tahfidz')
 const loading = ref(false)
 const saving = ref(false)
+
+// Analytics States & RBAC Aggregation
+const isFoundationOwner = computed(() => ['user', 'super_admin', 'owner'].includes(currentUser.value?.role))
+const isPrincipal = computed(() => currentUser.value?.role === 'principal')
+const isFoundationAggregate = ref(false)
+
+const analyticsData = ref<any>(null)
+const loadingAnalytics = ref(false)
+const analyticsDateFilter = ref<'all' | '30days' | 'today'>('all')
+
+const loadPesantrenAnalytics = async () => {
+  if (!selectedSchoolId.value) return
+  loadingAnalytics.value = true
+  try {
+    let startDate: string | undefined = undefined
+    let endDate: string | undefined = undefined
+
+    if (analyticsDateFilter.value === 'today') {
+      startDate = todayDate
+      endDate = todayDate
+    } else if (analyticsDateFilter.value === '30days') {
+      const d = new Date()
+      d.setDate(d.getDate() - 30)
+      startDate = d.toISOString().split('T')[0]
+      endDate = todayDate
+    }
+
+    const data = await fetchPesantrenAnalytics(selectedSchoolId.value, {
+      classId: isFoundationAggregate.value ? undefined : (selectedClassId.value || undefined),
+      startDate,
+      endDate,
+      aggregateFoundation: isFoundationOwner.value && isFoundationAggregate.value
+    })
+    analyticsData.value = data
+  } catch (err: any) {
+    console.error('Failed fetching pesantren analytics:', err)
+  } finally {
+    loadingAnalytics.value = false
+  }
+}
+
+const drillDownToSchool = async (schoolId: string) => {
+  isFoundationAggregate.value = false
+  selectedSchoolId.value = schoolId
+  await loadPesantrenAnalytics()
+}
 
 // Tahfidz Form Model
 const tahfidzForm = ref({
@@ -244,6 +299,12 @@ watch(filteredClassesList, (newVal) => {
 
 // When selected class changes, load class students and records
 watch(selectedClassId, async (newClassId) => {
+  if (activeTab.value === 'analytics') {
+    if (selectedSchoolId.value) {
+      await loadPesantrenAnalytics()
+    }
+    return
+  }
   if (newClassId && selectedSchoolId.value) {
     loading.value = true
     try {
@@ -362,8 +423,12 @@ watch(selectedDate, (newDate) => {
   }
 })
 
-watch(activeTab, () => {
-  if (selectedClassId.value) {
+watch([activeTab, analyticsDateFilter, isFoundationAggregate], ([newTab]) => {
+  if (newTab === 'analytics') {
+    if (selectedSchoolId.value) {
+      loadPesantrenAnalytics()
+    }
+  } else if (selectedClassId.value) {
     loadCurrentData()
   }
 })
@@ -626,53 +691,694 @@ const handleSaveBulkIbadah = async () => {
       </div>
     </div>
 
-    <!-- Empty State (When no class is selected, exactly like /report) -->
-    <div
-      v-if="!selectedClassId"
-      class="bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-16 text-center text-slate-400 dark:text-zinc-500 shadow-sm"
-    >
-      <BookOpen class="mx-auto mb-3 opacity-40 text-emerald-600" :size="40" />
-      <h3 class="font-bold text-slate-700 dark:text-zinc-300 text-sm">Belum Ada Kelas yang Dipilih</h3>
-      <p class="text-xs mt-1 max-w-sm mx-auto">
-        Silakan tentukan unit sekolah, tahun ajaran, dan kelas rombel/kamar di atas untuk mengelola setoran tahfidz dan mutaaba'ah santri.
-      </p>
+    <!-- Mode Tabs (Tahfidz, Ibadah, Analitik) -->
+    <div class="flex border-b border-slate-200 dark:border-zinc-800 space-x-2 overflow-x-auto">
+      <button
+        type="button"
+        @click="activeTab = 'tahfidz'"
+        :class="[
+          'flex items-center gap-2 px-4 py-2.5 text-xs md:text-sm font-bold border-b-2 transition cursor-pointer whitespace-nowrap',
+          activeTab === 'tahfidz'
+            ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20'
+            : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:border-slate-300'
+        ]"
+      >
+        <BookOpen :size="16" />
+        <span>Input Setoran Tahfidz / Tasmi'</span>
+      </button>
+
+      <button
+        type="button"
+        @click="activeTab = 'ibadah'"
+        :class="[
+          'flex items-center gap-2 px-4 py-2.5 text-xs md:text-sm font-bold border-b-2 transition cursor-pointer whitespace-nowrap',
+          activeTab === 'ibadah'
+            ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20'
+            : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:border-slate-300'
+        ]"
+      >
+        <Clock :size="16" />
+        <span>Mutaaba'ah Ibadah Santri (Checklist Massal)</span>
+      </button>
+
+      <button
+        type="button"
+        @click="activeTab = 'analytics'"
+        :class="[
+          'flex items-center gap-2 px-4 py-2.5 text-xs md:text-sm font-bold border-b-2 transition cursor-pointer whitespace-nowrap',
+          activeTab === 'analytics'
+            ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20'
+            : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:border-slate-300'
+        ]"
+      >
+        <BarChart3 :size="16" />
+        <span>Analitik & Rekap Lembaga (Yayasan / Sekolah)</span>
+      </button>
     </div>
 
-    <!-- Main Content when class is selected -->
-    <template v-else>
-      <!-- Mode Tabs -->
-      <div class="flex border-b border-slate-200 dark:border-zinc-800 space-x-2">
-        <button
-          type="button"
-          @click="activeTab = 'tahfidz'"
-          :class="[
-            'flex items-center gap-2 px-4 py-2.5 text-xs md:text-sm font-bold border-b-2 transition cursor-pointer',
-            activeTab === 'tahfidz'
-              ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20'
-              : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:border-slate-300'
-          ]"
-        >
-          <BookOpen :size="16" />
-          <span>Input Setoran Tahfidz / Tasmi'</span>
-        </button>
+    <!-- TAB 3: ANALITIK & REKAP LEMBAGA (YAYASAN / SEKOLAH) -->
+    <div v-show="activeTab === 'analytics'" class="space-y-6">
+      <!-- Top Executive Banner -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-gradient-to-r from-emerald-900/10 via-emerald-600/5 to-teal-900/10 dark:from-emerald-950/40 dark:to-teal-950/30 border border-emerald-200/60 dark:border-emerald-800/40 rounded-xl p-4 sm:p-5 shadow-xs">
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span
+              class="px-2.5 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider text-white shadow-xs flex items-center gap-1.5"
+              :class="isFoundationAggregate ? 'bg-indigo-600' : 'bg-emerald-600'"
+            >
+              <component :is="isFoundationAggregate ? Layers : Building2" :size="12" />
+              {{ isFoundationAggregate ? 'Agregasi Seluruh Yayasan' : 'Analitik Unit Sekolah' }}
+            </span>
+            <span v-if="isFoundationAggregate" class="text-xs font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-1">
+              <Building2 :size="12" /> Cakupan: {{ analyticsData?.foundation_schools?.length || 0 }} Unit Sekolah Terkonsolidasi
+            </span>
+            <span v-else-if="selectedClassId" class="text-xs font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
+              <Filter :size="12" /> Filter Rombel: {{ classes.find((c: any) => c.id === selectedClassId)?.class_name || 'Kelas' }}
+            </span>
+            <span v-else class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+              <ShieldCheck :size="12" /> Unit: {{ schools.find((s: any) => s.id === selectedSchoolId)?.name || 'Sekolah Terpilih' }}
+            </span>
+          </div>
 
-        <button
-          type="button"
-          @click="activeTab = 'ibadah'"
-          :class="[
-            'flex items-center gap-2 px-4 py-2.5 text-xs md:text-sm font-bold border-b-2 transition cursor-pointer',
-            activeTab === 'ibadah'
-              ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20'
-              : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:border-slate-300'
-          ]"
-        >
-          <Clock :size="16" />
-          <span>Mutaaba'ah Ibadah Santri (Checklist Massal)</span>
-        </button>
+          <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-zinc-100 mt-1 flex items-center gap-2">
+            <TrendingUp class="text-emerald-600 dark:text-emerald-400" :size="20" />
+            {{ isFoundationAggregate ? 'Konsolidasi Analisis Seluruh Unit Sekolah Yayasan' : 'Analisis Capaian Tahfidz & Kedisiplinan Ibadah' }}
+          </h2>
+          <p class="text-xs text-slate-600 dark:text-zinc-400">
+            <template v-if="isFoundationAggregate">
+              Ringkasan makro dan perbandingan produktivitas seluruh unit sekolah di bawah naungan yayasan.
+            </template>
+            <template v-else>
+              Agregasi makro capaian hafalan santri, sebaran juz, dan kepatuhan sholat fardhu berjamaah untuk Kepala Sekolah & Ustadz.
+            </template>
+          </p>
+        </div>
+
+        <!-- Controls: Foundation Scope Toggle (Role User Only) & Time Range Filter -->
+        <div class="flex flex-wrap items-center gap-2 self-start lg:self-center">
+          <!-- Toggle Role User/Super Admin: Unit vs Yayasan -->
+          <div v-if="isFoundationOwner" class="flex items-center bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg p-1 text-xs font-semibold shadow-xs">
+            <button
+              type="button"
+              @click="isFoundationAggregate = false"
+              :class="[
+                'px-2.5 py-1 rounded transition cursor-pointer flex items-center gap-1.5',
+                !isFoundationAggregate
+                  ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-xs'
+                  : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100'
+              ]"
+              title="Analitik Hanya Untuk Unit Sekolah Terpilih"
+            >
+              <Building2 :size="13" />
+              <span>Unit Ini</span>
+            </button>
+            <button
+              type="button"
+              @click="isFoundationAggregate = true"
+              :class="[
+                'px-2.5 py-1 rounded transition cursor-pointer flex items-center gap-1.5',
+                isFoundationAggregate
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-zinc-400 hover:text-indigo-600'
+              ]"
+              title="Agregasi Lintas Seluruh Unit Sekolah Yayasan"
+            >
+              <Layers :size="13" />
+              <span>Semua Sekolah</span>
+            </button>
+          </div>
+
+          <!-- Role Principal Indicator (Locked to Single School) -->
+          <div
+            v-else-if="isPrincipal"
+            class="px-2.5 py-1.5 bg-slate-100 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/60 rounded-lg text-slate-600 dark:text-zinc-300 text-xs font-semibold flex items-center gap-1.5"
+            title="Akses analitik dibatasi khusus untuk unit sekolah yang Anda pimpin"
+          >
+            <Building2 :size="13" class="text-emerald-600" />
+            <span class="max-w-[140px] truncate">{{ schools.find((s: any) => s.id === selectedSchoolId)?.name || 'Unit Anda' }}</span>
+          </div>
+
+          <!-- Time Range Filter Pills -->
+          <div class="flex items-center bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg p-1 text-xs font-semibold shadow-xs">
+            <button
+              type="button"
+              @click="analyticsDateFilter = 'all'"
+              :class="[
+                'px-2.5 py-1 rounded transition cursor-pointer',
+                analyticsDateFilter === 'all'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-zinc-400 hover:text-emerald-600'
+              ]"
+            >
+              Semua
+            </button>
+            <button
+              type="button"
+              @click="analyticsDateFilter = '30days'"
+              :class="[
+                'px-2.5 py-1 rounded transition cursor-pointer',
+                analyticsDateFilter === '30days'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-zinc-400 hover:text-emerald-600'
+              ]"
+            >
+              30 Hari
+            </button>
+            <button
+              type="button"
+              @click="analyticsDateFilter = 'today'"
+              :class="[
+                'px-2.5 py-1 rounded transition cursor-pointer',
+                analyticsDateFilter === 'today'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-zinc-400 hover:text-emerald-600'
+              ]"
+            >
+              Hari Ini
+            </button>
+          </div>
+
+          <button
+            type="button"
+            @click="loadPesantrenAnalytics"
+            :disabled="loadingAnalytics"
+            class="p-2 border border-slate-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition cursor-pointer shadow-xs disabled:opacity-50"
+            title="Muat Ulang Analisis"
+          >
+            <RefreshCw :size="16" :class="{ 'animate-spin text-emerald-600': loadingAnalytics }" />
+          </button>
+        </div>
       </div>
 
-      <!-- TAB 1: INPUT SETORAN TAHFIDZ -->
-      <div v-show="activeTab === 'tahfidz'" class="space-y-6">
+      <!-- Loading State for Analytics -->
+      <div v-if="loadingAnalytics" class="py-16 text-center text-slate-400 dark:text-zinc-500">
+        <RefreshCw class="mx-auto mb-3 animate-spin text-emerald-600" :size="32" />
+        <p class="text-sm font-semibold text-slate-700 dark:text-zinc-300">Menghitung agregasi data analitik pesantren...</p>
+      </div>
+
+      <template v-else-if="analyticsData">
+        <!-- 4 Executive Stat Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Card 1: Total Setoran -->
+          <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-xl p-4 shadow-xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Total Setoran Tahfidz</span>
+              <span class="p-2 rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">
+                <BookMarked :size="16" />
+              </span>
+            </div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span class="text-2xl font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.overview.total_setoran }}</span>
+              <span class="text-xs text-slate-500">kali setoran</span>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-xs">
+              <span class="text-slate-500 dark:text-zinc-400">{{ analyticsData.overview.active_tahfidz_students }} santri aktif</span>
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                {{ analyticsData.overview.pass_rate }}% Lulus
+              </span>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
+          </div>
+
+          <!-- Card 2: Rata-rata Skor -->
+          <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-xl p-4 shadow-xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Rata-rata Nilai</span>
+              <span class="p-2 rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
+                <Award :size="16" />
+              </span>
+            </div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span class="text-2xl font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.overview.avg_score }}</span>
+              <span class="text-xs text-slate-500">/ 100</span>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-xs">
+              <span class="text-slate-500 dark:text-zinc-400">Kualitas Tajwid & Makhraj</span>
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                {{ analyticsData.overview.avg_score >= 90 ? 'Mutqin / Mumtaz' : (analyticsData.overview.avg_score >= 80 ? 'Jayyid Jiddan' : 'Jayyid') }}
+              </span>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-yellow-400"></div>
+          </div>
+
+          <!-- Card 3: Kepatuhan Sholat Fardhu 5 Waktu -->
+          <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-xl p-4 shadow-xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Kepatuhan Sholat Fardhu</span>
+              <span class="p-2 rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400">
+                <CheckCircle2 :size="16" />
+              </span>
+            </div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span class="text-2xl font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.overview.fardhu_compliance_rate }}%</span>
+              <span class="text-xs text-slate-500">berjamaah</span>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-xs">
+              <span class="text-slate-500 dark:text-zinc-400">Rerata 5 Waktu</span>
+              <span :class="[
+                'px-1.5 py-0.5 rounded text-[10px] font-bold',
+                analyticsData.overview.fardhu_compliance_rate >= 80 ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'
+              ]">
+                {{ analyticsData.overview.fardhu_compliance_rate >= 80 ? 'Sangat Tertib' : 'Perlu Pendisiplinan' }}
+              </span>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-cyan-400"></div>
+          </div>
+
+          <!-- Card 4: Total Log Mutaaba'ah -->
+          <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-xl p-4 shadow-xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Log Mutaaba'ah</span>
+              <span class="p-2 rounded-lg bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-400">
+                <Activity :size="16" />
+              </span>
+            </div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span class="text-2xl font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.overview.total_ibadah_entries }}</span>
+              <span class="text-xs text-slate-500">sesi checklist</span>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-xs">
+              <span class="text-slate-500 dark:text-zinc-400">{{ analyticsData.overview.active_ibadah_students }} santri terdata</span>
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
+                Presensi Ibadah
+              </span>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 to-purple-400"></div>
+          </div>
+        </div>
+
+        <!-- Section 2: Sebaran Capaian Juz & Segmentasi Kelancaran -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Sebaran Capaian Per Juz -->
+          <BaseCard stripe class="lg:col-span-2 space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800">
+              <div class="flex items-center gap-2">
+                <BookOpen class="text-emerald-600" :size="18" />
+                <h3 class="font-black text-sm text-slate-900 dark:text-zinc-100">Sebaran Capaian Hafalan Santri per Juz</h3>
+              </div>
+              <span class="text-[11px] text-slate-400 font-semibold">Distribusi Setoran Al-Qur'an</span>
+            </div>
+
+            <div v-if="analyticsData.juz_distribution.length === 0" class="py-12 text-center text-slate-400">
+              <BookMarked class="mx-auto mb-2 opacity-30 text-emerald-600" :size="32" />
+              <p class="text-xs">Belum ada data setoran tahfidz pada rentang filter ini.</p>
+            </div>
+
+            <div v-else class="space-y-4">
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
+                <div
+                  v-for="j in analyticsData.juz_distribution"
+                  :key="j.juz"
+                  class="p-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/50 hover:border-emerald-500/60 transition group cursor-default"
+                >
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-black text-slate-900 dark:text-zinc-100 group-hover:text-emerald-600">Juz {{ j.juz }}</span>
+                    <span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400">
+                      {{ j.count }}x
+                    </span>
+                  </div>
+                  <div class="mt-1.5 flex items-center justify-between text-[10px] text-slate-500 dark:text-zinc-400">
+                    <span>Rerata Nilai:</span>
+                    <span class="font-bold text-slate-700 dark:text-zinc-200">{{ j.avg_score }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </BaseCard>
+
+          <!-- Segmentasi Tingkat Kelancaran (Fluency Breakdown) -->
+          <BaseCard stripe class="lg:col-span-1 space-y-4">
+            <div class="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-zinc-800">
+              <Award class="text-amber-500" :size="18" />
+              <h3 class="font-black text-sm text-slate-900 dark:text-zinc-100">Tingkat Kelancaran (Fluency)</h3>
+            </div>
+
+            <div v-if="analyticsData.fluency_breakdown.length === 0" class="py-12 text-center text-slate-400">
+              <p class="text-xs">Belum ada rekapan kelancaran santri.</p>
+            </div>
+
+            <div v-else class="space-y-3.5">
+              <div v-for="f in analyticsData.fluency_breakdown" :key="f.fluency_level" class="space-y-1">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-bold text-slate-700 dark:text-zinc-300">{{ f.fluency_level }}</span>
+                  <span class="font-extrabold text-slate-900 dark:text-zinc-100">{{ f.count }} santri ({{ f.percentage }}%)</span>
+                </div>
+                <div class="w-full bg-slate-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
+                  <div
+                    class="h-full rounded-full transition-all duration-500"
+                    :class="[
+                      f.fluency_level === 'Mutqin' ? 'bg-emerald-500' : (
+                        f.fluency_level === 'Mumtaz' || f.fluency_level === 'Jayyid Jiddan' ? 'bg-sky-500' : (
+                          f.fluency_level === 'Jayyid' ? 'bg-amber-500' : 'bg-rose-500'
+                        )
+                      )
+                    ]"
+                    :style="{ width: `${f.percentage}%` }"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- Status Kelulusan Mini Box -->
+              <div class="pt-3 border-t border-slate-100 dark:border-zinc-800 grid grid-cols-2 gap-2 text-center">
+                <div class="p-2 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800/40">
+                  <span class="block text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase">Lulus Munaqasyah</span>
+                  <span class="text-base font-black text-emerald-700 dark:text-emerald-400">
+                    {{ analyticsData.status_breakdown.find((s: any) => s.status === 'Lulus')?.count || 0 }} sesi
+                  </span>
+                </div>
+                <div class="p-2 rounded-lg bg-rose-50/60 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-800/40">
+                  <span class="block text-[10px] font-bold text-rose-800 dark:text-rose-300 uppercase">Perlu Muroja'ah</span>
+                  <span class="text-base font-black text-rose-700 dark:text-rose-400">
+                    {{ (analyticsData.status_breakdown.find((s: any) => s.status === 'Belum Lulus')?.count || 0) + (analyticsData.status_breakdown.find((s: any) => s.status === 'Muroja\'ah')?.count || 0) }} sesi
+                  </span>
+                </div>
+              </div>
+            </div>
+          </BaseCard>
+        </div>
+
+        <!-- Section 3: Matriks Kepatuhan 8 Ibadah Yaumiyah -->
+        <BaseCard stripe class="space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-zinc-800">
+            <div class="flex items-center gap-2">
+              <Sun class="text-amber-500" :size="18" />
+              <h3 class="font-black text-sm text-slate-900 dark:text-zinc-100">Matriks Kedisiplinan Mutaaba'ah Ibadah Yaumiyah</h3>
+            </div>
+            <span class="text-xs text-slate-500 dark:text-zinc-400">
+              Total {{ analyticsData.ibadah_matrix.total_records }} catatan mutaaba'ah harian
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+            <!-- Subuh -->
+            <div class="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/40 text-center space-y-1.5">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Sholat Subuh</span>
+              <p class="text-lg font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.ibadah_matrix.sholat_subuh }}%</p>
+              <div class="w-full bg-slate-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-emerald-500 h-full rounded-full" :style="{ width: `${analyticsData.ibadah_matrix.sholat_subuh}%` }"></div>
+              </div>
+              <span class="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">Berjamaah</span>
+            </div>
+
+            <!-- Dzuhur -->
+            <div class="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/40 text-center space-y-1.5">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Sholat Dzuhur</span>
+              <p class="text-lg font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.ibadah_matrix.sholat_dzuhur }}%</p>
+              <div class="w-full bg-slate-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-emerald-500 h-full rounded-full" :style="{ width: `${analyticsData.ibadah_matrix.sholat_dzuhur}%` }"></div>
+              </div>
+              <span class="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">Berjamaah</span>
+            </div>
+
+            <!-- Ashar -->
+            <div class="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/40 text-center space-y-1.5">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Sholat Ashar</span>
+              <p class="text-lg font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.ibadah_matrix.sholat_ashar }}%</p>
+              <div class="w-full bg-slate-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-emerald-500 h-full rounded-full" :style="{ width: `${analyticsData.ibadah_matrix.sholat_ashar}%` }"></div>
+              </div>
+              <span class="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">Berjamaah</span>
+            </div>
+
+            <!-- Maghrib -->
+            <div class="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/40 text-center space-y-1.5">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Sholat Maghrib</span>
+              <p class="text-lg font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.ibadah_matrix.sholat_maghrib }}%</p>
+              <div class="w-full bg-slate-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-emerald-500 h-full rounded-full" :style="{ width: `${analyticsData.ibadah_matrix.sholat_maghrib}%` }"></div>
+              </div>
+              <span class="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">Berjamaah</span>
+            </div>
+
+            <!-- Isya -->
+            <div class="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/40 text-center space-y-1.5">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Sholat Isya</span>
+              <p class="text-lg font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.ibadah_matrix.sholat_isya }}%</p>
+              <div class="w-full bg-slate-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-emerald-500 h-full rounded-full" :style="{ width: `${analyticsData.ibadah_matrix.sholat_isya}%` }"></div>
+              </div>
+              <span class="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">Berjamaah</span>
+            </div>
+
+            <!-- Tahajud -->
+            <div class="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/40 text-center space-y-1.5">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-500">Qiyamul Lail</span>
+              <p class="text-lg font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.ibadah_matrix.sholat_tahajud }}%</p>
+              <div class="w-full bg-slate-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-indigo-500 h-full rounded-full" :style="{ width: `${analyticsData.ibadah_matrix.sholat_tahajud}%` }"></div>
+              </div>
+              <span class="text-[9px] font-semibold text-indigo-600 dark:text-indigo-400">Tahajud</span>
+            </div>
+
+            <!-- Dhuha -->
+            <div class="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/40 text-center space-y-1.5">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-amber-500">Sholat Dhuha</span>
+              <p class="text-lg font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.ibadah_matrix.sholat_dhuha }}%</p>
+              <div class="w-full bg-slate-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-amber-500 h-full rounded-full" :style="{ width: `${analyticsData.ibadah_matrix.sholat_dhuha}%` }"></div>
+              </div>
+              <span class="text-[9px] font-semibold text-amber-600 dark:text-amber-400">Sunnah Pagi</span>
+            </div>
+
+            <!-- Tilawah -->
+            <div class="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/40 text-center space-y-1.5">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-teal-500">Tilawah Quran</span>
+              <p class="text-lg font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.ibadah_matrix.tilawah_quran }}%</p>
+              <div class="w-full bg-slate-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-teal-500 h-full rounded-full" :style="{ width: `${analyticsData.ibadah_matrix.tilawah_quran}%` }"></div>
+              </div>
+              <span class="text-[9px] font-semibold text-teal-600 dark:text-teal-400">Tadarus Harian</span>
+            </div>
+          </div>
+        </BaseCard>
+
+        <!-- Section 4: Top Achievers vs Remedial Support Alert -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Leaderboard Santri Berprestasi -->
+          <BaseCard stripe class="space-y-3.5">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800">
+              <div class="flex items-center gap-2">
+                <Trophy class="text-amber-500" :size="18" />
+                <h3 class="font-black text-sm text-slate-900 dark:text-zinc-100">Top 5 Santri Teraktif & Nilai Tertinggi</h3>
+              </div>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-400 font-bold">
+                Prestasi Santri
+              </span>
+            </div>
+
+            <div v-if="analyticsData.top_students.length === 0" class="py-12 text-center text-slate-400">
+              <p class="text-xs">Belum ada setoran tercatat untuk menentukan santri teraktif.</p>
+            </div>
+
+            <div v-else class="space-y-2.5">
+              <div
+                v-for="(s, idx) in analyticsData.top_students"
+                :key="s.student_id"
+                class="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-950/50 hover:bg-slate-50 dark:hover:bg-zinc-900 transition"
+              >
+                <div class="flex items-center gap-3">
+                  <span
+                    class="w-7 h-7 rounded-full flex items-center justify-center font-black text-xs shrink-0"
+                    :class="[
+                      idx === 0 ? 'bg-amber-500 text-white shadow-xs' : (
+                        idx === 1 ? 'bg-slate-300 text-slate-800 dark:bg-zinc-700 dark:text-zinc-200' : (
+                          idx === 2 ? 'bg-amber-700 text-white' : 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400'
+                        )
+                      )
+                    ]"
+                  >
+                    {{ idx + 1 }}
+                  </span>
+                  <div>
+                    <h4 class="font-bold text-xs text-slate-900 dark:text-zinc-100">{{ s.student_name }}</h4>
+                    <p class="text-[11px] text-slate-400">NIS: {{ s.nis || '-' }} • Rombel: {{ s.class_name }}</p>
+                  </div>
+                </div>
+
+                <div class="text-right">
+                  <div class="flex items-center gap-1.5 justify-end">
+                    <span class="text-xs font-black text-emerald-600 dark:text-emerald-400">{{ s.total_setoran }}x setoran</span>
+                    <span class="text-[10px] px-1.5 py-0.2 rounded bg-amber-50 text-amber-700 dark:bg-amber-950/50 font-bold">Skor: {{ s.avg_score }}</span>
+                  </div>
+                  <span class="text-[10px] text-slate-400">Capaian: s/d Juz {{ s.max_juz }}</span>
+                </div>
+              </div>
+            </div>
+          </BaseCard>
+
+          <!-- Early Warning System: Santri Perlu Bimbingan -->
+          <BaseCard stripe class="space-y-3.5 border-t-4 border-t-rose-500">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800">
+              <div class="flex items-center gap-2">
+                <AlertCircle class="text-rose-500" :size="18" />
+                <h3 class="font-black text-sm text-slate-900 dark:text-zinc-100">Peringatan Dini: Santri Perlu Pendampingan</h3>
+              </div>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-400 font-bold">
+                Intervensi Remedial
+              </span>
+            </div>
+
+            <div v-if="analyticsData.students_needing_support.length === 0" class="py-12 text-center text-slate-400">
+              <CheckCircle2 class="mx-auto mb-2 text-emerald-500 opacity-60" :size="32" />
+              <p class="text-xs text-emerald-600 font-bold">Alhamdulillah, seluruh santri lulus setoran dengan nilai baik!</p>
+            </div>
+
+            <div v-else class="space-y-2.5">
+              <div
+                v-for="s in analyticsData.students_needing_support"
+                :key="s.student_id"
+                class="p-3 rounded-xl border border-rose-100 dark:border-rose-950/60 bg-rose-50/30 dark:bg-rose-950/20 flex flex-col gap-1.5"
+              >
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h4 class="font-bold text-xs text-slate-900 dark:text-zinc-100">{{ s.student_name }}</h4>
+                    <p class="text-[11px] text-slate-400">NIS: {{ s.nis || '-' }} • Rombel: {{ s.class_name }}</p>
+                  </div>
+                  <div class="text-right">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
+                      {{ s.remedial_count }}x Remedial / Skor &lt; 75
+                    </span>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Nilai Terendah: {{ s.lowest_score }}</p>
+                  </div>
+                </div>
+                <div v-if="s.notes" class="text-[11px] text-rose-700 dark:text-rose-400 italic bg-white/70 dark:bg-zinc-900/60 p-2 rounded-lg border border-rose-100/60">
+                  Catatan Ustadz: "{{ s.notes }}"
+                </div>
+              </div>
+            </div>
+          </BaseCard>
+        </div>
+
+        <!-- Section 5: Komparasi Produktivitas Antar Unit Sekolah Yayasan (Khusus Agregasi Yayasan) -->
+        <BaseCard v-if="analyticsData.is_foundation_aggregate && analyticsData.school_comparison?.length" stripe class="space-y-4 border-t-4 border-t-indigo-600">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800">
+            <div class="flex items-center gap-2">
+              <Building2 class="text-indigo-600 dark:text-indigo-400" :size="18" />
+              <h3 class="font-black text-sm text-slate-900 dark:text-zinc-100">Komparasi Kinerja Antar Unit Sekolah Yayasan</h3>
+            </div>
+            <span class="text-xs text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-0.5 rounded-full">
+              {{ analyticsData.school_comparison.length }} Unit Terdaftar
+            </span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-zinc-800 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                  <th class="py-2.5 px-3">Nama Unit Sekolah</th>
+                  <th class="py-2.5 px-3 text-center">Jumlah Santri</th>
+                  <th class="py-2.5 px-3 text-center">Total Setoran Tahfidz</th>
+                  <th class="py-2.5 px-3 text-center">Rata-rata Nilai</th>
+                  <th class="py-2.5 px-3 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60">
+                <tr
+                  v-for="s in analyticsData.school_comparison"
+                  :key="s.school_id"
+                  class="hover:bg-slate-50/60 dark:hover:bg-zinc-900/50 transition"
+                >
+                  <td class="py-3 px-3 font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
+                    <Building2 :size="14" class="text-slate-400" />
+                    <span>{{ s.school_name }}</span>
+                    <span v-if="s.school_id === selectedSchoolId" class="text-[9px] px-1.5 py-0.2 bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-400 font-bold rounded">Aktif</span>
+                  </td>
+                  <td class="py-3 px-3 text-center text-slate-600 dark:text-zinc-300 font-semibold">{{ s.total_students }} santri</td>
+                  <td class="py-3 px-3 text-center">
+                    <span class="px-2 py-0.5 rounded font-extrabold text-[11px] bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300">
+                      {{ s.total_setoran }} setoran
+                    </span>
+                  </td>
+                  <td class="py-3 px-3 text-center font-bold text-slate-800 dark:text-zinc-200">
+                    {{ s.avg_score || 0 }} / 100
+                  </td>
+                  <td class="py-3 px-3 text-right">
+                    <button
+                      type="button"
+                      @click="drillDownToSchool(s.school_id)"
+                      class="text-[11px] text-indigo-600 dark:text-indigo-400 font-bold hover:underline cursor-pointer"
+                    >
+                      Buka Rincian Unit Ini →
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </BaseCard>
+
+        <!-- Section 6: Komparasi Performa Antar Rombel / Kamar -->
+        <BaseCard stripe class="space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800">
+            <div class="flex items-center gap-2">
+              <BarChart3 class="text-indigo-600" :size="18" />
+              <h3 class="font-black text-sm text-slate-900 dark:text-zinc-100">Komparasi Performa Antar Kelas / Kamar Asrama</h3>
+            </div>
+            <span class="text-xs text-slate-400">Evaluasi Produktivitas Halaqah</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-zinc-800 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                  <th class="py-2.5 px-3">Nama Kelas / Rombel</th>
+                  <th class="py-2.5 px-3 text-center">Jumlah Santri</th>
+                  <th class="py-2.5 px-3 text-center">Total Setoran Tahfidz</th>
+                  <th class="py-2.5 px-3 text-center">Rata-rata Nilai</th>
+                  <th class="py-2.5 px-3 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60">
+                <tr
+                  v-for="c in analyticsData.class_comparison"
+                  :key="c.class_id"
+                  class="hover:bg-slate-50/60 dark:hover:bg-zinc-900/50 transition"
+                >
+                  <td class="py-3 px-3 font-bold text-slate-900 dark:text-zinc-100">{{ c.class_name }}</td>
+                  <td class="py-3 px-3 text-center text-slate-600 dark:text-zinc-300">{{ c.total_students }} santri</td>
+                  <td class="py-3 px-3 text-center">
+                    <span class="px-2 py-0.5 rounded font-extrabold text-[11px] bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                      {{ c.total_setoran }} setoran
+                    </span>
+                  </td>
+                  <td class="py-3 px-3 text-center font-bold text-slate-800 dark:text-zinc-200">
+                    {{ c.avg_score || 0 }} / 100
+                  </td>
+                  <td class="py-3 px-3 text-right">
+                    <button
+                      type="button"
+                      @click="selectedClassId = c.class_id"
+                      class="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                    >
+                      Saring Rombel Ini →
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </BaseCard>
+      </template>
+    </div>
+
+    <!-- Mode Tahfidz & Ibadah (Membutuhkan Kelas Terpilih) -->
+    <template v-if="activeTab !== 'analytics'">
+      <!-- Empty State (When no class is selected, exactly like /report) -->
+      <div
+        v-if="!selectedClassId"
+        class="bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-16 text-center text-slate-400 dark:text-zinc-500 shadow-sm"
+      >
+        <BookOpen class="mx-auto mb-3 opacity-40 text-emerald-600" :size="40" />
+        <h3 class="font-bold text-slate-700 dark:text-zinc-300 text-sm">Belum Ada Kelas yang Dipilih</h3>
+        <p class="text-xs mt-1 max-w-sm mx-auto">
+          Silakan tentukan unit sekolah, tahun ajaran, dan kelas rombel/kamar di atas untuk mengelola setoran tahfidz dan mutaaba'ah santri.
+        </p>
+      </div>
+
+      <!-- Main Content when class is selected -->
+      <template v-else>
+        <!-- TAB 1: INPUT SETORAN TAHFIDZ -->
+        <div v-show="activeTab === 'tahfidz'" class="space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Input Form Card -->
           <BaseCard stripe class="lg:col-span-1 border-t-4 border-t-emerald-600 space-y-4">
@@ -1108,6 +1814,7 @@ const handleSaveBulkIbadah = async () => {
           </div>
         </BaseCard>
       </div>
+    </template>
     </template>
   </div>
 </template>

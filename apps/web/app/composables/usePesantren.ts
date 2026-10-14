@@ -69,6 +69,32 @@ export const usePesantren = () => {
     return res.success ? res.data : []
   }
 
+  const fetchPesantrenAnalytics = async (
+    schoolId: string,
+    opts: { classId?: string; startDate?: string; endDate?: string; aggregateFoundation?: boolean } = {}
+  ) => {
+    const params = new URLSearchParams()
+    if (opts.classId) params.append('class_id', opts.classId)
+    if (opts.startDate) params.append('start_date', opts.startDate)
+    if (opts.endDate) params.append('end_date', opts.endDate)
+    if (opts.aggregateFoundation) params.append('aggregate_foundation', 'true')
+    const queryString = params.toString() ? `?${params.toString()}` : ''
+    const res: any = await fetcher(`/school/${schoolId}/pesantren/analytics${queryString}`)
+    return res.success ? res.data : null
+  }
+
+  const fetchFoundationPesantrenAnalytics = async (
+    foundationId: string,
+    opts: { startDate?: string; endDate?: string } = {}
+  ) => {
+    const params = new URLSearchParams()
+    if (opts.startDate) params.append('start_date', opts.startDate)
+    if (opts.endDate) params.append('end_date', opts.endDate)
+    const queryString = params.toString() ? `?${params.toString()}` : ''
+    const res: any = await fetcher(`/foundation/${foundationId}/pesantren/analytics${queryString}`)
+    return res.success ? res.data : null
+  }
+
   return {
     recordTahfidz,
     fetchTahfidzList,
@@ -77,6 +103,8 @@ export const usePesantren = () => {
     deleteTahfidz,
     recordIbadah,
     recordIbadahBulk,
-    fetchIbadahByDate
+    fetchIbadahByDate,
+    fetchPesantrenAnalytics,
+    fetchFoundationPesantrenAnalytics
   }
 }
