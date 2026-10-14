@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ClipboardCheck, Users, Check, AlertCircle, Save, CheckCircle2, RefreshCw, ChevronDown } from 'lucide-vue-next'
+import { ClipboardCheck, Users, Check, AlertCircle, Save, CheckCircle2, RefreshCw, ChevronDown, CalendarRange } from 'lucide-vue-next'
 import { BaseCard, BaseButton } from '@eduraport/ui'
 import { useClass } from '../../composables/useClass'
 import { useStudent } from '../../composables/useStudent'
@@ -82,14 +82,16 @@ const loadData = async () => {
     // Fetch students of selected school
     await fetchStudents(schoolId)
 
-    // Fetch existing daily attendance records, checkins, and rules
+    // Fetch existing daily attendance records, checkins, time rules, and approved leave requests
     const existingRes = await fetchDailyAttendances(schoolId, classId, date)
     const attendances = existingRes.data?.attendances || []
     const checkins = existingRes.data?.checkins || []
     const timeRules = existingRes.data?.timeRules || []
+    const approvedLeaves = existingRes.data?.approvedLeaves || []
 
     const existingMap = new Map(attendances.map((a: any) => [a.student_id, a]))
     const checkinMap = new Map(checkins.map((c: any) => [c.student_id, c]))
+    const leaveMap = new Map(approvedLeaves.map((l: any) => [l.student_id, l]))
 
     // Determine applied rule
     let appliedRule = timeRules.find((r: any) => r.scope_type === 'school')
@@ -105,10 +107,18 @@ const loadData = async () => {
 
     for (const stud of classStudents) {
       const checkin = checkinMap.get(stud.id)
+      const approvedLeave = leaveMap.get(stud.id)
       let recStatus: 'hadir' | 'sakit' | 'izin' | 'alpha' | 'terlambat' = 'hadir'
       let checkinTimeStr = ''
       
-      if (checkin && checkin.checked_at) {
+      if (approvedLeave) {
+        const reasonLower = (approvedLeave.reason || '').toLowerCase()
+        if (reasonLower.includes('sakit') || reasonLower.includes('dokter') || reasonLower.includes('rawat') || reasonLower.includes('demam')) {
+          recStatus = 'sakit'
+        } else {
+          recStatus = 'izin'
+        }
+      } else if (checkin && checkin.checked_at) {
         const d = new Date(checkin.checked_at)
         checkinTimeStr = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }).replace('.', ':')
         
@@ -134,19 +144,20 @@ const loadData = async () => {
       sCheckins[stud.id] = {
         checked_at: checkinTimeStr,
         recommended_status: recStatus,
-        has_checkin: !!checkin
+        has_checkin: !!checkin,
+        approved_leave: approvedLeave || null
       }
 
       const exist = existingMap.get(stud.id)
       if (exist) {
         tempMap[stud.id] = {
           status: exist.status,
-          note: exist.note || ''
+          note: exist.note || (approvedLeave ? `Izin resmi: ${approvedLeave.reason}` : '')
         }
       } else {
         tempMap[stud.id] = {
-          status: recStatus, // Default to recommendation
-          note: ''
+          status: recStatus, // Default to recommendation (izin/sakit if approved)
+          note: approvedLeave ? `Izin resmi: ${approvedLeave.reason}` : ''
         }
       }
     }
@@ -356,6 +367,12 @@ const handleSave = async () => {
               <div class="md:col-span-3">
                 <p class="font-bold text-slate-900 dark:text-zinc-100">{{ s.full_name }}</p>
                 <p class="text-[10px] text-slate-400 font-semibold mt-0.5">NIS: {{ s.student_number || '-' }}</p>
+                <div v-if="studentCheckins[s.id]?.approved_leave" class="mt-1.5">
+                  <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800/80 px-2 py-0.5 rounded-md shadow-2xs" :title="studentCheckins[s.id].approved_leave.reason">
+                    <CalendarRange :size="11" class="text-amber-600 dark:text-amber-400 shrink-0" />
+                    <span class="truncate max-w-[160px]">Izin: {{ studentCheckins[s.id].approved_leave.reason }}</span>
+                  </span>
+                </div>
               </div>
 
               <!-- Jam Masuk -->

@@ -65,16 +65,19 @@ onMounted(async () => {
 const loadSchoolData = async (schoolId: string) => {
   loading.value = true
   try {
-    await Promise.all([
-      fetchAcademicYears(schoolId),
-      fetchClasses(schoolId)
-    ])
+    await fetchAcademicYears(schoolId)
     
     if (academicYears.value.length > 0) {
       const activeYear = academicYears.value.find(y => y.is_active)
       selectedAcademicYearId.value = activeYear ? activeYear.id : academicYears.value[0].id
     } else {
       selectedAcademicYearId.value = ''
+    }
+
+    if (selectedAcademicYearId.value) {
+      await fetchClasses(schoolId, selectedAcademicYearId.value)
+    } else {
+      await fetchClasses(schoolId)
     }
     selectedClassId.value = ''
   } catch (error) {
@@ -94,6 +97,18 @@ watch(selectedSchoolId, async (newVal) => {
     classes.value = []
     selectedAcademicYearId.value = ''
     selectedClassId.value = ''
+  }
+})
+
+watch(selectedAcademicYearId, async (newYearId, oldYearId) => {
+  if (newYearId !== oldYearId && newYearId && selectedSchoolId.value) {
+    await fetchClasses(selectedSchoolId.value, newYearId)
+    if (selectedClassId.value) {
+      const classExists = classes.value.find((c: any) => c.id === selectedClassId.value)
+      if (!classExists) {
+        selectedClassId.value = filteredClassesList.value[0]?.id || ''
+      }
+    }
   }
 })
 

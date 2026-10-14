@@ -204,6 +204,18 @@ watch([page, itemPerPage, selectedClassFilter, selectedAcademicYearId], () => {
   }
 })
 
+watch(selectedAcademicYearId, async (newVal, oldVal) => {
+  if (newVal !== oldVal && newVal && selectedSchoolId.value) {
+    await fetchClasses(selectedSchoolId.value, newVal)
+    if (selectedClassFilter.value && selectedClassFilter.value !== '__none__') {
+      const exists = classes.value.find((c: any) => c.id === selectedClassFilter.value)
+      if (!exists) {
+        selectedClassFilter.value = ''
+      }
+    }
+  }
+})
+
 let searchTimeout: any
 watch(searchQuery, (newVal) => {
   clearTimeout(searchTimeout)

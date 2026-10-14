@@ -20,7 +20,8 @@ import {
   CheckCircle2,
   Paperclip,
   Eye,
-  Clock
+  Clock,
+  ShieldCheck
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal } from '@eduraport/ui'
 import { useAcademicYear } from '../composables/useAcademicYear'
@@ -58,6 +59,7 @@ const {
   rejectLeaveRequest
 } = useHomeroom()
 const { user: currentUser } = useAuth()
+const isFoundationOwner = computed(() => ['user', 'super_admin', 'owner'].includes(currentUser.value?.role))
 const toast = useToast()
 const route = useRoute()
 
@@ -137,7 +139,6 @@ const loadSchoolData = async (schoolId: string) => {
   try {
     await Promise.all([
       fetchAcademicYears(schoolId),
-      fetchClasses(schoolId),
       fetchSchoolLeaveRequests(schoolId)
     ])
     
@@ -146,6 +147,12 @@ const loadSchoolData = async (schoolId: string) => {
       selectedAcademicYearId.value = activeYear ? activeYear.id : academicYears.value[0].id
     } else {
       selectedAcademicYearId.value = ''
+    }
+
+    if (selectedAcademicYearId.value) {
+      await fetchClasses(schoolId, selectedAcademicYearId.value)
+    } else {
+      await fetchClasses(schoolId)
     }
   } catch (error) {
     console.error('Failed loading school details:', error)
@@ -168,6 +175,18 @@ watch(selectedSchoolId, async (newVal) => {
   }
 })
 
+watch(selectedAcademicYearId, async (newYearId, oldYearId) => {
+  if (newYearId !== oldYearId && newYearId && selectedSchoolId.value) {
+    await fetchClasses(selectedSchoolId.value, newYearId)
+    if (selectedClassId.value) {
+      const classExists = classes.value.find((c: any) => c.id === selectedClassId.value)
+      if (!classExists) {
+        selectedClassId.value = activeTab.value === 'leave_requests' ? '' : (filteredClassesList.value[0]?.id || '')
+      }
+    }
+  }
+})
+
 watch(() => route.query.tab, (newTab) => {
   if (newTab === 'leave_requests') {
     activeTab.value = 'leave_requests'
@@ -180,12 +199,11 @@ const filteredClassesList = computed(() => {
   if (!classes.value || classes.value.length === 0) return []
   let list = classes.value
   
-  // Filter by selected academic year if matched
+  // Strictly filter by selected academic year
   if (selectedAcademicYearId.value) {
-    const yearFiltered = list.filter(c => c.academic_year_id === selectedAcademicYearId.value)
-    if (yearFiltered.length > 0) {
-      list = yearFiltered
-    }
+    list = list.filter(c => c.academic_year_id === selectedAcademicYearId.value)
+  } else {
+    return []
   }
 
   // Staff and admin roles see all classes
@@ -202,8 +220,10 @@ const filteredClassesList = computed(() => {
 // Automatically pick first available class for user
 watch(filteredClassesList, (newVal) => {
   if (newVal.length > 0) {
-    if (!newVal.some(c => c.id === selectedClassId.value)) {
+    if (activeTab.value !== 'leave_requests' && !selectedClassId.value) {
       selectedClassId.value = newVal[0].id
+    } else if (selectedClassId.value && !newVal.some(c => c.id === selectedClassId.value)) {
+      selectedClassId.value = activeTab.value === 'leave_requests' ? '' : newVal[0].id
     }
   } else {
     selectedClassId.value = ''
@@ -448,10 +468,27 @@ const removePhoto = (studentId: string, slotIndex: number) => {
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">Portal Wali Kelas</h2>
-        <p class="text-xs text-slate-500 dark:text-zinc-400">Kelola Kehadiran/Absensi, Nilai Ekstrakurikuler, dan Catatan Rapor untuk kelas bimbingan Anda.</p>
+        <div class="flex items-center gap-2.5">
+          <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">Portal Wali Kelas</h2>
+          <span 
+            v-if="isFoundationOwner" 
+            class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60 shadow-xs flex items-center gap-1.5"
+            title="Akses Penuh Pengawas Yayasan: Anda dapat memantau dan mengelola data seluruh rombel"
+          >
+            <ShieldCheck :size="12" class="text-indigo-600 dark:text-indigo-400" />
+            Mode Supervisi Yayasan
+          </span>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+          <template v-if="isFoundationOwner">
+            Supervisi dan kelola pengisian Kehadiran/Absensi, Nilai Ekstrakurikuler, Catatan Rapor, dan Izin Siswa lintas seluruh rombel binaan sekolah.
+          </template>
+          <template v-else>
+            Kelola Kehadiran/Absensi, Nilai Ekstrakurikuler, dan Catatan Rapor untuk kelas bimbingan Anda.
+          </template>
+        </p>
       </div>
-      <div class="flex gap-2 flex-wrap" v-if="selectedClassId">
+      <div class="flex gap-2 flex-wrap" v-if="selectedClassId && activeTab !== 'leave_requests'">
         <BaseButton variant="outline" @click="handleDownload" class="py-2.5 px-4 text-xs font-bold">
           <Download class="mr-1.5" :size="14" /> Unduh Template
         </BaseButton>
@@ -494,8 +531,11 @@ const removePhoto = (studentId: string, slotIndex: number) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Kelas Rombel</label>
-        <select v-model="selectedClassId" :disabled="filteredClassesList.length === 0" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
-          <option value="" disabled>Pilih Kelas</option>
+        <select v-model="selectedClassId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <option v-if="activeTab === 'leave_requests' || ['super_admin', 'principal', 'tu', 'user'].includes(currentUser?.role)" value="">
+            Semua Kelas (Seluruh Unit Sekolah)
+          </option>
+          <option v-else-if="filteredClassesList.length === 0" value="" disabled>Pilih Kelas</option>
           <option v-for="c in filteredClassesList" :key="c.id" :value="c.id">
             {{ c.class_name || c.name }}
           </option>
