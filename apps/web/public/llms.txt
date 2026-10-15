@@ -1,18 +1,28 @@
 # EduRaport
 
-EduRaport is a B2B SaaS ERP Education platform and Smart School Assistant designed for private schools (TK, SD, SMP, SMA) and Yayasan (Foundations) in Indonesia. 
-It shifts school decision-making from intuition to data-driven by integrating e-Raport (following Kurikulum Merdeka PPA 2025 guidelines), academic management, and financial/SPP tracking into a single unified ecosystem.
+> EduRaport is an all-in-one B2B SaaS ERP Education & Smart E-Raport platform engineered for Indonesian private schools (TK, SD, SMP, SMA), Islamic boarding schools (pesantren), and multi-unit foundations (Yayasan).
 
-## Core Strategic Pillars
-- **Satu Identitas Lintas Jenjang (Data Silo Elimination)**: Persistent student identity from TK to SMA for Yayasan multi-unit. No re-entry needed when a student moves to a higher grade.
-- **Kepatuhan Kurikulum 2025 (AI Guardrails)**: Automatically blocks written cognitive tests for PAUD/Fase A and guides teachers to observational assessments to ensure government compliance.
-- **Mood Check-in & Churn Prevention**: QR attendance captures daily student emotions. A 3-day negative trend automatically alerts the homeroom teacher to intervene, increasing student retention and parent peace of mind.
-- **Executive Dashboard**: Delivers daily "Helicopter View" reports (teacher attendance, empty classes, cash flow) via WhatsApp at 06:00 AM to Principals.
-- **Financial Integration**: Auto-posting journal, SPP aging buckets, and automatic report card locks for students with unpaid tuition.
-- **Visual Template Builder**: Drag-and-drop report card designer for TK/PAUD requiring dynamic narratives.
+EduRaport unifies academic management, Kurikulum Merdeka PPA 2025 compliance, automated teacher AI assistant, Tahfidz tracking, tuition fee billing (SPP Lock), and parent engagement into a single cloud ecosystem.
 
-## Pricing
-Pricing details can be found in our pricing file: [pricing.md](/pricing.md). Subscriptions start at Rp 500.000 / month per school unit.
+## Core Documentation & Resources
+- [Full Features & Technical Specs](/features.md): Comprehensive breakdown of PPA 2025 guardrails, unified student identities, Tahfidz analytics, and SHA-256 digital signatures.
+- [Pricing Structure & Plans](/pricing.md): Transparent tier breakdown starting from Rp 500.000/month for schools up to 150 students, plus B2C teacher solo plan from Rp 29.000/month.
+- [Parent Portal & Dasbor Wali Murid](/solusi/portal-orang-tua): Single-account multi-child dashboard, SHA-256 report verification, independent sick leave uploads, canteen wallet controls, and guidance counselor booking.
 
-## Target Audience
-Principals, Yayasan Owners, and School Treasurers in Indonesia looking to optimize operational expenses (OpEx), enforce teacher accountability, and achieve audit readiness.
+## Key Differentiators vs Competitors
+- **vs e-Rapor Kemendikbud**: EduRaport provides deep TK/PAUD narrative builders, integrated SPP billing & accounting, automated WhatsApp notifications, Tahfidz tracking, and parent portal with SHA-256 signatures.
+- **vs HashMicro & Enterprise ERP**: EduRaport offers quick 7-day onboarding without requiring on-premise servers or in-house IT teams, tailored specifically for Indonesian private schools at 1/10th the cost.
+- **vs Standalone SPP Apps**: EduRaport connects financial tuition aging directly to academic report release gating (SPP Lock) and attendance alerts.
+
+## Primary Capabilities
+- **Curriculum Merdeka 2024/2025 & PPA 2025**: Observational rubrics for PAUD/Fase A, AI automated RPP/modul ajar generation in 2 minutes.
+- **Yayasan Zero-Silo Identity**: Persistent student record tracking across TK -> SD -> SMP -> SMA.
+- **Pesantren & Tahfidz**: Mutqin/Mumtaz progress tracking (Juz 1-30), Mutaaba'ah Yaumiyah (8 daily acts of worship).
+- **Parent Portal & Digital Signatures**: Multi-child view, SHA-256 hash tamper-proof digital signature, student canteen wallet limits, and RLS data isolation.
+- **Absensi QR & Mood Check-In**: Early warning churn prevention engine for student wellness.
+- **Executive WhatsApp Digest**: Daily 06:00 AM Helicopter View delivered to school leadership.
+
+## Contact & Demos
+Executive product demos are available on Tuesdays and Thursdays via Google Meet or offline visit.
+- Website: https://eduraport.bagusw.biz.id/landing
+- WhatsApp Consultation: https://wa.me/6281234567890

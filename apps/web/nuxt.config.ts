@@ -26,7 +26,8 @@ export default defineNuxtConfig({
       '/solusi/pesantren',
       '/solusi/tk-paud',
       '/solusi/yayasan-multi-unit',
-      '/solusi/kurikulum-merdeka'
+      '/solusi/kurikulum-merdeka',
+      '/solusi/portal-orang-tua'
     ],
     exclude: [
       '/login', '/register', '/unauthorized', '/dashboard', '/academic-year',

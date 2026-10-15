@@ -2,25 +2,70 @@
 import { onMounted, ref } from 'vue'
 import { useAuth } from '../composables/useAuth'
 import { useColorMode } from '@vueuse/core'
-import { Sun, Moon } from 'lucide-vue-next'
+import { Sun, Moon, ChevronDown } from 'lucide-vue-next'
 
 definePageMeta({ layout: false })
 
+// ─── FAQ Pricing Data (Single Source of Truth for UI & Schema) ───────────────
+const pricingFaqs = [
+  {
+    q: 'Berapa biaya langganan EduRaport dan apa saja pilihan paketnya?',
+    a: 'EduRaport menyediakan 3 pilihan paket: Starter (Rp 500.000/bulan untuk sekolah hingga 150 siswa), Sekolah Menengah (Rp 1.200.000/bulan hingga 500 siswa), dan Enterprise Yayasan Multi-Unit (kustom sesuai jumlah unit TK/SD/SMP/SMA). Tersedia juga paket EduRaport Solo untuk guru personal mulai Rp 29.000/bulan.',
+  },
+  {
+    q: 'Apakah ada biaya implementasi server fisik atau biaya instalasi?',
+    a: 'Tidak ada biaya server fisik. EduRaport adalah platform cloud SaaS 100% tanpa perlu server lokal atau teknisi IT internal. Onboarding, migrasi data, dan pelatihan staf didampingi hingga tuntas dalam 7 hari kerja.',
+  },
+  {
+    q: 'Apakah tersedia masa uji coba (trial) gratis?',
+    a: 'Ya. Kami menyediakan program pilot gratis 3 bulan khusus untuk jenjang TK/PAUD serta sesi demo interaktif 1-on-1 gratis bagi pimpinan yayasan dan kepala sekolah setiap hari Selasa dan Kamis.',
+  },
+  {
+    q: 'Bagaimana sistem pembayaran SPP dan apakah ada proteksi SPP Lock?',
+    a: 'EduRaport mengotomatiskan tagihan SPP via WhatsApp dengan rincian usia piutang. Akses cetak raport digital siswa otomatis terkunci (SPP Lock) apabila terdapat tunggakan administrasi yang belum diselesaikan.',
+  },
+  {
+    q: 'Apakah paket langganan sudah termasuk WhatsApp Gateway resmi?',
+    a: 'Ya, paket Sekolah Menengah dan Enterprise sudah terintegrasi WhatsApp Gateway resmi untuk notifikasi presensi siswa real-time, invoice tagihan SPP berkala, dan laporan eksekutif Helicopter View setiap jam 06.00 pagi ke WA pimpinan.',
+  },
+  {
+    q: 'Bagaimana skema diskon untuk Yayasan dengan banyak unit sekolah?',
+    a: 'Yayasan multi-unit mendapatkan paket konsolidasi khusus serta sinkronisasi satu identitas siswa lintas jenjang (TK-SD-SMP-SMA) tanpa biaya ganda saat siswa naik tingkat.',
+  },
+]
+
+const activeFaq = ref<number | null>(null)
+const toggleFaq = (idx: number) => {
+  activeFaq.value = activeFaq.value === idx ? null : idx
+}
+
 // ─── SEO Meta Tags ────────────────────────────────────────────────────────────
 useSeoMeta({
-  title: 'EduRaport — Smart School ERP & E-Raport Terbaik untuk Sekolah Swasta Indonesia',
-  description: 'EduRaport menyatukan E-Raport, SPP, absensi, dan keuangan yayasan dalam satu platform. Patuh Kurikulum Merdeka 2025. Mulai dari Rp 500.000/bulan. Demo gratis.',
+  title: 'EduRaport — Smart School ERP & E-Raport Sekolah Indonesia',
+  description: 'Platform SaaS ERP Pendidikan & E-Raport Kurikulum Merdeka 2025. Terintegrasi manajemen SPP, AI Asisten Guru, absensi QR, dan keuangan yayasan mulai Rp 500.000/bln.',
   ogTitle: 'EduRaport — Smart School ERP & E-Raport untuk Sekolah Swasta',
   ogDescription: 'Platform SaaS yang menyatukan e-Raport, manajemen SPP, AI Asisten Guru, dan keuangan yayasan. Patuh regulasi PPA 2025. Identitas siswa tunggal dari TK hingga SMA.',
   ogType: 'website',
   ogUrl: 'https://eduraport.bagusw.biz.id/landing',
+  ogImage: 'https://eduraport.bagusw.biz.id/og-image.png',
   twitterCard: 'summary_large_image',
   twitterTitle: 'EduRaport — Smart School ERP untuk Sekolah Swasta Indonesia',
   twitterDescription: 'Lebih dari sekadar e-Rapor. AI Asisten Guru, SPP otomatis, Mood Check-in siswa, dan dashboard yayasan lintas jenjang. Mulai Rp 500.000/bulan.',
+  twitterImage: 'https://eduraport.bagusw.biz.id/og-image.png',
+  robots: 'index, follow',
 })
 
 // ─── JSON-LD Structured Data (Schema.org) ─────────────────────────────────────
 useHead({
+  htmlAttrs: {
+    lang: 'id',
+  },
+  link: [
+    {
+      rel: 'canonical',
+      href: 'https://eduraport.bagusw.biz.id/landing',
+    },
+  ],
   script: [
     {
       type: 'application/ld+json',
@@ -34,20 +79,56 @@ useHead({
             operatingSystem: 'Web, Android, iOS',
             description: 'Platform SaaS ERP Pendidikan untuk sekolah swasta Indonesia. Menyatukan e-Raport, manajemen SPP, AI Asisten Guru, absensi QR, Mood Check-in, dan keuangan yayasan dalam satu ekosistem.',
             url: 'https://eduraport.bagusw.biz.id',
-            offers: {
-              '@type': 'Offer',
-              price: '500000',
-              priceCurrency: 'IDR',
-            },
+            offers: [
+              {
+                '@type': 'Offer',
+                name: 'Paket Starter (TK / SD Kecil)',
+                price: '500000',
+                priceCurrency: 'IDR',
+                priceSpecification: {
+                  '@type': 'UnitPriceSpecification',
+                  price: '500000',
+                  priceCurrency: 'IDR',
+                  unitCode: 'MON',
+                },
+                description: 'Cocok untuk TK / SD kecil hingga 150 siswa. Termasuk E-Raport TK/SD, gradebook dasar, template visual, dan portal orang tua.',
+              },
+              {
+                '@type': 'Offer',
+                name: 'Paket Sekolah Menengah (SMP / SMA)',
+                price: '1200000',
+                priceCurrency: 'IDR',
+                priceSpecification: {
+                  '@type': 'UnitPriceSpecification',
+                  price: '1200000',
+                  priceCurrency: 'IDR',
+                  unitCode: 'MON',
+                },
+                description: 'Untuk sekolah menengah hingga 500 siswa. E-Raport SMP/SMA, Gradebook berbobot, jadwal pelajaran, PPDB, dan notifikasi WA.',
+              },
+              {
+                '@type': 'Offer',
+                name: 'Paket Solo Guru / Bimbel',
+                price: '29000',
+                priceCurrency: 'IDR',
+                priceSpecification: {
+                  '@type': 'UnitPriceSpecification',
+                  price: '29000',
+                  priceCurrency: 'IDR',
+                  unitCode: 'MON',
+                },
+                description: 'Edisi guru personal / les privat untuk pembuatan RPP AI, tagihan privat, dan raport mandiri.',
+              },
+            ],
             featureList: [
-              'E-Raport Kurikulum Merdeka 2025',
-              'AI Asisten Guru (Generate RPP, Soal, Materi, PPT)',
-              'Manajemen SPP & Keuangan Sekolah',
+              'E-Raport Kurikulum Merdeka 2025 & PPA 2025 Guardrail',
+              'AI Asisten Guru (RPP, Soal, Rubrik Asesmen 2 Menit)',
+              'Manajemen SPP Otomatis & SPP Lock',
               'Absensi QR + Mood Check-in Emosi Siswa',
-              'Executive Dashboard via WhatsApp',
-              'Workspace Yayasan Multi-Unit',
-              'WhatsApp Gateway Otomatis',
-              'PPDB Online Terintegrasi',
+              'Executive Helicopter View WhatsApp Jam 06.00 Pagi',
+              'Workspace Yayasan Multi-Unit (Satu Identitas TK-SMA)',
+              'Modul Pesantren, Tahfidz Juz 1-30 & Mutaabaah Yaumiyah',
+              'Tanda Tangan Digital Rapor Validasi Hash SHA-256',
             ],
           },
           {
@@ -59,38 +140,14 @@ useHead({
           },
           {
             '@type': 'FAQPage',
-            mainEntity: [
-              {
-                '@type': 'Question',
-                name: 'Apa itu EduRaport?',
-                acceptedAnswer: { '@type': 'Answer', text: 'EduRaport adalah platform SaaS ERP Pendidikan yang menyatukan e-Raport, manajemen SPP, AI Asisten Guru, absensi QR dengan Mood Check-in, dan keuangan yayasan dalam satu ekosistem terintegrasi untuk sekolah swasta Indonesia.' },
+            mainEntity: pricingFaqs.map(item => ({
+              '@type': 'Question',
+              name: item.q,
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: item.a,
               },
-              {
-                '@type': 'Question',
-                name: 'Berapa harga EduRaport?',
-                acceptedAnswer: { '@type': 'Answer', text: 'EduRaport tersedia mulai dari Rp 500.000 per bulan per unit sekolah. Untuk yayasan dengan multi-unit (TK, SD, SMP, SMA), tersedia paket Enterprise dengan harga kustom.' },
-              },
-              {
-                '@type': 'Question',
-                name: 'Apakah EduRaport mendukung Kurikulum Merdeka 2025?',
-                acceptedAnswer: { '@type': 'Answer', text: 'Ya. EduRaport sepenuhnya mendukung Kurikulum Merdeka 2024-2025 termasuk regulasi PPA 2025. AI Hard Guardrail secara otomatis memblokir tes kognitif tertulis untuk PAUD dan Fase A.' },
-              },
-              {
-                '@type': 'Question',
-                name: 'Apakah EduRaport cocok untuk pondok pesantren?',
-                acceptedAnswer: { '@type': 'Answer', text: 'Ya. EduRaport mendukung kurikulum kustom pesantren termasuk skala nilai Jayyid/Maqbul, modul tahfidz, dan mata pelajaran kepondokan berdampingan dengan Kurikulum Merdeka.' },
-              },
-              {
-                '@type': 'Question',
-                name: 'Apakah EduRaport bisa mengelola keuangan yayasan dengan banyak unit sekolah?',
-                acceptedAnswer: { '@type': 'Answer', text: 'Ya. Workspace Yayasan menyediakan dashboard konsolidasi keuangan lintas unit. Identitas siswa persisten dari TK hingga SMA. Pimpinan yayasan menerima laporan harian via WhatsApp setiap jam 06.00 pagi.' },
-              },
-              {
-                '@type': 'Question',
-                name: 'Bagaimana cara memulai trial EduRaport?',
-                acceptedAnswer: { '@type': 'Answer', text: 'Klik "Jadwalkan Demo Eksklusif" untuk sesi demo 1-on-1 gratis. Setup rata-rata membutuhkan kurang dari 7 hari kerja.' },
-              },
-            ],
+            })),
           },
         ],
       }),
@@ -160,6 +217,12 @@ const features = [
     title: 'WhatsApp Gateway Otomatis',
     desc: 'Rantai nilai ketenangan orang tua: Scan QR Real-time -> Notifikasi WA Instan. Komunikasi sekolah terasa profesional dan sangat personal.',
     color: 'purple'
+  },
+  {
+    icon: '👨‍👩‍👧‍👦',
+    title: 'Portal Terpadu Wali Murid (Multi-Child)',
+    desc: 'Satu akun untuk seluruh anak (TK-SMA). Tanda tangan digital rapor SHA-256, pengajuan izin sakit mandiri, grafik presensi real-time, dan dompet kantin anak.',
+    color: 'amber'
   }
 ]
 
@@ -266,6 +329,7 @@ const chartHeights = [65,80,55,90,70,85,60,95]
       </div>
     </header>
 
+    <main class="landing-main">
     <!-- HERO -->
     <section class="hero">
       <div class="hero-bg-orbs">
@@ -1001,6 +1065,36 @@ const chartHeights = [65,80,55,90,70,85,60,95]
           <span>·</span>
           <span>🤝 Partnership yayasan NU, Muhammadiyah, Pesantren tersedia</span>
         </div>
+
+        <!-- Pricing FAQ Accordion (100% Match with JSON-LD Schema) -->
+        <div class="pricing-faq-wrap">
+          <div class="faq-header">
+            <div class="section-badge">FAQ & Transparansi</div>
+            <h3 class="faq-title">Pertanyaan Seputar Harga & Layanan</h3>
+            <p class="faq-sub">Informasi lengkap lisensi, biaya implementasi, dan kemudahan berlangganan EduRaport.</p>
+          </div>
+          <div class="faq-list">
+            <div 
+              v-for="(faq, idx) in pricingFaqs" 
+              :key="idx" 
+              class="faq-item"
+              :class="{ 'faq-open': activeFaq === idx }"
+            >
+              <button 
+                type="button"
+                class="faq-trigger"
+                :aria-expanded="activeFaq === idx"
+                @click="toggleFaq(idx)"
+              >
+                <span class="faq-q-text">{{ faq.q }}</span>
+                <ChevronDown class="faq-chevron" :size="18" />
+              </button>
+              <div v-show="activeFaq === idx" class="faq-answer">
+                <p>{{ faq.a }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1066,6 +1160,7 @@ const chartHeights = [65,80,55,90,70,85,60,95]
         </div>
       </div>
     </section>
+    </main>
 
     <!-- FOOTER -->
     <footer class="footer">
@@ -1089,12 +1184,12 @@ const chartHeights = [65,80,55,90,70,85,60,95]
             <a href="/login">Login Portal</a>
           </div>
           <div class="footer-col">
-            <h4>Modul</h4>
-            <a href="#">E-Raport & Penilaian</a>
-            <a href="#">PPDB Online</a>
-            <a href="#">Keuangan & SPP</a>
-            <a href="#">Jadwal Pelajaran</a>
-            <a href="#">WhatsApp Gateway</a>
+            <h4>Solusi Terpadu</h4>
+            <a href="/solusi/portal-orang-tua">Portal Orang Tua</a>
+            <a href="/solusi/pesantren">Pondok Pesantren</a>
+            <a href="/solusi/tk-paud">TK & PAUD</a>
+            <a href="/solusi/yayasan-multi-unit">Yayasan Multi-Unit</a>
+            <a href="/solusi/kurikulum-merdeka">Kurikulum Merdeka 2025</a>
           </div>
           <div class="footer-col">
             <h4>Perusahaan</h4>
@@ -2021,6 +2116,20 @@ html.dark {
 .btn-price-outline { border: 1px solid rgba(255,255,255,0.15); color: var(--text-main); text-decoration: none; font-size: 14px; font-weight: 700; padding: 13px; border-radius: 10px; text-align: center; display: block; transition: border-color 0.2s, background 0.2s; }
 .btn-price-outline:hover { border-color: rgba(167,139,250,0.4); background: rgba(167,139,250,0.05); }
 .pricing-note { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; font-size: 13px; color: #475569; text-align: center; }
+
+/* PRICING FAQ (ui-ux-pro styled) */
+.pricing-faq-wrap { margin-top: 60px; max-width: 860px; margin-left: auto; margin-right: auto; text-align: left; }
+.faq-header { text-align: center; margin-bottom: 32px; }
+.faq-title { font-size: 24px; font-weight: 800; color: var(--text-main); margin: 12px 0 8px; letter-spacing: -0.5px; }
+.faq-sub { font-size: 14px; color: var(--text-muted); }
+.faq-list { display: flex; flex-direction: column; gap: 12px; }
+.faq-item { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; overflow: hidden; transition: border-color 0.2s, background-color 0.2s; }
+.faq-item.faq-open { border-color: rgba(124, 58, 237, 0.4); background: rgba(124, 58, 237, 0.03); }
+.faq-trigger { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; background: none; border: none; cursor: pointer; text-align: left; color: var(--text-main); font-size: 15px; font-weight: 600; line-height: 1.4; transition: color 0.2s; }
+.faq-trigger:hover { color: #8b5cf6; }
+.faq-chevron { color: var(--text-muted); flex-shrink: 0; transition: transform 0.25s ease; }
+.faq-open .faq-chevron { transform: rotate(180deg); color: #8b5cf6; }
+.faq-answer { padding: 0 22px 18px; font-size: 14px; line-height: 1.7; color: var(--text-secondary); border-top: 1px dashed var(--border-color); padding-top: 14px; }
 
 /* TESTIMONIALS */
 .testimonials-section { background: var(--bg-secondary); }
