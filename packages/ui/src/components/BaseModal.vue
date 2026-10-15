@@ -58,12 +58,12 @@ const handleClose = () => {
     >
       <div v-if="isOpen" class="fixed inset-0 bg-slate-950/40 backdrop-blur-[2px] z-[100] flex items-center justify-center p-4" @click.self="handleClose">
         <div 
-          class="bg-white dark:bg-zinc-900 w-full rounded-xl border border-slate-200/60 dark:border-zinc-800 shadow-xl overflow-hidden animate-in zoom-in-95 duration-300"
+          class="bg-white dark:bg-zinc-900 w-full rounded-xl border border-slate-200/60 dark:border-zinc-800 shadow-xl overflow-visible animate-in zoom-in-95 duration-300"
           :class="sizeClass"
           @click.stop
         >
           <!-- Header -->
-          <div v-if="title || !hideClose" class="px-6 py-4 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between">
+          <div v-if="title || !hideClose" class="px-6 py-4 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between rounded-t-xl">
             <h3 class="font-bold text-base tracking-tight text-slate-900 dark:text-zinc-100">{{ title }}</h3>
             <button 
               v-if="!hideClose"
