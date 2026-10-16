@@ -3,6 +3,7 @@ import { useSchoolContext } from '../composables/useSchoolContext'
 import { BookOpen, Plus, Trash2, Edit2, ShieldAlert, CheckCircle2, Bookmark } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
 import { useSubject } from '../composables/useSubject'
+import { useSchool } from '../composables/useSchool'
 
 definePageMeta({
   middleware: [
@@ -17,6 +18,7 @@ definePageMeta({
 
 const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
 const { subjects, subjectsMeta, fetchSubjects, createSubject, updateSubject, deleteSubject } = useSubject()
+const { curriculumCategories, fetchCurriculumCategories, fetchSchools } = useSchool()
 const { page, itemPerPage } = usePagination(10)
 
 const typeFilter = ref('') // all

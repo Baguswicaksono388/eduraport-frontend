@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { useApi } from './useApi'
 import { useToast } from './useToast'
+import { useSchool } from './useSchool'
 
 export interface CurriculumElement {
   id: string;
@@ -164,6 +165,8 @@ export const useCurriculum = () => {
     deleteElement,
     createOutcome,
     updateOutcome,
-    deleteOutcome
+    deleteOutcome,
+    fetchCurriculumCategories: useSchool().fetchCurriculumCategories,
+    curriculumCategories: useSchool().curriculumCategories
   }
 }
