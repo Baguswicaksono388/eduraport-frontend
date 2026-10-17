@@ -64,7 +64,7 @@ const calculatePosition = () => {
   if (containerRef.value) {
     const rect = containerRef.value.getBoundingClientRect()
     const spaceBelow = window.innerHeight - rect.bottom
-    if (spaceBelow < 340 && rect.top > 340) {
+    if (spaceBelow < 380 && rect.top > 380) {
       popoverVertical.value = 'top'
     } else {
       popoverVertical.value = 'bottom'
@@ -309,7 +309,7 @@ const nextYearPage = () => {
 </script>
 
 <template>
-  <div ref="containerRef" class="flex flex-col gap-1.5 w-full relative select-none">
+  <div ref="containerRef" class="flex flex-col gap-1.5 w-full relative select-none" :class="{ 'z-50': isOpen }">
     <label v-if="label" class="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider px-0.5">
       {{ label }}
       <span v-if="required" class="text-rose-500">*</span>
@@ -596,3 +596,14 @@ const nextYearPage = () => {
     </Transition>
   </div>
 </template>
+
+<style scoped>
+.custom-date-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  opacity: 0;
+  cursor: pointer;
+}
+</style>

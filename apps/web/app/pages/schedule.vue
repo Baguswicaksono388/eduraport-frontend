@@ -46,7 +46,7 @@ const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, sch
 const { classes, fetchClasses } = useClass()
 const { subjects, fetchSubjects } = useSubject()
 const { teachers, fetchTeachers } = useTeacher()
-const { schedules, fetchSchedules, createSchedule, updateSchedule, deleteSchedule } = useSchedule()
+const { schedules, weeklyHolidays, fetchSchedules, fetchWeeklyHolidays, createSchedule, updateSchedule, deleteSchedule } = useSchedule()
 const { user } = useAuth()
 const { academicYears } = useAcademicYear()
 
@@ -84,7 +84,7 @@ const startOfWeek = computed(() => {
 
 const endOfWeek = computed(() => {
   const d = new Date(startOfWeek.value)
-  d.setDate(d.getDate() + 5) // Saturday
+  d.setDate(d.getDate() + 6) // Sunday / Ahad (7 days full)
   d.setHours(23, 59, 59, 999)
   return d
 })
@@ -97,7 +97,7 @@ const currentWeekLabel = computed(() => {
 
 const weekDates = computed(() => {
   const dates = []
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 7; i++) {
     const d = new Date(startOfWeek.value)
     d.setDate(d.getDate() + i)
     dates.push(d)
@@ -107,14 +107,34 @@ const weekDates = computed(() => {
 
 const weekDatesMap = computed(() => {
   const map: Record<string, string> = {}
-  const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+  const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']
   
   weekDates.value.forEach((date, index) => {
-    map[days[index]] = date.toISOString().split('T')[0]
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    map[days[index]] = `${year}-${month}-${day}`
   })
   
   return map
 })
+
+const startOfWeekDate = startOfWeek
+const endOfWeekDate = endOfWeek
+
+const getDayDateStr = (dayName: string) => {
+  const dayOffsetMap: Record<string, number> = {
+    'Senin': 0, 'Selasa': 1, 'Rabu': 2, 'Kamis': 3, 'Jumat': 4, 'Sabtu': 5, 'Minggu': 6
+  }
+  const offset = dayOffsetMap[dayName] || 0
+  const d = new Date(startOfWeek.value)
+  d.setDate(d.getDate() + offset)
+  
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 // Change week handler
 const changeWeek = (direction: 'prev' | 'next') => {
@@ -157,8 +177,8 @@ const selectedSubTeacherId = ref('')
 const declineReason = ref('')
 const isDirectAssignment = ref(false)
 
-// View Modes: day (1 day), work-week (Mon-Fri), week (Mon-Sat), list (table list)
-const viewMode = ref<'day' | 'work-week' | 'week' | 'list'>('week')
+// View Modes: day (1 day), work-week (Mon-Fri), week-6 (Mon-Sat), week (Mon-Sun/Ahad), list (table list)
+const viewMode = ref<'day' | 'work-week' | 'week-6' | 'week' | 'list'>('week')
 const currentDayView = ref('Senin')
 
 // Modals
@@ -236,9 +256,29 @@ watch(selectedSchoolId, async (newVal) => {
   }
 })
 
+const loadWeeklyHolidays = async () => {
+  if (!selectedSchoolId.value) return
+  const formatDate = (d: Date) => {
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+  const from = formatDate(startOfWeek.value)
+  const to = formatDate(endOfWeek.value)
+  await fetchWeeklyHolidays(selectedSchoolId.value, from, to, selectedClassId.value || undefined)
+}
+
 watch(selectedClassId, async (newVal) => {
   if (selectedSchoolId.value) {
     await fetchSchedules(selectedSchoolId.value, newVal || undefined, selectedAcademicYearId.value || activeAcademicYear.value?.id)
+    await loadWeeklyHolidays()
+  }
+})
+
+watch(currentDate, async () => {
+  if (selectedSchoolId.value) {
+    await loadWeeklyHolidays()
   }
 })
 
@@ -248,7 +288,8 @@ const loadSchoolData = async (schoolId: string) => {
     fetchClasses(schoolId, ayId),
     fetchSubjects(schoolId),
     fetchTeachers(schoolId),
-    fetchSchedules(schoolId, selectedClassId.value || undefined, ayId)
+    fetchSchedules(schoolId, selectedClassId.value || undefined, ayId),
+    loadWeeklyHolidays()
   ])
 }
 
@@ -257,9 +298,75 @@ const clearData = () => {
   subjects.value = []
   teachers.value = []
   schedules.value = []
+  weeklyHolidays.value = {}
   selectedClassId.value = ''
   selectedTeacherId.value = ''
 }
+
+// Holiday Helper Utilities
+const holidayMap = computed<Record<string, any>>(() => {
+  if (!weeklyHolidays.value) return {}
+  if (weeklyHolidays.value.dayStatusMap) {
+    return weeklyHolidays.value.dayStatusMap
+  }
+  return weeklyHolidays.value || {}
+})
+
+const getDayHolidayInfo = (dayName: string) => {
+  const dateStr = getDayDateStr(dayName)
+  return holidayMap.value[dateStr] || null
+}
+
+const activeWeekHolidays = computed(() => {
+  if (Array.isArray(weeklyHolidays.value?.holidays) && weeklyHolidays.value.holidays.length > 0) {
+    return weeklyHolidays.value.holidays
+  }
+  return Object.values(holidayMap.value).filter((item: any) => item && typeof item === 'object' && item.date && (!item.isSchoolDay || item.hasPartialHoliday))
+})
+
+const formatDateShort = (dateStr: string) => {
+  if (!dateStr) return ''
+  const parts = dateStr.split('-')
+  if (parts.length === 3) return `${parts[2]}/${parts[1]}`
+  return dateStr
+}
+
+const formatDateIndo = (dateStr: string) => {
+  if (!dateStr) return ''
+  const parts = dateStr.split('-')
+  if (parts.length === 3) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+    const mIdx = parseInt(parts[1], 10) - 1
+    return `${parseInt(parts[2], 10)} ${months[mIdx] || parts[1]}`
+  }
+  return dateStr
+}
+
+const createModalHolidayAlert = computed(() => {
+  if (!scheduleForm.day_of_week) return null
+  const info = getDayHolidayInfo(scheduleForm.day_of_week)
+  if (!info) return null
+  if (!info.isSchoolDay) {
+    return `Peringatan: Hari ${scheduleForm.day_of_week} di minggu ini adalah hari libur (${info.reason || 'KBM Diliburkan'}). Alokasi jam pelajaran tidak akan berlaku pada tanggal ini.`
+  }
+  if (info.hasPartialHoliday) {
+    return `Catatan: Hari ${scheduleForm.day_of_week} terdapat penetapan libur khusus sebagian tingkat/rombel (${info.reason}).`
+  }
+  return null
+})
+
+const editModalHolidayAlert = computed(() => {
+  if (!editForm.day_of_week) return null
+  const info = getDayHolidayInfo(editForm.day_of_week)
+  if (!info) return null
+  if (!info.isSchoolDay) {
+    return `Peringatan: Hari ${editForm.day_of_week} di minggu ini adalah hari libur (${info.reason || 'KBM Diliburkan'}). Alokasi jam pelajaran tidak akan berlaku pada tanggal ini.`
+  }
+  if (info.hasPartialHoliday) {
+    return `Catatan: Hari ${editForm.day_of_week} terdapat penetapan libur khusus sebagian tingkat/rombel (${info.reason}).`
+  }
+  return null
+})
 
 // Time Helper Utilities
 const formatTimeDisplay = (timeStr: string) => {
@@ -309,7 +416,7 @@ const nextDay = () => {
 
 const goToToday = () => {
   const todayName = getTodayDayName()
-  if (daysOfWeek.includes(todayName) && todayName !== 'Minggu') {
+  if (daysOfWeek.includes(todayName)) {
     currentDayView.value = todayName
   } else {
     currentDayView.value = 'Senin'
@@ -406,9 +513,11 @@ const activeDays = computed(() => {
     return [currentDayView.value]
   } else if (viewMode.value === 'work-week') {
     return ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat']
-  } else {
-    // default week is Monday to Saturday
+  } else if (viewMode.value === 'week-6') {
     return ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+  } else {
+    // default week is Monday to Sunday (7 days full)
+    return ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']
   }
 })
 
@@ -778,40 +887,10 @@ const handleDeleteSchedule = async (id: string) => {
 // ==========================================
 // LEAVE & SUBSTITUTION METHODS (Modul 7.1e)
 // ==========================================
-const startOfWeekDate = computed(() => {
-  const d = new Date(currentDate.value)
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1) // Monday is start
-  const monday = new Date(d.setDate(diff))
-  monday.setHours(0, 0, 0, 0)
-  return monday
-})
-
-const endOfWeekDate = computed(() => {
-  const mon = new Date(startOfWeekDate.value)
-  const sat = new Date(mon.setDate(mon.getDate() + 5)) // Monday to Saturday
-  sat.setHours(23, 59, 59, 999)
-  return sat
-})
-
 const weekRangeDisplay = computed(() => {
   const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' }
   return `${startOfWeekDate.value.toLocaleDateString('id-ID', options)} - ${endOfWeekDate.value.toLocaleDateString('id-ID', options)}`
 })
-
-const getDayDateStr = (dayName: string) => {
-  const dayOffsetMap: Record<string, number> = {
-    'Senin': 0, 'Selasa': 1, 'Rabu': 2, 'Kamis': 3, 'Jumat': 4, 'Sabtu': 5, 'Minggu': 6
-  }
-  const offset = dayOffsetMap[dayName] || 0
-  const d = new Date(startOfWeekDate.value)
-  d.setDate(d.getDate() + offset)
-  
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
 
 const loadVacanciesData = async () => {
   if (!selectedSchoolId.value || !substitutionMode.value) return
@@ -1093,7 +1172,8 @@ const handleDeclineSubstitution = async (substitutionId: string) => {
             v-for="mode in [
               { id: 'day', label: 'Hari' },
               { id: 'work-week', label: '5 Hari' },
-              { id: 'week', label: '6 Hari' },
+              { id: 'week-6', label: '6 Hari' },
+              { id: 'week', label: '7 Hari (Ahad)' },
               { id: 'list', label: 'Agenda' }
             ]"
             :key="mode.id"
@@ -1219,6 +1299,48 @@ const handleDeclineSubstitution = async (substitutionId: string) => {
       </div>
     </div>
 
+    <!-- Weekly Holiday Alert Banner (ui-ux-pro style) -->
+    <div 
+      v-if="activeWeekHolidays.length > 0 && selectedSchoolId" 
+      class="bg-gradient-to-r from-rose-500/10 via-amber-500/5 to-transparent border border-rose-500/20 dark:border-rose-500/30 text-rose-700 dark:text-rose-300 rounded-2xl p-4 flex items-start justify-between gap-3 text-xs shadow-sm backdrop-blur-md animate-in slide-in-from-top duration-300"
+    >
+      <div class="flex items-start gap-3">
+        <div class="p-2 bg-rose-500/15 dark:bg-rose-500/25 rounded-xl text-rose-600 dark:text-rose-300 flex-shrink-0 shadow-sm">
+          <Calendar :size="18" />
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h4 class="font-extrabold text-sm text-slate-900 dark:text-zinc-100">
+              Agenda Libur & Kalender Operasional Minggu Ini
+            </h4>
+            <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30">
+              {{ activeWeekHolidays.length }} Hari Berstatus Khusus
+            </span>
+          </div>
+          <p class="text-xs text-slate-600 dark:text-zinc-350 mt-1 leading-relaxed">
+            Jadwal pelajaran di bawah ini otomatis menyesuaikan dengan kalender libur nasional, libur pondok pesantren, dan libur khusus per jenjang/rombel.
+          </p>
+          <div class="flex flex-wrap gap-2 mt-2.5">
+            <div 
+              v-for="h in activeWeekHolidays" 
+              :key="h.date"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold border backdrop-blur-sm shadow-xs"
+              :class="[
+                !h.isSchoolDay 
+                  ? 'bg-rose-500/10 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-300/60 dark:border-rose-800/60'
+                  : 'bg-amber-500/10 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-300/60 dark:border-amber-800/60'
+              ]"
+            >
+              <span>{{ !h.isSchoolDay ? '🏖️' : '⚠️' }}</span>
+              <strong class="font-bold">{{ h.dayName }} ({{ formatDateIndo(h.date) }}):</strong>
+              <span>{{ h.reason }}</span>
+              <span v-if="h.hasPartialHoliday && h.isSchoolDay" class="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 font-bold uppercase">Parsial</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 1. TIME GRID VIEW (Microsoft Teams Calendar style) -->
     <div 
       v-if="viewMode !== 'list'"
@@ -1227,7 +1349,7 @@ const handleDeclineSubstitution = async (substitutionId: string) => {
       <!-- Horizontal Scroll Wrapper for Mobile -->
       <div class="overflow-x-auto scrollbar-hide">
         <!-- Minimum calendar grid width to ensure clean layout on small screens -->
-        <div :class="[viewMode === 'day' ? 'w-full' : 'min-w-[850px] lg:w-full']" class="relative flex flex-col">
+        <div :class="[viewMode === 'day' ? 'w-full' : 'min-w-[950px] lg:w-full']" class="relative flex flex-col">
           
           <!-- Sticky Day Column Headers -->
           <div class="flex border-b border-slate-200 dark:border-zinc-850 bg-slate-50/70 dark:bg-zinc-900/90 sticky top-0 z-30 backdrop-blur-md">
@@ -1240,7 +1362,8 @@ const handleDeclineSubstitution = async (substitutionId: string) => {
               :key="day"
               class="flex-1 py-3 text-center border-r border-slate-200/50 dark:border-zinc-800/60 last:border-r-0 flex flex-col items-center justify-center min-w-0 transition-colors"
               :class="[
-                isToday(day) ? 'bg-violet-600/5 dark:bg-violet-500/5' : ''
+                isToday(day) ? 'bg-violet-600/5 dark:bg-violet-500/5' : '',
+                getDayHolidayInfo(day)?.isSchoolDay === false ? 'bg-rose-500/[0.04] dark:bg-rose-500/[0.06]' : ''
               ]"
             >
               <span 
@@ -1249,13 +1372,30 @@ const handleDeclineSubstitution = async (substitutionId: string) => {
                   isToday(day) ? 'text-violet-600 dark:text-violet-400 font-extrabold' : 'text-slate-700 dark:text-zinc-300'
                 ]"
               >
-                {{ day }}
+                {{ day === 'Minggu' ? 'Minggu (Ahad)' : day }}
               </span>
               <span 
                 v-if="isToday(day)" 
                 class="mt-1 inline-flex px-1.5 py-0.5 rounded-full text-[8px] font-extrabold tracking-widest uppercase bg-violet-600 text-white dark:bg-violet-500/20 dark:text-violet-400"
               >
                 Hari Ini
+              </span>
+              <!-- Holiday Badge Pills -->
+              <span 
+                v-if="getDayHolidayInfo(day)?.isSchoolDay === false"
+                class="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-500/15 text-rose-700 dark:bg-rose-500/25 dark:text-rose-300 border border-rose-300/70 dark:border-rose-800/70 shadow-xs max-w-[90%] truncate"
+                :title="getDayHolidayInfo(day)?.reason || 'Hari Libur'"
+              >
+                <span>🏖️</span>
+                <span class="truncate">{{ getDayHolidayInfo(day)?.reason || 'Libur' }}</span>
+              </span>
+              <span 
+                v-else-if="getDayHolidayInfo(day)?.hasPartialHoliday"
+                class="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/15 text-amber-800 dark:bg-amber-500/25 dark:text-amber-300 border border-amber-300/70 dark:border-amber-800/70 shadow-xs max-w-[90%] truncate"
+                :title="getDayHolidayInfo(day)?.reason || 'Libur Sebagian Kelas'"
+              >
+                <span>⚠️</span>
+                <span class="truncate">Libur Parsial</span>
               </span>
             </div>
           </div>
@@ -1306,12 +1446,92 @@ const handleDeclineSubstitution = async (substitutionId: string) => {
                   :key="day"
                   class="flex-1 relative border-r border-slate-200/50 dark:border-zinc-800/60 last:border-r-0 transition-colors"
                   :class="[
-                    isToday(day) ? 'bg-violet-600/[0.01] dark:bg-violet-500/[0.01]' : ''
+                    isToday(day) ? 'bg-violet-600/[0.01] dark:bg-violet-500/[0.01]' : '',
+                    getDayHolidayInfo(day)?.isSchoolDay === false ? 'bg-rose-500/[0.025] dark:bg-rose-500/[0.04]' : ''
                   ]"
                 >
                   <!-- Highlight border strip for active today column -->
                   <div v-if="isToday(day)" class="absolute inset-x-0 top-0 h-0.5 bg-violet-600 dark:bg-violet-500 z-10 opacity-70"></div>
                   
+                  <!-- Prominent Full Holiday Card inside Day Column (ui-ux-pro Standard) -->
+                  <div 
+                    v-if="getDayHolidayInfo(day)?.isSchoolDay === false"
+                    class="absolute inset-x-2 top-3 z-20 rounded-2xl p-4 bg-gradient-to-br from-rose-500/15 via-rose-500/10 to-rose-500/5 dark:from-rose-950/85 dark:via-rose-950/50 dark:to-zinc-900/70 border-2 border-rose-400/80 dark:border-rose-600/70 shadow-xl shadow-rose-500/10 backdrop-blur-md flex flex-col justify-between overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:border-rose-500 select-none group"
+                    :style="{ minHeight: (processedSchedulesByDay[day] && processedSchedulesByDay[day].length > 0) ? '170px' : '260px' }"
+                  >
+                    <!-- Decorative subtle watermark -->
+                    <div class="absolute -right-4 -bottom-4 text-rose-500/10 dark:text-rose-400/10 pointer-events-none transition-transform group-hover:scale-110">
+                      <Calendar :size="120" />
+                    </div>
+
+                    <div class="relative z-10 space-y-2">
+                      <!-- Badge & Date Pill -->
+                      <div class="flex items-center justify-between gap-1.5 flex-wrap">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-rose-500 text-white dark:bg-rose-600 shadow-sm">
+                          <span>🏖️</span>
+                          <span>HARI LIBUR</span>
+                        </span>
+                        <span class="text-[10px] font-bold text-rose-700 dark:text-rose-300 bg-rose-500/10 dark:bg-rose-500/20 px-2 py-0.5 rounded-md border border-rose-300/40">
+                          {{ formatDateIndo(getDayHolidayInfo(day)?.date) }}
+                        </span>
+                      </div>
+
+                      <!-- Holiday Title/Reason -->
+                      <h3 class="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-zinc-50 leading-snug line-clamp-2 pt-1">
+                        {{ getDayHolidayInfo(day)?.reason || 'KBM Diliburkan' }}
+                      </h3>
+
+                      <!-- Holiday Scope / Description -->
+                      <p class="text-[10px] text-slate-600 dark:text-zinc-300 leading-relaxed font-medium">
+                        {{ getDayHolidayInfo(day)?.partialSummary || 'Seluruh kegiatan belajar mengajar (KBM) ditiadakan pada hari ini.' }}
+                      </p>
+                    </div>
+
+                    <!-- Card Footer -->
+                    <div class="relative z-10 mt-3 pt-2.5 border-t border-rose-300/40 dark:border-rose-800/40 flex items-center justify-between text-[10px] font-bold text-rose-700 dark:text-rose-300">
+                      <span class="inline-flex items-center gap-1">
+                        <Clock :size="12" /> Sepanjang Hari
+                      </span>
+                      <span class="inline-flex items-center gap-1 uppercase tracking-wider bg-rose-500/15 dark:bg-rose-500/25 px-2 py-0.5 rounded-md border border-rose-400/30">
+                        KBM OFF
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Prominent Partial Holiday Card (When some classes are off) -->
+                  <div 
+                    v-else-if="getDayHolidayInfo(day)?.hasPartialHoliday"
+                    class="absolute inset-x-2 top-3 z-20 rounded-2xl p-3.5 bg-gradient-to-br from-amber-500/15 via-amber-500/10 to-amber-500/5 dark:from-amber-950/85 dark:via-amber-950/50 dark:to-zinc-900/70 border-2 border-amber-400/80 dark:border-amber-600/70 shadow-lg shadow-amber-500/10 backdrop-blur-md flex flex-col justify-between overflow-hidden transition-all duration-300 hover:scale-[1.01] select-none"
+                    :style="{ minHeight: (processedSchedulesByDay[day] && processedSchedulesByDay[day].length > 0) ? '140px' : '220px' }"
+                  >
+                    <div class="relative z-10 space-y-1.5">
+                      <div class="flex items-center justify-between gap-1.5 flex-wrap">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-500 text-white dark:bg-amber-600 shadow-sm">
+                          <span>⚠️</span>
+                          <span>LIBUR PARSIAL</span>
+                        </span>
+                        <span class="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-500/10 dark:bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-300/40">
+                          {{ formatDateIndo(getDayHolidayInfo(day)?.date) }}
+                        </span>
+                      </div>
+
+                      <h3 class="font-extrabold text-xs text-slate-900 dark:text-zinc-50 leading-snug pt-0.5">
+                        {{ getDayHolidayInfo(day)?.reason }}
+                      </h3>
+
+                      <p class="text-[10px] text-amber-900 dark:text-amber-200 leading-relaxed font-semibold">
+                        {{ getDayHolidayInfo(day)?.partialSummary || 'Sebagian jenjang/rombel diliburkan.' }}
+                      </p>
+                    </div>
+
+                    <div class="relative z-10 mt-2.5 pt-2 border-t border-amber-300/40 dark:border-amber-800/40 flex items-center justify-between text-[10px] font-bold text-amber-800 dark:text-amber-300">
+                      <span>Sebagian Kelas Aktif</span>
+                      <span class="uppercase tracking-wider bg-amber-500/15 dark:bg-amber-500/25 px-2 py-0.5 rounded-md border border-amber-400/30">
+                        PARSIAL
+                      </span>
+                    </div>
+                  </div>
+
                   <!-- Current Time Indicator Pointer -->
                   <div 
                     v-if="isToday(day) && currentTimeTop"
@@ -1341,7 +1561,8 @@ const handleDeclineSubstitution = async (substitutionId: string) => {
                       substitutionMode && event.vacancyStatus === 'planned_empty' ? 'border-slate-300' :
                       scheduleConflicts[event.id] 
                         ? '!border-amber-500 dark:!border-amber-500/80 ring-2 ring-amber-500/10 dark:ring-amber-500/5 shadow-amber-500/5' 
-                        : getSubjectTheme(event.subject_code).border
+                        : getSubjectTheme(event.subject_code).border,
+                      getDayHolidayInfo(day)?.isSchoolDay === false ? 'opacity-40 grayscale-[25%] hover:opacity-100 hover:z-30 transition-all' : ''
                     ]"
                     :style="getEventStyles(event)"
                   >
@@ -1385,6 +1606,10 @@ const handleDeclineSubstitution = async (substitutionId: string) => {
 
                           <span v-if="!substitutionMode && scheduleConflicts[event.id]" class="inline-flex items-center gap-0.5 text-[8px] font-bold text-amber-600 bg-amber-500/10 px-1 py-0.2 rounded border border-amber-500/20">
                             <AlertTriangle :size="9" class="animate-pulse" /> Bentrok
+                          </span>
+
+                          <span v-if="getDayHolidayInfo(day)?.isSchoolDay === false" class="inline-flex items-center gap-0.5 text-[8px] font-extrabold text-rose-600 bg-rose-500/15 dark:text-rose-300 dark:bg-rose-500/25 px-1.5 py-0.2 rounded border border-rose-400/30">
+                            🏖️ KBM Off
                           </span>
                         </div>
                       </div>
@@ -1752,12 +1977,18 @@ const handleDeclineSubstitution = async (substitutionId: string) => {
           <p class="font-semibold">{{ errorMessage }}</p>
         </div>
 
+        <!-- Holiday Contextual Alert -->
+        <div v-if="createModalHolidayAlert" class="bg-amber-500/10 border border-amber-500/25 text-amber-800 dark:text-amber-300 rounded-xl p-3 text-xs flex items-start gap-2 shadow-sm animate-in fade-in duration-200">
+          <AlertTriangle :size="16" class="flex-shrink-0 mt-0.5 text-amber-500" />
+          <p class="font-medium leading-relaxed">{{ createModalHolidayAlert }}</p>
+        </div>
+
         <div class="grid grid-cols-2 gap-4">
           <!-- Day of Week -->
           <div class="flex flex-col gap-1.5 w-full">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Hari</label>
             <select v-model="scheduleForm.day_of_week" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
-              <option v-for="day in daysOfWeek" :key="day" :value="day">{{ day }}</option>
+              <option v-for="day in daysOfWeek" :key="day" :value="day">{{ day === 'Minggu' ? 'Minggu (Ahad)' : day }}</option>
             </select>
           </div>
 
@@ -1830,12 +2061,18 @@ const handleDeclineSubstitution = async (substitutionId: string) => {
           <p class="font-semibold">{{ errorMessage }}</p>
         </div>
 
+        <!-- Holiday Contextual Alert -->
+        <div v-if="editModalHolidayAlert" class="bg-amber-500/10 border border-amber-500/25 text-amber-800 dark:text-amber-300 rounded-xl p-3 text-xs flex items-start gap-2 shadow-sm animate-in fade-in duration-200">
+          <AlertTriangle :size="16" class="flex-shrink-0 mt-0.5 text-amber-500" />
+          <p class="font-medium leading-relaxed">{{ editModalHolidayAlert }}</p>
+        </div>
+
         <div class="grid grid-cols-2 gap-4">
           <!-- Day of Week -->
           <div class="flex flex-col gap-1.5 w-full">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Hari</label>
             <select v-model="editForm.day_of_week" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
-              <option v-for="day in daysOfWeek" :key="day" :value="day">{{ day }}</option>
+              <option v-for="day in daysOfWeek" :key="day" :value="day">{{ day === 'Minggu' ? 'Minggu (Ahad)' : day }}</option>
             </select>
           </div>
 

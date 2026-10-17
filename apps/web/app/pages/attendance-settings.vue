@@ -17,11 +17,15 @@ import {
   School, 
   Check,
   Layers,
-  Tag
+  Tag,
+  GraduationCap,
+  Users,
+  Search
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseInput, BaseModal, BaseDateInput } from '@eduraport/ui'
 import { useApi } from '../composables/useApi'
 import { useSchoolContext } from '../composables/useSchoolContext'
+import { useClass } from '../composables/useClass'
 
 definePageMeta({
   middleware: [
@@ -36,6 +40,18 @@ definePageMeta({
 
 const { fetcher } = useApi()
 const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
+const { classes, fetchClasses } = useClass()
+
+const availableLevels = computed(() => {
+  const set = new Set<string>()
+  classes.value.forEach((c: any) => {
+    if (c.level) set.add(String(c.level))
+  })
+  if (set.size === 0) {
+    return ['10', '11', '12']
+  }
+  return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+})
 
 const activeTab = ref<'time_rules' | 'notifications' | 'holidays'>('time_rules')
 
@@ -73,6 +89,11 @@ const holidayData = ref<{
     is_joint_leave: boolean
     is_national_holiday: boolean
     school_status: string // 'holiday' | 'force_school_day' | 'custom_holiday'
+    scope_type?: 'school' | 'level' | 'class'
+    level?: string | null
+    class_id?: string | null
+    class_name?: string | null
+    scope_label?: string | null
     override_id: string | null
     override_type: string | null
     category: string | null
@@ -137,9 +158,61 @@ const holidayForm = reactive({
   end_date: '',
   name: '',
   category: 'libur_semester',
+  scope_type: 'school' as 'school' | 'level' | 'class',
+  level: '',
+  class_id: '',
+  levels: [] as string[],
+  class_ids: [] as string[],
   override_type: 'custom_holiday' as 'custom_holiday' | 'force_school_day',
 })
 const isSavingHoliday = ref(false)
+
+// Multi-select helpers for Level
+const toggleLevel = (lvl: string) => {
+  const idx = holidayForm.levels.indexOf(lvl)
+  if (idx > -1) {
+    holidayForm.levels.splice(idx, 1)
+  } else {
+    holidayForm.levels.push(lvl)
+  }
+}
+
+const selectAllLevels = () => {
+  holidayForm.levels = [...availableLevels.value]
+}
+
+const clearAllLevels = () => {
+  holidayForm.levels = []
+}
+
+// Multi-select helpers for Class / Rombel
+const classSearchQuery = ref('')
+
+const filteredClasses = computed(() => {
+  if (!classSearchQuery.value.trim()) return classes.value
+  const q = classSearchQuery.value.toLowerCase()
+  return classes.value.filter((c: any) => 
+    (c.class_name && c.class_name.toLowerCase().includes(q)) ||
+    (c.level && String(c.level).toLowerCase().includes(q))
+  )
+})
+
+const toggleClass = (classId: string) => {
+  const idx = holidayForm.class_ids.indexOf(classId)
+  if (idx > -1) {
+    holidayForm.class_ids.splice(idx, 1)
+  } else {
+    holidayForm.class_ids.push(classId)
+  }
+}
+
+const selectAllClasses = () => {
+  holidayForm.class_ids = classes.value.map((c: any) => c.id)
+}
+
+const clearAllClasses = () => {
+  holidayForm.class_ids = []
+}
 
 // Safe Notification Helper (falls back to alert if $toast is absent)
 const notify = (msg: string, type: 'success' | 'error' = 'success') => {
@@ -189,7 +262,8 @@ const loadAllSettings = async (schoolId: string) => {
     await Promise.all([
       fetchTimeRules(schoolId),
       fetchAttendanceSettings(schoolId),
-      fetchHolidays(schoolId, selectedYear.value)
+      fetchHolidays(schoolId, selectedYear.value),
+      fetchClasses(schoolId)
     ])
   } catch (error) {
     console.error('Failed to load settings:', error)
@@ -375,8 +449,14 @@ const openAddHolidayModal = () => {
   holidayForm.end_date = ''
   holidayForm.name = ''
   holidayForm.category = 'libur_semester'
+  holidayForm.scope_type = 'school'
+  holidayForm.level = availableLevels.value[0] || ''
+  holidayForm.class_id = classes.value[0]?.id || ''
+  holidayForm.levels = availableLevels.value.length > 0 ? [availableLevels.value[0]] : []
+  holidayForm.class_ids = classes.value.length > 0 ? [classes.value[0].id] : []
   holidayModalMode.value = 'single'
   modalError.value = ''
+  classSearchQuery.value = ''
   showHolidayModal.value = true
 }
 
@@ -420,6 +500,19 @@ const saveHolidayModal = async () => {
     }
   }
 
+  if (holidayForm.scope_type === 'level') {
+    if (!holidayForm.levels || holidayForm.levels.length === 0) {
+      modalError.value = 'Minimal pilih satu tingkat kelas yang diliburkan.'
+      return
+    }
+  }
+  if (holidayForm.scope_type === 'class') {
+    if (!holidayForm.class_ids || holidayForm.class_ids.length === 0) {
+      modalError.value = 'Minimal pilih satu rombel kelas yang diliburkan.'
+      return
+    }
+  }
+
   // Auto-fallback: jika nama dikosongkan, gunakan nama kategori yang dipilih
   const finalName = holidayForm.name?.trim() || getCategoryMeta(holidayForm.category)?.name || 'Libur Khusus'
 
@@ -428,6 +521,11 @@ const saveHolidayModal = async () => {
     const payload: any = {
       override_type: holidayForm.override_type || 'custom_holiday',
       category: holidayForm.category,
+      scope_type: holidayForm.scope_type,
+      level: holidayForm.scope_type === 'level' ? (holidayForm.levels[0] || null) : null,
+      class_id: holidayForm.scope_type === 'class' ? (holidayForm.class_ids[0] || null) : null,
+      levels: holidayForm.scope_type === 'level' ? holidayForm.levels : [],
+      class_ids: holidayForm.scope_type === 'class' ? holidayForm.class_ids : [],
       note: finalName
     }
 
@@ -443,10 +541,16 @@ const saveHolidayModal = async () => {
       body: payload
     })
 
+    const scopeTxt = holidayForm.scope_type === 'level'
+      ? ` (${holidayForm.levels.length} Jenjang: ${holidayForm.levels.map(l => 'Tingkat ' + l).join(', ')})`
+      : holidayForm.scope_type === 'class'
+        ? ` (${holidayForm.class_ids.length} Rombel Terpilih)`
+        : ''
+
     notify(
       holidayModalMode.value === 'range'
-        ? `Berhasil menyimpan rentang libur "${finalName}" (${rangeDaysCount.value} hari)`
-        : `Berhasil menyimpan libur khusus "${finalName}"`,
+        ? `Berhasil menyimpan rentang libur "${finalName}"${scopeTxt} (${rangeDaysCount.value} hari)`
+        : `Berhasil menyimpan libur khusus "${finalName}"${scopeTxt}`,
       'success'
     )
 
@@ -476,7 +580,11 @@ const deleteCustomHoliday = async (item: any) => {
   }
 
   try {
-    const url = `/school/${selectedSchoolId.value}/attendance/holidays/override/${item.date}${deleteGroup ? '?delete_group=true' : ''}`
+    const queryParams = new URLSearchParams()
+    if (deleteGroup) queryParams.set('delete_group', 'true')
+    if (item.override_id) queryParams.set('override_id', item.override_id)
+    const qs = queryParams.toString() ? `?${queryParams.toString()}` : ''
+    const url = `/school/${selectedSchoolId.value}/attendance/holidays/override/${item.date}${qs}`
     await fetcher(url, { method: 'DELETE' })
     notify(deleteGroup ? 'Seluruh rentang libur berhasil dihapus' : 'Hari libur berhasil dihapus', 'success')
     await fetchHolidays(selectedSchoolId.value, selectedYear.value)
@@ -851,6 +959,7 @@ const deleteCustomHoliday = async (item: any) => {
                 <tr class="bg-slate-900 border-b border-slate-800 text-slate-400 uppercase text-[10px] tracking-wider font-semibold">
                   <th class="py-3 px-4">Tanggal & Hari</th>
                   <th class="py-3 px-4">Nama Hari Libur / Agenda</th>
+                  <th class="py-3 px-4">Sasaran (Scope)</th>
                   <th class="py-3 px-4">Kategori</th>
                   <th class="py-3 px-4">Status di Unit Ini</th>
                   <th class="py-3 px-4 text-right">Aksi Override</th>
@@ -858,14 +967,14 @@ const deleteCustomHoliday = async (item: any) => {
               </thead>
               <tbody class="divide-y divide-slate-800/60 text-slate-300">
                 <tr v-if="holidayData.items.length === 0">
-                  <td colspan="5" class="py-8 text-center text-slate-500">
+                  <td colspan="6" class="py-8 text-center text-slate-500">
                     Belum ada data hari libur. Klik tombol "Tarik Libur Nasional" di atas.
                   </td>
                 </tr>
 
                 <tr
                   v-for="item in holidayData.items"
-                  :key="item.date"
+                  :key="item.override_id || (item.date + '-' + (item.scope_type || 'school') + '-' + (item.level || '') + '-' + (item.class_id || ''))"
                   :class="[
                     'hover:bg-slate-850/40 transition-colors',
                     item.school_status === 'force_school_day' ? 'bg-emerald-950/20' : ''
@@ -883,6 +992,20 @@ const deleteCustomHoliday = async (item: any) => {
                     {{ item.name }}
                     <span v-if="item.note && item.override_type === 'custom_holiday' && item.note !== item.name" class="block text-[11px] text-violet-400 font-normal mt-0.5">
                       {{ item.note }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 whitespace-nowrap">
+                    <span v-if="item.scope_type === 'level'" class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 inline-flex items-center gap-1.5 shadow-2xs">
+                      <GraduationCap :size="12" class="text-amber-400 shrink-0" />
+                      Tingkat {{ item.level }}
+                    </span>
+                    <span v-else-if="item.scope_type === 'class'" class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 inline-flex items-center gap-1.5 shadow-2xs">
+                      <Users :size="12" class="text-purple-400 shrink-0" />
+                      Kelas {{ item.class_name || 'Khusus' }}
+                    </span>
+                    <span v-else class="px-2.5 py-1 rounded-md text-[10px] font-medium bg-slate-800/80 text-slate-300 border border-slate-700/60 inline-flex items-center gap-1.5">
+                      <School :size="12" class="text-slate-400 shrink-0" />
+                      Seluruh Sekolah
                     </span>
                   </td>
                   <td class="py-3 px-4 whitespace-nowrap">
@@ -1082,6 +1205,202 @@ const deleteCustomHoliday = async (item: any) => {
                   <span class="text-base">{{ cat.icon }}</span>
                   <span class="leading-tight">{{ cat.name }}</span>
                 </button>
+              </div>
+            </div>
+
+            <!-- Scope Selector (Seluruh Sekolah vs Tingkat vs Rombel) -->
+            <div class="space-y-2.5 pt-1 border-t border-slate-800/80">
+              <div class="flex items-center justify-between">
+                <label class="block text-xs font-semibold text-slate-300">Sasaran Hari Libur (Scope Operasional):</label>
+                <span class="text-[10px] text-slate-400 font-medium">Pilih cakupan yang diliburkan</span>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  @click="holidayForm.scope_type = 'school'"
+                  :class="[
+                    'p-3 rounded-xl border text-center text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5',
+                    holidayForm.scope_type === 'school'
+                      ? 'bg-violet-950/60 border-violet-500 text-white shadow-sm ring-1 ring-violet-500/50'
+                      : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                  ]"
+                >
+                  <School class="w-4 h-4 text-violet-400" />
+                  <span>Semua Sekolah</span>
+                  <span class="text-[9px] font-normal text-slate-400">Seluruh unit libur</span>
+                </button>
+
+                <button
+                  type="button"
+                  @click="holidayForm.scope_type = 'level'"
+                  :class="[
+                    'p-3 rounded-xl border text-center text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5',
+                    holidayForm.scope_type === 'level'
+                      ? 'bg-amber-950/60 border-amber-500 text-white shadow-sm ring-1 ring-amber-500/50'
+                      : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                  ]"
+                >
+                  <GraduationCap class="w-4 h-4 text-amber-400" />
+                  <span>Tingkat Tertentu</span>
+                  <span class="text-[9px] font-normal text-slate-400">Pilih 1 atau beberapa jenjang</span>
+                </button>
+
+                <button
+                  type="button"
+                  @click="holidayForm.scope_type = 'class'"
+                  :class="[
+                    'p-3 rounded-xl border text-center text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5',
+                    holidayForm.scope_type === 'class'
+                      ? 'bg-purple-950/60 border-purple-500 text-white shadow-sm ring-1 ring-purple-500/50'
+                      : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                  ]"
+                >
+                  <Users class="w-4 h-4 text-purple-400" />
+                  <span>Rombel Spesifik</span>
+                  <span class="text-[9px] font-normal text-slate-400">Pilih 1 atau beberapa kelas</span>
+                </button>
+              </div>
+
+              <!-- Scope Detail Picker: Level -->
+              <div v-if="holidayForm.scope_type === 'level'" class="p-3.5 bg-amber-950/20 border border-amber-500/30 rounded-xl space-y-3">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-amber-300">Pilih Jenjang / Tingkat Kelas:</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      Dipilih: {{ holidayForm.levels.length }} Tingkat
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-[11px]">
+                    <button
+                      type="button"
+                      @click="selectAllLevels"
+                      class="px-2 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 font-medium transition-colors"
+                    >
+                      Pilih Semua
+                    </button>
+                    <button
+                      type="button"
+                      @click="clearAllLevels"
+                      class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 font-medium transition-colors"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Chips Multi-Select -->
+                <div class="flex items-center gap-2 flex-wrap">
+                  <button
+                    v-for="lvl in availableLevels"
+                    :key="lvl"
+                    type="button"
+                    @click="toggleLevel(lvl)"
+                    :class="[
+                      'px-3 py-1.5 rounded-lg text-xs font-bold transition-all border flex items-center gap-1.5',
+                      holidayForm.levels.includes(lvl)
+                        ? 'bg-amber-500 border-amber-400 text-slate-950 shadow-md ring-2 ring-amber-500/30'
+                        : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-amber-500/50'
+                    ]"
+                  >
+                    <Check v-if="holidayForm.levels.includes(lvl)" class="w-3.5 h-3.5 stroke-[3]" />
+                    <span>Tingkat {{ lvl }}</span>
+                  </button>
+                </div>
+
+                <div class="p-2.5 rounded-lg bg-amber-950/40 border border-amber-500/20 text-[11px] text-amber-300/90 leading-relaxed flex items-start gap-2">
+                  <span class="text-base shrink-0">💡</span>
+                  <div>
+                    <span v-if="holidayForm.levels.length > 0">
+                      Seluruh rombel di <strong>{{ holidayForm.levels.map(l => 'Tingkat ' + l).join(', ') }}</strong> akan diliburkan (misal karena tingkat lain sedang Ujian Sekolah). Jenjang di luar pilihan ini tetap beroperasi normal.
+                    </span>
+                    <span v-else class="text-amber-400/60 italic">
+                      Klik satu atau beberapa tombol tingkat di atas untuk menentukan jenjang mana saja yang diliburkan.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Scope Detail Picker: Class -->
+              <div v-if="holidayForm.scope_type === 'class'" class="p-3.5 bg-purple-950/20 border border-purple-500/30 rounded-xl space-y-3">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-purple-300">Pilih Rombel / Kelas:</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                      Dipilih: {{ holidayForm.class_ids.length }} dari {{ classes.length }} Rombel
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-[11px]">
+                    <button
+                      type="button"
+                      @click="selectAllClasses"
+                      class="px-2 py-0.5 rounded bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 font-medium transition-colors"
+                    >
+                      Pilih Semua
+                    </button>
+                    <button
+                      type="button"
+                      @click="clearAllClasses"
+                      class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 font-medium transition-colors"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Search Input if classes > 3 -->
+                <div v-if="classes.length > 3" class="relative">
+                  <Search class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    v-model="classSearchQuery"
+                    type="text"
+                    placeholder="Cari nama rombel atau tingkat..."
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-purple-500"
+                  />
+                </div>
+
+                <!-- Classes Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
+                  <button
+                    v-for="c in filteredClasses"
+                    :key="c.id"
+                    type="button"
+                    @click="toggleClass(c.id)"
+                    :class="[
+                      'p-2 rounded-lg border text-left text-xs transition-all flex items-center justify-between gap-2',
+                      holidayForm.class_ids.includes(c.id)
+                        ? 'bg-purple-900/40 border-purple-400 text-white shadow-sm ring-1 ring-purple-500/50'
+                        : 'bg-slate-900/80 border-slate-800 text-slate-300 hover:border-slate-700'
+                    ]"
+                  >
+                    <div class="truncate">
+                      <div class="font-bold truncate">{{ c.class_name }}</div>
+                      <div class="text-[10px] text-slate-400">Tingkat {{ c.level || '-' }}</div>
+                    </div>
+                    <div
+                      :class="[
+                        'w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-all',
+                        holidayForm.class_ids.includes(c.id)
+                          ? 'bg-purple-500 border-purple-400 text-white'
+                          : 'border-slate-700 bg-slate-950'
+                      ]"
+                    >
+                      <Check v-if="holidayForm.class_ids.includes(c.id)" class="w-3 h-3 stroke-[3]" />
+                    </div>
+                  </button>
+                </div>
+
+                <div class="p-2.5 rounded-lg bg-purple-950/40 border border-purple-500/20 text-[11px] text-purple-300/90 leading-relaxed flex items-start gap-2">
+                  <span class="text-base shrink-0">💡</span>
+                  <div>
+                    <span v-if="holidayForm.class_ids.length > 0">
+                      Hanya <strong>{{ holidayForm.class_ids.length }} rombel terpilih</strong> yang diliburkan (misal karena jadwal outing class / isolasi mandiri). Rombel lainnya di sekolah tetap wajib presensi.
+                    </span>
+                    <span v-else class="text-purple-400/60 italic">
+                      Pilih minimal satu rombel kelas di atas yang ingin diliburkan.
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 

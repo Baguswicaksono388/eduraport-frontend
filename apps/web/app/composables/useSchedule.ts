@@ -51,11 +51,37 @@ export const useSchedule = () => {
     return res
   }
 
+  const weeklyHolidays = useState<any>('schedule_weekly_holidays', () => ({
+    startDate: '',
+    endDate: '',
+    holidayCount: 0,
+    holidays: [],
+    dayStatusMap: {}
+  }))
+
+  const fetchWeeklyHolidays = async (schoolId: string, startDate: string, endDate: string, classId?: string) => {
+    try {
+      let url = `/school/${schoolId}/schedule/holidays?startDate=${startDate}&endDate=${endDate}`
+      if (classId) url += `&classId=${classId}`
+      const res: any = await fetcher(url)
+      if (res.success) {
+        weeklyHolidays.value = res.data
+        return res.data
+      }
+    } catch (error) {
+      console.error('Failed to fetch schedule holidays:', error)
+    }
+    return null
+  }
+
   return {
     schedules,
+    weeklyHolidays,
     fetchSchedules,
+    fetchWeeklyHolidays,
     createSchedule,
     updateSchedule,
     deleteSchedule
   }
 }
+

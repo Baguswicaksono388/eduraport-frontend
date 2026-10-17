@@ -30,6 +30,7 @@ export const ROUTE_ROLES: Record<string, string[]> = {
   '/school':       ['super_admin', 'principal', 'user', 'solo_teacher'],
   '/academic-year':['super_admin', 'principal', 'user', 'solo_teacher'],
   '/attendance-settings': ['super_admin', 'principal', 'tu', 'user', 'solo_teacher'],
+  '/attendance-analytics': ['super_admin', 'principal', 'tu', 'teacher', 'user', 'solo_teacher'],
   '/extracurricular': ['super_admin', 'principal', 'tu', 'teacher', 'user'],
   '/bk':           ['super_admin', 'principal', 'teacher', 'user', 'solo_teacher'],
   '/discipline':   ['super_admin', 'principal', 'teacher', 'user', 'solo_teacher']

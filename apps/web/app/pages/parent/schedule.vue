@@ -19,7 +19,7 @@ const selectedChildId = ref('')
 const loading = ref(true)
 const scheduleData = ref<Record<string, any[]>>({})
 
-const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']
 
 // Get today's day name in Indonesian
 const getTodayName = () => {
@@ -28,7 +28,7 @@ const getTodayName = () => {
   return map[dayIndex]
 }
 
-const activeDay = ref(getTodayName() === 'Minggu' ? 'Senin' : getTodayName())
+const activeDay = ref(getTodayName())
 
 const loadSchedule = async () => {
   if (!selectedChildId.value) return
@@ -97,7 +97,7 @@ const isCurrentLive = (day: string, startTime: string, endTime: string) => {
             : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800 hover:border-slate-300'
         ]"
       >
-        <span>{{ day }}</span>
+        <span>{{ day === 'Minggu' ? 'Ahad / Minggu' : day }}</span>
         <span v-if="day.toLowerCase() === getTodayName().toLowerCase()" class="w-2 h-2 rounded-full bg-emerald-400"></span>
       </button>
     </div>
