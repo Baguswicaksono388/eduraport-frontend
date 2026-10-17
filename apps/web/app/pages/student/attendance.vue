@@ -33,7 +33,10 @@ definePageMeta({
 
 import { useAuth } from '../../composables/useAuth'
 
+import { useApi } from '../../composables/useApi'
+
 const { user } = useAuth()
+const { fetcher } = useApi()
 const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
 const { classes, fetchClasses } = useClass()
 const { students, fetchStudents } = useStudent()
@@ -45,6 +48,13 @@ const selectedClassId = ref('')
 const selectedDate = ref(new Date().toISOString().split('T')[0])
 const loading = ref(false)
 const saving = ref(false)
+
+// Tabs & UF-3 Pending State
+const currentViewTab = ref<'regular' | 'pending'>('regular')
+const pendingStudents = ref<any[]>([])
+const loadingPending = ref(false)
+const pendingConfirmMap = ref<Record<string, { status: string; note: string }>>({})
+const confirmingPending = ref(false)
 
 // Persistence & DB state
 const isRecordedInDb = ref(false)
@@ -211,12 +221,80 @@ const loadData = async () => {
 
     studentCheckins.value = sCheckins
     attendanceMap.value = tempMap
+    await loadPendingStudents()
   } catch (err: any) {
     console.error('Failed to load attendance:', err)
     toast.error('Gagal memuat data kehadiran.', 'Error')
   } finally {
     loading.value = false
   }
+}
+
+// UF-3: Load students who haven't checked in yet today
+const loadPendingStudents = async () => {
+  if (!selectedSchoolId.value) return
+  loadingPending.value = true
+  try {
+    const qClass = selectedClassId.value ? `&class_id=${selectedClassId.value}` : ''
+    const res: any = await fetcher(`/school/${selectedSchoolId.value}/attendance/pending?date=${selectedDate.value}${qClass}`)
+    if (res && res.data) {
+      pendingStudents.value = res.data
+      for (const s of res.data) {
+        if (!pendingConfirmMap.value[s.student_id]) {
+          const defaultStatus = s.leave_status === 'approved' ? 'izin' : 'alpha'
+          pendingConfirmMap.value[s.student_id] = {
+            status: defaultStatus,
+            note: s.leave_reason ? `Izin terverifikasi: ${s.leave_reason}` : ''
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load pending students:', err)
+  } finally {
+    loadingPending.value = false
+  }
+}
+
+// UF-3: Confirm pending attendance
+const handleConfirmPending = async () => {
+  if (!selectedSchoolId.value || pendingStudents.value.length === 0) return
+  confirmingPending.value = true
+  try {
+    const items = pendingStudents.value.map((s) => {
+      const conf = pendingConfirmMap.value[s.student_id] || { status: 'alpha', note: '' }
+      return {
+        student_id: s.student_id,
+        date: selectedDate.value,
+        status: conf.status,
+        note: conf.note || null
+      }
+    })
+    const res: any = await fetcher(`/school/${selectedSchoolId.value}/attendance/confirm`, {
+      method: 'POST',
+      body: { items }
+    })
+    if (res && res.success) {
+      toast.success('Konfirmasi presensi siswa berhasil disimpan.', 'Sukses')
+      await loadPendingStudents()
+      await loadData()
+    }
+  } catch (err: any) {
+    toast.error(err.message || 'Gagal menyimpan konfirmasi presensi.', 'Gagal')
+  } finally {
+    confirmingPending.value = false
+  }
+}
+
+// WhatsApp link generator for quick follow-up
+const getWhatsAppUrl = (phone?: string, studentName?: string, parentName?: string) => {
+  if (!phone) return '#'
+  let clean = phone.replace(/\D/g, '')
+  if (clean.startsWith('0')) clean = '62' + clean.slice(1)
+  const text = encodeURIComponent(
+    `Assalamualaikum Wr. Wb. Bapak/Ibu ${parentName || 'Wali Murid'}, menginformasikan bahwa ananda ${studentName} tercatat belum melakukan absensi di gerbang sekolah pada hari ini (${selectedDate.value}). Mohon konfirmasi kehadiran/keterangan ananda. Terima kasih.`
+  )
+  return `https://wa.me/${clean}?text=${text}`
 }
 
 // Watch filters
@@ -427,8 +505,35 @@ const handleSave = async () => {
       </div>
     </div>
 
-    <!-- Dynamic Persistence / Holiday State Banner -->
-    <div v-if="!loading && classStudents.length > 0">
+    <!-- View Mode Tabs (Regular Grid vs UF-3 Pending Homeroom Confirmation) -->
+    <div class="flex items-center gap-2 border-b border-slate-200 dark:border-zinc-800 pb-3">
+      <button 
+        @click="currentViewTab = 'regular'" 
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+        :class="currentViewTab === 'regular' ? 'bg-violet-600 text-white shadow-sm' : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800'"
+      >
+        <span>📋 Rekap Presensi Kelas</span>
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="currentViewTab === 'regular' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300'">
+          {{ classStudents.length }}
+        </span>
+      </button>
+
+      <button 
+        @click="currentViewTab = 'pending'" 
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+        :class="currentViewTab === 'pending' ? 'bg-amber-600 text-white shadow-sm' : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800'"
+      >
+        <span>⚠️ Siswa Belum Hadir / Pagi (UF-3)</span>
+        <span v-if="pendingStudents.length > 0" class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="currentViewTab === 'pending' ? 'bg-white/20 text-white' : 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400'">
+          {{ pendingStudents.length }}
+        </span>
+      </button>
+    </div>
+
+    <!-- Regular Attendance Mode -->
+    <div v-if="currentViewTab === 'regular'" class="space-y-6">
+      <!-- Dynamic Persistence / Holiday State Banner -->
+      <div v-if="!loading && classStudents.length > 0">
       <!-- State 0: Hari Libur (Presensi Dinonaktifkan) -->
       <div
         v-if="isHoliday"
@@ -726,6 +831,135 @@ const handleSave = async () => {
             <Save v-if="!saving" :size="14" />
             <RefreshCw v-else class="animate-spin" :size="14" />
             <span>{{ saving ? 'Menyimpan...' : (!isRecordedInDb ? 'Simpan Absensi Sekarang' : 'Perbarui Data Absensi') }}</span>
+          </BaseButton>
+        </div>
+      </div>
+    </div>
+    </div> <!-- Close regular attendance mode -->
+
+    <!-- UF-3: Pending Attendance & Homeroom Confirmation Mode -->
+    <div v-else-if="currentViewTab === 'pending'" class="space-y-6">
+      <div class="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="text-sm font-black text-amber-800 dark:text-amber-300 flex items-center gap-2">
+            <span>⏰</span> Konfirmasi Siswa Belum Masuk Gerbang (Cutoff Pagi)
+          </h3>
+          <p class="text-xs text-amber-700/80 dark:text-amber-400/80 mt-0.5">
+            Daftar siswa yang belum mencatatkan kehadiran di gerbang. Hubungi orang tua via WhatsApp untuk konfirmasi keterangan.
+          </p>
+        </div>
+
+        <button 
+          @click="loadPendingStudents" 
+          :disabled="loadingPending" 
+          class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-800 dark:text-amber-200 rounded-xl text-xs font-bold transition-colors shrink-0 flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+        >
+          <RefreshCw :class="{ 'animate-spin': loadingPending }" :size="12" />
+          <span>Segarkan Antrean Pagi</span>
+        </button>
+      </div>
+
+      <!-- Pending Students List -->
+      <div v-if="loadingPending" class="flex flex-col items-center justify-center py-20 space-y-4">
+        <div class="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">Memuat daftar siswa belum hadir...</p>
+      </div>
+
+      <div v-else-if="pendingStudents.length === 0" class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-12 text-center shadow-sm">
+        <span class="text-4xl block mb-2">🎉</span>
+        <h4 class="text-base font-black text-slate-800 dark:text-zinc-100">Semua Siswa Sudah Hadir / Terkonfirmasi!</h4>
+        <p class="text-xs text-slate-500 dark:text-zinc-400 mt-1">Tidak ada siswa yang belum absen pada tanggal ini.</p>
+      </div>
+
+      <div v-else class="space-y-3">
+        <div 
+          v-for="s in pendingStudents" 
+          :key="s.student_id" 
+          class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4"
+        >
+          <!-- Student Info -->
+          <div class="flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center font-black text-sm shrink-0">
+              {{ s.student_name ? s.student_name[0] : 'S' }}
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h4 class="font-black text-sm text-slate-900 dark:text-zinc-100">{{ s.student_name }}</h4>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300">
+                  {{ s.class_name || '-' }}
+                </span>
+                <span v-if="s.leave_status === 'approved'" class="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                  ✓ Izin Terverifikasi: {{ s.leave_reason || 'Izin Orang Tua' }}
+                </span>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">NIS: {{ s.nis || '-' }}</p>
+            </div>
+          </div>
+
+          <!-- Parent Contact & WhatsApp Action -->
+          <div class="flex items-center gap-3 border-y md:border-y-0 md:border-x border-slate-100 dark:border-zinc-800 py-3 md:py-0 md:px-4">
+            <div class="text-xs">
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Wali Murid</p>
+              <p class="font-bold text-slate-700 dark:text-zinc-200">{{ s.parent_name || 'Orang Tua Siswa' }}</p>
+              <p class="text-[11px] text-slate-500">{{ s.parent_phone || 'Nomor belum didaftarkan' }}</p>
+            </div>
+
+            <a 
+              v-if="s.parent_phone" 
+              :href="getWhatsAppUrl(s.parent_phone, s.student_name, s.parent_name)" 
+              target="_blank" 
+              class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm shrink-0"
+              title="Hubungi Orang Tua via WhatsApp"
+            >
+              <span>💬 WhatsApp</span>
+            </a>
+          </div>
+
+          <!-- Homeroom Attendance Decision (Sakit/Izin/Alpha) -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div v-if="pendingConfirmMap[s.student_id]" class="flex items-center gap-1.5">
+              <button 
+                v-for="st in (['sakit', 'izin', 'alpha'] as const)" 
+                :key="st"
+                @click="pendingConfirmMap[s.student_id].status = st"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all border cursor-pointer"
+                :class="pendingConfirmMap[s.student_id].status === st 
+                  ? {
+                      sakit: 'bg-blue-600 text-white border-blue-600 shadow-sm',
+                      izin: 'bg-indigo-600 text-white border-indigo-600 shadow-sm',
+                      alpha: 'bg-rose-600 text-white border-rose-600 shadow-sm'
+                    }[st]
+                  : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:bg-slate-50'"
+              >
+                {{ st }}
+              </button>
+            </div>
+
+            <!-- Notes -->
+            <input 
+              v-if="pendingConfirmMap[s.student_id]"
+              v-model="pendingConfirmMap[s.student_id].note" 
+              type="text" 
+              placeholder="Keterangan..." 
+              class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-amber-500 w-full sm:w-44"
+            />
+          </div>
+        </div>
+
+        <!-- Confirm All Button -->
+        <div class="p-4 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+          <p class="text-xs text-slate-500 dark:text-zinc-400 font-medium">
+            Pastikan seluruh status konfirmasi sudah sesuai sebelum menyimpan ke basis data harian.
+          </p>
+
+          <BaseButton 
+            @click="handleConfirmPending" 
+            :disabled="confirmingPending"
+            class="px-6 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-xs font-bold rounded-xl shadow-md cursor-pointer disabled:opacity-50"
+          >
+            <Save v-if="!confirmingPending" :size="14" />
+            <RefreshCw v-else class="animate-spin" :size="14" />
+            <span>{{ confirmingPending ? 'Menyimpan...' : 'Simpan Konfirmasi Presensi (' + pendingStudents.length + ' Siswa)' }}</span>
           </BaseButton>
         </div>
       </div>

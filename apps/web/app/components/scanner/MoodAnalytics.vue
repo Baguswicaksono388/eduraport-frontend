@@ -30,6 +30,16 @@
       >
         Jam Kedatangan
       </button>
+      <button 
+        @click="activeView = 'alerts'" 
+        :class="activeView === 'alerts' ? 'bg-rose-600 text-white' : 'bg-white text-slate-600 border border-slate-300'"
+        class="px-4 py-2 rounded-full text-sm font-bold shadow-sm transition-colors flex items-center gap-1.5"
+      >
+        <span>🚨 Alert Kepedulian</span>
+        <span v-if="openAlertsCount > 0" class="px-2 py-0.5 rounded-full bg-white text-rose-600 text-[10px] font-black shadow-sm">
+          {{ openAlertsCount }}
+        </span>
+      </button>
     </div>
 
     <!-- Loading State -->
@@ -338,6 +348,206 @@
         </div>
       </div>
 
+      <!-- CARE ALERTS VIEW (UF-5) -->
+      <div v-else-if="activeView === 'alerts'" class="space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div>
+            <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
+              <span>🚨</span> Alert Kepedulian (Care Alerts)
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Deteksi otomatis siswa yang mengalami mood negatif (sedih, kesal, lelah) selama 3 hari berturut-turut.
+            </p>
+          </div>
+
+          <!-- Status Filters -->
+          <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+            <button 
+              @click="alertsFilter = 'open'" 
+              :class="alertsFilter === 'open' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'"
+              class="px-3 py-1.5 rounded-lg transition-all"
+            >
+              Perlu Tindak Lanjut ({{ openCount }})
+            </button>
+            <button 
+              @click="alertsFilter = 'followed_up'" 
+              :class="alertsFilter === 'followed_up' ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'"
+              class="px-3 py-1.5 rounded-lg transition-all"
+            >
+              Ditindaklanjuti
+            </button>
+            <button 
+              @click="alertsFilter = 'closed'" 
+              :class="alertsFilter === 'closed' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'"
+              class="px-3 py-1.5 rounded-lg transition-all"
+            >
+              Selesai
+            </button>
+            <button 
+              @click="alertsFilter = 'all'" 
+              :class="alertsFilter === 'all' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'"
+              class="px-3 py-1.5 rounded-lg transition-all"
+            >
+              Semua
+            </button>
+          </div>
+        </div>
+
+        <!-- Alert Cards List -->
+        <div v-if="filteredCareAlerts.length > 0" class="space-y-4">
+          <div 
+            v-for="alert in filteredCareAlerts" 
+            :key="alert.id"
+            class="p-5 rounded-2xl border transition-all shadow-sm"
+            :class="getAlertCardBorder(alert.status)"
+          >
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-3.5">
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl font-black shadow-inner"
+                     :class="getAlertIconBg(alert.status)">
+                  {{ alert.status === 'closed' ? '💚' : '💔' }}
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h4 class="font-black text-base text-slate-900">{{ alert.student_name }}</h4>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border"
+                          :class="getAlertStatusBadge(alert.status)">
+                      {{ getAlertStatusLabel(alert.status) }}
+                    </span>
+                  </div>
+                  <p class="text-xs text-slate-500 mt-0.5">
+                    {{ alert.class_name || 'Tanpa Kelas' }} <span v-if="alert.nis">· NIS: {{ alert.nis }}</span>
+                  </p>
+                </div>
+              </div>
+
+              <!-- Streak Info & Actions -->
+              <div class="flex flex-wrap items-center gap-2.5">
+                <div class="px-3 py-1.5 bg-rose-50 border border-rose-200/80 rounded-xl text-xs font-bold text-rose-700 flex items-center gap-1.5">
+                  <span>🔥</span>
+                  <span>{{ alert.streak_days }} Hari Berturut-turut Negatif</span>
+                </div>
+
+                <button 
+                  v-if="alert.status !== 'closed'"
+                  @click="openFollowupModal(alert)"
+                  class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95"
+                >
+                  <span>✏️ Catat Follow-up</span>
+                </button>
+
+                <button 
+                  v-if="alert.status !== 'closed'"
+                  @click="openCloseModal(alert)"
+                  class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95"
+                >
+                  <span>✓ Tutup Kasus</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Follow-up History Timeline -->
+            <div v-if="alert.followups && alert.followups.length > 0" class="mt-4 pt-4 border-t border-slate-100 space-y-2.5">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Riwayat Pendampingan & Konseling:</p>
+              <div class="space-y-2">
+                <div 
+                  v-for="f in alert.followups" 
+                  :key="f.id"
+                  class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs flex flex-col gap-1"
+                >
+                  <div class="flex items-center justify-between text-[11px] text-slate-500 font-semibold">
+                    <span class="text-indigo-600 font-bold">👤 {{ f.author_name || 'Konselor / Wali Kelas' }}</span>
+                    <span>{{ formatDateTime(f.created_at) }}</span>
+                  </div>
+                  <p class="text-slate-700 leading-relaxed">{{ f.note }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div v-else class="mt-3 text-[11px] text-slate-400 italic">
+              Belum ada catatan tindak lanjut untuk siswa ini.
+            </div>
+          </div>
+        </div>
+
+        <div v-else class="text-center py-16 text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+          <span class="text-3xl block mb-2">🎉</span>
+          <p class="font-bold text-sm text-slate-700">Tidak Ada Alert Kepedulian</p>
+          <p class="text-xs text-slate-500 mt-1">Semua siswa dalam kondisi emosional terpantau baik pada filter ini.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Modals for Care Alerts -->
+    <!-- Follow-up Modal -->
+    <div v-if="showFollowupModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+        <h3 class="text-base font-black text-slate-800">
+          ✏️ Catat Tindak Lanjut Konseling
+        </h3>
+        <p class="text-xs text-slate-500 mt-1">
+          Siswa: <span class="font-bold text-slate-700">{{ activeAlert?.student_name }}</span> ({{ activeAlert?.class_name }})
+        </p>
+
+        <div class="mt-4">
+          <label class="block text-xs font-bold text-slate-600 mb-1.5">Catatan Pendampingan / Panggilan Orang Tua</label>
+          <textarea 
+            v-model="followupNote" 
+            rows="4" 
+            placeholder="Tuliskan hasil obrolan dengan siswa, konsultasi wali kelas, atau konfirmasi dengan wali murid..." 
+            class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          ></textarea>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-2.5">
+          <button @click="showFollowupModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors">
+            Batal
+          </button>
+          <button 
+            @click="submitFollowup" 
+            :disabled="!followupNote.trim() || submittingAlert"
+            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition-colors disabled:opacity-50"
+          >
+            {{ submittingAlert ? 'Menyimpan...' : 'Simpan Tindak Lanjut' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Close Alert Modal -->
+    <div v-if="showCloseModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+        <h3 class="text-base font-black text-slate-800">
+          ✓ Tutup Kasus Kepedulian
+        </h3>
+        <p class="text-xs text-slate-500 mt-1">
+          Apakah siswa <span class="font-bold text-slate-700">{{ activeAlert?.student_name }}</span> sudah mendapatkan perhatian dan kondisinya membaik?
+        </p>
+
+        <div class="mt-4">
+          <label class="block text-xs font-bold text-slate-600 mb-1.5">Catatan Penyelesaian (Opsional)</label>
+          <textarea 
+            v-model="closeNote" 
+            rows="3" 
+            placeholder="Contoh: Siswa sudah ceria kembali setelah sesi konseling wali kelas..." 
+            class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          ></textarea>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-2.5">
+          <button @click="showCloseModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors">
+            Batal
+          </button>
+          <button 
+            @click="submitCloseAlert" 
+            :disabled="submittingAlert"
+            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-colors disabled:opacity-50"
+          >
+            {{ submittingAlert ? 'Memproses...' : 'Ya, Selesaikan Kasus' }}
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Privacy Note -->
@@ -471,10 +681,142 @@ const loadSummaryData = async () => {
   }
 }
 
+// --- Care Alerts State (UF-5) ---
+const careAlerts = ref([])
+const alertsFilter = ref('open')
+const loadingAlerts = ref(false)
+const showFollowupModal = ref(false)
+const showCloseModal = ref(false)
+const activeAlert = ref(null)
+const followupNote = ref('')
+const closeNote = ref('')
+const submittingAlert = ref(false)
+
+const openCount = computed(() => {
+  return careAlerts.value.filter((a) => a.status === 'open').length
+})
+
+const openAlertsCount = computed(() => openCount.value)
+
+const filteredCareAlerts = computed(() => {
+  if (alertsFilter.value === 'all') return careAlerts.value
+  return careAlerts.value.filter((a) => a.status === alertsFilter.value)
+})
+
+const loadCareAlerts = async () => {
+  if (!selectedSchoolId.value) return
+  loadingAlerts.value = true
+  try {
+    const res = await fetcher(`/school/${selectedSchoolId.value}/attendance/care-alerts`)
+    if (res && res.data) {
+      careAlerts.value = res.data || []
+    }
+  } catch (err) {
+    console.error('Failed to load care alerts:', err)
+  } finally {
+    loadingAlerts.value = false
+  }
+}
+
+const openFollowupModal = (alert) => {
+  activeAlert.value = alert
+  followupNote.value = ''
+  showFollowupModal.value = true
+}
+
+const openCloseModal = (alert) => {
+  activeAlert.value = alert
+  closeNote.value = ''
+  showCloseModal.value = true
+}
+
+const submitFollowup = async () => {
+  if (!activeAlert.value || !followupNote.value.trim() || !selectedSchoolId.value) return
+  submittingAlert.value = true
+  try {
+    await fetcher(`/school/${selectedSchoolId.value}/attendance/care-alerts/${activeAlert.value.id}/followup`, {
+      method: 'POST',
+      body: { note: followupNote.value }
+    })
+    showFollowupModal.value = false
+    await loadCareAlerts()
+  } catch (err) {
+    console.error('Failed to add care followup:', err)
+  } finally {
+    submittingAlert.value = false
+  }
+}
+
+const submitCloseAlert = async () => {
+  if (!activeAlert.value || !selectedSchoolId.value) return
+  submittingAlert.value = true
+  try {
+    await fetcher(`/school/${selectedSchoolId.value}/attendance/care-alerts/${activeAlert.value.id}/close`, {
+      method: 'POST',
+      body: { note: closeNote.value }
+    })
+    showCloseModal.value = false
+    await loadCareAlerts()
+  } catch (err) {
+    console.error('Failed to close care alert:', err)
+  } finally {
+    submittingAlert.value = false
+  }
+}
+
+const getAlertCardBorder = (status) => {
+  switch (status) {
+    case 'closed': return 'bg-emerald-50/40 border-emerald-200'
+    case 'followed_up': return 'bg-amber-50/40 border-amber-200'
+    case 'open':
+    default: return 'bg-rose-50/40 border-rose-200'
+  }
+}
+
+const getAlertIconBg = (status) => {
+  switch (status) {
+    case 'closed': return 'bg-emerald-100 text-emerald-700'
+    case 'followed_up': return 'bg-amber-100 text-amber-700'
+    case 'open':
+    default: return 'bg-rose-100 text-rose-700'
+  }
+}
+
+const getAlertStatusBadge = (status) => {
+  switch (status) {
+    case 'closed': return 'bg-emerald-100 text-emerald-800 border-emerald-300'
+    case 'followed_up': return 'bg-amber-100 text-amber-800 border-amber-300'
+    case 'open':
+    default: return 'bg-rose-100 text-rose-800 border-rose-300'
+  }
+}
+
+const getAlertStatusLabel = (status) => {
+  switch (status) {
+    case 'closed': return 'Selesai'
+    case 'followed_up': return 'Ditindaklanjuti'
+    case 'open':
+    default: return 'Perlu Tindak Lanjut'
+  }
+}
+
+const formatDateTime = (dtStr) => {
+  if (!dtStr) return ''
+  const d = new Date(dtStr)
+  return d.toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
 onMounted(() => {
   if (selectedSchoolId.value) {
     loadHeatmapData()
     loadSummaryData()
+    loadCareAlerts()
   }
 })
 
@@ -482,6 +824,7 @@ watch(selectedSchoolId, (newVal) => {
   if (newVal) {
     loadHeatmapData()
     loadSummaryData()
+    loadCareAlerts()
     selectedStudent.value = null
   }
 })

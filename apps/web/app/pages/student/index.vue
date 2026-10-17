@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Users, Plus, Trash2, Edit2, School, Search, Download, Upload, FileSpreadsheet, X, CheckCircle, AlertCircle, LayoutGrid, History, TrendingUp } from 'lucide-vue-next'
+import { Users, Plus, Trash2, Edit2, School, Search, Download, Upload, FileSpreadsheet, X, CheckCircle, AlertCircle, LayoutGrid, History, TrendingUp, QrCode, Printer, RefreshCw, AlertTriangle } from 'lucide-vue-next'
+import QrcodeVue from 'qrcode.vue'
 import { BaseCard, BaseButton, BaseModal, BaseInput, BaseDateInput } from '@eduraport/ui'
 import { useStudent } from '../../composables/useStudent'
 import { useParent } from '../../composables/useParent'
@@ -122,6 +123,123 @@ const openHistoryModal = async (student: any) => {
   } finally {
     historyLoading.value = false
   }
+}
+
+// UF-6: Kartu Presensi QR & Regenerate Token
+const showQrModal = ref(false)
+const selectedStudentForQr = ref<any>(null)
+const qrTokenData = ref<any>(null)
+const qrLoading = ref(false)
+const regenerateReason = ref<'lost' | 'damaged' | 'security' | 'renewal'>('lost')
+const isRegenerating = ref(false)
+
+const reasonOptions = [
+  { value: 'lost', label: 'Kartu Hilang', emoji: '🔴' },
+  { value: 'damaged', label: 'Kartu Rusak / Patah', emoji: '🟡' },
+  { value: 'security', label: 'Masalah Keamanan', emoji: '🔒' },
+  { value: 'renewal', label: 'Pembaruan Rutin', emoji: '🔄' }
+]
+
+const openQrModal = async (student: any) => {
+  selectedStudentForQr.value = student
+  showQrModal.value = true
+  qrLoading.value = true
+  qrTokenData.value = null
+  regenerateReason.value = 'lost'
+
+  try {
+    const { fetcher } = useApi()
+    const res: any = await fetcher(`/school/${selectedSchoolId.value}/attendance/students/${student.id}/qr-token`)
+    if (res && res.success && res.data) {
+      qrTokenData.value = res.data
+    } else {
+      toast.error(res?.message || 'Gagal memuat kartu QR siswa')
+    }
+  } catch (err: any) {
+    console.error('Failed to load QR token:', err)
+    toast.error('Gagal memuat kartu QR siswa')
+  } finally {
+    qrLoading.value = false
+  }
+}
+
+const handleRegenerateToken = async () => {
+  if (!selectedStudentForQr.value || !selectedSchoolId.value) return
+  isRegenerating.value = true
+
+  try {
+    const { fetcher } = useApi()
+    const res: any = await fetcher(`/school/${selectedSchoolId.value}/attendance/students/${selectedStudentForQr.value.id}/qr-token/regenerate`, {
+      method: 'POST',
+      body: { reason: regenerateReason.value }
+    })
+    if (res && res.success && res.data) {
+      qrTokenData.value = res.data
+      toast.success('Kartu baru berhasil diterbitkan! Kartu lama otomatis dicabut/tidak berlaku.', 'Sukses UF-6')
+    } else {
+      toast.error(res?.message || 'Gagal menerbitkan kartu baru')
+    }
+  } catch (err: any) {
+    console.error('Failed to regenerate token:', err)
+    toast.error('Terjadi kesalahan saat menerbitkan token baru')
+  } finally {
+    isRegenerating.value = false
+  }
+}
+
+const printQrCard = () => {
+  if (!selectedStudentForQr.value || !qrTokenData.value) return
+  const student = selectedStudentForQr.value
+  const svgEl = document.querySelector('#printable-student-card svg')
+  const svgHtml = svgEl ? svgEl.outerHTML : ''
+  const printWindow = window.open('', '_blank', 'width=650,height=750')
+  if (!printWindow) {
+    window.print()
+    return
+  }
+  
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Kartu Presensi - \${student.full_name}</title>
+        <style>
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #f8fafc; }
+          .card { width: 360px; padding: 28px; border-radius: 24px; background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); color: white; box-shadow: 0 20px 30px rgba(79, 70, 229, 0.2); text-align: center; }
+          .header { border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 16px; margin-bottom: 20px; }
+          .school { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; font-weight: 700; margin-bottom: 6px; }
+          .name { font-size: 20px; font-weight: 800; line-height: 1.2; margin-bottom: 6px; }
+          .meta { font-size: 12px; opacity: 0.9; }
+          .qr-box { background: white; padding: 20px; border-radius: 18px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+          .token { font-family: monospace; font-size: 10px; color: #64748b; margin-top: 8px; font-weight: 600; }
+          .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; background: rgba(255,255,255,0.2); font-size: 11px; font-weight: 700; margin-bottom: 16px; }
+          .footer { font-size: 9px; opacity: 0.8; letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <div class="header">
+            <div class="school">KARTU PRESENSI RESMI</div>
+            <div class="name">\${student.full_name}</div>
+            <div class="meta">NIS: \${student.student_number || '-'} &bull; NISN: \${student.national_student_number || '-'}</div>
+          </div>
+          <div class="badge">Kelas: \${student.class_name || 'Umum'}</div>
+          <div class="qr-box">
+            \${svgHtml}
+            <div class="token">ERQR1:\${qrTokenData.value.token.substring(0, 8)}...</div>
+          </div>
+          <div class="footer">EDURAPORT DIGITAL ATTENDANCE &bull; VERIFIED</div>
+        </div>
+        <script>
+          window.onload = function() {
+            setTimeout(function() { window.print(); }, 250);
+          }
+        <\/script>
+      </body>
+    </html>
+  `)
+  printWindow.document.close()
 }
 
 const studentForm = reactive({
@@ -548,6 +666,9 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
               </td>
               <td class="px-6 py-4 text-right">
                 <div class="flex items-center justify-end gap-2">
+                  <button @click="openQrModal(student)" class="p-1.5 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg transition-colors" title="Kartu Presensi QR (UF-6)">
+                    <QrCode :size="14" />
+                  </button>
                   <button @click="openHistoryModal(student)" class="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg transition-colors" title="Riwayat Akademik">
                     <History :size="14" />
                   </button>
@@ -872,6 +993,135 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
             {{ massPromotionLoading ? 'Memproses...' : 'Proses Kenaikan Kelas' }}
           </BaseButton>
         </div>
+      </div>
+    </BaseModal>
+
+    <!-- UF-6: QR Attendance Card & Token Regeneration Modal -->
+    <BaseModal :show="showQrModal" title="Kartu Presensi Siswa (UF-6)" @close="showQrModal = false" custom-class="max-w-xl w-full">
+      <div v-if="selectedStudentForQr" class="space-y-5">
+        
+        <!-- Printable Student Card Badge -->
+        <div id="printable-student-card" class="bg-gradient-to-br from-violet-600 via-indigo-700 to-purple-800 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden border border-white/10">
+          <!-- Background ornaments -->
+          <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10 blur-xl pointer-events-none"></div>
+          <div class="absolute -left-8 -bottom-8 w-32 h-32 rounded-full bg-indigo-500/20 blur-xl pointer-events-none"></div>
+
+          <div class="flex items-center justify-between pb-4 border-b border-white/15 relative z-10">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-xl bg-white/15 backdrop-blur-md flex items-center justify-center font-black text-white text-lg shadow-inner">
+                {{ selectedStudentForQr.full_name?.[0] || 'S' }}
+              </div>
+              <div>
+                <h4 class="font-black text-base tracking-tight text-white leading-tight">
+                  {{ selectedStudentForQr.full_name }}
+                </h4>
+                <p class="text-xs text-violet-200 mt-0.5 font-medium">
+                  NIS: <span class="font-bold text-white">{{ selectedStudentForQr.student_number || '-' }}</span>
+                  <span class="mx-1.5 opacity-60">|</span>
+                  NISN: <span class="font-bold text-white">{{ selectedStudentForQr.national_student_number || '-' }}</span>
+                </p>
+              </div>
+            </div>
+
+            <div class="text-right">
+              <span class="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/20 text-white border border-white/25 backdrop-blur-sm">
+                {{ selectedStudentForQr.class_name || 'Tanpa Kelas' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- QR Code Center -->
+          <div class="my-5 flex flex-col items-center justify-center bg-white rounded-2xl p-5 text-slate-900 shadow-lg relative z-10">
+            <div v-if="qrLoading" class="py-10 flex flex-col items-center gap-3">
+              <div class="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+              <span class="text-xs font-bold text-slate-500">Memuat Token QR...</span>
+            </div>
+            <template v-else-if="qrTokenData">
+              <QrcodeVue 
+                :value="'ERQR1:' + qrTokenData.token" 
+                :size="160" 
+                level="H" 
+                render-as="svg" 
+                class="rounded-lg shadow-sm"
+              />
+              <p class="text-[10px] font-mono tracking-widest text-slate-400 mt-3 font-semibold">
+                ERQR1:{{ qrTokenData.token.substring(0, 8) }}••••••••{{ qrTokenData.token.substring(qrTokenData.token.length - 4) }}
+              </p>
+              <div class="mt-2 flex items-center gap-2">
+                <span class="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  ✓ Token Aktif
+                </span>
+                <span class="text-[10px] text-slate-400">
+                  Diterbitkan: {{ new Date(qrTokenData.created_at || qrTokenData.issued_at || Date.now()).toLocaleDateString('id-ID') }}
+                </span>
+              </div>
+            </template>
+            <div v-else class="py-8 text-center text-xs text-slate-400">
+              Belum ada token QR yang aktif.
+            </div>
+          </div>
+
+          <!-- Card Footer -->
+          <div class="flex items-center justify-between text-[10px] text-violet-200 font-bold tracking-wider uppercase pt-1 relative z-10">
+            <span>KARTU PRESENSI DIGITAL</span>
+            <span>EDURAPORT SECURITY BADGE</span>
+          </div>
+        </div>
+
+        <!-- Action Print Button -->
+        <button 
+          @click="printQrCard" 
+          :disabled="qrLoading || !qrTokenData"
+          class="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+        >
+          <Printer :size="15" />
+          <span>🖨️ Cetak Kartu Individual (Print / PDF)</span>
+        </button>
+
+        <!-- UF-6 Section: Ganti Kartu Hilang / Rusak -->
+        <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-left">
+          <div class="flex items-start gap-3">
+            <AlertTriangle class="text-amber-500 shrink-0 mt-0.5" :size="18" />
+            <div class="flex-1">
+              <h5 class="text-xs font-black text-amber-500 uppercase tracking-wide">
+                Alur UF-6: Kartu Hilang / Rusak (Regenerate Token)
+              </h5>
+              <p class="text-[11px] text-slate-600 dark:text-zinc-400 mt-1 leading-relaxed">
+                Jika siswa kehilangan kartu atau kartu rusak, pilih alasan di bawah lalu klik tombol terbitkan kartu baru. 
+                <strong class="text-rose-500">Kartu lama akan otomatis dicabut/mati</strong>, sehingga jika kartu lama dicoba di scanner gerbang, sistem akan otomatis menolak.
+              </p>
+
+              <!-- Reason Options -->
+              <div class="mt-3 grid grid-cols-2 gap-2">
+                <label 
+                  v-for="r in reasonOptions" 
+                  :key="r.value"
+                  class="flex items-center gap-2 p-2 rounded-xl border text-xs font-bold cursor-pointer transition-all"
+                  :class="regenerateReason === r.value 
+                    ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-sm' 
+                    : 'bg-white/60 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-white'"
+                >
+                  <input type="radio" v-model="regenerateReason" :value="r.value" class="hidden" />
+                  <span>{{ r.emoji }}</span>
+                  <span class="truncate">{{ r.label }}</span>
+                </label>
+              </div>
+
+              <!-- Regenerate Action Button -->
+              <div class="mt-3.5 flex justify-end">
+                <button 
+                  @click="handleRegenerateToken" 
+                  :disabled="isRegenerating || qrLoading"
+                  class="py-2.5 px-4 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 disabled:opacity-50 text-white font-black text-xs rounded-xl shadow-md transition-all flex items-center gap-2"
+                >
+                  <RefreshCw :size="14" :class="{ 'animate-spin': isRegenerating }" />
+                  <span>{{ isRegenerating ? 'Mencabut & Menerbitkan Baru...' : '⚠️ Cabut Kartu Lama & Terbitkan Kartu Baru' }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </BaseModal>
 
