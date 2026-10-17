@@ -31,7 +31,16 @@ import {
   Activity,
   Percent,
   Building2,
-  Layers
+  Layers,
+  Settings,
+  X,
+  Plus,
+  Edit2,
+  CheckSquare,
+  RotateCcw,
+  CheckCheck,
+  Sunrise,
+  Sunset
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton } from '@eduraport/ui'
 import AppPagination from '../../components/AppPagination.vue'
@@ -62,8 +71,15 @@ const {
   fetchTahfidzList,
   fetchTahfidzPaginated,
   deleteTahfidz,
-  recordIbadahBulk,
-  fetchIbadahByDate,
+  fetchSchoolAssignedMutabaahItems,
+  recordMutabaahBulk,
+  fetchMutabaahByDate,
+  fetchFoundationMutabaahItems,
+  createFoundationMutabaahItem,
+  updateFoundationMutabaahItem,
+  deleteFoundationMutabaahItem,
+  fetchFoundationSchoolAssignments,
+  saveSchoolMutabaahAssignments,
   fetchPesantrenAnalytics
 } = usePesantren()
 
@@ -182,6 +198,27 @@ const loadPesantrenAnalytics = async () => {
 const drillDownToSchool = async (schoolId: string) => {
   isFoundationAggregate.value = false
   selectedSchoolId.value = schoolId
+  selectedClassId.value = ''
+  await loadPesantrenAnalytics()
+  if (typeof window !== 'undefined') {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+const filterByClass = async (classId: string, schoolId?: string) => {
+  if (schoolId && schoolId !== selectedSchoolId.value) {
+    selectedSchoolId.value = schoolId
+  }
+  isFoundationAggregate.value = false
+  selectedClassId.value = classId
+  await loadPesantrenAnalytics()
+  if (typeof window !== 'undefined') {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+const resetClassFilter = async () => {
+  selectedClassId.value = ''
   await loadPesantrenAnalytics()
 }
 
@@ -201,18 +238,205 @@ const tahfidzForm = ref({
 // Tahfidz List
 const tahfidzRecords = ref<any[]>([])
 
-// Ibadah Grid Model: Record<studentId, { sholat_subuh: boolean, ... }>
-const ibadahGrid = ref<Record<string, {
-  sholat_subuh: boolean
-  sholat_dzuhur: boolean
-  sholat_ashar: boolean
-  sholat_maghrib: boolean
-  sholat_isya: boolean
-  sholat_tahajud: boolean
-  sholat_dhuha: boolean
-  tilawah_quran: boolean
+// Dynamic Mutaba'ah State Model
+interface StudentMutabaahState {
+  check_data: Record<string, boolean>
+  is_excused: boolean
   notes: string
-}>>({})
+}
+const ibadahGrid = ref<Record<string, StudentMutabaahState>>({})
+const assignedMutabaahItems = ref<any[]>([])
+const loadingAssignedItems = ref(false)
+
+// Unsaved Changes & Filter States for Mutaaba'ah
+const hasUnsavedChanges = ref(false)
+const ibadahSearch = ref('')
+const ibadahStatusFilter = ref<'all' | 'hadir' | 'uzur' | 'incomplete'>('all')
+
+const markIbadahChanged = () => {
+  hasUnsavedChanges.value = true
+}
+
+// Master Yayasan Management Modal States
+const showMasterModal = ref(false)
+const masterTab = ref<'items' | 'assignments'>('items')
+const foundationMasterItems = ref<any[]>([])
+const loadingFoundationItems = ref(false)
+const schoolAssignmentsData = ref<any[]>([])
+const selectedAssignSchoolId = ref<string>('')
+const savingAssignment = ref(false)
+
+const masterItemForm = ref({
+  id: '',
+  name: '',
+  category: 'fardhu',
+  target_gender: 'all',
+  is_active: true
+})
+const isEditingMasterItem = ref(false)
+const savingMasterItem = ref(false)
+
+const loadAssignedMutabaahItems = async (schoolId: string) => {
+  if (!schoolId) return
+  loadingAssignedItems.value = true
+  try {
+    assignedMutabaahItems.value = await fetchSchoolAssignedMutabaahItems(schoolId)
+  } catch (err) {
+    console.error('Failed loading assigned mutabaah items:', err)
+  } finally {
+    loadingAssignedItems.value = false
+  }
+}
+
+const openMasterModal = async () => {
+  if (!selectedFoundationId.value) {
+    toast.error('Pilih yayasan terlebih dahulu.')
+    return
+  }
+  showMasterModal.value = true
+  await loadFoundationMasterData()
+}
+
+const loadFoundationMasterData = async () => {
+  if (!selectedFoundationId.value) return
+  loadingFoundationItems.value = true
+  try {
+    foundationMasterItems.value = await fetchFoundationMutabaahItems(selectedFoundationId.value)
+    schoolAssignmentsData.value = await fetchFoundationSchoolAssignments(selectedFoundationId.value)
+    if (!selectedAssignSchoolId.value && schools.value.length > 0) {
+      selectedAssignSchoolId.value = selectedSchoolId.value || schools.value[0].id
+    }
+  } catch (err) {
+    console.error('Failed fetching master items:', err)
+  } finally {
+    loadingFoundationItems.value = false
+  }
+}
+
+const resetMasterItemForm = () => {
+  masterItemForm.value = {
+    id: '',
+    name: '',
+    category: 'fardhu',
+    target_gender: 'all',
+    is_active: true
+  }
+  isEditingMasterItem.value = false
+}
+
+const editMasterItem = (item: any) => {
+  masterItemForm.value = {
+    id: item.id,
+    name: item.name,
+    category: item.category,
+    target_gender: item.target_gender || 'all',
+    is_active: item.is_active ?? true
+  }
+  isEditingMasterItem.value = true
+}
+
+const handleSaveMasterItem = async () => {
+  if (!masterItemForm.value.name.trim()) {
+    toast.error('Nama amalan wajib diisi')
+    return
+  }
+  if (!selectedFoundationId.value) return
+
+  savingMasterItem.value = true
+  try {
+    if (isEditingMasterItem.value && masterItemForm.value.id) {
+      await updateFoundationMutabaahItem(selectedFoundationId.value, masterItemForm.value.id, {
+        name: masterItemForm.value.name,
+        category: masterItemForm.value.category,
+        target_gender: masterItemForm.value.target_gender,
+        is_active: masterItemForm.value.is_active
+      })
+      toast.success('Amalan mutaaba\'ah berhasil diperbarui')
+    } else {
+      await createFoundationMutabaahItem(selectedFoundationId.value, {
+        name: masterItemForm.value.name,
+        category: masterItemForm.value.category,
+        target_gender: masterItemForm.value.target_gender,
+        order_index: foundationMasterItems.value.length + 1,
+        is_active: true
+      })
+      toast.success('Amalan mutaaba\'ah baru berhasil ditambahkan')
+    }
+    resetMasterItemForm()
+    await loadFoundationMasterData()
+    if (selectedSchoolId.value) {
+      await loadAssignedMutabaahItems(selectedSchoolId.value)
+      if (selectedClassId.value) await loadCurrentData()
+    }
+  } catch (err: any) {
+    toast.error(err.message || 'Gagal menyimpan amalan')
+  } finally {
+    savingMasterItem.value = false
+  }
+}
+
+const handleDeleteMasterItem = async (item: any) => {
+  if (!confirm(`Hapus amalan "${item.name}" dari master yayasan?`)) return
+  if (!selectedFoundationId.value) return
+
+  try {
+    await deleteFoundationMutabaahItem(selectedFoundationId.value, item.id)
+    toast.success('Amalan mutaaba\'ah berhasil dihapus')
+    await loadFoundationMasterData()
+    if (selectedSchoolId.value) {
+      await loadAssignedMutabaahItems(selectedSchoolId.value)
+      if (selectedClassId.value) await loadCurrentData()
+    }
+  } catch (err: any) {
+    toast.error(err.message || 'Gagal menghapus amalan')
+  }
+}
+
+const handleSaveSchoolAssignments = async () => {
+  if (!selectedAssignSchoolId.value || !selectedFoundationId.value) return
+  savingAssignment.value = true
+  try {
+    const schoolData = schoolAssignmentsData.value.find(s => s.school_id === selectedAssignSchoolId.value)
+    if (!schoolData) return
+
+    const payload = schoolData.assigned_items.map((item: any, idx: number) => ({
+      master_item_id: item.id,
+      is_mandatory: item.is_mandatory ?? true,
+      order_index: idx + 1,
+      is_active: item.is_assigned ?? false
+    }))
+
+    await saveSchoolMutabaahAssignments(selectedFoundationId.value, {
+      school_id: selectedAssignSchoolId.value,
+      assignments: payload
+    })
+    toast.success('Penugasan amalan ke unit sekolah berhasil disimpan')
+    if (selectedSchoolId.value === selectedAssignSchoolId.value) {
+      await loadAssignedMutabaahItems(selectedSchoolId.value)
+      if (selectedClassId.value) await loadCurrentData()
+    }
+  } catch (err: any) {
+    toast.error(err.message || 'Gagal menyimpan penugasan')
+  } finally {
+    savingAssignment.value = false
+  }
+}
+
+const toggleStudentExcused = (studentId: string) => {
+  if (!ibadahGrid.value[studentId]) return
+  ibadahGrid.value[studentId].is_excused = !ibadahGrid.value[studentId].is_excused
+  hasUnsavedChanges.value = true
+  if (ibadahGrid.value[studentId].is_excused) {
+    for (const item of assignedMutabaahItems.value) {
+      if (item.category === 'fardhu') {
+        ibadahGrid.value[studentId].check_data[item.id] = false
+      }
+    }
+    toast.info('Santri ditandai Uzur Syar\'i / Sakit. Kewajiban sholat fardhu dikecualikan otomatis.')
+  } else {
+    toast.info('Status santri dikembalikan ke Hadir.')
+  }
+}
 
 const commonSurahs = [
   'An-Naba', 'An-Nazi\'at', '\'Abasa', 'At-Takwir', 'Al-Infitar',
@@ -237,7 +461,10 @@ onMounted(async () => {
 const loadSchoolData = async (schoolId: string) => {
   loading.value = true
   try {
-    await fetchAcademicYears(schoolId)
+    await Promise.all([
+      fetchAcademicYears(schoolId),
+      loadAssignedMutabaahItems(schoolId)
+    ])
 
     if (academicYears.value.length > 0) {
       const activeYear = academicYears.value.find((y: any) => y.is_active)
@@ -305,8 +532,16 @@ const filteredClassesList = computed(() => {
 })
 
 watch(filteredClassesList, (newVal) => {
+  if (activeTab.value === 'analytics') {
+    if (selectedClassId.value && !newVal.some((c: any) => c.id === selectedClassId.value)) {
+      selectedClassId.value = ''
+    }
+    return
+  }
   if (newVal.length > 0) {
-    selectedClassId.value = newVal[0].id
+    if (!selectedClassId.value || !newVal.some((c: any) => c.id === selectedClassId.value)) {
+      selectedClassId.value = newVal[0].id
+    }
   } else {
     selectedClassId.value = ''
   }
@@ -388,7 +623,11 @@ const loadCurrentData = async () => {
     await loadTahfidzRecords()
   } else {
     const targetDate = selectedDate.value || new Date().toISOString().split('T')[0]
-    const existing = await fetchIbadahByDate(
+    if (assignedMutabaahItems.value.length === 0 && selectedSchoolId.value) {
+      await loadAssignedMutabaahItems(selectedSchoolId.value)
+    }
+
+    const existing = await fetchMutabaahByDate(
       selectedSchoolId.value,
       targetDate,
       selectedClassId.value
@@ -398,33 +637,26 @@ const loadCurrentData = async () => {
     const newGrid: any = {}
     for (const s of classStudents.value) {
       const saved = existingMap.get(s.id)
-      if (saved) {
+      if (saved && saved.record_id) {
         newGrid[s.id] = {
-          sholat_subuh: !!saved.sholat_subuh,
-          sholat_dzuhur: !!saved.sholat_dzuhur,
-          sholat_ashar: !!saved.sholat_ashar,
-          sholat_maghrib: !!saved.sholat_maghrib,
-          sholat_isya: !!saved.sholat_isya,
-          sholat_tahajud: !!saved.sholat_tahajud,
-          sholat_dhuha: !!saved.sholat_dhuha,
-          tilawah_quran: !!saved.tilawah_quran,
+          check_data: saved.check_data || {},
+          is_excused: !!saved.is_excused,
           notes: saved.notes || ''
         }
       } else {
+        const defaultChecks: Record<string, boolean> = {}
+        for (const item of assignedMutabaahItems.value) {
+          defaultChecks[item.id] = item.category === 'fardhu'
+        }
         newGrid[s.id] = {
-          sholat_subuh: true,
-          sholat_dzuhur: true,
-          sholat_ashar: true,
-          sholat_maghrib: true,
-          sholat_isya: true,
-          sholat_tahajud: false,
-          sholat_dhuha: false,
-          tilawah_quran: true,
+          check_data: defaultChecks,
+          is_excused: false,
           notes: ''
         }
       }
     }
     ibadahGrid.value = newGrid
+    hasUnsavedChanges.value = false
   }
 }
 
@@ -499,18 +731,283 @@ const handleDeleteTahfidz = async (id: string) => {
   }
 }
 
-// Check all Fardhu Prayers for all students
+// Check all Fardhu Prayers for all non-excused students
 const setAllFardhu = () => {
+  const fardhuItems = assignedMutabaahItems.value.filter(i => i.category === 'fardhu')
+  if (fardhuItems.length === 0) {
+    toast.error('Tidak ada amalan bertipe fardhu yang ditugaskan ke unit sekolah ini.')
+    return
+  }
+
   for (const s of classStudents.value) {
-    if (ibadahGrid.value[s.id]) {
-      ibadahGrid.value[s.id].sholat_subuh = true
-      ibadahGrid.value[s.id].sholat_dzuhur = true
-      ibadahGrid.value[s.id].sholat_ashar = true
-      ibadahGrid.value[s.id].sholat_maghrib = true
-      ibadahGrid.value[s.id].sholat_isya = true
+    if (ibadahGrid.value[s.id] && !ibadahGrid.value[s.id].is_excused) {
+      if (!ibadahGrid.value[s.id].check_data) {
+        ibadahGrid.value[s.id].check_data = {}
+      }
+      for (const item of fardhuItems) {
+        ibadahGrid.value[s.id].check_data[item.id] = true
+      }
     }
   }
+  hasUnsavedChanges.value = true
   toast.success('Seluruh sholat fardhu berjamaah berhasil dicentang.')
+}
+
+// Student initials avatar helper
+const getInitials = (name: string) => {
+  if (!name) return '?'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase()
+  return (parts[0][0] + parts[1][0]).toUpperCase()
+}
+
+// Filtered student list in Mutaaba'ah tab
+const filteredClassStudents = computed(() => {
+  let list = classStudents.value || []
+  if (ibadahSearch.value.trim()) {
+    const q = ibadahSearch.value.toLowerCase().trim()
+    list = list.filter((s: any) =>
+      (s.full_name && s.full_name.toLowerCase().includes(q)) ||
+      (s.student_number && s.student_number.toLowerCase().includes(q))
+    )
+  }
+
+  if (ibadahStatusFilter.value === 'hadir') {
+    list = list.filter((s: any) => !ibadahGrid.value[s.id]?.is_excused)
+  } else if (ibadahStatusFilter.value === 'uzur') {
+    list = list.filter((s: any) => !!ibadahGrid.value[s.id]?.is_excused)
+  } else if (ibadahStatusFilter.value === 'incomplete') {
+    list = list.filter((s: any) => {
+      const state = ibadahGrid.value[s.id]
+      if (!state) return true
+      if (state.is_excused) {
+        return assignedMutabaahItems.value
+          .filter(i => i.category !== 'fardhu')
+          .some(i => !state.check_data?.[i.id])
+      }
+      return assignedMutabaahItems.value.some(i => !state.check_data?.[i.id])
+    })
+  }
+  return list
+})
+
+// Informative KPI Statistics for Mutaaba'ah Header
+const ibadahStats = computed(() => {
+  const total = classStudents.value.length
+  if (total === 0) {
+    return {
+      total: 0,
+      hadir: 0,
+      uzur: 0,
+      fardhuCompletionPct: 0,
+      overallCompletionPct: 0,
+      completedStudents: 0
+    }
+  }
+
+  let hadir = 0
+  let uzur = 0
+  let totalFardhuSlots = 0
+  let completedFardhuSlots = 0
+  let totalApplicableSlots = 0
+  let completedSlots = 0
+  let completedStudents = 0
+
+  const fardhuItems = assignedMutabaahItems.value.filter(i => i.category === 'fardhu')
+  const nonFardhuItems = assignedMutabaahItems.value.filter(i => i.category !== 'fardhu')
+
+  for (const s of classStudents.value) {
+    const state = ibadahGrid.value[s.id]
+    const isExcused = !!state?.is_excused
+    let studentApplicable = 0
+    let studentDone = 0
+
+    if (isExcused) {
+      uzur++
+      for (const item of nonFardhuItems) {
+        totalApplicableSlots++
+        studentApplicable++
+        if (state?.check_data?.[item.id]) {
+          completedSlots++
+          studentDone++
+        }
+      }
+    } else {
+      hadir++
+      for (const item of fardhuItems) {
+        totalFardhuSlots++
+        totalApplicableSlots++
+        studentApplicable++
+        if (state?.check_data?.[item.id]) {
+          completedFardhuSlots++
+          completedSlots++
+          studentDone++
+        }
+      }
+      for (const item of nonFardhuItems) {
+        totalApplicableSlots++
+        studentApplicable++
+        if (state?.check_data?.[item.id]) {
+          completedSlots++
+          studentDone++
+        }
+      }
+    }
+
+    if (studentApplicable > 0 && studentDone === studentApplicable) {
+      completedStudents++
+    }
+  }
+
+  const fardhuCompletionPct = totalFardhuSlots > 0 ? Math.round((completedFardhuSlots / totalFardhuSlots) * 100) : 100
+  const overallCompletionPct = totalApplicableSlots > 0 ? Math.round((completedSlots / totalApplicableSlots) * 100) : 100
+
+  return {
+    total,
+    hadir,
+    uzur,
+    fardhuCompletionPct,
+    overallCompletionPct,
+    completedStudents
+  }
+})
+
+// Item Display Helpers (Icon, Name, Theme)
+const getItemName = (item: any) => item.name || item.title || 'Amalan'
+
+const getItemIconComponent = (item: any) => {
+  const name = getItemName(item).toLowerCase()
+  if (name.includes('shubuh') || name.includes('subuh')) return Sunrise
+  if (name.includes('dzuhur') || name.includes('dhuhur')) return Sun
+  if (name.includes('ashar') || name.includes('asar')) return Sun
+  if (name.includes('maghrib')) return Sunset
+  if (name.includes('isya')) return Moon
+  if (name.includes('dhuha')) return Sun
+  if (name.includes('tahajjud') || name.includes('qiyam')) return Moon
+  if (name.includes('tilawah') || name.includes('qur\'an') || name.includes('tadarus')) return BookOpen
+  if (name.includes('tahfidz')) return BookMarked
+  if (name.includes('zikir') || name.includes('doa') || name.includes('wirid')) return Sparkles
+  return CheckSquare
+}
+
+const getItemColorTheme = (item: any) => {
+  const name = getItemName(item).toLowerCase()
+  if (name.includes('shubuh') || name.includes('subuh')) return 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 border-sky-200 dark:border-sky-800'
+  if (name.includes('dzuhur')) return 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800'
+  if (name.includes('ashar')) return 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-800'
+  if (name.includes('maghrib')) return 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800'
+  if (name.includes('isya')) return 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800'
+  if (item.category === 'fardhu') return 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800'
+  if (item.category === 'sunnah') return 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800'
+  return 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800'
+}
+
+// Column Live Stats
+const getColumnStats = (itemId: string, category: string) => {
+  let applicableTotal = 0
+  let checkedCount = 0
+
+  for (const s of classStudents.value) {
+    const state = ibadahGrid.value[s.id]
+    if (state?.is_excused && category === 'fardhu') {
+      continue
+    }
+    applicableTotal++
+    if (state?.check_data?.[itemId]) {
+      checkedCount++
+    }
+  }
+
+  const pct = applicableTotal > 0 ? Math.round((checkedCount / applicableTotal) * 100) : 0
+  return {
+    checked: checkedCount,
+    total: applicableTotal,
+    pct
+  }
+}
+
+// Toggle an entire amalan column for all active students
+const toggleColumn = (item: any) => {
+  const { checked, total } = getColumnStats(item.id, item.category)
+  const isAllChecked = total > 0 && checked === total
+  const targetState = !isAllChecked
+
+  for (const s of classStudents.value) {
+    if (!ibadahGrid.value[s.id]) {
+      ibadahGrid.value[s.id] = { check_data: {}, is_excused: false, notes: '' }
+    }
+    const state = ibadahGrid.value[s.id]
+    if (state.is_excused && item.category === 'fardhu') {
+      continue
+    }
+    if (!state.check_data) state.check_data = {}
+    state.check_data[item.id] = targetState
+  }
+
+  hasUnsavedChanges.value = true
+  const name = getItemName(item)
+  if (targetState) {
+    toast.success(`Seluruh santri hadir dicentang untuk: ${name}`)
+  } else {
+    toast.info(`Centang amalan ${name} dibatalkan untuk seluruh santri`)
+  }
+}
+
+// Student Row Progress Helper
+const getStudentProgress = (studentId: string) => {
+  const state = ibadahGrid.value[studentId]
+  if (!state) return { completed: 0, total: 0, pct: 0 }
+
+  let total = 0
+  let completed = 0
+
+  for (const item of assignedMutabaahItems.value) {
+    if (state.is_excused && item.category === 'fardhu') {
+      continue
+    }
+    total++
+    if (state.check_data?.[item.id]) {
+      completed++
+    }
+  }
+
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 100
+  return { completed, total, pct }
+}
+
+// Toggle all amalan for a single student
+const toggleStudentAll = (studentId: string) => {
+  const state = ibadahGrid.value[studentId]
+  if (!state) return
+
+  const { completed, total } = getStudentProgress(studentId)
+  const targetState = completed < total
+
+  if (!state.check_data) state.check_data = {}
+
+  for (const item of assignedMutabaahItems.value) {
+    if (state.is_excused && item.category === 'fardhu') {
+      state.check_data[item.id] = false
+    } else {
+      state.check_data[item.id] = targetState
+    }
+  }
+
+  hasUnsavedChanges.value = true
+}
+
+// Reset all checks in the class
+const resetAllIbadahChecks = () => {
+  if (!confirm('Apakah Anda yakin ingin mengosongkan seluruh checklist amalan untuk rombel ini pada tanggal yang dipilih?')) {
+    return
+  }
+  for (const s of classStudents.value) {
+    if (ibadahGrid.value[s.id]) {
+      ibadahGrid.value[s.id].check_data = {}
+    }
+  }
+  hasUnsavedChanges.value = true
+  toast.info('Seluruh checklist amalan kelas berhasil dikosongkan.')
 }
 
 // Save Bulk Ibadah
@@ -521,27 +1018,22 @@ const handleSaveBulkIbadah = async () => {
   saving.value = true
   try {
     const payloadRecords = classStudents.value.map(s => {
-      const current = ibadahGrid.value[s.id] || {}
+      const current = ibadahGrid.value[s.id] || { check_data: {}, is_excused: false, notes: '' }
       return {
         student_id: s.id,
-        sholat_subuh: !!current.sholat_subuh,
-        sholat_dzuhur: !!current.sholat_dzuhur,
-        sholat_ashar: !!current.sholat_ashar,
-        sholat_maghrib: !!current.sholat_maghrib,
-        sholat_isya: !!current.sholat_isya,
-        sholat_tahajud: !!current.sholat_tahajud,
-        sholat_dhuha: !!current.sholat_dhuha,
-        tilawah_quran: !!current.tilawah_quran,
+        check_data: current.check_data || {},
+        is_excused: !!current.is_excused,
         notes: current.notes || null
       }
     })
 
-    const res: any = await recordIbadahBulk(selectedSchoolId.value, {
-      date: selectedDate.value,
+    const res: any = await recordMutabaahBulk(selectedSchoolId.value, {
+      date: selectedDate.value || todayDate,
       records: payloadRecords
     })
 
     if (res.success) {
+      hasUnsavedChanges.value = false
       toast.success(`Mutaaba'ah ibadah berhasil disimpan untuk ${payloadRecords.length} santri.`)
     } else {
       toast.error(res.message || 'Gagal menyimpan mutaaba\'ah.')
@@ -628,7 +1120,7 @@ const handleSaveBulkIbadah = async () => {
           :disabled="filteredClassesList.length === 0"
           class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-emerald-600 text-slate-900 dark:text-zinc-100"
         >
-          <option value="" disabled>Pilih Kelas</option>
+          <option :value="''">{{ activeTab === 'analytics' ? 'Semua Kelas (Agregasi Unit)' : 'Pilih Kelas' }}</option>
           <option v-for="c in filteredClassesList" :key="c.id" :value="c.id">{{ c.class_name }}</option>
         </select>
       </div>
@@ -767,11 +1259,17 @@ const handleSaveBulkIbadah = async () => {
             <span v-if="isFoundationAggregate" class="text-xs font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-1">
               <Building2 :size="12" /> Cakupan: {{ analyticsData?.foundation_schools?.length || 0 }} Unit Sekolah Terkonsolidasi
             </span>
-            <span v-else-if="selectedClassId" class="text-xs font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
+            <span v-else-if="selectedClassId" class="text-xs font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
               <Filter :size="12" /> Filter Rombel: {{ classes.find((c: any) => c.id === selectedClassId)?.class_name || 'Kelas' }}
+              <button
+                type="button"
+                @click="resetClassFilter"
+                class="ml-1 text-emerald-700 hover:text-rose-600 dark:text-emerald-300 dark:hover:text-rose-400 font-black cursor-pointer transition text-xs"
+                title="Tampilkan Seluruh Kelas Unit Ini"
+              >✕</button>
             </span>
             <span v-else class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
-              <ShieldCheck :size="12" /> Unit: {{ schools.find((s: any) => s.id === selectedSchoolId)?.name || 'Sekolah Terpilih' }}
+              <ShieldCheck :size="12" /> Unit: {{ schools.find((s: any) => s.id === selectedSchoolId)?.name || 'Sekolah Terpilih' }} (Semua Kelas)
             </span>
           </div>
 
@@ -795,14 +1293,14 @@ const handleSaveBulkIbadah = async () => {
           <div v-if="isFoundationOwner" class="flex items-center bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg p-1 text-xs font-semibold shadow-xs">
             <button
               type="button"
-              @click="isFoundationAggregate = false"
+              @click="isFoundationAggregate = false; selectedClassId = ''; loadPesantrenAnalytics()"
               :class="[
                 'px-2.5 py-1 rounded transition cursor-pointer flex items-center gap-1.5',
                 !isFoundationAggregate
                   ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-xs'
                   : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100'
               ]"
-              title="Analitik Hanya Untuk Unit Sekolah Terpilih"
+              title="Analitik Seluruh Kelas Untuk Unit Sekolah Terpilih"
             >
               <Building2 :size="13" />
               <span>Unit Ini</span>
@@ -891,7 +1389,7 @@ const handleSaveBulkIbadah = async () => {
         <p class="text-sm font-semibold text-slate-700 dark:text-zinc-300">Menghitung agregasi data analitik pesantren...</p>
       </div>
 
-      <template v-else-if="analyticsData">
+      <div v-else-if="analyticsData" class="space-y-6">
         <!-- 4 Executive Stat Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <!-- Card 1: Total Setoran -->
@@ -903,13 +1401,13 @@ const handleSaveBulkIbadah = async () => {
               </span>
             </div>
             <div class="mt-2 flex items-baseline gap-2">
-              <span class="text-2xl font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.overview.total_setoran }}</span>
+              <span class="text-2xl font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.overview?.total_setoran ?? 0 }}</span>
               <span class="text-xs text-slate-500">kali setoran</span>
             </div>
             <div class="mt-2 flex items-center justify-between text-xs">
-              <span class="text-slate-500 dark:text-zinc-400">{{ analyticsData.overview.active_tahfidz_students }} santri aktif</span>
+              <span class="text-slate-500 dark:text-zinc-400">{{ analyticsData.overview?.active_tahfidz_students ?? 0 }} santri aktif</span>
               <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-                {{ analyticsData.overview.pass_rate }}% Lulus
+                {{ analyticsData.overview?.pass_rate ?? 0 }}% Lulus
               </span>
             </div>
             <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
@@ -924,13 +1422,13 @@ const handleSaveBulkIbadah = async () => {
               </span>
             </div>
             <div class="mt-2 flex items-baseline gap-2">
-              <span class="text-2xl font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.overview.avg_score }}</span>
+              <span class="text-2xl font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.overview?.avg_score ?? analyticsData.overview?.avg_tahfidz_score ?? 0 }}</span>
               <span class="text-xs text-slate-500">/ 100</span>
             </div>
             <div class="mt-2 flex items-center justify-between text-xs">
               <span class="text-slate-500 dark:text-zinc-400">Kualitas Tajwid & Makhraj</span>
               <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
-                {{ analyticsData.overview.avg_score >= 90 ? 'Mutqin / Mumtaz' : (analyticsData.overview.avg_score >= 80 ? 'Jayyid Jiddan' : 'Jayyid') }}
+                {{ !analyticsData.overview?.total_setoran ? '-' : ((analyticsData.overview?.avg_score ?? analyticsData.overview?.avg_tahfidz_score ?? 0) >= 90 ? 'Mutqin / Mumtaz' : ((analyticsData.overview?.avg_score ?? analyticsData.overview?.avg_tahfidz_score ?? 0) >= 80 ? 'Jayyid Jiddan' : 'Jayyid')) }}
               </span>
             </div>
             <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-yellow-400"></div>
@@ -945,16 +1443,28 @@ const handleSaveBulkIbadah = async () => {
               </span>
             </div>
             <div class="mt-2 flex items-baseline gap-2">
-              <span class="text-2xl font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.overview.fardhu_compliance_rate }}%</span>
+              <span class="text-2xl font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.overview?.fardhu_compliance_rate ?? 0 }}%</span>
               <span class="text-xs text-slate-500">berjamaah</span>
             </div>
             <div class="mt-2 flex items-center justify-between text-xs">
-              <span class="text-slate-500 dark:text-zinc-400">Rerata 5 Waktu</span>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-slate-500 dark:text-zinc-400 font-medium">
+                  {{ Math.max(0, (analyticsData.overview?.active_ibadah_students ?? 0) - (analyticsData.overview?.excused_count ?? 0)) }} Wajib
+                </span>
+                <span
+                  v-if="analyticsData.overview?.excused_count"
+                  class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-100/80 dark:border-rose-900/40 flex items-center gap-1"
+                  :title="`${analyticsData.overview.excused_count} santriwati berhalangan/uzur syar'i dikecualikan dari sholat fardhu`"
+                >
+                  <span>🌸</span>
+                  <span>{{ analyticsData.overview.excused_count }} Uzur</span>
+                </span>
+              </div>
               <span :class="[
                 'px-1.5 py-0.5 rounded text-[10px] font-bold',
-                analyticsData.overview.fardhu_compliance_rate >= 80 ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'
+                (analyticsData.overview?.fardhu_compliance_rate ?? 0) >= 80 ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'
               ]">
-                {{ analyticsData.overview.fardhu_compliance_rate >= 80 ? 'Sangat Tertib' : 'Perlu Pendisiplinan' }}
+                {{ !analyticsData.overview?.total_ibadah_entries ? '-' : ((analyticsData.overview?.fardhu_compliance_rate ?? 0) >= 80 ? 'Sangat Tertib' : 'Perlu Pendisiplinan') }}
               </span>
             </div>
             <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-cyan-400"></div>
@@ -969,11 +1479,11 @@ const handleSaveBulkIbadah = async () => {
               </span>
             </div>
             <div class="mt-2 flex items-baseline gap-2">
-              <span class="text-2xl font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.overview.total_ibadah_entries }}</span>
+              <span class="text-2xl font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.overview?.total_ibadah_entries ?? 0 }}</span>
               <span class="text-xs text-slate-500">sesi checklist</span>
             </div>
             <div class="mt-2 flex items-center justify-between text-xs">
-              <span class="text-slate-500 dark:text-zinc-400">{{ analyticsData.overview.active_ibadah_students }} santri terdata</span>
+              <span class="text-slate-500 dark:text-zinc-400">{{ analyticsData.overview?.active_ibadah_students ?? 0 }} santri terdata</span>
               <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
                 Presensi Ibadah
               </span>
@@ -994,7 +1504,7 @@ const handleSaveBulkIbadah = async () => {
               <span class="text-[11px] text-slate-400 font-semibold">Distribusi Setoran Al-Qur'an</span>
             </div>
 
-            <div v-if="analyticsData.juz_distribution.length === 0" class="py-12 text-center text-slate-400">
+            <div v-if="!analyticsData.juz_distribution || analyticsData.juz_distribution.length === 0" class="py-12 text-center text-slate-400">
               <BookMarked class="mx-auto mb-2 opacity-30 text-emerald-600" :size="32" />
               <p class="text-xs">Belum ada data setoran tahfidz pada rentang filter ini.</p>
             </div>
@@ -1002,7 +1512,7 @@ const handleSaveBulkIbadah = async () => {
             <div v-else class="space-y-4">
               <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
                 <div
-                  v-for="j in analyticsData.juz_distribution"
+                  v-for="j in (analyticsData.juz_distribution || [])"
                   :key="j.juz"
                   class="p-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/50 hover:border-emerald-500/60 transition group cursor-default"
                 >
@@ -1028,27 +1538,31 @@ const handleSaveBulkIbadah = async () => {
               <h3 class="font-black text-sm text-slate-900 dark:text-zinc-100">Tingkat Kelancaran (Fluency)</h3>
             </div>
 
-            <div v-if="analyticsData.fluency_breakdown.length === 0" class="py-12 text-center text-slate-400">
+            <div v-if="!analyticsData.fluency_breakdown || analyticsData.fluency_breakdown.length === 0" class="py-12 text-center text-slate-400">
               <p class="text-xs">Belum ada rekapan kelancaran santri.</p>
             </div>
 
             <div v-else class="space-y-3.5">
-              <div v-for="f in analyticsData.fluency_breakdown" :key="f.fluency_level" class="space-y-1">
+              <div v-for="f in (analyticsData.fluency_breakdown || [])" :key="f.fluency_level || f.name" class="space-y-1">
                 <div class="flex items-center justify-between text-xs">
-                  <span class="font-bold text-slate-700 dark:text-zinc-300">{{ f.fluency_level }}</span>
-                  <span class="font-extrabold text-slate-900 dark:text-zinc-100">{{ f.count }} santri ({{ f.percentage }}%)</span>
+                  <span class="font-bold text-slate-700 dark:text-zinc-300">{{ f.fluency_level || f.name }}</span>
+                  <span class="font-extrabold text-slate-900 dark:text-zinc-100">
+                    {{ f.count }} setoran ({{ f.percentage ?? (analyticsData.overview?.total_setoran ? Math.round((f.count / analyticsData.overview.total_setoran) * 100) : 0) }}%)
+                  </span>
                 </div>
                 <div class="w-full bg-slate-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
                   <div
                     class="h-full rounded-full transition-all duration-500"
                     :class="[
-                      f.fluency_level === 'Mutqin' ? 'bg-emerald-500' : (
-                        f.fluency_level === 'Mumtaz' || f.fluency_level === 'Jayyid Jiddan' ? 'bg-sky-500' : (
-                          f.fluency_level === 'Jayyid' ? 'bg-amber-500' : 'bg-rose-500'
+                      (f.fluency_level || f.name) === 'Mutqin' ? 'bg-emerald-500' : (
+                        (f.fluency_level || f.name) === 'Mumtaz' ? 'bg-teal-500' : (
+                          (f.fluency_level || f.name) === 'Jayyid Jiddan' ? 'bg-sky-500' : (
+                            (f.fluency_level || f.name) === 'Jayyid' ? 'bg-amber-500' : 'bg-rose-500'
+                          )
                         )
                       )
                     ]"
-                    :style="{ width: `${f.percentage}%` }"
+                    :style="{ width: `${f.percentage ?? (analyticsData.overview?.total_setoran ? Math.round((f.count / analyticsData.overview.total_setoran) * 100) : 0)}%` }"
                   ></div>
                 </div>
               </div>
@@ -1058,13 +1572,13 @@ const handleSaveBulkIbadah = async () => {
                 <div class="p-2 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800/40">
                   <span class="block text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase">Lulus Munaqasyah</span>
                   <span class="text-base font-black text-emerald-700 dark:text-emerald-400">
-                    {{ analyticsData.status_breakdown.find((s: any) => s.status === 'Lulus')?.count || 0 }} sesi
+                    {{ analyticsData.status_breakdown?.find((s: any) => (s.status || s.name) === 'Lulus')?.count || 0 }} sesi
                   </span>
                 </div>
                 <div class="p-2 rounded-lg bg-rose-50/60 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-800/40">
                   <span class="block text-[10px] font-bold text-rose-800 dark:text-rose-300 uppercase">Perlu Muroja'ah</span>
                   <span class="text-base font-black text-rose-700 dark:text-rose-400">
-                    {{ (analyticsData.status_breakdown.find((s: any) => s.status === 'Belum Lulus')?.count || 0) + (analyticsData.status_breakdown.find((s: any) => s.status === 'Muroja\'ah')?.count || 0) }} sesi
+                    {{ (analyticsData.status_breakdown?.find((s: any) => (s.status || s.name) === 'Belum Lulus')?.count || 0) + (analyticsData.status_breakdown?.find((s: any) => (s.status || s.name) === 'Muroja\'ah')?.count || 0) }} sesi
                   </span>
                 </div>
               </div>
@@ -1072,97 +1586,70 @@ const handleSaveBulkIbadah = async () => {
           </BaseCard>
         </div>
 
-        <!-- Section 3: Matriks Kepatuhan 8 Ibadah Yaumiyah -->
+        <!-- Section 3: Matriks Kepatuhan Amalan Mutaaba'ah (Dinamis dari Backend) -->
         <BaseCard stripe class="space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-zinc-800">
             <div class="flex items-center gap-2">
               <Sun class="text-amber-500" :size="18" />
-              <h3 class="font-black text-sm text-slate-900 dark:text-zinc-100">Matriks Kedisiplinan Mutaaba'ah Ibadah Yaumiyah</h3>
+              <h3 class="font-black text-sm text-slate-900 dark:text-zinc-100">Matriks Kedisiplinan Mutaaba'ah Ibadah Santri</h3>
             </div>
-            <span class="text-xs text-slate-500 dark:text-zinc-400">
-              Total {{ analyticsData.ibadah_matrix.total_records }} catatan mutaaba'ah harian
-            </span>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs text-slate-500 dark:text-zinc-400">
+                Total {{ analyticsData.ibadah_matrix?.total_records || 0 }} catatan
+              </span>
+              <span
+                v-if="analyticsData.overview?.excused_count"
+                class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-100 dark:border-rose-900/40 flex items-center gap-1"
+                :title="`${analyticsData.overview.excused_count} santriwati berhalangan/uzur syar'i dikecualikan dari sholat fardhu`"
+              >
+                <span>🌸</span>
+                <span>{{ analyticsData.overview.excused_count }} Uzur Syar'i (Dikecualikan Fardhu)</span>
+              </span>
+            </div>
           </div>
 
-          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-            <!-- Subuh -->
-            <div class="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/40 text-center space-y-1.5">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Sholat Subuh</span>
-              <p class="text-lg font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.ibadah_matrix.sholat_subuh }}%</p>
-              <div class="w-full bg-slate-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                <div class="bg-emerald-500 h-full rounded-full" :style="{ width: `${analyticsData.ibadah_matrix.sholat_subuh}%` }"></div>
-              </div>
-              <span class="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">Berjamaah</span>
-            </div>
+          <div v-if="!analyticsData.ibadah_matrix?.items?.length" class="py-8 text-center text-slate-400">
+            <Clock class="mx-auto mb-2 opacity-30 text-amber-500" :size="28" />
+            <p class="text-xs">Belum ada amalan mutaaba'ah yang tercatat atau ditugaskan.</p>
+          </div>
 
-            <!-- Dzuhur -->
-            <div class="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/40 text-center space-y-1.5">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Sholat Dzuhur</span>
-              <p class="text-lg font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.ibadah_matrix.sholat_dzuhur }}%</p>
-              <div class="w-full bg-slate-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                <div class="bg-emerald-500 h-full rounded-full" :style="{ width: `${analyticsData.ibadah_matrix.sholat_dzuhur}%` }"></div>
+          <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            <div
+              v-for="item in (analyticsData.ibadah_matrix?.items || [])"
+              :key="item.id"
+              class="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/40 text-center space-y-1.5 hover:border-emerald-500/50 transition"
+            >
+              <div class="flex items-center justify-between gap-1 text-[10px]">
+                <span class="font-bold truncate text-slate-700 dark:text-zinc-300" :title="item.title">{{ item.title }}</span>
+                <span
+                  :class="[
+                    'px-1.5 py-0.2 rounded text-[9px] font-extrabold shrink-0 uppercase',
+                    item.category === 'fardhu'
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-400'
+                      : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-400'
+                  ]"
+                >
+                  {{ item.category }}
+                </span>
               </div>
-              <span class="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">Berjamaah</span>
-            </div>
-
-            <!-- Ashar -->
-            <div class="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/40 text-center space-y-1.5">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Sholat Ashar</span>
-              <p class="text-lg font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.ibadah_matrix.sholat_ashar }}%</p>
+              <p class="text-lg font-black text-slate-900 dark:text-zinc-100">{{ item.compliance_rate }}%</p>
               <div class="w-full bg-slate-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                <div class="bg-emerald-500 h-full rounded-full" :style="{ width: `${analyticsData.ibadah_matrix.sholat_ashar}%` }"></div>
+                <div
+                  :class="[
+                    'h-full rounded-full transition-all duration-500',
+                    item.category === 'fardhu' ? 'bg-emerald-500' : 'bg-amber-500'
+                  ]"
+                  :style="{ width: `${item.compliance_rate}%` }"
+                ></div>
               </div>
-              <span class="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">Berjamaah</span>
-            </div>
-
-            <!-- Maghrib -->
-            <div class="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/40 text-center space-y-1.5">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Sholat Maghrib</span>
-              <p class="text-lg font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.ibadah_matrix.sholat_maghrib }}%</p>
-              <div class="w-full bg-slate-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                <div class="bg-emerald-500 h-full rounded-full" :style="{ width: `${analyticsData.ibadah_matrix.sholat_maghrib}%` }"></div>
+              <div class="text-[9px] text-slate-400 flex items-center justify-between">
+                <span class="font-bold text-slate-600 dark:text-zinc-300">{{ item.total_completed }} selesai</span>
+                <span v-if="item.category === 'fardhu' && (item.excused_count || analyticsData.overview?.excused_count)" class="flex items-center gap-0.5 font-medium">
+                  <span>{{ item.total_eligible_records }} wajib</span>
+                  <span class="text-rose-500 dark:text-rose-400 font-bold" :title="`${item.excused_count || analyticsData.overview?.excused_count} santriwati uzur syar'i dikecualikan`">(+{{ item.excused_count || analyticsData.overview?.excused_count }}🌸)</span>
+                </span>
+                <span v-else>{{ item.total_eligible_records }} santri</span>
               </div>
-              <span class="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">Berjamaah</span>
-            </div>
-
-            <!-- Isya -->
-            <div class="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/40 text-center space-y-1.5">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Sholat Isya</span>
-              <p class="text-lg font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.ibadah_matrix.sholat_isya }}%</p>
-              <div class="w-full bg-slate-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                <div class="bg-emerald-500 h-full rounded-full" :style="{ width: `${analyticsData.ibadah_matrix.sholat_isya}%` }"></div>
-              </div>
-              <span class="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">Berjamaah</span>
-            </div>
-
-            <!-- Tahajud -->
-            <div class="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/40 text-center space-y-1.5">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-500">Qiyamul Lail</span>
-              <p class="text-lg font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.ibadah_matrix.sholat_tahajud }}%</p>
-              <div class="w-full bg-slate-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                <div class="bg-indigo-500 h-full rounded-full" :style="{ width: `${analyticsData.ibadah_matrix.sholat_tahajud}%` }"></div>
-              </div>
-              <span class="text-[9px] font-semibold text-indigo-600 dark:text-indigo-400">Tahajud</span>
-            </div>
-
-            <!-- Dhuha -->
-            <div class="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/40 text-center space-y-1.5">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-amber-500">Sholat Dhuha</span>
-              <p class="text-lg font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.ibadah_matrix.sholat_dhuha }}%</p>
-              <div class="w-full bg-slate-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                <div class="bg-amber-500 h-full rounded-full" :style="{ width: `${analyticsData.ibadah_matrix.sholat_dhuha}%` }"></div>
-              </div>
-              <span class="text-[9px] font-semibold text-amber-600 dark:text-amber-400">Sunnah Pagi</span>
-            </div>
-
-            <!-- Tilawah -->
-            <div class="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/40 text-center space-y-1.5">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-teal-500">Tilawah Quran</span>
-              <p class="text-lg font-black text-slate-900 dark:text-zinc-100">{{ analyticsData.ibadah_matrix.tilawah_quran }}%</p>
-              <div class="w-full bg-slate-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                <div class="bg-teal-500 h-full rounded-full" :style="{ width: `${analyticsData.ibadah_matrix.tilawah_quran}%` }"></div>
-              </div>
-              <span class="text-[9px] font-semibold text-teal-600 dark:text-teal-400">Tadarus Harian</span>
             </div>
           </div>
         </BaseCard>
@@ -1181,13 +1668,13 @@ const handleSaveBulkIbadah = async () => {
               </span>
             </div>
 
-            <div v-if="analyticsData.top_students.length === 0" class="py-12 text-center text-slate-400">
+            <div v-if="!analyticsData.top_students || analyticsData.top_students.length === 0" class="py-12 text-center text-slate-400">
               <p class="text-xs">Belum ada setoran tercatat untuk menentukan santri teraktif.</p>
             </div>
 
             <div v-else class="space-y-2.5">
               <div
-                v-for="(s, idx) in analyticsData.top_students"
+                v-for="(s, idx) in (analyticsData.top_students || [])"
                 :key="s.student_id"
                 class="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-950/50 hover:bg-slate-50 dark:hover:bg-zinc-900 transition"
               >
@@ -1233,14 +1720,14 @@ const handleSaveBulkIbadah = async () => {
               </span>
             </div>
 
-            <div v-if="analyticsData.students_needing_support.length === 0" class="py-12 text-center text-slate-400">
+            <div v-if="!analyticsData.students_needing_support || analyticsData.students_needing_support.length === 0" class="py-12 text-center text-slate-400">
               <CheckCircle2 class="mx-auto mb-2 text-emerald-500 opacity-60" :size="32" />
               <p class="text-xs text-emerald-600 font-bold">Alhamdulillah, seluruh santri lulus setoran dengan nilai baik!</p>
             </div>
 
             <div v-else class="space-y-2.5">
               <div
-                v-for="s in analyticsData.students_needing_support"
+                v-for="s in (analyticsData.students_needing_support || [])"
                 :key="s.student_id"
                 class="p-3 rounded-xl border border-rose-100 dark:border-rose-950/60 bg-rose-50/30 dark:bg-rose-950/20 flex flex-col gap-1.5"
               >
@@ -1272,7 +1759,7 @@ const handleSaveBulkIbadah = async () => {
               <h3 class="font-black text-sm text-slate-900 dark:text-zinc-100">Komparasi Kinerja Antar Unit Sekolah Yayasan</h3>
             </div>
             <span class="text-xs text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-0.5 rounded-full">
-              {{ analyticsData.school_comparison.length }} Unit Terdaftar
+              {{ analyticsData.school_comparison?.length || 0 }} Unit Terdaftar
             </span>
           </div>
 
@@ -1289,7 +1776,7 @@ const handleSaveBulkIbadah = async () => {
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60">
                 <tr
-                  v-for="s in analyticsData.school_comparison"
+                  v-for="s in (analyticsData.school_comparison || [])"
                   :key="s.school_id"
                   class="hover:bg-slate-50/60 dark:hover:bg-zinc-900/50 transition"
                 >
@@ -1323,7 +1810,7 @@ const handleSaveBulkIbadah = async () => {
         </BaseCard>
 
         <!-- Section 6: Komparasi Performa Antar Rombel / Kamar -->
-        <BaseCard stripe class="space-y-4">
+        <BaseCard v-if="analyticsData.class_comparison?.length" stripe class="space-y-4">
           <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800">
             <div class="flex items-center gap-2">
               <BarChart3 class="text-indigo-600" :size="18" />
@@ -1345,7 +1832,7 @@ const handleSaveBulkIbadah = async () => {
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60">
                 <tr
-                  v-for="c in analyticsData.class_comparison"
+                  v-for="c in (analyticsData.class_comparison || [])"
                   :key="c.class_id"
                   class="hover:bg-slate-50/60 dark:hover:bg-zinc-900/50 transition"
                 >
@@ -1362,7 +1849,7 @@ const handleSaveBulkIbadah = async () => {
                   <td class="py-3 px-3 text-right">
                     <button
                       type="button"
-                      @click="selectedClassId = c.class_id"
+                      @click="filterByClass(c.class_id, c.school_id)"
                       class="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
                     >
                       Saring Rombel Ini →
@@ -1373,12 +1860,12 @@ const handleSaveBulkIbadah = async () => {
             </table>
           </div>
         </BaseCard>
-      </template>
+      </div>
     </div>
 
-    <!-- Mode Tahfidz & Ibadah (Membutuhkan Kelas Terpilih) -->
-    <template v-if="activeTab !== 'analytics'">
-      <!-- Empty State (When no class is selected, exactly like /report) -->
+    <!-- TAB 1: INPUT SETORAN TAHFIDZ -->
+    <div v-show="activeTab === 'tahfidz'" class="space-y-6">
+      <!-- Empty State (When no class is selected) -->
       <div
         v-if="!selectedClassId"
         class="bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-16 text-center text-slate-400 dark:text-zinc-500 shadow-sm"
@@ -1386,14 +1873,12 @@ const handleSaveBulkIbadah = async () => {
         <BookOpen class="mx-auto mb-3 opacity-40 text-emerald-600" :size="40" />
         <h3 class="font-bold text-slate-700 dark:text-zinc-300 text-sm">Belum Ada Kelas yang Dipilih</h3>
         <p class="text-xs mt-1 max-w-sm mx-auto">
-          Silakan tentukan unit sekolah, tahun ajaran, dan kelas rombel/kamar di atas untuk mengelola setoran tahfidz dan mutaaba'ah santri.
+          Silakan tentukan unit sekolah, tahun ajaran, dan kelas rombel/kamar di atas untuk mengelola setoran tahfidz santri.
         </p>
       </div>
 
       <!-- Main Content when class is selected -->
-      <template v-else>
-        <!-- TAB 1: INPUT SETORAN TAHFIDZ -->
-        <div v-show="activeTab === 'tahfidz'" class="space-y-6">
+      <div v-else class="space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Input Form Card -->
           <BaseCard stripe class="lg:col-span-1 border-t-4 border-t-emerald-600 space-y-4">
@@ -1667,160 +2152,553 @@ const handleSaveBulkIbadah = async () => {
           </BaseCard>
         </div>
       </div>
+    </div>
 
-      <!-- TAB 2: MUTAABA'AH IBADAH SANTRI (BULK CHECKLIST) -->
-      <div v-show="activeTab === 'ibadah'" class="space-y-6">
+    <!-- TAB 2: MUTAABA'AH IBADAH SANTRI (BULK CHECKLIST DINAMIS) -->
+    <div v-show="activeTab === 'ibadah'" class="space-y-6">
+      <!-- Empty State (When no class is selected) -->
+      <div
+        v-if="!selectedClassId"
+        class="bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-16 text-center text-slate-400 dark:text-zinc-500 shadow-sm"
+      >
+        <Clock class="mx-auto mb-3 opacity-40 text-indigo-600" :size="40" />
+        <h3 class="font-bold text-slate-700 dark:text-zinc-300 text-sm">Belum Ada Kelas yang Dipilih</h3>
+        <p class="text-xs mt-1 max-w-sm mx-auto">
+          Silakan tentukan unit sekolah, tahun ajaran, dan kelas rombel/kamar di atas untuk mengisi checklist mutaaba'ah ibadah santri.
+        </p>
+      </div>
+
+      <!-- Main Ibadah Content when class is selected -->
+      <div v-else class="space-y-6">
+        <!-- Section 1: Live Executive Summary KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- KPI 1: Total Santri Rombel -->
+          <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-xl p-4 shadow-xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Total Santri Rombel</span>
+              <span class="p-2 rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">
+                <Users :size="16" />
+              </span>
+            </div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span class="text-2xl font-black text-slate-900 dark:text-zinc-100">{{ ibadahStats.total }}</span>
+              <span class="text-xs text-slate-500">santri terdaftar</span>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-xs font-semibold">
+              <span class="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> {{ ibadahStats.hadir }} Hadir
+              </span>
+              <span class="text-rose-500 dark:text-rose-400 flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-rose-400"></span> {{ ibadahStats.uzur }} Uzur Syar'i
+              </span>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
+          </div>
+
+          <!-- KPI 2: Kepatuhan Sholat Fardhu -->
+          <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-xl p-4 shadow-xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Kepatuhan Sholat Fardhu</span>
+              <span class="p-2 rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400">
+                <CheckCircle2 :size="16" />
+              </span>
+            </div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span class="text-2xl font-black text-slate-900 dark:text-zinc-100">{{ ibadahStats.fardhuCompletionPct }}%</span>
+              <span class="text-xs text-slate-500">berjamaah</span>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-xs font-semibold">
+              <span class="text-slate-500 dark:text-zinc-400">Evaluasi Fardhu</span>
+              <span
+                :class="[
+                  'px-1.5 py-0.5 rounded text-[10px] font-bold',
+                  ibadahStats.fardhuCompletionPct >= 80
+                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
+                    : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'
+                ]"
+              >
+                {{ ibadahStats.fardhuCompletionPct >= 80 ? 'Sangat Tertib' : 'Perlu Didisiplinkan' }}
+              </span>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-cyan-400"></div>
+          </div>
+
+          <!-- KPI 3: Kelengkapan Amalan Harian -->
+          <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-xl p-4 shadow-xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Kelengkapan Amalan</span>
+              <span class="p-2 rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
+                <Sparkles :size="16" />
+              </span>
+            </div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span class="text-2xl font-black text-slate-900 dark:text-zinc-100">{{ ibadahStats.completedStudents }}</span>
+              <span class="text-xs text-slate-500">/ {{ ibadahStats.total }} santri selesai</span>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-xs font-semibold">
+              <span class="text-slate-500 dark:text-zinc-400">Total Progres</span>
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                {{ ibadahStats.overallCompletionPct }}% Terlaksana
+              </span>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-yellow-400"></div>
+          </div>
+
+          <!-- KPI 4: Status Sinkronisasi Data -->
+          <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-xl p-4 shadow-xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Status Penyimpanan</span>
+              <span
+                :class="[
+                  'p-2 rounded-lg',
+                  hasUnsavedChanges
+                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400'
+                    : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400'
+                ]"
+              >
+                <Save :size="16" />
+              </span>
+            </div>
+            <div class="mt-2 flex items-center gap-2">
+              <span
+                v-if="hasUnsavedChanges"
+                class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"
+              ></span>
+              <span
+                v-else
+                class="w-2.5 h-2.5 rounded-full bg-emerald-500"
+              ></span>
+              <span class="text-lg font-black text-slate-900 dark:text-zinc-100">
+                {{ hasUnsavedChanges ? 'Belum Disimpan' : 'Tersimpan Rapi' }}
+              </span>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-xs">
+              <span class="text-slate-500 dark:text-zinc-400">
+                {{ hasUnsavedChanges ? 'Ada checklist diubah' : 'Sinkron dengan server' }}
+              </span>
+              <span
+                :class="[
+                  'px-1.5 py-0.5 rounded text-[10px] font-bold',
+                  hasUnsavedChanges
+                    ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
+                    : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
+                ]"
+              >
+                {{ hasUnsavedChanges ? 'Draft Lokal' : 'Tersinkron' }}
+              </span>
+            </div>
+            <div
+              class="absolute bottom-0 left-0 right-0 h-1"
+              :class="hasUnsavedChanges ? 'bg-gradient-to-r from-amber-500 to-orange-400' : 'bg-gradient-to-r from-indigo-500 to-purple-400'"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Section 2: Main Checklist Card & Interactive Controls -->
         <BaseCard stripe class="border-t-4 border-t-indigo-600 space-y-4">
-          <!-- Action Toolbar -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-zinc-800">
+          <!-- Action Toolbar Header -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-slate-100 dark:border-zinc-800">
             <div>
-              <h3 class="font-black text-sm text-slate-900 dark:text-zinc-100 flex items-center gap-2">
-                <Clock class="text-indigo-600" :size="18" />
-                Checklist Mutaaba'ah Sholat & Ibadah Massal
-              </h3>
-              <p class="text-xs text-slate-400 mt-0.5">
-                Tanggal: <span class="font-bold text-slate-700 dark:text-zinc-300">{{ formatIndoDate(selectedDate || todayDate) }}</span> &bull; Centang sholat fardhu berjamaah dan amalan sunnah santri
+              <div class="flex items-center gap-2">
+                <span class="p-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+                  <Clock :size="18" />
+                </span>
+                <h3 class="font-black text-base text-slate-900 dark:text-zinc-100">
+                  Checklist Mutaaba'ah Sholat & Ibadah Massal
+                </h3>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-zinc-400 mt-1 flex flex-wrap items-center gap-2">
+                <span>Tanggal: <strong class="text-slate-800 dark:text-zinc-200">{{ formatIndoDate(selectedDate || todayDate) }}</strong></span>
+                <span class="text-slate-300 dark:text-zinc-700">&bull;</span>
+                <span>Unit: <strong class="text-slate-800 dark:text-zinc-200">{{ schools.find((s: any) => s.id === selectedSchoolId)?.name || 'Sekolah' }}</strong></span>
+                <span class="text-slate-300 dark:text-zinc-700">&bull;</span>
+                <span>Rombel: <strong class="text-slate-800 dark:text-zinc-200">{{ classes.find((c: any) => c.id === selectedClassId)?.class_name || 'Kelas' }}</strong></span>
               </p>
             </div>
 
-            <div class="flex items-center gap-2">
+            <!-- Toolbar Buttons -->
+            <div class="flex flex-wrap items-center gap-2">
+              <button
+                v-if="canManageFoundationMaster"
+                type="button"
+                @click="openMasterModal"
+                class="px-3 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                title="Kelola bank amalan yayasan dan penugasan per unit sekolah"
+              >
+                <Settings :size="14" />
+                <span>Atur Amalan Yayasan</span>
+              </button>
+
               <button
                 type="button"
                 @click="setAllFardhu"
-                class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                class="px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                title="Centang seluruh sholat fardhu 5 waktu untuk santri yang hadir (santriwati uzur dikecualikan otomatis)"
               >
-                <Check :size="14" class="text-emerald-500" />
-                <span>Centang 5 Waktu Semua</span>
+                <Check :size="14" class="text-emerald-600" />
+                <span>Centang Fardhu Semua</span>
+              </button>
+
+              <button
+                type="button"
+                @click="resetAllIbadahChecks"
+                class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                title="Kosongkan seluruh checklist amalan pada tanggal ini"
+              >
+                <RotateCcw :size="14" />
+                <span>Reset</span>
               </button>
 
               <button
                 type="button"
                 @click="handleSaveBulkIbadah"
                 :disabled="saving"
-                class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md disabled:opacity-50 cursor-pointer"
+                class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black transition flex items-center gap-2 shadow-md hover:shadow-lg disabled:opacity-50 cursor-pointer relative"
               >
-                <Save :size="14" />
+                <RefreshCw v-if="saving" :size="14" class="animate-spin" />
+                <Save v-else :size="14" />
                 <span>{{ saving ? 'Menyimpan...' : 'Simpan Seluruh Data' }}</span>
+                <span
+                  v-if="hasUnsavedChanges"
+                  class="w-2 h-2 rounded-full bg-amber-300 animate-ping absolute -top-1 -right-1"
+                  title="Ada perubahan belum tersimpan"
+                ></span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty State if no assigned items for this school -->
+          <div v-if="assignedMutabaahItems.length === 0" class="py-12 text-center text-slate-400">
+            <AlertCircle class="mx-auto mb-2 text-amber-500 opacity-60" :size="32" />
+            <p class="text-sm font-bold text-slate-700 dark:text-zinc-300">Belum Ada Amalan yang Ditugaskan untuk Sekolah Ini</p>
+            <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+              Yayasan perlu memilih dan menugaskan amalan dari Bank Amalan Yayasan agar muncul di form checklist harian santri.
+            </p>
+            <button
+              v-if="canManageFoundationMaster"
+              type="button"
+              @click="openMasterModal"
+              class="mt-4 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold inline-flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <Settings :size="14" />
+              <span>Buka Pengaturan Amalan Yayasan</span>
+            </button>
+          </div>
+
+          <!-- Search & Filter Filter Bar -->
+          <div v-else class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 pb-2">
+            <!-- Search Input -->
+            <div class="relative flex-1 max-w-xs">
+              <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" :size="14" />
+              <input
+                type="text"
+                v-model="ibadahSearch"
+                placeholder="Cari nama santri / NIS..."
+                class="w-full bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-xl pl-9 pr-3 py-1.5 text-xs outline-none focus:border-indigo-500 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400"
+              />
+              <button
+                v-if="ibadahSearch"
+                type="button"
+                @click="ibadahSearch = ''"
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-xs"
+              >
+                &times;
+              </button>
+            </div>
+
+            <!-- Filter Status Tabs -->
+            <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800/70 p-1 rounded-xl text-xs font-semibold overflow-x-auto">
+              <button
+                type="button"
+                @click="ibadahStatusFilter = 'all'"
+                :class="[
+                  'px-3 py-1 rounded-lg transition cursor-pointer whitespace-nowrap',
+                  ibadahStatusFilter === 'all'
+                    ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 shadow-xs font-bold'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100'
+                ]"
+              >
+                Semua ({{ classStudents.length }})
+              </button>
+              <button
+                type="button"
+                @click="ibadahStatusFilter = 'hadir'"
+                :class="[
+                  'px-3 py-1 rounded-lg transition cursor-pointer whitespace-nowrap flex items-center gap-1',
+                  ibadahStatusFilter === 'hadir'
+                    ? 'bg-white dark:bg-zinc-900 text-emerald-700 dark:text-emerald-400 shadow-xs font-bold'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-emerald-600'
+                ]"
+              >
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>Hadir ({{ ibadahStats.hadir }})</span>
+              </button>
+              <button
+                type="button"
+                @click="ibadahStatusFilter = 'uzur'"
+                :class="[
+                  'px-3 py-1 rounded-lg transition cursor-pointer whitespace-nowrap flex items-center gap-1',
+                  ibadahStatusFilter === 'uzur'
+                    ? 'bg-white dark:bg-zinc-900 text-rose-700 dark:text-rose-400 shadow-xs font-bold'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-rose-600'
+                ]"
+              >
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                <span>🌸 Uzur ({{ ibadahStats.uzur }})</span>
+              </button>
+              <button
+                type="button"
+                @click="ibadahStatusFilter = 'incomplete'"
+                :class="[
+                  'px-3 py-1 rounded-lg transition cursor-pointer whitespace-nowrap',
+                  ibadahStatusFilter === 'incomplete'
+                    ? 'bg-white dark:bg-zinc-900 text-amber-700 dark:text-amber-400 shadow-xs font-bold'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-amber-600'
+                ]"
+              >
+                ⏳ Belum Lengkap
               </button>
             </div>
           </div>
 
           <!-- Student Checklist Matrix Table -->
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead>
-                <tr class="border-b border-slate-200 dark:border-zinc-800 text-slate-400 font-semibold text-[10px] uppercase tracking-wider">
-                  <th class="py-3 px-3">Nama Santri</th>
-                  <th class="py-3 px-2 text-center">Subuh</th>
-                  <th class="py-3 px-2 text-center">Dzuhur</th>
-                  <th class="py-3 px-2 text-center">Ashar</th>
-                  <th class="py-3 px-2 text-center">Maghrib</th>
-                  <th class="py-3 px-2 text-center">Isya</th>
-                  <th class="py-3 px-2 text-center">Tahajud</th>
-                  <th class="py-3 px-2 text-center">Dhuha</th>
-                  <th class="py-3 px-2 text-center">Tilawah</th>
-                  <th class="py-3 px-3">Catatan Musyrif</th>
+          <div v-if="assignedMutabaahItems.length > 0" class="overflow-x-auto border border-slate-200 dark:border-zinc-800 rounded-xl relative max-h-[70vh]">
+            <table class="w-full text-left text-xs border-collapse">
+              <!-- Sticky Table Header with Informative Prayer Details -->
+              <thead class="sticky top-0 bg-slate-50/95 dark:bg-zinc-900/95 backdrop-blur-md z-20 border-b border-slate-200 dark:border-zinc-800 text-slate-500 dark:text-zinc-400">
+                <tr>
+                  <!-- Kolom 1: Nama Santri (Sticky Left) -->
+                  <th class="py-3 px-3.5 sticky left-0 bg-slate-50/95 dark:bg-zinc-900/95 backdrop-blur-md z-30 min-w-[200px] border-r border-slate-200/60 dark:border-zinc-800/60">
+                    <div class="flex items-center justify-between">
+                      <span class="font-extrabold uppercase text-[10px] tracking-wider text-slate-600 dark:text-zinc-300">
+                        Nama Santri
+                      </span>
+                      <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300">
+                        {{ filteredClassStudents.length }}
+                      </span>
+                    </div>
+                  </th>
+
+                  <!-- Kolom 2: Status Uzur / Haid -->
+                  <th class="py-3 px-2 text-center min-w-[100px] border-r border-slate-200/60 dark:border-zinc-800/60" title="Status Uzur Syar'i (Haid/Sakit) untuk santriwati">
+                    <div class="flex flex-col items-center">
+                      <span class="font-extrabold uppercase text-[10px] tracking-wider text-slate-600 dark:text-zinc-300">
+                        Uzur / Haid
+                      </span>
+                      <span class="text-[9px] text-slate-400 font-semibold mt-0.5">
+                        {{ ibadahStats.uzur }} Uzur
+                      </span>
+                    </div>
+                  </th>
+
+                  <!-- Kolom Amalan Dinamis -->
+                  <th
+                    v-for="item in assignedMutabaahItems"
+                    :key="item.id"
+                    class="py-2.5 px-3 text-center min-w-[125px] border-r border-slate-200/60 dark:border-zinc-800/60 group"
+                  >
+                    <div class="flex flex-col items-center gap-1">
+                      <!-- Amalan Icon + Name -->
+                      <div class="flex items-center gap-1.5 font-black text-slate-800 dark:text-zinc-100 text-[11px]">
+                        <component
+                          :is="getItemIconComponent(item)"
+                          :size="14"
+                          :class="[
+                            'shrink-0',
+                            item.category === 'fardhu'
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : (item.category === 'sunnah' ? 'text-amber-500' : 'text-purple-500')
+                          ]"
+                        />
+                        <span class="truncate max-w-[100px]" :title="getItemName(item)">
+                          {{ getItemName(item) }}
+                        </span>
+                      </div>
+
+                      <!-- Category Badge -->
+                      <span
+                        :class="[
+                          'text-[8px] font-extrabold uppercase px-1.5 py-0.2 rounded tracking-wider',
+                          item.category === 'fardhu'
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                            : (item.category === 'sunnah' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300')
+                        ]"
+                      >
+                        {{ item.category }}
+                      </span>
+
+                      <!-- Column Live Completion Stat & 1-Click Action -->
+                      <div class="flex items-center gap-1 mt-0.5">
+                        <span
+                          class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300"
+                          title="Jumlah santri yang telah melaksanakan amalan ini"
+                        >
+                          {{ getColumnStats(item.id, item.category).checked }}/{{ getColumnStats(item.id, item.category).total }}
+                        </span>
+
+                        <button
+                          type="button"
+                          @click="toggleColumn(item)"
+                          class="p-1 rounded hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-500 dark:text-zinc-400 hover:text-emerald-600 transition cursor-pointer"
+                          :title="`Klik untuk centang/batal seluruh kolom: ${getItemName(item)}`"
+                        >
+                          <CheckCheck :size="12" />
+                        </button>
+                      </div>
+                    </div>
+                  </th>
+
+                  <!-- Kolom Progres Santri -->
+                  <th class="py-3 px-3 text-center min-w-[110px] border-r border-slate-200/60 dark:border-zinc-800/60">
+                    <span class="font-extrabold uppercase text-[10px] tracking-wider text-slate-600 dark:text-zinc-300">
+                      Progres
+                    </span>
+                  </th>
+
+                  <!-- Kolom Catatan Musyrif -->
+                  <th class="py-3 px-3 min-w-[180px]">
+                    <span class="font-extrabold uppercase text-[10px] tracking-wider text-slate-600 dark:text-zinc-300">
+                      Catatan Musyrif
+                    </span>
+                  </th>
                 </tr>
               </thead>
+
+              <!-- Table Body -->
               <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60 font-medium">
                 <tr
-                  v-for="s in classStudents"
+                  v-for="s in filteredClassStudents"
                   :key="s.id"
-                  class="hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 transition"
+                  class="hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 transition group"
+                  :class="{ 'bg-rose-50/20 dark:bg-rose-950/10': ibadahGrid[s.id]?.is_excused }"
                 >
-                  <td class="py-3 px-3 whitespace-nowrap">
-                    <p class="font-bold text-slate-900 dark:text-zinc-100">{{ s.full_name }}</p>
-                    <p class="text-[10px] text-slate-400">{{ s.student_number || 'NIS -' }}</p>
+                  <!-- Kolom 1: Nama Santri (Sticky Left) -->
+                  <td class="py-2.5 px-3.5 whitespace-nowrap sticky left-0 bg-white dark:bg-zinc-900 group-hover:bg-slate-50/90 dark:group-hover:bg-zinc-800/90 z-10 border-r border-slate-200/60 dark:border-zinc-800/60">
+                    <div class="flex items-center gap-2.5">
+                      <!-- Avatar with Initials & Gender Theme -->
+                      <div
+                        :class="[
+                          'w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 shadow-2xs',
+                          s.gender === 'P'
+                            ? 'bg-pink-100 text-pink-700 dark:bg-pink-950/60 dark:text-pink-300 border border-pink-200 dark:border-pink-800'
+                            : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                        ]"
+                      >
+                        {{ getInitials(s.full_name) }}
+                      </div>
+
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-1.5">
+                          <p class="font-bold text-slate-900 dark:text-zinc-100 text-xs truncate max-w-[140px]" :title="s.full_name">
+                            {{ s.full_name }}
+                          </p>
+                          <span
+                            v-if="s.gender === 'P'"
+                            class="px-1 py-0.2 rounded text-[8px] font-extrabold bg-pink-100 text-pink-700 dark:bg-pink-950/60 dark:text-pink-300"
+                            title="Santriwati (Akhwat)"
+                          >
+                            P
+                          </span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 font-mono">{{ s.student_number || 'NIS -' }}</p>
+                      </div>
+
+                      <!-- 1-Click Row Check All -->
+                      <button
+                        type="button"
+                        @click="toggleStudentAll(s.id)"
+                        class="ml-auto opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-400 hover:text-indigo-600 transition cursor-pointer"
+                        title="Centang/batal seluruh amalan santri ini"
+                      >
+                        <CheckCheck :size="13" />
+                      </button>
+                    </div>
                   </td>
 
-                  <!-- Subuh -->
-                  <td class="py-3 px-2 text-center">
-                    <input
-                      type="checkbox"
-                      v-if="ibadahGrid[s.id]"
-                      v-model="ibadahGrid[s.id].sholat_subuh"
-                      class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
-                    />
+                  <!-- Kolom 2: Uzur / Haid Toggle -->
+                  <td class="py-2.5 px-2 text-center whitespace-nowrap border-r border-slate-200/60 dark:border-zinc-800/60">
+                    <button
+                      type="button"
+                      @click="toggleStudentExcused(s.id)"
+                      :class="[
+                        'px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition cursor-pointer border shadow-2xs inline-flex items-center gap-1',
+                        ibadahGrid[s.id]?.is_excused
+                          ? 'bg-rose-100 text-rose-700 border-rose-300 dark:bg-rose-950/70 dark:text-rose-300 dark:border-rose-800 ring-2 ring-rose-400/20'
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
+                      ]"
+                      :title="ibadahGrid[s.id]?.is_excused ? 'Klik untuk membatalkan status uzur' : 'Klik jika santriwati berhalangan syar\'i (haid/sakit)'"
+                    >
+                      <span v-if="ibadahGrid[s.id]?.is_excused">🌸 Uzur Syar'i</span>
+                      <span v-else class="flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        <span>Hadir</span>
+                      </span>
+                    </button>
                   </td>
 
-                  <!-- Dzuhur -->
-                  <td class="py-3 px-2 text-center">
-                    <input
-                      type="checkbox"
-                      v-if="ibadahGrid[s.id]"
-                      v-model="ibadahGrid[s.id].sholat_dzuhur"
-                      class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
-                    />
+                  <!-- Kolom Amalan Dinamis Checkboxes -->
+                  <td
+                    v-for="item in assignedMutabaahItems"
+                    :key="item.id"
+                    class="py-2.5 px-2 text-center border-r border-slate-200/60 dark:border-zinc-800/60"
+                  >
+                    <!-- Jika Santri Uzur Syar'i & Amalan Fardhu -> Dikecualikan Syar'i -->
+                    <span
+                      v-if="ibadahGrid[s.id]?.is_excused && item.category === 'fardhu'"
+                      class="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-50 text-rose-500 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200/50 dark:border-rose-900/50 cursor-not-allowed select-none"
+                      title="Santriwati sedang berhalangan syar'i (tidak wajib sholat fardhu & tidak dihitung alpha)"
+                    >
+                      🌸 Dikecualikan
+                    </span>
+
+                    <!-- Checkbox Amalan -->
+                    <label
+                      v-else
+                      class="inline-flex items-center justify-center p-1 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 cursor-pointer transition"
+                    >
+                      <input
+                        type="checkbox"
+                        v-if="ibadahGrid[s.id] && ibadahGrid[s.id].check_data"
+                        v-model="ibadahGrid[s.id].check_data[item.id]"
+                        @change="markIbadahChanged"
+                        class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-zinc-700 dark:bg-zinc-800 cursor-pointer accent-emerald-600 transition"
+                        :title="`${s.full_name} - ${getItemName(item)}`"
+                      />
+                    </label>
                   </td>
 
-                  <!-- Ashar -->
-                  <td class="py-3 px-2 text-center">
-                    <input
-                      type="checkbox"
-                      v-if="ibadahGrid[s.id]"
-                      v-model="ibadahGrid[s.id].sholat_ashar"
-                      class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
-                    />
+                  <!-- Kolom Progres Santri -->
+                  <td class="py-2.5 px-3 text-center border-r border-slate-200/60 dark:border-zinc-800/60">
+                    <div class="flex flex-col items-center gap-1">
+                      <span
+                        :class="[
+                          'text-[10px] font-extrabold px-1.5 py-0.2 rounded font-mono',
+                          getStudentProgress(s.id).pct === 100
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                            : (getStudentProgress(s.id).pct >= 50 ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' : 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400')
+                        ]"
+                      >
+                        {{ getStudentProgress(s.id).completed }}/{{ getStudentProgress(s.id).total }} ({{ getStudentProgress(s.id).pct }}%)
+                      </span>
+                      <div class="w-16 bg-slate-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                        <div
+                          class="h-full rounded-full transition-all duration-300"
+                          :class="getStudentProgress(s.id).pct === 100 ? 'bg-emerald-500' : (getStudentProgress(s.id).pct >= 50 ? 'bg-amber-500' : 'bg-slate-400')"
+                          :style="{ width: `${getStudentProgress(s.id).pct}%` }"
+                        ></div>
+                      </div>
+                    </div>
                   </td>
 
-                  <!-- Maghrib -->
-                  <td class="py-3 px-2 text-center">
-                    <input
-                      type="checkbox"
-                      v-if="ibadahGrid[s.id]"
-                      v-model="ibadahGrid[s.id].sholat_maghrib"
-                      class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
-                    />
-                  </td>
-
-                  <!-- Isya -->
-                  <td class="py-3 px-2 text-center">
-                    <input
-                      type="checkbox"
-                      v-if="ibadahGrid[s.id]"
-                      v-model="ibadahGrid[s.id].sholat_isya"
-                      class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
-                    />
-                  </td>
-
-                  <!-- Tahajud -->
-                  <td class="py-3 px-2 text-center">
-                    <input
-                      type="checkbox"
-                      v-if="ibadahGrid[s.id]"
-                      v-model="ibadahGrid[s.id].sholat_tahajud"
-                      class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 cursor-pointer"
-                    />
-                  </td>
-
-                  <!-- Dhuha -->
-                  <td class="py-3 px-2 text-center">
-                    <input
-                      type="checkbox"
-                      v-if="ibadahGrid[s.id]"
-                      v-model="ibadahGrid[s.id].sholat_dhuha"
-                      class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-slate-300 cursor-pointer"
-                    />
-                  </td>
-
-                  <!-- Tilawah -->
-                  <td class="py-3 px-2 text-center">
-                    <input
-                      type="checkbox"
-                      v-if="ibadahGrid[s.id]"
-                      v-model="ibadahGrid[s.id].tilawah_quran"
-                      class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 cursor-pointer"
-                    />
-                  </td>
-
-                  <!-- Notes -->
-                  <td class="py-3 px-3">
+                  <!-- Kolom Catatan Musyrif -->
+                  <td class="py-2.5 px-3">
                     <input
                       type="text"
                       v-if="ibadahGrid[s.id]"
                       v-model="ibadahGrid[s.id].notes"
-                      placeholder="Catatan..."
-                      class="w-36 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-[11px] outline-none focus:border-indigo-500 text-slate-900 dark:text-zinc-100"
+                      @input="markIbadahChanged"
+                      placeholder="Catatan sholat/ibadah..."
+                      class="w-full min-w-[160px] bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1 text-[11px] outline-none focus:border-indigo-500 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 transition"
                     />
                   </td>
                 </tr>
@@ -1829,7 +2707,289 @@ const handleSaveBulkIbadah = async () => {
           </div>
         </BaseCard>
       </div>
-    </template>
-    </template>
+    </div>
+
+    <!-- MODAL: KELOLA BANK AMALAN YAYASAN & PENUGASAN SEKOLAH -->
+    <div
+      v-if="showMasterModal"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
+    >
+      <div
+        class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+      >
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between bg-slate-50/50 dark:bg-zinc-900/80">
+          <div class="flex items-center gap-2.5">
+            <div class="p-2 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400">
+              <Settings :size="20" />
+            </div>
+            <div>
+              <h3 class="font-black text-base text-slate-900 dark:text-zinc-100">
+                Pengaturan Bank Amalan Mutaaba'ah Yayasan
+              </h3>
+              <p class="text-xs text-slate-400">
+                Kelola master item amalan yayasan dan penugasan ke unit sekolah di bawah naungan.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            @click="showMasterModal = false"
+            class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+          >
+            <X :size="20" />
+          </button>
+        </div>
+
+        <!-- Modal Sub-Tab Bar -->
+        <div class="flex border-b border-slate-200 dark:border-zinc-800 px-6 bg-slate-50/30 dark:bg-zinc-900/40">
+          <button
+            type="button"
+            @click="activeMasterTab = 'items'"
+            :class="[
+              'px-4 py-3 text-xs font-bold border-b-2 transition flex items-center gap-2 cursor-pointer',
+              activeMasterTab === 'items'
+                ? 'border-purple-600 text-purple-700 dark:text-purple-400'
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400'
+            ]"
+          >
+            <CheckSquare :size="15" />
+            <span>Bank Amalan Yayasan (Master)</span>
+          </button>
+          <button
+            type="button"
+            @click="activeMasterTab = 'assign'"
+            :class="[
+              'px-4 py-3 text-xs font-bold border-b-2 transition flex items-center gap-2 cursor-pointer',
+              activeMasterTab === 'assign'
+                ? 'border-purple-600 text-purple-700 dark:text-purple-400'
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400'
+            ]"
+          >
+            <Building2 :size="15" />
+            <span>Penugasan ke Unit Sekolah</span>
+          </button>
+        </div>
+
+        <!-- Modal Body Content -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+          <!-- TAB 1: BANK AMALAN YAYASAN -->
+          <div v-show="activeMasterTab === 'items'" class="space-y-6">
+            <!-- Form Input / Edit Item -->
+            <div class="p-4 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/50 space-y-3">
+              <div class="flex items-center justify-between">
+                <h4 class="font-bold text-xs text-slate-800 dark:text-zinc-200 flex items-center gap-1.5">
+                  <Plus :size="14" class="text-purple-600" />
+                  <span>{{ isEditingMasterItem ? 'Ubah Data Amalan' : 'Tambah Amalan Baru' }}</span>
+                </h4>
+                <button
+                  v-if="isEditingMasterItem"
+                  type="button"
+                  @click="resetMasterItemForm"
+                  class="text-[11px] text-slate-400 hover:underline cursor-pointer"
+                >
+                  Batal Edit
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+                <div class="sm:col-span-2">
+                  <label class="block font-bold text-slate-600 dark:text-zinc-400 mb-1">Nama Amalan *</label>
+                  <input
+                    type="text"
+                    v-model="masterItemForm.name"
+                    placeholder="Contoh: Sholat Dhuha, Dzikir Pagi"
+                    class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-purple-600 text-slate-900 dark:text-zinc-100"
+                  />
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-600 dark:text-zinc-400 mb-1">Kategori *</label>
+                  <select
+                    v-model="masterItemForm.category"
+                    class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-purple-600 text-slate-900 dark:text-zinc-100"
+                  >
+                    <option value="fardhu">Fardhu (Wajib)</option>
+                    <option value="sunnah">Sunnah</option>
+                    <option value="tahfidz">Tahfidz & Murojaah</option>
+                    <option value="adab_karakter">Adab & Karakter</option>
+                    <option value="kedisiplinan">Kedisiplinan</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-600 dark:text-zinc-400 mb-1">Target Santri</label>
+                  <select
+                    v-model="masterItemForm.target_gender"
+                    class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-purple-600 text-slate-900 dark:text-zinc-100"
+                  >
+                    <option value="all">Semua (Putra & Putri)</option>
+                    <option value="male">Khusus Santri Putra</option>
+                    <option value="female">Khusus Santri Putri</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  @click="handleSaveMasterItem"
+                  :disabled="savingMasterItem || !masterItemForm.name.trim()"
+                  class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer shadow-xs"
+                >
+                  <Save :size="14" />
+                  <span>{{ isEditingMasterItem ? 'Perbarui Amalan' : 'Simpan Amalan ke Bank' }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- List Amalan Yayasan -->
+            <div class="space-y-2">
+              <h4 class="font-bold text-xs text-slate-700 dark:text-zinc-300">
+                Daftar Amalan Terdaftar ({{ foundationMasterItems.length }} Amalan)
+              </h4>
+
+              <div v-if="foundationMasterItems.length === 0" class="py-8 text-center text-slate-400 text-xs">
+                Belum ada master amalan. Buat baru di formulir atas.
+              </div>
+
+              <div v-else class="divide-y divide-slate-100 dark:divide-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden bg-white dark:bg-zinc-900">
+                <div
+                  v-for="(item, idx) in foundationMasterItems"
+                  :key="item.id"
+                  class="p-3.5 flex items-center justify-between hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition text-xs"
+                >
+                  <div class="flex items-center gap-3">
+                    <span class="w-6 h-6 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-bold text-[11px] flex items-center justify-center shrink-0">
+                      {{ item.order_index ?? (idx + 1) }}
+                    </span>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-900 dark:text-zinc-100">{{ item.name }}</span>
+                        <span
+                          :class="[
+                            'px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase',
+                            item.category === 'fardhu'
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-400'
+                              : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-400'
+                          ]"
+                        >
+                          {{ item.category }}
+                        </span>
+                        <span
+                          v-if="item.target_gender && item.target_gender !== 'all'"
+                          class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300"
+                        >
+                          {{ item.target_gender === 'female' ? 'Santriwati' : 'Santriwan' }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      @click="editMasterItem(item)"
+                      class="p-1.5 rounded-lg text-slate-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition cursor-pointer"
+                      title="Edit Amalan"
+                    >
+                      <Edit2 :size="14" />
+                    </button>
+                    <button
+                      type="button"
+                      @click="handleDeleteMasterItem(item)"
+                      class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                      title="Hapus Amalan"
+                    >
+                      <Trash2 :size="14" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: PENUGASAN KE UNIT SEKOLAH -->
+          <div v-show="activeMasterTab === 'assign'" class="space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800">
+              <div class="flex items-center gap-2">
+                <Building2 class="text-purple-600" :size="18" />
+                <span class="text-xs font-bold text-slate-800 dark:text-zinc-200">Pilih Unit Sekolah:</span>
+              </div>
+              <select
+                v-model="selectedAssignSchoolId"
+                class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-semibold outline-none focus:border-purple-600 text-slate-900 dark:text-zinc-100 min-w-[200px]"
+              >
+                <option v-for="sc in schools" :key="sc.id" :value="sc.id">{{ sc.name }}</option>
+              </select>
+            </div>
+
+            <!-- Table Assignment Checklist -->
+            <div class="border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden bg-white dark:bg-zinc-900">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-slate-200 dark:border-zinc-800 text-slate-400 font-semibold text-[10px] uppercase tracking-wider bg-slate-50/50 dark:bg-zinc-900/50">
+                    <th class="py-2.5 px-3">Nama Amalan</th>
+                    <th class="py-2.5 px-2 text-center">Kategori</th>
+                    <th class="py-2.5 px-3 text-center">Aktif di Sekolah</th>
+                    <th class="py-2.5 px-3 text-center">Wajib Diisi</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60">
+                  <template v-if="currentSchoolAssignments">
+                    <tr
+                      v-for="item in currentSchoolAssignments.assigned_items"
+                      :key="item.id"
+                      class="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition"
+                    >
+                      <td class="py-2.5 px-3">
+                        <p class="font-bold text-slate-900 dark:text-zinc-100">{{ item.name }}</p>
+                      </td>
+                      <td class="py-2.5 px-2 text-center">
+                        <span
+                          :class="[
+                            'px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase',
+                            item.category === 'fardhu'
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-400'
+                              : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-400'
+                          ]"
+                        >
+                          {{ item.category }}
+                        </span>
+                      </td>
+                      <td class="py-2.5 px-3 text-center">
+                        <input
+                          type="checkbox"
+                          v-model="item.is_assigned"
+                          class="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-slate-300 cursor-pointer"
+                        />
+                      </td>
+                      <td class="py-2.5 px-3 text-center">
+                        <input
+                          type="checkbox"
+                          v-model="item.is_mandatory"
+                          :disabled="!item.is_assigned"
+                          class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 cursor-pointer disabled:opacity-40"
+                        />
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                @click="handleSaveSchoolAssignments"
+                :disabled="savingAssignment || !selectedAssignSchoolId"
+                class="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer shadow-md"
+              >
+                <Save :size="14" />
+                <span>Simpan Penugasan Sekolah</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

@@ -87,18 +87,32 @@ watch(selectedChildId, () => {
 })
 
 const ibadahList = computed(() => {
-  if (!pesantrenData.value?.ibadah?.today_status) return []
-  const raw = pesantrenData.value.ibadah.today_status
-  return [
-    { key: 'sholat_subuh', label: 'Sholat Subuh', time: '04:30 WIB', type: 'Fardhu Berjamaah', done: !!raw.sholat_subuh, icon: Sun },
-    { key: 'sholat_dzuhur', label: 'Sholat Dzuhur', time: '12:00 WIB', type: 'Fardhu Berjamaah', done: !!raw.sholat_dzuhur, icon: Sun },
-    { key: 'sholat_ashar', label: 'Sholat Ashar', time: '15:15 WIB', type: 'Fardhu Berjamaah', done: !!raw.sholat_ashar, icon: Sun },
-    { key: 'sholat_maghrib', label: 'Sholat Maghrib', time: '18:05 WIB', type: 'Fardhu Berjamaah', done: !!raw.sholat_maghrib, icon: Moon },
-    { key: 'sholat_isya', label: 'Sholat Isya', time: '19:15 WIB', type: 'Fardhu Berjamaah', done: !!raw.sholat_isya, icon: Moon },
-    { key: 'sholat_tahajud', label: 'Qiyamul Lail / Tahajud', time: '03:15 WIB', type: 'Sunnah Muakkadah', done: !!raw.sholat_tahajud, icon: Moon },
-    { key: 'sholat_dhuha', label: 'Sholat Dhuha', time: '07:30 WIB', type: 'Sunnah Pondok', done: !!raw.sholat_dhuha, icon: Sun },
-    { key: 'tilawah_quran', label: 'Tilawah Qur\'an Mandiri', time: 'Ba\'da Maghrib', type: 'Mutaaba\'ah Santri', done: !!raw.tilawah_quran, icon: BookOpen }
-  ]
+  const ibadah = pesantrenData.value?.ibadah
+  if (!ibadah) return []
+  if (ibadah.items && Array.isArray(ibadah.items) && ibadah.items.length > 0) {
+    return ibadah.items.map((item: any) => ({
+      key: item.id,
+      label: item.name,
+      type: item.category === 'fardhu'
+        ? 'Fardhu Berjamaah'
+        : item.category === 'sunnah'
+        ? 'Sunnah Muakkadah'
+        : item.category === 'tahfidz'
+        ? 'Al-Qur\'an'
+        : 'Adab & Karakter',
+      done: !!item.done,
+      icon: item.category === 'fardhu' ? Sun : item.category === 'sunnah' ? Moon : BookOpen
+    }))
+  }
+
+  const raw = ibadah.today_status || {}
+  return Object.keys(raw).map(k => ({
+    key: k,
+    label: k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+    type: 'Amalan Santri',
+    done: !!raw[k],
+    icon: Sun
+  }))
 })
 </script>
 
@@ -453,7 +467,19 @@ const ibadahList = computed(() => {
             </div>
           </div>
 
-          <!-- Daily Ibadah Grid (8 Amalan) -->
+          <!-- Uzur Syar'i / Izin Notice if excused -->
+          <div
+            v-if="pesantrenData.ibadah?.is_excused"
+            class="mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex items-center gap-3 text-amber-800 dark:text-amber-300"
+          >
+            <AlertCircle :size="18" class="shrink-0 text-amber-600 dark:text-amber-400" />
+            <div class="text-xs">
+              <span class="font-bold">Status Khusus: </span>
+              Santriwati tercatat sedang dalam masa <strong>Uzur Syar'i (Haid / Sakit)</strong> pada hari ini, sehingga kewajiban sholat fardhu tidak dihitung sebagai pelanggaran kedisiplinan.
+            </div>
+          </div>
+
+          <!-- Daily Ibadah Grid -->
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             <div
               v-for="item in ibadahList"
