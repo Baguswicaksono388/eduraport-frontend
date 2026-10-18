@@ -73,22 +73,24 @@
       </div>
     </header>
 
-    <!-- Top Navigation Tabs -->
-    <nav class="bg-slate-900 border-b border-slate-800 flex px-4">
-      <button 
-        @click="currentTab = 'scan'"
-        class="px-5 py-2.5 font-bold text-xs sm:text-sm transition-colors border-b-2 flex items-center gap-2"
-        :class="currentTab === 'scan' ? 'text-violet-400 border-violet-400 bg-violet-500/5' : 'text-slate-400 border-transparent hover:text-slate-200'"
+    <!-- Top Navigation Bar -->
+    <nav class="bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 py-2">
+      <div class="flex items-center gap-2">
+        <span class="px-3 py-1 font-bold text-xs sm:text-sm text-violet-400 border-b-2 border-violet-400 bg-violet-500/10 rounded-t-lg flex items-center gap-2">
+          <span>📷 Kamera Scanner Gerbang</span>
+        </span>
+      </div>
+      <NuxtLink 
+        to="/attendance-analytics?tab=mood"
+        target="_blank"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-bold transition-all shadow-sm active:scale-95"
+        title="Buka Dasbor Analitik Mood & Care Alert di Portal"
       >
-        <span>📷 Kamera Gerbang</span>
-      </button>
-      <button 
-        @click="currentTab = 'analytics'"
-        class="px-5 py-2.5 font-bold text-xs sm:text-sm transition-colors border-b-2 flex items-center gap-2"
-        :class="currentTab === 'analytics' ? 'text-indigo-400 border-indigo-400 bg-indigo-500/5' : 'text-slate-400 border-transparent hover:text-slate-200'"
-      >
-        <span>🙂 Analitik Mood & Care Alerts</span>
-      </button>
+        <span>📊 Analitik Mood di Portal</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+        </svg>
+      </NuxtLink>
     </nav>
 
     <!-- Main Content Area -->
@@ -262,9 +264,6 @@
 
       </div>
 
-      <!-- ANALYTICS TAB -->
-      <MoodAnalytics v-else-if="currentTab === 'analytics'" class="absolute inset-0 z-10 bg-slate-50 text-slate-900" />
-
       <!-- UF-2: Manual Search Modal (Kartu Tertinggal) -->
       <div v-if="showManualSearch" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
         <div class="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-6 flex flex-col max-h-[85vh]">
@@ -383,7 +382,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import MoodAnalytics from '~/components/scanner/MoodAnalytics.vue'
 import { QrcodeStream } from 'vue-qrcode-reader'
 import { useNetwork } from '@vueuse/core'
 import { db } from '~/utils/db'

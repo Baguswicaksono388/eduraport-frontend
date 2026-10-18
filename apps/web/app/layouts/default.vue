@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange, Smartphone, Settings, Sparkles, Sun, Moon, Boxes, ShieldAlert, HeartHandshake, Scale, Activity, Crown, Library, MessageSquare, FileText, Wallet, BookMarked, Bell, ShieldCheck, CalendarCheck } from 'lucide-vue-next'
+import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange, Smartphone, Settings, Sparkles, Sun, Moon, Boxes, ShieldAlert, HeartHandshake, Scale, Activity, Crown, Library, MessageSquare, FileText, Wallet, BookMarked, Bell, ShieldCheck, CalendarCheck, Search } from 'lucide-vue-next'
 import { BaseModal, BaseButton, BaseInput } from '@eduraport/ui'
 import B2cSoloBadge from '../components/b2c/SoloBadge.vue'
 import B2cPaywallModal from '../components/b2c/PaywallModal.vue'
@@ -10,6 +10,8 @@ import { useSchool } from '../composables/useSchool'
 import { useAcademicYear } from '../composables/useAcademicYear'
 import { useRbac } from '../composables/useRbac'
 import { usePaywallStore } from '../stores/paywall'
+import { isEarlyChildhood } from '../composables/useSchoolLevel'
+import { useColorMode } from '@vueuse/core'
 
 const { user, isSoloTeacher, logout, fetchUser, changePassword } = useAuth()
 const { currentSchoolId, currentSchool, foundations } = useSchool()
@@ -17,7 +19,6 @@ const { subscription, fetchSubscription } = useB2CSubscription()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
 const { canAccess } = useRbac()
 const paywallStore = usePaywallStore()
-import { useColorMode } from '@vueuse/core'
 
 const colorMode = useColorMode()
 const toggleTheme = () => {
@@ -98,6 +99,25 @@ watch(currentSchoolId, async (newVal) => {
 })
 
 
+const isTKSchoolActive = computed(() => isEarlyChildhood(currentSchool.value?.level))
+const menuSearchQuery = ref('')
+
+const getBadgeClass = (badge?: string) => {
+  if (!badge) return ''
+  if (badge.includes('TK/PAUD')) return 'bg-amber-100/90 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border-amber-300/70 dark:border-amber-700/60'
+  if (badge.includes('AI')) return 'bg-violet-100/90 text-violet-700 dark:bg-violet-950/70 dark:text-violet-300 border-violet-300/70 dark:border-violet-700/60'
+  if (badge.includes('BK')) return 'bg-rose-100/90 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 border-rose-300/70 dark:border-rose-700/60'
+  if (badge.includes('Wali Kelas')) return 'bg-blue-100/90 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 border-blue-300/70 dark:border-blue-700/60'
+  if (badge.includes('Tahfidz') || badge.includes('Pesantren')) return 'bg-emerald-100/90 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border-emerald-300/70 dark:border-emerald-700/60'
+  if (badge.includes('Care Alert')) return 'bg-orange-100/90 text-orange-700 dark:bg-orange-950/70 dark:text-orange-300 border-orange-300/70 dark:border-orange-700/60'
+  if (badge.includes('Bendahara') || badge.includes('Keuangan')) return 'bg-teal-100/90 text-teal-700 dark:bg-teal-950/70 dark:text-teal-300 border-teal-300/70 dark:border-teal-700/60'
+  if (badge.includes('Mapel')) return 'bg-sky-100/90 text-sky-700 dark:bg-sky-950/70 dark:text-sky-300 border-sky-300/70 dark:border-sky-700/60'
+  if (badge.includes('Kurikulum')) return 'bg-indigo-100/90 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 border-indigo-300/70 dark:border-indigo-700/60'
+  if (badge.includes('Kesiswaan')) return 'bg-amber-100/90 text-amber-700 dark:bg-amber-950/70 dark:text-amber-300 border-amber-300/70 dark:border-amber-700/60'
+  if (badge.includes('TU')) return 'bg-cyan-100/90 text-cyan-700 dark:bg-cyan-950/70 dark:text-cyan-300 border-cyan-300/70 dark:border-cyan-700/60'
+  return 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 border-slate-200 dark:border-zinc-700'
+}
+
 const menuGroups = computed(() => {
   const groups: any[] = []
 
@@ -106,29 +126,29 @@ const menuGroups = computed(() => {
       {
         title: 'Portal Orang Tua',
         items: [
-          { to: '/', label: 'Beranda Portal', icon: LayoutDashboard, access: '/' },
-          { to: '/parent/attendance', label: 'Kehadiran Anak', icon: CalendarCheck, access: '/' },
-          { to: '/parent/grades', label: 'Nilai & Akademik', icon: Trophy, access: '/' },
-          { to: '/parent/schedule', label: 'Jadwal Pelajaran', icon: Clock, access: '/' },
-          { to: '/parent/pesantren', label: 'Tahfidz & Ibadah', icon: BookMarked, access: '/' }
+          { to: '/', label: 'Beranda Portal', icon: LayoutDashboard, access: '/', badge: 'Wali Murid', subtitle: 'Ringkasan info & kabar belajar anak' },
+          { to: '/parent/attendance', label: 'Kehadiran Anak', icon: CalendarCheck, access: '/', badge: 'Presensi', subtitle: 'Catatan hadir, izin & surat sakit' },
+          { to: '/parent/grades', label: 'Nilai & Akademik', icon: Trophy, access: '/', badge: 'Akademik', subtitle: 'Nilai ujian, formatif & capaian rapor' },
+          { to: '/parent/schedule', label: 'Jadwal Pelajaran', icon: Clock, access: '/', badge: 'Jadwal', subtitle: 'Agenda harian & jam kelas anak' },
+          { to: '/parent/pesantren', label: 'Tahfidz & Ibadah', icon: BookMarked, access: '/', badge: 'Tahfidz', subtitle: 'Ziyadah, murajaah & jurnal ibadah' }
         ]
       },
       {
         title: 'Administrasi & Keuangan',
         items: [
-          { to: '/parent/bills', label: 'Tagihan & SPP', icon: DollarSign, access: '/' },
-          { to: '/parent/wallet', label: 'Dompet Digital', icon: Wallet, access: '/' },
-          { to: '/parent/leave', label: 'Permohonan Izin / Sakit', icon: CalendarRange, access: '/' },
-          { to: '/parent/meetings', label: 'Konsultasi Guru (PTM)', icon: HeartHandshake, access: '/' }
+          { to: '/parent/bills', label: 'Tagihan & SPP', icon: DollarSign, access: '/', badge: 'Keuangan', subtitle: 'Riwayat bayar & kwitansi SPP' },
+          { to: '/parent/wallet', label: 'Dompet Digital', icon: Wallet, access: '/', badge: 'Keuangan', subtitle: 'Saldo uang saku & transaksi digital' },
+          { to: '/parent/leave', label: 'Permohonan Izin / Sakit', icon: CalendarRange, access: '/', badge: 'Dispensasi', subtitle: 'Ajukan surat izin atau sakit' },
+          { to: '/parent/meetings', label: 'Konsultasi Guru (PTM)', icon: HeartHandshake, access: '/', badge: 'Konsultasi', subtitle: 'Booking jadwal temu wali kelas/guru' }
         ]
       },
       {
         title: 'Komunikasi & Keamanan',
         items: [
-          { to: '/parent/announcements', label: 'Pengumuman Sekolah', icon: Bell, access: '/' },
-          { to: '/parent/messages', label: 'Pesan Guru', icon: MessageSquare, access: '/' },
-          { to: '/parent/notification-preferences', label: 'Pengaturan Notifikasi', icon: Settings, access: '/' },
-          { to: '/parent/security-log', label: 'Log Keamanan', icon: ShieldCheck, access: '/' }
+          { to: '/parent/announcements', label: 'Pengumuman Sekolah', icon: Bell, access: '/', badge: 'Edaran', subtitle: 'Informasi resmi & agenda sekolah' },
+          { to: '/parent/messages', label: 'Pesan Guru', icon: MessageSquare, access: '/', badge: 'Chat', subtitle: 'Komunikasi pesan langsung guru' },
+          { to: '/parent/notification-preferences', label: 'Pengaturan Notifikasi', icon: Settings, access: '/', badge: 'Setting', subtitle: 'Kanal WA & pemberitahuan akun' },
+          { to: '/parent/security-log', label: 'Log Keamanan', icon: ShieldCheck, access: '/', badge: 'Keamanan', subtitle: 'Aktivitas masuk & audit login akun' }
         ]
       }
     ]
@@ -140,7 +160,7 @@ const menuGroups = computed(() => {
     groups.push({
       title: 'Yayasan / Workspace',
       items: [
-        { to: `/foundation/${foundationId}/workspace`, label: 'Foundation Workspace', icon: Landmark, access: '/' }
+        { to: `/foundation/${foundationId}/workspace`, label: 'Foundation Workspace', icon: Landmark, access: '/', badge: 'Yayasan', subtitle: 'Multi-sekolah & konsolidasi data' }
       ]
     })
   }
@@ -148,86 +168,112 @@ const menuGroups = computed(() => {
   groups.push(
     {
       title: 'Utama / Dashboard',
-    items: [
-      { to: '/', label: user.value?.role === 'parent' ? 'Portal Orang Tua' : 'Dashboard', icon: LayoutDashboard, access: '/' },
-      ...(isSoloTeacher.value ? [] : [
-        { to: '/dashboard', label: 'Dashboard Eksekutif', icon: BarChart3, access: '/dashboard' }
-      ]),
-      ...(isSoloTeacher.value ? [{ to: '/b2c/subscription', label: 'Kelola Paket & Layanan', icon: Crown, access: '/', customClass: 'text-violet-500 hover:text-violet-400 hover:bg-violet-900/30 font-semibold' }] : []),
-      ...(isSoloTeacher.value ? [] : [
-        { to: '/scanner', label: 'QR Scanner PWA', icon: Smartphone, access: '/dashboard', external: true, customClass: 'text-amber-400 hover:text-amber-300 hover:bg-amber-900/30' }
-      ])
-    ]
-  },
-  {
-    title: 'Master Data',
-    items: [
-      { to: '/school', label: 'Unit Sekolah', icon: School, access: '/school' },
-      { to: '/master-akademik', label: 'Master Akademik', icon: Library, access: '/academic-year' }
-    ]
-  },
-  {
-    title: 'Kesiswaan & Absensi',
-    items: [
-      { to: '/student', label: 'Data Siswa', icon: Users, access: '/student' },
-      { to: '/parent', label: 'Data Orang Tua', icon: Users, access: '/student' },
-      { to: '/announcement', label: 'Pengumuman Sekolah', icon: Bell, access: '/student' },
-      { to: '/student/attendance', label: 'Absensi Siswa', icon: ClipboardCheck, access: '/student' },
-      { to: '/attendance-analytics', label: 'Analitik & Audit Absensi', icon: BarChart3, access: '/student' },
-      { to: '/homeroom?tab=leave_requests', label: 'Izin Siswa (Wali Murid)', icon: CalendarRange, access: '/homeroom' },
-      { to: '/attendance-settings', label: 'Pengaturan Absensi', icon: Settings, access: '/attendance-settings' },
-      ...(isSoloTeacher.value ? [] : [{ to: '/ppdb', label: 'PPDB Online', icon: UserPlus, access: '/ppdb' }])
-    ]
-  },
-  {
-    title: 'Kepegawaian',
-    items: [
-      { to: '/teacher', label: 'Guru & Staf', icon: UserCheck, access: '/teacher' },
-      { to: '/teacher/attendance', label: 'Absensi Guru & Staf', icon: ClipboardCheck, access: '/teacher' },
-      { to: '/schedule', label: 'Jadwal Pelajaran', icon: Clock, access: '/schedule' },
-      { to: '/leave', label: 'Cuti & Izin Guru', icon: CalendarRange, access: '/leave' }
-    ]
-  },
-  {
-    title: 'BK & Kedisiplinan',
-    items: [
-      { to: '/bk', label: 'Dashboard BK', icon: Activity, access: '/bk' },
-      { to: '/bk/counselors', label: 'Data Guru BK', icon: Users, access: '/bk' },
-      { to: '/bk/sessions', label: 'Sesi Konseling', icon: HeartHandshake, access: '/bk' },
-      { to: '/discipline', label: 'Rekap Poin Siswa', icon: ShieldAlert, access: '/discipline' },
-      { to: '/discipline/rules', label: 'Aturan Poin', icon: Scale, access: '/discipline' }
-    ]
-  },
-  {
-    title: 'Akademik & Penilaian',
-    items: [
-      { to: '/ai-asisten', label: 'AI Asisten Guru', icon: Sparkles, access: '/gradebook', customClass: 'text-violet-400 hover:text-violet-300 hover:bg-violet-900/30' },
-      { to: '/gradebook/scheme', label: 'Skema Penilaian', icon: FileSpreadsheet, access: '/gradebook' },
-      { to: '/gradebook/input', label: 'Input Nilai', icon: ClipboardCheck, access: '/gradebook' },
-      { to: '/gradebook/analytics', label: 'Analitik & Rekap', icon: BarChart3, access: '/gradebook' },
-      { to: '/homeroom', label: 'Rapor Wali Kelas', icon: ClipboardCheck, access: '/homeroom' },
-      { to: '/teacher/pesantren', label: 'Tahfidz & Pesantren', icon: BookMarked, access: '/teacher' },
-      { to: '/report/template', label: 'Template Rapor', icon: LayoutTemplate, access: '/report' },
-      { to: '/report', label: 'Cetak Rapor', icon: ClipboardCheck, access: '/report' }
-    ]
-  },
-  {
-    title: 'Layanan Ekstra',
-    items: [
-      { to: '/financial', label: 'Keuangan & SPP', icon: DollarSign, access: '/financial' },
-      { to: '/financial/assets', label: 'Inventaris Aset', icon: Boxes, access: '/financial' },
-      { to: '/wa/devices', label: 'WA Gateway', icon: Smartphone, access: '/wa' }
-    ]
-  })
+      items: [
+        { to: '/', label: user.value?.role === 'parent' ? 'Portal Orang Tua' : 'Dashboard', icon: LayoutDashboard, access: '/', badge: 'Umum', subtitle: 'Ringkasan operasional & statistik' },
+        ...(isSoloTeacher.value ? [] : [
+          { to: '/dashboard', label: 'Dashboard Eksekutif', icon: BarChart3, access: '/dashboard', badge: 'Pimpinan', subtitle: 'KPI sekolah, tren nilai & analitik' }
+        ]),
+        ...(isSoloTeacher.value ? [{ to: '/b2c/subscription', label: 'Kelola Paket & Layanan', icon: Crown, access: '/', customClass: 'text-violet-500 hover:text-violet-400 hover:bg-violet-900/30 font-semibold', badge: 'B2C', subtitle: 'Status lisensi guru solo' }] : []),
+        ...(isSoloTeacher.value ? [] : [
+          { to: '/scanner', label: 'QR Scanner PWA', icon: Smartphone, access: '/dashboard', external: true, customClass: 'text-amber-400 hover:text-amber-300 hover:bg-amber-900/30', badge: 'Petugas', subtitle: 'Pemindai presensi QR & wajah' }
+        ])
+      ]
+    },
+    {
+      title: 'Master Data',
+      items: [
+        { to: '/school', label: 'Unit Sekolah', icon: School, access: '/school', badge: 'Admin', subtitle: 'Identitas, profil & akreditasi' },
+        { to: '/master-akademik', label: 'Master Akademik', icon: Library, access: '/academic-year', badge: 'Kurikulum', subtitle: 'Tahun ajaran, kelas & mapel' }
+      ]
+    },
+    {
+      title: 'Kesiswaan & Absensi',
+      items: [
+        { to: '/student', label: 'Data Siswa', icon: Users, access: '/student', badge: 'Kesiswaan', subtitle: 'Buku induk, NISN & biodata siswa' },
+        { to: '/parent', label: 'Data Orang Tua', icon: Users, access: '/student', badge: 'Kesiswaan', subtitle: 'Daftar wali & nomor kontak WhatsApp' },
+        { to: '/announcement', label: 'Pengumuman Sekolah', icon: Bell, access: '/student', badge: 'Humas', subtitle: 'Broadcast info resmi ke wali murid' },
+        { to: '/student/attendance', label: 'Absensi Siswa', icon: ClipboardCheck, access: '/student', badge: 'Wali Kelas', subtitle: 'Presensi harian per rombel' },
+        { to: '/attendance-analytics', label: 'Analitik & Audit Absensi', icon: BarChart3, access: '/student', badge: 'Care Alert', subtitle: 'Audit tanggal bolong & mood emosi' },
+        { to: '/homeroom?tab=leave_requests', label: 'Izin Siswa (Wali Murid)', icon: CalendarRange, access: '/homeroom', badge: 'Wali Kelas', subtitle: 'Validasi surat izin & sakit siswa' },
+        { to: '/attendance-settings', label: 'Pengaturan Absensi', icon: Settings, access: '/attendance-settings', badge: 'Admin', subtitle: 'Radius GPS, jam masuk & dispensasi' },
+        ...(isSoloTeacher.value ? [] : [{ to: '/ppdb', label: 'PPDB Online', icon: UserPlus, access: '/ppdb', badge: 'Panitia', subtitle: 'Pendaftaran peserta didik baru' }])
+      ]
+    },
+    {
+      title: 'Kepegawaian',
+      items: [
+        { to: '/teacher', label: 'Guru & Staf', icon: UserCheck, access: '/teacher', badge: 'TU', subtitle: 'Direktori PTK & status penugasan' },
+        { to: '/teacher/attendance', label: 'Absensi Guru & Staf', icon: ClipboardCheck, access: '/teacher', badge: 'TU', subtitle: 'Rekap kehadiran & jam finger guru' },
+        { to: '/schedule', label: 'Jadwal Pelajaran', icon: Clock, access: '/schedule', badge: 'Kurikulum', subtitle: 'Plotting jam mengajar guru & ruang' },
+        { to: '/leave', label: 'Cuti & Izin Guru', icon: CalendarRange, access: '/leave', badge: 'TU', subtitle: 'Pengajuan & persetujuan cuti PTK' }
+      ]
+    },
+    {
+      title: 'BK & Kedisiplinan',
+      items: [
+        { to: '/bk', label: 'Dashboard BK', icon: Activity, access: '/bk', badge: 'Guru BK', subtitle: 'Statistik bimbingan, aduan & tren' },
+        { to: '/bk/counselors', label: 'Data Guru BK', icon: Users, access: '/bk', badge: 'Guru BK', subtitle: 'Daftar konselor & pembagian siswa' },
+        { to: '/bk/sessions', label: 'Sesi Konseling', icon: HeartHandshake, access: '/bk', badge: 'Guru BK', subtitle: 'Jadwal & rekam bimbingan privat' },
+        { to: '/discipline', label: 'Rekap Poin Siswa', icon: ShieldAlert, access: '/discipline', badge: 'Kesiswaan', subtitle: 'Buku pelanggaran, reward & sanksi' },
+        { to: '/discipline/rules', label: 'Aturan Poin', icon: Scale, access: '/discipline', badge: 'Kesiswaan', subtitle: 'Katalog tata tertib & bobot poin' }
+      ]
+    },
+    {
+      title: 'Akademik & Penilaian',
+      items: [
+        { to: '/ai-asisten', label: 'AI Asisten Guru', icon: Sparkles, access: '/gradebook', customClass: 'text-violet-400 hover:text-violet-300 hover:bg-violet-900/30', badge: 'AI', subtitle: 'Generator RPP, modul ajar, ATP & soal' },
+        { to: '/gradebook/scheme', label: 'Skema Penilaian', icon: FileSpreadsheet, access: '/gradebook', badge: 'Kurikulum', subtitle: 'Bobot formatif, sumatif & KKM' },
+        { 
+          to: '/gradebook/input', 
+          label: isTKSchoolActive.value ? 'Penilaian TK & Anekdot' : 'Input Nilai Mapel', 
+          icon: ClipboardCheck, 
+          access: '/gradebook', 
+          badge: isTKSchoolActive.value ? '🧸 TK/PAUD' : 'Mapel', 
+          subtitle: isTKSchoolActive.value ? 'Capaian rapor & jurnal anekdot harian' : 'Nilai formatif, sumatif & PTS/PAS' 
+        },
+        { to: '/gradebook/analytics', label: 'Analitik & Rekap', icon: BarChart3, access: '/gradebook', badge: 'Kurikulum', subtitle: 'Distribusi nilai, ketuntasan & grafik' },
+        { to: '/homeroom', label: 'Rapor Wali Kelas', icon: ClipboardCheck, access: '/homeroom', badge: 'Wali Kelas', subtitle: 'Absensi, ekskul, catatan wali & rangking' },
+        { to: '/teacher/pesantren', label: 'Tahfidz & Pesantren', icon: BookMarked, access: '/teacher', badge: 'Tahfidz', subtitle: 'Mutabaah ibadah & setoran hafalan' },
+        { to: '/report/template', label: 'Template Rapor', icon: LayoutTemplate, access: '/report', badge: 'Kurikulum', subtitle: 'Kustomisasi layout halaman rapor' },
+        { to: '/report', label: 'Cetak Rapor', icon: ClipboardCheck, access: '/report', badge: 'Wali Kelas', subtitle: 'Generate PDF e-raport resmi siswa' }
+      ]
+    },
+    {
+      title: 'Layanan Ekstra',
+      items: [
+        { to: '/financial', label: 'Keuangan & SPP', icon: DollarSign, access: '/financial', badge: 'Bendahara', subtitle: 'Pos kas, tagihan SPP & tunggakan' },
+        { to: '/financial/assets', label: 'Inventaris Aset', icon: Boxes, access: '/financial', badge: 'Sarpras', subtitle: 'Katalog sarana & inventaris sekolah' },
+        { to: '/wa/devices', label: 'WA Gateway', icon: Smartphone, access: '/wa', badge: 'IT / Admin', subtitle: 'Koneksi perangkat WhatsApp broadcast' }
+      ]
+    }
+  )
 
   return groups
 })
 
 const filteredMenuGroups = computed(() => {
-  return menuGroups.value.map(group => ({
-    ...group,
-    items: group.items.filter(item => canAccess(item.access))
-  })).filter(group => group.items.length > 0)
+  const query = menuSearchQuery.value.trim().toLowerCase()
+
+  return menuGroups.value.map(group => {
+    const accessibleItems = group.items.filter((item: any) => canAccess(item.access))
+    if (!query) {
+      return {
+        ...group,
+        items: accessibleItems
+      }
+    }
+    const matchedItems = accessibleItems.filter((item: any) => {
+      const labelMatch = item.label?.toLowerCase().includes(query)
+      const subtitleMatch = item.subtitle?.toLowerCase().includes(query)
+      const badgeMatch = item.badge?.toLowerCase().includes(query)
+      const groupTitleMatch = group.title?.toLowerCase().includes(query)
+      return labelMatch || subtitleMatch || badgeMatch || groupTitleMatch
+    })
+    return {
+      ...group,
+      items: matchedItems
+    }
+  }).filter(group => group.items.length > 0)
 })
 
 </script>
@@ -244,32 +290,63 @@ const filteredMenuGroups = computed(() => {
       ></div>
 
       <!-- Drawer Content -->
-      <aside class="relative flex flex-col w-72 max-w-[85vw] h-full bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 p-6 shadow-2xl z-50 border-r border-slate-200 dark:border-slate-800 transition-transform duration-300">
+      <aside class="relative flex flex-col w-72 max-w-[85vw] h-full bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 p-5 shadow-2xl z-50 border-r border-slate-200 dark:border-slate-800 transition-transform duration-300">
         <!-- Close Button -->
         <button 
           @click="isMobileMenuOpen = false" 
-          class="absolute top-5 right-5 p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
+          class="absolute top-4 right-4 p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
         >
           <X :size="18" />
         </button>
 
         <!-- Logo / School Branding -->
-        <div class="flex items-center gap-3 mb-10 px-2">
-          <div class="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-violet-600/20">
+        <div class="flex items-center gap-3 mb-5 px-1">
+          <div class="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-violet-600/20 shrink-0">
             <GraduationCap class="text-white" :size="20" />
           </div>
-          <div>
-            <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-tight">EduRaport</h1>
-            <span v-if="!isSoloTeacher" class="text-[9px] uppercase tracking-wider text-amber-500 font-bold">Portal E-Raport</span>
-            <B2cSoloBadge v-if="isSoloTeacher" class="mt-1" />
+          <div class="min-w-0">
+            <h1 class="text-base font-bold tracking-tight text-slate-900 dark:text-white leading-tight truncate">EduRaport</h1>
+            <span v-if="!isSoloTeacher" class="text-[9px] uppercase tracking-wider text-amber-500 font-bold block">Portal E-Raport</span>
+            <B2cSoloBadge v-if="isSoloTeacher" class="mt-0.5" />
+          </div>
+        </div>
+
+        <!-- Quick Menu Search -->
+        <div class="mb-3 px-1">
+          <div class="relative">
+            <Search :size="13" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
+            <input 
+              v-model="menuSearchQuery"
+              type="text"
+              placeholder="Cari menu & fitur..."
+              class="w-full pl-8 pr-7 py-1.5 text-xs rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500 transition-all"
+            />
+            <button 
+              v-if="menuSearchQuery"
+              @click="menuSearchQuery = ''"
+              type="button"
+              class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded"
+            >
+              <X :size="12" />
+            </button>
           </div>
         </div>
 
         <!-- Navigation Links -->
         <nav class="flex-1 overflow-y-auto pr-1 pb-4">
-          <div v-for="(group, gIdx) in filteredMenuGroups" :key="gIdx" class="mb-4 mt-2">
-            <div class="px-5 mb-2">
-              <h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest">{{ group.title }}</h3>
+          <div v-if="filteredMenuGroups.length === 0" class="text-center py-8 px-3">
+            <p class="text-xs text-slate-400 dark:text-slate-500">Tidak ada menu untuk "{{ menuSearchQuery }}"</p>
+            <button 
+              @click="menuSearchQuery = ''"
+              class="mt-2 text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline"
+            >
+              Reset Pencarian
+            </button>
+          </div>
+
+          <div v-for="(group, gIdx) in filteredMenuGroups" :key="gIdx" class="mb-3.5">
+            <div class="px-2.5 mb-1.5">
+              <h3 class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{{ group.title }}</h3>
             </div>
             <div class="space-y-1">
               <template v-for="(item, iIdx) in group.items" :key="item.to">
@@ -277,12 +354,32 @@ const filteredMenuGroups = computed(() => {
                   :to="item.to"
                   :target="item.external ? '_blank' : undefined"
                   @click="isMobileMenuOpen = false"
-                  class="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200"
-                  :class="item.customClass || 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60'"
-                  active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
+                  class="group relative flex flex-col gap-0.5 px-3 py-2 rounded-xl transition-all duration-200"
+                  :class="item.customClass || 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/90 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60'"
+                  active-class="!bg-violet-600 !text-white shadow-md shadow-violet-600/20"
                 >
-                  <component :is="item.icon" :size="16" /> 
-                  <span>{{ item.label }}</span>
+                  <div class="flex items-center justify-between w-full gap-1.5">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <component :is="item.icon" :size="16" class="shrink-0 transition-transform group-hover:scale-110" /> 
+                      <span class="text-xs font-semibold tracking-wide truncate">{{ item.label }}</span>
+                    </div>
+                    <span 
+                      v-if="item.badge" 
+                      class="text-[9px] font-bold px-1.5 py-0.5 rounded border shrink-0 transition-colors uppercase tracking-wider leading-none"
+                      :class="[
+                        getBadgeClass(item.badge),
+                        'group-[.router-link-active]:!bg-white/20 group-[.router-link-active]:!text-white group-[.router-link-active]:!border-white/30'
+                      ]"
+                    >
+                      {{ item.badge }}
+                    </span>
+                  </div>
+                  <p 
+                    v-if="item.subtitle" 
+                    class="text-[10px] pl-[26px] truncate leading-tight transition-colors text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 group-[.router-link-active]:!text-violet-100"
+                  >
+                    {{ item.subtitle }}
+                  </p>
                 </NuxtLink>
               </template>
             </div>
@@ -319,36 +416,88 @@ const filteredMenuGroups = computed(() => {
     </div>
 
     <!-- Sidebar for Desktop -->
-    <aside class="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 flex-col p-6 z-50 border-r border-slate-200 dark:border-slate-800">
+    <aside class="hidden lg:flex fixed left-0 top-0 bottom-0 w-72 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 flex-col p-5 z-50 border-r border-slate-200 dark:border-slate-800">
       <!-- Logo / School Branding -->
-      <div class="flex items-center gap-3 mb-10 px-2">
-        <div class="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-violet-600/20">
+      <div class="flex items-center gap-3 mb-5 px-1">
+        <div class="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-violet-600/20 shrink-0">
           <GraduationCap class="text-white" :size="20" />
         </div>
-        <div>
-          <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-tight">EduRaport</h1>
-          <span v-if="!isSoloTeacher" class="text-[9px] uppercase tracking-wider text-amber-500 font-bold">Portal E-Raport</span>
-          <B2cSoloBadge v-if="isSoloTeacher" class="mt-1" />
+        <div class="min-w-0">
+          <h1 class="text-base font-bold tracking-tight text-slate-900 dark:text-white leading-tight truncate">EduRaport</h1>
+          <span v-if="!isSoloTeacher" class="text-[9px] uppercase tracking-wider text-amber-500 font-bold block">Portal E-Raport</span>
+          <B2cSoloBadge v-if="isSoloTeacher" class="mt-0.5" />
+        </div>
+      </div>
+
+      <!-- Quick Menu Search -->
+      <div class="mb-3 px-1">
+        <div class="relative">
+          <Search :size="13" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
+          <input 
+            v-model="menuSearchQuery"
+            type="text"
+            placeholder="Cari menu & fitur..."
+            class="w-full pl-8 pr-7 py-1.5 text-xs rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500 transition-all"
+          />
+          <button 
+            v-if="menuSearchQuery"
+            @click="menuSearchQuery = ''"
+            type="button"
+            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded"
+            title="Hapus pencarian"
+          >
+            <X :size="12" />
+          </button>
         </div>
       </div>
 
       <!-- Navigation Links -->
       <nav class="flex-1 overflow-y-auto pr-1 pb-4">
-        <div v-for="(group, gIdx) in filteredMenuGroups" :key="gIdx" class="mb-4 mt-2">
-          <div class="px-5 mb-2">
-            <h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest">{{ group.title }}</h3>
+        <div v-if="filteredMenuGroups.length === 0" class="text-center py-8 px-3">
+          <p class="text-xs text-slate-400 dark:text-slate-500">Tidak ada menu untuk "{{ menuSearchQuery }}"</p>
+          <button 
+            @click="menuSearchQuery = ''"
+            class="mt-2 text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline"
+          >
+            Reset Pencarian
+          </button>
+        </div>
+
+        <div v-for="(group, gIdx) in filteredMenuGroups" :key="gIdx" class="mb-3.5">
+          <div class="px-2.5 mb-1.5">
+            <h3 class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{{ group.title }}</h3>
           </div>
           <div class="space-y-1">
             <template v-for="(item, iIdx) in group.items" :key="item.to">
               <NuxtLink 
                 :to="item.to"
                 :target="item.external ? '_blank' : undefined"
-                class="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200"
-                :class="item.customClass || 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60'"
-                active-class="!bg-violet-600 !text-white shadow-lg shadow-violet-600/15"
+                class="group relative flex flex-col gap-0.5 px-3 py-2 rounded-xl transition-all duration-200"
+                :class="item.customClass || 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/90 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60'"
+                active-class="!bg-violet-600 !text-white shadow-md shadow-violet-600/20"
               >
-                <component :is="item.icon" :size="16" /> 
-                <span>{{ item.label }}</span>
+                <div class="flex items-center justify-between w-full gap-1.5">
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <component :is="item.icon" :size="16" class="shrink-0 transition-transform group-hover:scale-110" /> 
+                    <span class="text-xs font-semibold tracking-wide truncate">{{ item.label }}</span>
+                  </div>
+                  <span 
+                    v-if="item.badge" 
+                    class="text-[9px] font-bold px-1.5 py-0.5 rounded border shrink-0 transition-colors uppercase tracking-wider leading-none"
+                    :class="[
+                      getBadgeClass(item.badge),
+                      'group-[.router-link-active]:!bg-white/20 group-[.router-link-active]:!text-white group-[.router-link-active]:!border-white/30'
+                    ]"
+                  >
+                    {{ item.badge }}
+                  </span>
+                </div>
+                <p 
+                  v-if="item.subtitle" 
+                  class="text-[10px] pl-[26px] truncate leading-tight transition-colors text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 group-[.router-link-active]:!text-violet-100"
+                >
+                  {{ item.subtitle }}
+                </p>
               </NuxtLink>
             </template>
           </div>
@@ -384,7 +533,7 @@ const filteredMenuGroups = computed(() => {
     </aside>
 
     <!-- Main Workspace -->
-    <div class="flex-1 lg:pl-64 flex flex-col min-w-0">
+    <div class="flex-1 lg:pl-72 flex flex-col min-w-0">
       
       <!-- Top header bar for desktop/mobile (thin bottom border, glassmorphism) -->
       <header class="sticky top-0 z-40 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border-b border-slate-200/50 dark:border-zinc-900/80 px-6 py-4 flex items-center justify-between">

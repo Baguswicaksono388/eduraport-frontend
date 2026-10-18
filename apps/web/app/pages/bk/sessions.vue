@@ -45,8 +45,11 @@ const sessionForm = reactive({
   issue_category: '',
   action_plan: '',
   follow_up_date: '',
-  confidential_notes: ''
+  confidential_notes: '',
+  care_alert_id: ''
 })
+
+const route = useRoute()
 
 watch(selectedFoundationId, onFoundationChange)
 
@@ -63,6 +66,17 @@ onMounted(async () => {
     }
     if (selectedAcademicYearId.value) {
       await fetchClasses(selectedSchoolId.value, selectedAcademicYearId.value)
+    }
+
+    // Auto-open modal or select student if query param exists
+    if (route.query.student_id) {
+      selectedStudentId.value = String(route.query.student_id)
+    }
+    if (route.query.open_create === 'true') {
+      sessionForm.care_alert_id = String(route.query.care_alert_id || '')
+      sessionForm.issue_category = String(route.query.issue || 'Perilaku & Emosional (Care Alert)')
+      sessionForm.session_date = new Date().toISOString().split('T')[0]
+      showCreateModal.value = true
     }
   } else {
     academicYears.value = []
@@ -139,7 +153,8 @@ const handleCreateSession = async () => {
         issue_category: '',
         action_plan: '',
         follow_up_date: '',
-        confidential_notes: ''
+        confidential_notes: '',
+        care_alert_id: ''
       })
       await fetchSessions(selectedSchoolId.value, selectedStudentId.value, selectedAcademicYearId.value)
     }
@@ -155,7 +170,8 @@ const openEditModal = (session: any) => {
     issue_category: session.issue_category || '',
     action_plan: session.action_plan || '',
     follow_up_date: session.follow_up_date ? session.follow_up_date.split('T')[0] : '',
-    confidential_notes: session.confidential_notes || ''
+    confidential_notes: session.confidential_notes || '',
+    care_alert_id: session.care_alert_id || ''
   })
   showEditModal.value = true
 }
@@ -294,9 +310,14 @@ const getStatusBadge = (status: string) => {
               Konselor: {{ session.counselor_name || '-' }}
             </p>
           </div>
-          <span :class="['px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider', getStatusBadge(session.status).class]">
-            {{ getStatusBadge(session.status).label }}
-          </span>
+          <div class="flex items-center gap-1.5 flex-wrap justify-end">
+            <span v-if="session.care_alert_id" class="px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+              🚨 Care Alert
+            </span>
+            <span :class="['px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider', getStatusBadge(session.status).class]">
+              {{ getStatusBadge(session.status).label }}
+            </span>
+          </div>
         </div>
         
         <div class="space-y-3 mt-4 border-t border-slate-100 dark:border-zinc-800 pt-4">
@@ -329,6 +350,11 @@ const getStatusBadge = (status: string) => {
 
     <!-- Modals -->
     <BaseModal :show="showCreateModal" title="Catat Sesi Konseling" size="lg" @close="showCreateModal = false">
+      <div v-if="sessionForm.care_alert_id" class="mb-4 p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl text-xs flex items-center gap-2 text-rose-700 dark:text-rose-300 font-medium">
+        <span class="text-base">🚨</span>
+        <span>Sesi konseling ini terhubung langsung dengan <strong>Peringatan Kepedulian Siswa (Care Alert)</strong>. Menyimpan sesi ini akan otomatis memperbarui status alert menjadi <em>Followed Up</em>.</span>
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="space-y-1.5">
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">Tanggal Sesi</label>

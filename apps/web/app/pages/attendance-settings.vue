@@ -20,7 +20,8 @@ import {
   Tag,
   GraduationCap,
   Users,
-  Search
+  Search,
+  ShieldAlert
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseInput, BaseModal, BaseDateInput } from '@eduraport/ui'
 import { useApi } from '../composables/useApi'
@@ -53,7 +54,7 @@ const availableLevels = computed(() => {
   return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
 })
 
-const activeTab = ref<'time_rules' | 'notifications' | 'holidays'>('time_rules')
+const activeTab = ref<'time_rules' | 'notifications' | 'holidays' | 'discipline'>('time_rules')
 
 const isLoading = ref(true)
 const isSaving = ref(false)
@@ -79,6 +80,13 @@ const notificationForm = reactive({
   notify_checkin_parents: true,
   notify_absent_parents: true
 })
+
+// 3. Discipline Integration Settings Form
+const disciplineForm = reactive({
+  sync_late_to_discipline: false,
+  late_rule_id: null as string | null
+})
+const pointRules = ref<any[]>([])
 
 // 3. Holidays & Overrides Data
 const selectedYear = ref(new Date().getFullYear())
@@ -262,6 +270,7 @@ const loadAllSettings = async (schoolId: string) => {
     await Promise.all([
       fetchTimeRules(schoolId),
       fetchAttendanceSettings(schoolId),
+      fetchPointRules(schoolId),
       fetchHolidays(schoolId, selectedYear.value),
       fetchClasses(schoolId)
     ])
@@ -305,9 +314,22 @@ const fetchAttendanceSettings = async (schoolId: string) => {
     if (res && res.data) {
       notificationForm.notify_checkin_parents = res.data.notify_checkin_parents !== false
       notificationForm.notify_absent_parents = res.data.notify_absent_parents !== false
+      disciplineForm.sync_late_to_discipline = res.data.sync_late_to_discipline === true
+      disciplineForm.late_rule_id = res.data.late_rule_id || null
     }
   } catch (error) {
     console.error('Failed to fetch attendance settings:', error)
+  }
+}
+
+const fetchPointRules = async (schoolId: string) => {
+  try {
+    const res: any = await fetcher(`/school/${schoolId}/discipline/rules`)
+    if (res && res.data) {
+      pointRules.value = (res.data || []).filter((r: any) => r.is_active && r.category === 'violation')
+    }
+  } catch (err) {
+    console.error('Failed to fetch point rules:', err)
   }
 }
 
@@ -388,6 +410,26 @@ const saveNotificationSettings = async () => {
   } catch (error) {
     console.error('Failed to save notification settings:', error)
     notify('Gagal menyimpan setelan notifikasi', 'error')
+  } finally {
+    isSaving.value = false
+  }
+}
+
+const saveDisciplineSettings = async () => {
+  if (!selectedSchoolId.value) return
+  isSaving.value = true
+  try {
+    await fetcher(`/school/${selectedSchoolId.value}/attendance/attendance-settings`, {
+      method: 'PUT',
+      body: {
+        sync_late_to_discipline: disciplineForm.sync_late_to_discipline,
+        late_rule_id: disciplineForm.late_rule_id || null
+      }
+    })
+    notify('Pengaturan integrasi kedisiplinan berhasil disimpan', 'success')
+  } catch (error) {
+    console.error('Failed to save discipline settings:', error)
+    notify('Gagal menyimpan pengaturan kedisiplinan', 'error')
   } finally {
     isSaving.value = false
   }
@@ -678,6 +720,19 @@ const deleteCustomHoliday = async (item: any) => {
         >
           <Calendar :size="16" />
           Libur Nasional & Override Pesantren
+        </button>
+
+        <button
+          @click="activeTab = 'discipline'"
+          :class="[
+            'px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all flex items-center gap-2 border-b-2 -mb-px whitespace-nowrap',
+            activeTab === 'discipline'
+              ? 'border-violet-500 text-violet-400 bg-violet-500/10'
+              : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+          ]"
+        >
+          <ShieldAlert :size="16" />
+          Integrasi Kedisiplinan & Poin
         </button>
       </div>
 
@@ -1432,6 +1487,96 @@ const deleteCustomHoliday = async (item: any) => {
             </div>
           </template>
         </BaseModal>
+      </div>
+
+      <!-- TAB 4: Integrasi Kedisiplinan & Poin Tata Tertib -->
+      <div v-else-if="activeTab === 'discipline'" class="space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2">
+            <BaseCard class="p-6 space-y-6 bg-slate-900/50 border border-slate-800">
+              <div>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                  <ShieldAlert class="text-rose-400" :size="20" />
+                  Otomatisasi Poin Pelanggaran Keterlambatan
+                </h3>
+                <p class="text-xs text-slate-400 mt-1">
+                  Hubungkan hasil pemindaian presensi di gerbang sekolah langsung ke Buku Besar Kedisiplinan Siswa.
+                </p>
+              </div>
+
+              <div class="space-y-4">
+                <!-- Switch 1: Auto Deduct Points -->
+                <div class="flex items-start justify-between p-4 rounded-xl border border-slate-800 bg-slate-900/60">
+                  <div class="pr-4">
+                    <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                      Potong Poin Otomatis Saat Siswa Terlambat
+                    </h4>
+                    <p class="text-xs text-slate-400 mt-1">
+                      Saat santri/siswa discan di gerbang dan melewati batas toleransi jam masuk (Status: Terlambat), sistem otomatis mencatat insiden pelanggaran di Modul Kedisiplinan.
+                    </p>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                    <input type="checkbox" v-model="disciplineForm.sync_late_to_discipline" class="sr-only peer" />
+                    <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
+                  </label>
+                </div>
+
+                <!-- Rule Selection -->
+                <div v-if="disciplineForm.sync_late_to_discipline" class="p-4 rounded-xl border border-rose-900/40 bg-rose-950/20 space-y-3">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-200 mb-1.5">
+                      Pilih Aturan Poin Keterlambatan:
+                    </label>
+                    <select 
+                      v-model="disciplineForm.late_rule_id"
+                      class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                    >
+                      <option :value="null">-- Gunakan Aturan Standar Sistem (Cari aturan 'Terlambat') --</option>
+                      <option v-for="rule in pointRules" :key="rule.id" :value="rule.id">
+                        [{{ rule.rule_code }}] {{ rule.name }} ({{ rule.point_value }} Poin)
+                      </option>
+                    </select>
+                  </div>
+                  
+                  <p v-if="pointRules.length === 0" class="text-[11px] text-amber-400 flex items-center gap-1.5">
+                    <span>⚠️</span> Belum ada aturan pelanggaran aktif di master poin. 
+                    <NuxtLink to="/discipline/rules" class="underline font-bold text-rose-400 hover:text-rose-300">
+                      Konfigurasi aturan poin di sini &rarr;
+                    </NuxtLink>
+                  </p>
+                </div>
+              </div>
+
+              <div class="pt-4 flex justify-end border-t border-slate-800">
+                <BaseButton variant="primary" @click="saveDisciplineSettings" :disabled="isSaving" class="gap-2">
+                  <Loader2 v-if="isSaving" class="w-4 h-4 animate-spin" />
+                  <Save v-else class="w-4 h-4" />
+                  {{ isSaving ? 'Menyimpan...' : 'Simpan Pengaturan Kedisiplinan' }}
+                </BaseButton>
+              </div>
+            </BaseCard>
+          </div>
+
+          <div>
+            <BaseCard class="p-6 bg-slate-900/50 border border-slate-800 space-y-3">
+              <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                <ShieldAlert class="text-amber-400" :size="18" />
+                Prinsip Integritas Poin
+              </h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                EduRaport menerapkan mekanisme <strong>Idempoten Harian</strong>: siswa yang discan berkali-kali pada hari yang sama hanya akan dikenakan 1 kali pengurangan poin keterlambatan.
+              </p>
+              <div class="p-3 bg-slate-800/50 rounded-xl border border-slate-700 text-xs text-slate-300 space-y-1.5">
+                <div class="font-bold text-amber-400 flex items-center gap-1">
+                  <span>💡</span> Sistem Poin Positif
+                </div>
+                <p class="text-[11px] text-slate-400">
+                  Modal awal poin siswa (default 100 poin) akan berkurang sesuai bobot minus pelanggaran, sehingga wali kelas dan guru BK dapat memantau siswa berisiko secara dini.
+                </p>
+              </div>
+            </BaseCard>
+          </div>
+        </div>
       </div>
     </div>
   </div>

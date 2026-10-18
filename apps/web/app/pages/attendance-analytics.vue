@@ -23,9 +23,11 @@ import {
   SlidersHorizontal,
   Check,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  HeartHandshake
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton, BaseInput, BaseModal, BaseDateInput } from '@eduraport/ui'
+import MoodAnalytics from '../components/scanner/MoodAnalytics.vue'
 import { useApi } from '../composables/useApi'
 import { useSchoolContext } from '../composables/useSchoolContext'
 import { useClass } from '../composables/useClass'
@@ -80,8 +82,11 @@ const toDateInputStr = (val: any): string => {
 }
 
 // State & Filters
+const route = useRoute()
 const isLoading = ref(true)
-const activeTab = ref<'audit' | 'classes' | 'students'>('audit')
+const activeTab = ref<'audit' | 'classes' | 'students' | 'mood'>(
+  (route.query.tab as any) === 'mood' ? 'mood' : 'audit'
+)
 const startDate = ref(getFirstDayOfMonthStr())
 const endDate = ref(getTodayStr())
 const selectedClassId = ref('')
@@ -450,6 +455,12 @@ watch(selectedSchoolId, async (newId) => {
     await loadAnalytics()
   }
 })
+
+watch(() => route.query.tab, (newTab) => {
+  if (newTab === 'mood' || newTab === 'audit' || newTab === 'classes' || newTab === 'students') {
+    activeTab.value = newTab as any
+  }
+})
 </script>
 
 <template>
@@ -739,11 +750,11 @@ watch(selectedSchoolId, async (newId) => {
     </div>
 
     <!-- Main Navigation Tabs -->
-    <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800">
+    <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 overflow-x-auto">
       <button
         type="button"
         @click="activeTab = 'audit'"
-        class="pb-3 px-4 text-sm font-semibold flex items-center gap-2 border-b-2 transition-all"
+        class="pb-3 px-4 text-sm font-semibold flex items-center gap-2 border-b-2 transition-all whitespace-nowrap"
         :class="activeTab === 'audit' ? 'border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'"
       >
         <AlertTriangle class="w-4 h-4" />
@@ -759,7 +770,7 @@ watch(selectedSchoolId, async (newId) => {
       <button
         type="button"
         @click="activeTab = 'classes'"
-        class="pb-3 px-4 text-sm font-semibold flex items-center gap-2 border-b-2 transition-all"
+        class="pb-3 px-4 text-sm font-semibold flex items-center gap-2 border-b-2 transition-all whitespace-nowrap"
         :class="activeTab === 'classes' ? 'border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'"
       >
         <Layers class="w-4 h-4" />
@@ -772,13 +783,26 @@ watch(selectedSchoolId, async (newId) => {
       <button
         type="button"
         @click="activeTab = 'students'"
-        class="pb-3 px-4 text-sm font-semibold flex items-center gap-2 border-b-2 transition-all"
+        class="pb-3 px-4 text-sm font-semibold flex items-center gap-2 border-b-2 transition-all whitespace-nowrap"
         :class="activeTab === 'students' ? 'border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'"
       >
         <Users class="w-4 h-4" />
         <span>Rekapitulasi Siswa & Rapor</span>
         <span class="px-1.5 py-0.2 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
           {{ analytics.student_recap.length }}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        @click="activeTab = 'mood'"
+        class="pb-3 px-4 text-sm font-semibold flex items-center gap-2 border-b-2 transition-all whitespace-nowrap"
+        :class="activeTab === 'mood' ? 'border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'"
+      >
+        <HeartHandshake class="w-4 h-4" />
+        <span>Mood Emosi & Care Alert</span>
+        <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-600 dark:text-rose-400">
+          Live Heatmap
         </span>
       </button>
     </div>
@@ -1038,6 +1062,36 @@ watch(selectedSchoolId, async (newId) => {
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- TAB 4: MOOD EMOSI & CARE ALERT -->
+    <div v-if="activeTab === 'mood'" class="space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-violet-500/10 dark:bg-violet-950/25 border border-violet-500/20 dark:border-violet-900/50 rounded-2xl">
+        <div class="flex items-start gap-3">
+          <HeartHandshake class="w-5 h-5 text-violet-600 dark:text-violet-400 shrink-0 mt-0.5" />
+          <div>
+            <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>Analitik Mood Emosional & Care Alert Siswa</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/20 text-violet-600 dark:text-violet-300">
+                Terintegrasi Satu Pintu
+              </span>
+            </h4>
+            <p class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+              Heatmap emosi harian (senang, sedih, kesal, lelah) hasil check-in presensi scanner, grafik tren individu, dan tindak lanjut Care Alert ke BK atau Catatan Anekdot TK.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-sm min-h-[500px]">
+        <MoodAnalytics 
+          :school-id="selectedSchoolId"
+          :class-id="selectedClassId"
+          :start-date="startDate"
+          :end-date="endDate"
+          :sync-with-parent-filters="true"
+        />
       </div>
     </div>
 
