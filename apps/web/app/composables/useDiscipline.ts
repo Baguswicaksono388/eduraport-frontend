@@ -6,6 +6,7 @@ export const useDiscipline = () => {
   const studentRecords = useState<any[]>('student_point_records', () => [])
 
   const fetchPointRules = async (schoolId: string) => {
+    if (!schoolId || typeof schoolId !== 'string') return
     try {
       const res: any = await fetcher(`/school/${schoolId}/discipline/rules`)
       if (res.success) {
@@ -17,6 +18,9 @@ export const useDiscipline = () => {
   }
 
   const createPointRule = async (schoolId: string, data: any) => {
+    if (!schoolId || typeof schoolId !== 'string') {
+      throw new Error('School ID is required')
+    }
     const res: any = await fetcher(`/school/${schoolId}/discipline/rules`, {
       method: 'POST',
       body: data
@@ -26,6 +30,9 @@ export const useDiscipline = () => {
   }
 
   const updatePointRule = async (schoolId: string, id: string, data: any) => {
+    if (!schoolId || typeof schoolId !== 'string' || !id) {
+      throw new Error('School ID and Rule ID are required')
+    }
     const res: any = await fetcher(`/school/${schoolId}/discipline/rules/${id}`, {
       method: 'PUT',
       body: data
@@ -35,6 +42,9 @@ export const useDiscipline = () => {
   }
 
   const deletePointRule = async (schoolId: string, id: string) => {
+    if (!schoolId || typeof schoolId !== 'string' || !id) {
+      throw new Error('School ID and Rule ID are required')
+    }
     const res = await fetcher(`/school/${schoolId}/discipline/rules/${id}`, {
       method: 'DELETE'
     })
@@ -43,6 +53,7 @@ export const useDiscipline = () => {
   }
 
   const fetchStudentRecords = async (schoolId: string, studentId: string, academicYearId: string) => {
+    if (!schoolId || typeof schoolId !== 'string' || !studentId || !academicYearId) return
     try {
       const res: any = await fetcher(`/school/${schoolId}/discipline/students/${studentId}/points?academic_year_id=${academicYearId}`)
       if (res.success) {
@@ -54,6 +65,9 @@ export const useDiscipline = () => {
   }
 
   const createStudentRecord = async (schoolId: string, data: any) => {
+    if (!schoolId || typeof schoolId !== 'string') {
+      throw new Error('School ID is required')
+    }
     const res: any = await fetcher(`/school/${schoolId}/discipline/points`, {
       method: 'POST',
       body: data

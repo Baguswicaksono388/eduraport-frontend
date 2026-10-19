@@ -103,17 +103,41 @@ const attendanceMap = ref<Record<string, AttendanceState>>({})
 
 // Load initial selections
 const route = useRoute()
+
+const syncClassesAndData = async (schoolId: string) => {
+  if (!schoolId) {
+    classes.value = []
+    selectedClassId.value = ''
+    return
+  }
+  await fetchClasses(schoolId)
+  const queryClassId = route.query.classId ? String(route.query.classId) : null
+  if (queryClassId && classes.value.some((c) => c.id === queryClassId)) {
+    selectedClassId.value = queryClassId
+  } else if (selectedClassId.value && classes.value.some((c) => c.id === selectedClassId.value)) {
+    // Keep existing valid class selection
+  } else if (classes.value.length > 0) {
+    selectedClassId.value = classes.value[0].id
+  } else {
+    selectedClassId.value = ''
+  }
+  if (selectedClassId.value) {
+    await loadData()
+  }
+}
+
 onMounted(async () => {
-  const schoolId = await initContext()
-  if (schoolId) selectedSchoolId.value = schoolId
   if (route.query.classId) {
     selectedClassId.value = String(route.query.classId)
   }
   if (route.query.date) {
     selectedDate.value = String(route.query.date)
   }
-  if (selectedSchoolId.value && selectedClassId.value) {
-    loadData()
+  const schoolId = await initContext()
+  const effectiveSchoolId = schoolId || selectedSchoolId.value
+  if (effectiveSchoolId) {
+    selectedSchoolId.value = effectiveSchoolId
+    await syncClassesAndData(effectiveSchoolId)
   }
 })
 
@@ -123,6 +147,7 @@ const studentCheckins = ref<Record<string, { checked_at: string, recommended_sta
 // Load students and attendance records
 const loadData = async () => {
   if (!selectedSchoolId.value || !selectedClassId.value) return
+  if (loading.value) return
   loading.value = true
 
   try {
@@ -298,21 +323,10 @@ const getWhatsAppUrl = (phone?: string, studentName?: string, parentName?: strin
 }
 
 // Watch filters
-watch(selectedSchoolId, async (newVal) => {
-  if (newVal) {
-    await fetchClasses(newVal)
-    const queryClassId = route.query.classId ? String(route.query.classId) : null
-    if (queryClassId && classes.value.some((c) => c.id === queryClassId)) {
-      selectedClassId.value = queryClassId
-    } else if (selectedClassId.value && classes.value.some((c) => c.id === selectedClassId.value)) {
-      // Keep existing valid class selection
-    } else if (classes.value.length > 0) {
-      selectedClassId.value = classes.value[0].id
-    } else {
-      selectedClassId.value = ''
-    }
-    loadData()
-  } else {
+watch(selectedSchoolId, async (newVal, oldVal) => {
+  if (newVal && newVal !== oldVal) {
+    await syncClassesAndData(newVal)
+  } else if (!newVal) {
     classes.value = []
     selectedClassId.value = ''
   }
@@ -322,6 +336,12 @@ watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
 watch([selectedClassId, selectedDate], () => {
   loadData()
+})
+
+watch(currentViewTab, async (newTab) => {
+  if (newTab === 'pending' && selectedSchoolId.value) {
+    await loadPendingStudents()
+  }
 })
 
 // Filtered list of students to show in grid
@@ -460,8 +480,9 @@ const handleSave = async () => {
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider shrink-0">Kelas:</span>
           <select
             v-model="selectedClassId"
-            class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-zinc-200 outline-none cursor-pointer focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all w-[120px] sm:w-[150px] shadow-sm"
+            class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-zinc-200 outline-none cursor-pointer focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all w-[130px] sm:w-[160px] shadow-sm"
           >
+            <option v-if="classes.length === 0" value="" disabled>Pilih Kelas</option>
             <option v-for="c in classes" :key="c.id" :value="c.id" class="bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200">{{ c.class_name }}</option>
           </select>
         </div>

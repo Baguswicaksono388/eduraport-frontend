@@ -43,21 +43,25 @@ onMounted(async () => {
   }
 
   if (selectedSchoolId.value) {
-    await fetchPointRules()
+    await fetchPointRules(selectedSchoolId.value)
   }
 })
 
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {
-    await fetchPointRules()
+    await fetchPointRules(newVal)
   } else {
     pointRules.value = []
   }
 })
 
 const handleCreateRule = async () => {
+  if (!selectedSchoolId.value) {
+    alert('Pilih unit sekolah terlebih dahulu')
+    return
+  }
   try {
-    const res = await createPointRule({ ...ruleForm })
+    const res = await createPointRule(selectedSchoolId.value, { ...ruleForm })
     if (res.success) {
       showCreateModal.value = false
       Object.assign(ruleForm, {
@@ -84,8 +88,9 @@ const openEditModal = (rule: any) => {
 }
 
 const handleUpdateRule = async () => {
+  if (!selectedSchoolId.value || !editingRuleId.value) return
   try {
-    const res = await updatePointRule(editingRuleId.value, { ...ruleForm })
+    const res = await updatePointRule(selectedSchoolId.value, editingRuleId.value, { ...ruleForm })
     if (res.success) {
       showEditModal.value = false
     }
@@ -95,9 +100,10 @@ const handleUpdateRule = async () => {
 }
 
 const handleDeleteRule = async (id: string) => {
+  if (!selectedSchoolId.value) return
   if (confirm('Apakah Anda yakin ingin menghapus aturan poin ini?')) {
     try {
-      await deletePointRule(id)
+      await deletePointRule(selectedSchoolId.value, id)
     } catch (e: any) {
       alert(e?.message ?? 'Gagal menghapus aturan')
     }
