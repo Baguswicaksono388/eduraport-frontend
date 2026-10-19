@@ -31,21 +31,21 @@ const form = ref({
 const photoFile = ref<File | null>(null)
 const photoPreview = ref<string | null>(null)
 
-watch(() => props.show, (newVal) => {
-  if (newVal) {
-    if (props.initialData) {
+watch([() => props.show, () => props.initialData], ([newShow, newInitial]) => {
+  if (newShow) {
+    if (newInitial) {
       form.value = {
-        name: props.initialData.name || '',
-        category: props.initialData.category || 'electronic',
-        purchase_date: props.initialData.purchase_date ? (typeof props.initialData.purchase_date === 'string' ? props.initialData.purchase_date.substring(0,10) : new Date(props.initialData.purchase_date).toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
-        purchase_cost: props.initialData.purchase_cost ? String(props.initialData.purchase_cost) : '',
-        quantity: props.initialData.quantity || 1,
-        condition: props.initialData.condition || 'good',
+        name: newInitial.name || '',
+        category: newInitial.category || 'electronic',
+        purchase_date: newInitial.purchase_date ? (typeof newInitial.purchase_date === 'string' ? newInitial.purchase_date.substring(0,10) : new Date(newInitial.purchase_date).toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
+        purchase_cost: newInitial.purchase_cost != null ? String(newInitial.purchase_cost) : '',
+        quantity: newInitial.quantity || 1,
+        condition: newInitial.condition || 'good',
         condition_change_reason: '',
-        location: props.initialData.location || '',
-        useful_life_years: props.initialData.useful_life_years || null,
-        depreciation_method: props.initialData.depreciation_method || 'straight_line',
-        description: props.initialData.description || ''
+        location: newInitial.location || '',
+        useful_life_years: newInitial.useful_life_years || null,
+        depreciation_method: newInitial.depreciation_method || 'straight_line',
+        description: newInitial.description || ''
       }
     } else {
       form.value = {
@@ -65,7 +65,7 @@ watch(() => props.show, (newVal) => {
     photoFile.value = null
     photoPreview.value = null
   }
-})
+}, { immediate: true })
 
 const isEdit = computed(() => !!props.initialData?.id)
 const conditionChanged = computed(() => isEdit.value && form.value.condition !== props.initialData?.condition)
