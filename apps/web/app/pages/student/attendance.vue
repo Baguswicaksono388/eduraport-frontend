@@ -104,25 +104,32 @@ const attendanceMap = ref<Record<string, AttendanceState>>({})
 // Load initial selections
 const route = useRoute()
 
+const syncingClasses = ref(false)
 const syncClassesAndData = async (schoolId: string) => {
   if (!schoolId) {
     classes.value = []
     selectedClassId.value = ''
     return
   }
-  await fetchClasses(schoolId)
-  const queryClassId = route.query.classId ? String(route.query.classId) : null
-  if (queryClassId && classes.value.some((c) => c.id === queryClassId)) {
-    selectedClassId.value = queryClassId
-  } else if (selectedClassId.value && classes.value.some((c) => c.id === selectedClassId.value)) {
-    // Keep existing valid class selection
-  } else if (classes.value.length > 0) {
-    selectedClassId.value = classes.value[0].id
-  } else {
-    selectedClassId.value = ''
-  }
-  if (selectedClassId.value) {
-    await loadData()
+  if (syncingClasses.value) return
+  syncingClasses.value = true
+  try {
+    await fetchClasses(schoolId)
+    const queryClassId = route.query.classId ? String(route.query.classId) : null
+    if (queryClassId && classes.value.some((c) => c.id === queryClassId)) {
+      selectedClassId.value = queryClassId
+    } else if (selectedClassId.value && classes.value.some((c) => c.id === selectedClassId.value)) {
+      // Keep existing valid class selection
+    } else if (classes.value.length > 0) {
+      selectedClassId.value = classes.value[0].id
+    } else {
+      selectedClassId.value = ''
+    }
+    if (selectedClassId.value) {
+      await loadData()
+    }
+  } finally {
+    syncingClasses.value = false
   }
 }
 
@@ -137,7 +144,9 @@ onMounted(async () => {
   const effectiveSchoolId = schoolId || selectedSchoolId.value
   if (effectiveSchoolId) {
     selectedSchoolId.value = effectiveSchoolId
-    await syncClassesAndData(effectiveSchoolId)
+    if (classes.value.length === 0 || !selectedClassId.value) {
+      await syncClassesAndData(effectiveSchoolId)
+    }
   }
 })
 
@@ -323,14 +332,14 @@ const getWhatsAppUrl = (phone?: string, studentName?: string, parentName?: strin
 }
 
 // Watch filters
-watch(selectedSchoolId, async (newVal, oldVal) => {
-  if (newVal && newVal !== oldVal) {
+watch(selectedSchoolId, async (newVal) => {
+  if (newVal) {
     await syncClassesAndData(newVal)
-  } else if (!newVal) {
+  } else {
     classes.value = []
     selectedClassId.value = ''
   }
-})
+}, { immediate: true })
 
 watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 

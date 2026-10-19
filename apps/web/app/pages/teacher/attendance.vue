@@ -79,7 +79,7 @@ const loadData = async () => {
     // Fetch existing teacher attendance records for selected date
     const existingRes = await fetchTeacherAttendances(schoolId, date)
     const existingList = existingRes.data || []
-    const existingMap = new Map(existingList.map((a: any) => [a.employee_id, a]))
+    const existingMap = new Map(existingList.map((a: any) => [a.teacher_id || a.employee_id, a]))
 
     // Reset maps
     const tempMap: Record<string, AttendanceState> = {}
@@ -142,6 +142,7 @@ const handleSave = async () => {
     const list = teachers.value.map((t) => {
       const state = attendanceMap.value[t.id] || { status: 'hadir', note: '' }
       return {
+        teacher_id: t.id,
         employee_id: t.id,
         date: selectedDate.value,
         status: state.status,
