@@ -1,7 +1,21 @@
 export const useReportRenderer = () => {
   const renderWidgetHTML = (w: any, reportData: any, isPreview: boolean = false) => {
     const p = w.props || {}
-    const esc = (str: any) => str ? String(str).replace(/</g, '&lt;').replace(/>/g, '&gt;') : ''
+    const esc = (str: any) => (str !== null && str !== undefined) ? String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;') : ''
+    const sanitizeUrl = (url: any) => {
+      if (!url || typeof url !== 'string') return ''
+      const trimmed = url.trim()
+      if (
+        trimmed.startsWith('https://') ||
+        trimmed.startsWith('http://') ||
+        trimmed.startsWith('/uploads/') ||
+        trimmed.startsWith('/storage/') ||
+        trimmed.startsWith('data:image/')
+      ) {
+        return trimmed.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      }
+      return ''
+    }
     
     // For Preview Mode (Visual Builder)
     const SCHOOL = {
@@ -69,12 +83,14 @@ export const useReportRenderer = () => {
     const getRawHTML = () => {
       switch (w.type) {
       case "header_school": {
-        const logoUrl = (!isPreview && (reportData?.school?.logo || reportData?.school?.logo_url)) ? (reportData.school.logo || reportData.school.logo_url) : null;
+        const rawLogo = (!isPreview && (reportData?.school?.logo || reportData?.school?.logo_url)) ? (reportData.school.logo || reportData.school.logo_url) : null;
+        const logoUrl = sanitizeUrl(rawLogo);
         const logoHtml = logoUrl 
           ? `<div style="flex:none; display:flex; justify-content:center; align-items:center; width: 75px; height: 75px;"><img src="${logoUrl}" style="max-width:100%; max-height:100%; object-fit:contain;" /></div>` 
           : `<div class="badge">LOGO</div>`;
           
-        const photoUrl = (!isPreview && reportData?.school?.logo_dinas) ? reportData.school.logo_dinas : null;
+        const rawPhoto = (!isPreview && reportData?.school?.logo_dinas) ? reportData.school.logo_dinas : null;
+        const photoUrl = sanitizeUrl(rawPhoto);
         const photoHtml = photoUrl 
           ? `<div style="flex:none; display:flex; justify-content:center; align-items:center; width: 75px; height: 75px;"><img src="${photoUrl}" style="max-width:100%; max-height:100%; object-fit:contain;" /></div>` 
           : `<div class="badge" style="border-style:dashed;">FOTO</div>`;
@@ -84,7 +100,7 @@ export const useReportRenderer = () => {
           <div class="tt">
             <div class="l1">LAPORAN PERKEMBANGAN ANAK DIDIK</div>
             <div class="l2">${esc(getSchoolName())}</div>
-            <div class="l3">${p.showAddress ? esc(getSchoolAddress()) : ""} ${p.showNpsn ? "· NPSN " + getSchoolNpsn() : ""}</div>
+            <div class="l3">${p.showAddress ? esc(getSchoolAddress()) : ""} ${p.showNpsn ? "· NPSN " + esc(getSchoolNpsn()) : ""}</div>
           </div>
           ${photoHtml}
         </div>`
@@ -99,7 +115,8 @@ export const useReportRenderer = () => {
           ${p.showWali ? `<div><span class="k">Guru Kelas</span>: &nbsp;${esc(getWali())}</div>` : ``}
         </div>`
       case "student_photo": {
-        const photoUrl = (!isPreview && (reportData?.student?.photo || reportData?.student?.photo_url)) ? (reportData.student.photo || reportData.student.photo_url) : null;
+        const rawPhoto = (!isPreview && (reportData?.student?.photo || reportData?.student?.photo_url)) ? (reportData.student.photo || reportData.student.photo_url) : null;
+        const photoUrl = sanitizeUrl(rawPhoto);
         if (photoUrl) {
           return `<div class="pad" style="display:flex;justify-content:flex-end"><div class="rp-photo" style="border:none;background:transparent;"><img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:4px;" /></div></div>`
         }
