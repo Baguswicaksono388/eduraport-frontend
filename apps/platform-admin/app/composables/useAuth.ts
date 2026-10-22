@@ -84,8 +84,18 @@ export const useAuth = () => {
   const fetchUser = async () => {
     if (!token.value) return null;
     try {
-      const res: any = await fetcher('/auth/me');
-      if (res.success && res.data) {
+      let res: any;
+      try {
+        res = await fetcher('/auth/me');
+      } catch (err: any) {
+        if (err.response?.status === 404) {
+          res = await fetcher('/admin/platform/auth/me');
+        } else {
+          throw err;
+        }
+      }
+
+      if (res && res.success && res.data) {
         if (res.data.role !== 'super_admin') {
           logout();
           return null;
