@@ -165,6 +165,15 @@ const menuGroups = computed(() => {
     })
   }
 
+  if (user.value?.role === 'super_admin') {
+    groups.push({
+      title: 'Platform Superadmin',
+      items: [
+        { to: '/admin', label: 'Platform Cockpit', icon: ShieldCheck, access: '/', badge: 'B2B & B2C', subtitle: 'Maintenance ekosistem & lisensi platform' }
+      ]
+    })
+  }
+
   groups.push(
     {
       title: 'Utama / Dashboard',

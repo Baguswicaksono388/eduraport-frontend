@@ -9,7 +9,11 @@
   ],
   "scripts": {
     "dev": "turbo dev",
+    "dev:web": "pnpm --filter @eduraport/web dev",
+    "dev:admin": "pnpm --filter @eduraport/platform-admin dev",
     "build": "turbo build",
+    "build:web": "pnpm --filter @eduraport/web build",
+    "build:admin": "pnpm --filter @eduraport/platform-admin build",
     "lint": "turbo lint",
     "test": "turbo test"
   },

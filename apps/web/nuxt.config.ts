@@ -73,6 +73,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: '/api/v1',
+      platformAdminUrl: process.env.NUXT_PUBLIC_PLATFORM_ADMIN_URL || 'http://localhost:3002',
     }
   },
 
