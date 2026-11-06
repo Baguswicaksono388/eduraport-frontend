@@ -43,7 +43,8 @@ export const useApi = () => {
       if (error.response?.status === 401) {
         token.value = null;
         refreshToken.value = null;
-        if (import.meta.client) {
+        const isAuthRequest = url.includes('/login') || url.includes('/auth/');
+        if (import.meta.client && !isAuthRequest && window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
       }

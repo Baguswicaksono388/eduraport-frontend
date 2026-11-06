@@ -6,8 +6,7 @@ import { BaseButton } from '@eduraport/ui'
 import { useAuth } from '../composables/useAuth'
 
 definePageMeta({
-  layout: 'auth',
-  middleware: ['auth']
+  layout: false
 })
 
 const router = useRouter()
