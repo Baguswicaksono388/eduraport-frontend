@@ -127,7 +127,7 @@ const handleCancel = async (meetingId: string) => {
 
               <h4 class="font-bold text-slate-800 dark:text-zinc-200 text-sm mt-1">Konsultasi dengan {{ m.teacher_name || 'Guru' }}</h4>
               <p class="text-xs text-slate-500 flex items-center gap-1">
-                <Clock :size="14" /> {{ new Date(m.scheduled_at).toLocaleDateString('id-ID', { dateStyle: 'full', timeStyle: 'short' }) }}
+                <Clock :size="14" /> {{ new Date(m.scheduled_at).toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' }) }}
               </p>
             </div>
 
