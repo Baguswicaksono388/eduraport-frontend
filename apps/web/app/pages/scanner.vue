@@ -9,9 +9,9 @@
           </div>
           <div>
             <h1 class="text-base sm:text-lg font-black tracking-tight flex items-center gap-2">
-              EduScanner <span class="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">Hybrid</span>
+              EduScanner <span class="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">Gerbang Hybrid</span>
             </h1>
-            <p class="text-[11px] text-slate-400 font-medium">Presensi Kamera QR & Tap Kartu RFID</p>
+            <p class="text-[11px] text-slate-400 font-medium">Presensi Real-time & Mood Siswa · QR & RFID</p>
           </div>
         </div>
 
