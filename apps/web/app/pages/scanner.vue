@@ -9,9 +9,9 @@
           </div>
           <div>
             <h1 class="text-base sm:text-lg font-black tracking-tight flex items-center gap-2">
-              EduScanner <span class="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">Gerbang</span>
+              EduScanner <span class="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">Hybrid</span>
             </h1>
-            <p class="text-[11px] text-slate-400 font-medium">Presensi Real-time & Mood Siswa</p>
+            <p class="text-[11px] text-slate-400 font-medium">Presensi Kamera QR & Tap Kartu RFID</p>
           </div>
         </div>
 
@@ -77,7 +77,12 @@
     <nav class="bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 py-2">
       <div class="flex items-center gap-2">
         <span class="px-3 py-1 font-bold text-xs sm:text-sm text-violet-400 border-b-2 border-violet-400 bg-violet-500/10 rounded-t-lg flex items-center gap-2">
-          <span>📷 Kamera Scanner Gerbang</span>
+          <span>📷 Kamera QR</span>
+          <span class="text-slate-600">/</span>
+          <span class="flex items-center gap-1.5 text-emerald-400 font-semibold text-[11px] sm:text-xs">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            🏷️ Tap Kartu RFID Siap
+          </span>
         </span>
       </div>
       <NuxtLink 
@@ -110,8 +115,8 @@
           <!-- Viewfinder Target Reticle -->
           <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div class="w-64 h-64 sm:w-80 sm:h-80 border-2 border-dashed border-violet-400/60 rounded-3xl relative flex items-center justify-center">
-              <div class="absolute -top-3 px-3 py-1 bg-slate-900/90 text-[10px] font-bold text-violet-300 rounded-full border border-violet-500/30 uppercase tracking-widest">
-                Arahkan Kartu QR Ke Sini
+              <div class="absolute -top-3 px-3 py-1 bg-slate-900/90 text-[10px] font-bold text-violet-300 rounded-full border border-violet-500/30 uppercase tracking-widest flex items-center gap-1.5 shadow-md">
+                <span>📷 Scan QR / 🏷️ Tap RFID</span>
               </div>
               <div class="w-12 h-1 bg-violet-400/70 absolute top-0 left-0 rounded-tl-3xl"></div>
               <div class="w-1 h-12 bg-violet-400/70 absolute top-0 left-0 rounded-tl-3xl"></div>
@@ -154,6 +159,15 @@
                   <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm border"
                         :class="getFeedbackPillClass(arrivalFeedback.check_in_status)">
                     {{ getFeedbackStatusLabel(arrivalFeedback.check_in_status, arrivalFeedback.late_minutes) }}
+                  </span>
+                  <span v-if="arrivalFeedback.method === 'rfid'" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                    🏷️ RFID Tap
+                  </span>
+                  <span v-else-if="arrivalFeedback.method === 'qr'" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                    📷 QR Scan
+                  </span>
+                  <span v-else-if="arrivalFeedback.method === 'manual_search'" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    📝 Manual
                   </span>
                   <span class="text-[11px] text-white/70 font-semibold">
                     {{ arrivalFeedback.time_str }}
@@ -512,6 +526,11 @@ onMounted(async () => {
   // Periodic background tasks
   syncInterval = setInterval(syncQueue, 5000)
   feedInterval = setInterval(fetchTodaySummary, 15000)
+
+  // USB RFID Reader Keyboard Wedge listener
+  if (typeof window !== 'undefined') {
+    window.addEventListener('keydown', handleKeyDown)
+  }
 })
 
 onUnmounted(() => {
@@ -519,6 +538,9 @@ onUnmounted(() => {
   clearInterval(syncInterval)
   clearInterval(feedInterval)
   clearInterval(countdownTimer)
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('keydown', handleKeyDown)
+  }
 })
 
 watch(currentSchoolId, async (newVal) => {
@@ -633,8 +655,11 @@ const onDetect = async (detectedCodes) => {
     const rawToken = payload.substring(6)
     // Find student in local cache
     let student = await db.studentsCache.where('token').equals(rawToken).first()
+    if (!student) {
+      student = await db.studentsCache.where('token').equals(payload).first()
+    }
     if (!student && cachedStudents.value.length > 0) {
-      student = cachedStudents.value.find((s) => s.token === rawToken)
+      student = cachedStudents.value.find((s) => s.token === rawToken || s.token === payload)
     }
 
     // UF-6 & AC-1: Revoked or unregistered token must be rejected immediately
@@ -659,7 +684,8 @@ const onDetect = async (detectedCodes) => {
       nis: student ? student.nis : '',
       check_in_status: checkInStatus,
       late_minutes: lateMinutes,
-      time_str: timeStr
+      time_str: timeStr,
+      method: 'qr'
     }
 
     // Open Mood dialog with fast-path 5-second countdown
@@ -678,6 +704,130 @@ const onDetect = async (detectedCodes) => {
     console.error('[Scanner] Error processing scan:', err)
     playAudioFeedback('error')
     showResult(false, 'Terjadi kesalahan pemrosesan scan.')
+    scanning.value = false
+  }
+}
+
+// --- Model Hybrid: USB RFID Keyboard Wedge Listener ---
+let rfidBuffer = ''
+let lastKeypressTime = 0
+
+const handleKeyDown = (event) => {
+  // Ignore if user is currently typing in an input/textarea element (e.g. manual search input)
+  const target = event.target
+  const isInputFocused = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+  if (isInputFocused) {
+    return
+  }
+
+  // Prevent handling during another active scan/mood processing
+  if (scanning.value || !!pendingMoodScan.value) {
+    rfidBuffer = ''
+    return
+  }
+
+  const now = Date.now()
+  const timeDiff = now - lastKeypressTime
+  lastKeypressTime = now
+
+  if (event.key === 'Enter') {
+    const candidateCode = rfidBuffer.trim()
+    rfidBuffer = ''
+    if (candidateCode.length >= 3) {
+      event.preventDefault()
+      processRfidScan(candidateCode)
+    }
+    return
+  }
+
+  // If gap between keystrokes > 500ms, consider it user typing slowly, reset buffer
+  if (timeDiff > 500) {
+    rfidBuffer = ''
+  }
+
+  // Accumulate single printable characters
+  if (event.key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey) {
+    rfidBuffer += event.key
+  }
+}
+
+// Process Scanned RFID Code (Model Hybrid)
+const processRfidScan = async (scannedCode) => {
+  if (scanning.value || pendingMoodScan.value) return
+  if (!scannedCode) return
+
+  scanning.value = true
+
+  try {
+    const cleanCode = scannedCode.trim()
+    const cleanNoZeros = cleanCode.replace(/^0+/, '')
+
+    // 1. Search in Dexie local cache by rfid_uid, nis, or token
+    let student = await db.studentsCache.where('rfid_uid').equals(cleanCode).first()
+    if (!student && cleanNoZeros) {
+      student = await db.studentsCache.where('rfid_uid').equals(cleanNoZeros).first()
+    }
+    if (!student) {
+      student = await db.studentsCache.where('nis').equals(cleanCode).first()
+    }
+    if (!student && cleanNoZeros) {
+      student = await db.studentsCache.where('nis').equals(cleanNoZeros).first()
+    }
+    if (!student) {
+      student = await db.studentsCache.where('token').equals(cleanCode).first()
+    }
+    if (!student && cleanCode.startsWith('ERQR1:')) {
+      student = await db.studentsCache.where('token').equals(cleanCode.substring(6)).first()
+    }
+
+    // 2. In-memory fallback if Dexie index missed
+    if (!student && cachedStudents.value.length > 0) {
+      student = cachedStudents.value.find((s) => 
+        (s.rfid_uid && (s.rfid_uid.toLowerCase() === cleanCode.toLowerCase() || (cleanNoZeros && s.rfid_uid.toLowerCase() === cleanNoZeros.toLowerCase()))) ||
+        (s.nis && (s.nis === cleanCode || (cleanNoZeros && s.nis === cleanNoZeros))) ||
+        (s.token && (s.token === cleanCode || s.token === `ERQR1:${cleanCode}`))
+      )
+    }
+
+    // UF-6 & AC-1: Unregistered or invalid RFID must be rejected immediately
+    if (!student) {
+      playAudioFeedback('error')
+      showResult(false, `Kartu RFID [${cleanCode}] belum terdaftar.`)
+      scanning.value = false
+      return
+    }
+
+    const now = new Date()
+    const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+    const { checkInStatus, lateMinutes } = evaluateScanStatus(now)
+
+    playAudioFeedback('success')
+
+    arrivalFeedback.value = {
+      student_name: student.student_name,
+      class_name: student.class_name,
+      nis: student.nis,
+      check_in_status: checkInStatus,
+      late_minutes: lateMinutes,
+      time_str: timeStr,
+      method: 'rfid'
+    }
+
+    pendingMoodScan.value = {
+      client_scan_id: generateScanId(),
+      payload: `ERRFID1:${cleanCode}`,
+      student_id: student.student_id,
+      student_name: student.student_name,
+      class_name: student.class_name,
+      method: 'rfid',
+      timestamp: now.getTime()
+    }
+
+    startMoodCountdown()
+  } catch (err) {
+    console.error('[RFID] Gagal memproses tap kartu:', err)
+    playAudioFeedback('error')
+    showResult(false, 'Terjadi kesalahan saat membaca kartu RFID.')
     scanning.value = false
   }
 }
@@ -710,7 +860,8 @@ const selectManualStudent = (student) => {
     nis: student.nis,
     check_in_status: checkInStatus,
     late_minutes: lateMinutes,
-    time_str: timeStr
+    time_str: timeStr,
+    method: 'manual_search'
   }
 
   pendingMoodScan.value = {

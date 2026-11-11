@@ -7,7 +7,7 @@ export interface ScanQueueItem {
   student_id?: string;
   student_name?: string;
   class_name?: string;
-  method: 'qr' | 'manual_search';
+  method: 'qr' | 'manual_search' | 'rfid';
   mood?: string | null;
   timestamp: number;
   status: 'pending' | 'syncing' | 'failed';
@@ -20,6 +20,7 @@ export interface CachedStudent {
   class_id?: string;
   class_name?: string;
   token?: string;
+  rfid_uid?: string;
 }
 
 export class EduScannerDB extends Dexie {
@@ -34,6 +35,10 @@ export class EduScannerDB extends Dexie {
     this.version(2).stores({
       scanQueue: '++id, client_scan_id, student_id, method, timestamp, status',
       studentsCache: 'student_id, student_name, nis, token'
+    });
+    this.version(3).stores({
+      scanQueue: '++id, client_scan_id, student_id, method, timestamp, status',
+      studentsCache: 'student_id, student_name, nis, token, rfid_uid'
     });
   }
 }
