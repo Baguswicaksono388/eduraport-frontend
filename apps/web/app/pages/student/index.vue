@@ -132,6 +132,29 @@ const qrTokenData = ref<any>(null)
 const qrLoading = ref(false)
 const regenerateReason = ref<'lost' | 'damaged' | 'security' | 'renewal'>('lost')
 const isRegenerating = ref(false)
+const quickRfidUid = ref('')
+const isSavingRfid = ref(false)
+
+const handleSaveRfid = async () => {
+  if (!selectedStudentForQr.value || !selectedSchoolId.value) return
+  isSavingRfid.value = true
+  try {
+    const rfidVal = quickRfidUid.value.trim() || null
+    const res = await updateStudent(selectedSchoolId.value, selectedStudentForQr.value.id, {
+      rfid_uid: rfidVal
+    })
+    if (res.success) {
+      selectedStudentForQr.value.rfid_uid = rfidVal
+      const s = students.value.find((item: any) => item.id === selectedStudentForQr.value.id)
+      if (s) s.rfid_uid = rfidVal
+      toast.success('Nomor kartu RFID siswa berhasil disimpan!', 'Berhasil')
+    }
+  } catch (err: any) {
+    toast.error('Gagal menyimpan nomor kartu RFID', 'Error')
+  } finally {
+    isSavingRfid.value = false
+  }
+}
 
 const reasonOptions = [
   { value: 'lost', label: 'Kartu Hilang', emoji: '🔴' },
@@ -146,6 +169,7 @@ const openQrModal = async (student: any) => {
   qrLoading.value = true
   qrTokenData.value = null
   regenerateReason.value = 'lost'
+  quickRfidUid.value = student.rfid_uid || ''
 
   try {
     const { fetcher } = useApi()
@@ -246,6 +270,7 @@ const studentForm = reactive({
   full_name: '',
   student_number: '',
   national_student_number: '',
+  rfid_uid: '',
   gender: 'Laki-laki',
   religion: '',
   birth_date: '',
@@ -263,6 +288,7 @@ const editForm = reactive({
   full_name: '',
   student_number: '',
   national_student_number: '',
+  rfid_uid: '',
   gender: 'Laki-laki',
   religion: '',
   birth_date: '',
@@ -364,6 +390,7 @@ const resetCreateForm = () => {
     full_name: '',
     student_number: '',
     national_student_number: '',
+    rfid_uid: '',
     gender: 'Laki-laki',
     religion: '',
     birth_date: '',
@@ -405,6 +432,7 @@ const openEditModal = (student: any) => {
     full_name: student.full_name,
     student_number: student.student_number || '',
     national_student_number: student.national_student_number || '',
+    rfid_uid: student.rfid_uid || '',
     gender: student.gender || 'Laki-laki',
     religion: student.religion || '',
     birth_date: student.birth_date ? new Date(student.birth_date).toISOString().split('T')[0] : '',
@@ -591,7 +619,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
           <input 
             v-model="searchQuery"
             type="text" 
-            placeholder="Cari siswa, NIS, atau NISN..." 
+            placeholder="Cari siswa, NIS, NISN, atau RFID..." 
             class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg pl-9 pr-4 py-2 text-xs font-semibold transition-all outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10"
           />
         </div>
@@ -633,6 +661,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
               <td class="px-6 py-4">
                 <p class="text-slate-900 dark:text-zinc-100">{{ student.student_number || '-' }}</p>
                 <p class="text-[9px] text-slate-400 dark:text-zinc-500 mt-0.5">NISN: {{ student.national_student_number || '-' }}</p>
+                <p v-if="student.rfid_uid" class="text-[9px] text-violet-600 dark:text-violet-400 font-bold mt-0.5">🏷️ RFID: {{ student.rfid_uid }}</p>
               </td>
               <td class="px-6 py-4">
                 <span v-if="student.class_name" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300 border border-violet-100 dark:border-violet-900/50">
@@ -709,9 +738,10 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
           <BaseInput v-model="studentForm.parent_name" label="Nama Orang Tua" placeholder="Bapak Budi" />
           <BaseInput v-model="studentForm.parent_phone_number" label="No. WA Orang Tua" placeholder="081234567890" :required="isSoloTeacher" />
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-3 gap-4">
           <BaseInput v-model="studentForm.student_number" label="NIS" placeholder="10293" />
           <BaseInput v-model="studentForm.national_student_number" label="NISN" placeholder="0098765432" />
+          <BaseInput v-model="studentForm.rfid_uid" label="Nomor Kartu / RFID UID" placeholder="Tap kartu..." />
         </div>
 
         <!-- Class Assignment -->
@@ -770,9 +800,10 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
           <BaseInput v-model="editForm.parent_name" label="Nama Orang Tua" placeholder="Bapak Budi" />
           <BaseInput v-model="editForm.parent_phone_number" label="No. WA Orang Tua" placeholder="081234567890" :required="isSoloTeacher" />
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-3 gap-4">
           <BaseInput v-model="editForm.student_number" label="NIS" placeholder="10293" />
           <BaseInput v-model="editForm.national_student_number" label="NISN" placeholder="0098765432" />
+          <BaseInput v-model="editForm.rfid_uid" label="Nomor Kartu / RFID UID" placeholder="Tap kartu..." />
         </div>
 
         <!-- Class Assignment -->
@@ -1077,6 +1108,43 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
           <Printer :size="15" />
           <span>🖨️ Cetak Kartu Individual (Print / PDF)</span>
         </button>
+
+        <!-- RFID Card Section -->
+        <div class="p-4 rounded-2xl bg-violet-500/10 border border-violet-500/30 text-left">
+          <div class="flex items-start gap-3">
+            <span class="text-xl">🏷️</span>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <h5 class="text-xs font-black text-violet-500 uppercase tracking-wide">
+                  Kartu Fisik RFID (125kHz / 13.56MHz)
+                </h5>
+                <span v-if="selectedStudentForQr.rfid_uid" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  ✓ Terdaftar
+                </span>
+                <span v-else class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-500/20 text-slate-400 border border-slate-500/30">
+                  Belum Dipasangkan
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-zinc-400 mt-1 leading-relaxed">
+                Nomor UID kartu fisik. Cukup arahkan kursor ke kotak di bawah lalu <strong>tap kartu ke reader USB</strong> untuk mengisi otomatis:
+              </p>
+              <div class="mt-2.5 flex items-center gap-2">
+                <input
+                  v-model="quickRfidUid"
+                  placeholder="Tap kartu RFID ke reader..."
+                  class="flex-1 bg-white dark:bg-zinc-900 border border-violet-300 dark:border-violet-700 rounded-xl px-3 py-2 text-xs font-bold font-mono text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-violet-500"
+                />
+                <button
+                  @click="handleSaveRfid"
+                  :disabled="isSavingRfid"
+                  class="px-4 py-2 bg-violet-600 hover:bg-violet-700 active:bg-violet-800 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
+                >
+                  {{ isSavingRfid ? 'Menyimpan...' : 'Simpan Kartu RFID' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- UF-6 Section: Ganti Kartu Hilang / Rusak -->
         <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-left">
