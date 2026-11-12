@@ -56,6 +56,21 @@ export const useExtracurricular = () => {
     return res.success ? res.data : []
   }
 
+  const fetchExtracurricularMemberConflicts = async (
+    schoolId: string,
+    ekskulId: string,
+    academicYearId?: string,
+    date?: string
+  ) => {
+    const params = new URLSearchParams()
+    if (academicYearId) params.set('academic_year_id', academicYearId)
+    if (date) params.set('date', date)
+    const qs = params.toString()
+    const url = `/school/${schoolId}/extracurricular/${ekskulId}/member-conflicts${qs ? `?${qs}` : ''}`
+    const res: any = await fetcher(url)
+    return res.success ? res.data : { enrollments_by_student: {}, is_schedule_structured: false }
+  }
+
   const saveExtracurricularMembers = async (
     schoolId: string,
     ekskulId: string,
@@ -98,6 +113,7 @@ export const useExtracurricular = () => {
     updateExtracurricular,
     deleteExtracurricular,
     fetchExtracurricularMembers,
+    fetchExtracurricularMemberConflicts,
     saveExtracurricularMembers,
     cloneExtracurricularMembers,
     fetchExtracurricularAttendances

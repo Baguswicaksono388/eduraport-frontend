@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
-import { Trophy, Plus, Trash2, Edit2, ShieldAlert, CheckCircle2, User, Clock, Users, Activity, RefreshCw, Search } from 'lucide-vue-next'
-import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
+import { Trophy, Plus, Trash2, Edit2, ShieldAlert, CheckCircle2, User, Clock, Users, Activity, RefreshCw, Search, AlertTriangle } from 'lucide-vue-next'
+import { BaseCard, BaseButton, BaseModal, BaseInput, BaseDateInput } from '@eduraport/ui'
 import { useExtracurricular } from '../composables/useExtracurricular'
 import { useTeacher } from '../composables/useTeacher'
 import { useAcademicYear } from '../composables/useAcademicYear'
@@ -28,6 +28,7 @@ const {
   updateExtracurricular,
   deleteExtracurricular,
   fetchExtracurricularMembers,
+  fetchExtracurricularMemberConflicts,
   saveExtracurricularMembers,
   cloneExtracurricularMembers,
   fetchExtracurricularAttendances
@@ -76,6 +77,16 @@ const cloneSourceAcademicYearId = ref('')
 const schoolStudents = ref<any[]>([])
 const selectedMemberIds = ref<string[]>([])
 const memberSearch = ref('')
+const memberViewFilter = ref<'all' | 'enrolled' | 'conflicts'>('all')
+const memberEnrollmentsMap = ref<Record<string, Array<{
+  extracurricular_id: string
+  extracurricular_name: string
+  schedule: string | null
+  is_conflict: boolean
+  overlap_detail: string | null
+}>>>({})
+const memberConflictErrors = ref<string[]>([])
+const memberAlertRef = ref<HTMLElement | null>(null)
 const loadingMembers = ref(false)
 const savingMembers = ref(false)
 const cloningMembers = ref(false)
@@ -83,6 +94,50 @@ const cloningMembers = ref(false)
 const otherMemberAcademicYears = computed(() =>
   academicYears.value.filter((y: any) => y.id !== selectedMemberAcademicYearId.value)
 )
+
+const WEEKDAY_OPTIONS = [
+  { id: 1, short: 'Sen', full: 'Senin' },
+  { id: 2, short: 'Sel', full: 'Selasa' },
+  { id: 3, short: 'Rab', full: 'Rabu' },
+  { id: 4, short: 'Kam', full: 'Kamis' },
+  { id: 5, short: 'Jum', full: 'Jumat' },
+  { id: 6, short: 'Sab', full: 'Sabtu' },
+  { id: 7, short: 'Min', full: 'Minggu' }
+] as const
+
+const formatStructuredScheduleText = (days: number[], start: string, end: string): string => {
+  if (!days.length || !start || !end) return ''
+  const sorted = [...days].sort((a, b) => a - b)
+  const names = sorted.map((d) => WEEKDAY_OPTIONS.find((w) => w.id === d)?.full || '').filter(Boolean)
+  const dayLabel =
+    names.length === 1
+      ? names[0]
+      : names.length === 2
+        ? `${names[0]} & ${names[1]}`
+        : `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}`
+  return `${dayLabel}, ${start} - ${end} WIB`
+}
+
+const syncScheduleBuilderToForm = (formObj: any) => {
+  if (formObj.schedule_days.length > 0 && formObj.schedule_start_time && formObj.schedule_end_time) {
+    formObj.schedule = formatStructuredScheduleText(
+      formObj.schedule_days,
+      formObj.schedule_start_time,
+      formObj.schedule_end_time
+    )
+  }
+}
+
+const toggleFormScheduleDay = (formObj: any, dayId: number) => {
+  const idx = formObj.schedule_days.indexOf(dayId)
+  if (idx >= 0) {
+    formObj.schedule_days.splice(idx, 1)
+  } else {
+    formObj.schedule_days.push(dayId)
+    formObj.schedule_days.sort((a: number, b: number) => a - b)
+  }
+  syncScheduleBuilderToForm(formObj)
+}
 
 const loadMonitorData = async () => {
   if (!selectedSchoolId.value || !selectedMonitorEkstraId.value) return
@@ -173,16 +228,19 @@ const formatMethodBadge = (method?: string | null): string => {
 const loadMembersModalData = async () => {
   if (!selectedSchoolId.value || !membersEkskul.value) return
   loadingMembers.value = true
+  memberConflictErrors.value = []
   try {
     const ayId = selectedMemberAcademicYearId.value || undefined
     const studentParams = new URLSearchParams({ limit: '1000' })
     if (ayId) studentParams.set('academic_year_id', ayId)
 
-    const [membersRes, studentsRes]: [any[], any] = await Promise.all([
+    const [membersRes, conflictsRes, studentsRes]: [any[], any, any] = await Promise.all([
       fetchExtracurricularMembers(selectedSchoolId.value, membersEkskul.value.id, ayId),
+      fetchExtracurricularMemberConflicts(selectedSchoolId.value, membersEkskul.value.id, ayId),
       fetcher(`/school/${selectedSchoolId.value}/student?${studentParams.toString()}`)
     ])
     selectedMemberIds.value = (membersRes || []).map((m: any) => m.student_id)
+    memberEnrollmentsMap.value = conflictsRes?.enrollments_by_student || {}
     const rawStudents = studentsRes?.data?.data || studentsRes?.data || []
     schoolStudents.value = Array.isArray(rawStudents) ? rawStudents : []
   } catch (err) {
@@ -196,6 +254,8 @@ const openMembersModal = async (ekskul: any) => {
   if (!selectedSchoolId.value) return
   membersEkskul.value = ekskul
   memberSearch.value = ''
+  memberViewFilter.value = 'all'
+  memberConflictErrors.value = []
   if (academicYears.value.length === 0) {
     await fetchAcademicYears(selectedSchoolId.value)
   }
@@ -214,27 +274,56 @@ const onMemberAcademicYearChange = async () => {
   await loadMembersModalData()
 }
 
+const getStudentEnrollments = (studentId: string) => memberEnrollmentsMap.value[studentId] || []
+const getStudentScheduleConflicts = (studentId: string) =>
+  getStudentEnrollments(studentId).filter((e) => e.is_conflict)
+const hasStudentScheduleConflict = (studentId: string) => getStudentScheduleConflicts(studentId).length > 0
+
+const conflictingStudentsCount = computed(() =>
+  schoolStudents.value.filter((s: any) => hasStudentScheduleConflict(s.id)).length
+)
+
 const filteredSchoolStudents = computed(() => {
   const kw = memberSearch.value.trim().toLowerCase()
-  if (!kw) return schoolStudents.value
-  return schoolStudents.value.filter((s: any) =>
-    (s.full_name || '').toLowerCase().includes(kw) ||
-    (s.student_number || '').toLowerCase().includes(kw)
-  )
+  const base = schoolStudents.value.filter((s: any) => {
+    if (memberViewFilter.value === 'enrolled' && !selectedMemberIds.value.includes(s.id)) return false
+    if (memberViewFilter.value === 'conflicts' && !hasStudentScheduleConflict(s.id)) return false
+    if (!kw) return true
+    return (
+      (s.full_name || '').toLowerCase().includes(kw) ||
+      (s.student_number || '').toLowerCase().includes(kw)
+    )
+  })
+
+  // Surface currently enrolled members first so admins immediately see who is registered
+  return [...base].sort((a: any, b: any) => {
+    const aEnrolled = selectedMemberIds.value.includes(a.id) ? 0 : 1
+    const bEnrolled = selectedMemberIds.value.includes(b.id) ? 0 : 1
+    if (aEnrolled !== bEnrolled) return aEnrolled - bEnrolled
+    return (a.full_name || '').localeCompare(b.full_name || '')
+  })
 })
 
 const toggleMemberSelection = (studentId: string) => {
   const idx = selectedMemberIds.value.indexOf(studentId)
   if (idx >= 0) {
     selectedMemberIds.value.splice(idx, 1)
-  } else {
-    selectedMemberIds.value.push(studentId)
+    return
   }
+  if (hasStudentScheduleConflict(studentId)) {
+    const conflicts = getStudentScheduleConflicts(studentId)
+    const detail = conflicts.map((c) => `${c.extracurricular_name} (${c.overlap_detail})`).join(', ')
+    memberConflictErrors.value = [`Siswa tidak dapat dipilih karena jadwal bentrok dengan ${detail}.`]
+    nextTick(() => memberAlertRef.value?.focus())
+    return
+  }
+  selectedMemberIds.value.push(studentId)
 }
 
 const handleSaveMembers = async () => {
   if (!selectedSchoolId.value || !membersEkskul.value) return
   savingMembers.value = true
+  memberConflictErrors.value = []
   try {
     await saveExtracurricularMembers(
       selectedSchoolId.value,
@@ -244,11 +333,18 @@ const handleSaveMembers = async () => {
     )
     toast.success('Daftar anggota ekstrakurikuler berhasil disimpan.', 'Sukses')
     showMembersModal.value = false
+    await fetchExtracurriculars(selectedSchoolId.value)
     if (activeTab.value === 'monitoring' && selectedMonitorEkstraId.value === membersEkskul.value.id) {
       await loadMonitorData()
     }
   } catch (err: any) {
-    toast.error(err?.data?.message || err?.message || 'Gagal menyimpan anggota ekskul', 'Gagal')
+    const studentErrs = err?.data?.errors?.student_ids
+    if (Array.isArray(studentErrs) && studentErrs.length > 0) {
+      memberConflictErrors.value = studentErrs
+      await nextTick()
+      memberAlertRef.value?.focus()
+    }
+    toast.error(studentErrs?.[0] || err?.data?.message || err?.message || 'Gagal menyimpan anggota ekskul', 'Gagal')
   } finally {
     savingMembers.value = false
   }
@@ -257,6 +353,7 @@ const handleSaveMembers = async () => {
 const handleCloneMembers = async () => {
   if (!selectedSchoolId.value || !membersEkskul.value || !cloneSourceAcademicYearId.value) return
   cloningMembers.value = true
+  memberConflictErrors.value = []
   try {
     const res: any = await cloneExtracurricularMembers(
       selectedSchoolId.value,
@@ -266,12 +363,21 @@ const handleCloneMembers = async () => {
     )
     const count = res?.data?.cloned ?? 0
     toast.success(`Berhasil menyalin ${count} anggota dari tahun ajaran sumber.`, 'Sukses')
-    await loadMembersModalData()
+    await Promise.all([loadMembersModalData(), fetchExtracurriculars(selectedSchoolId.value)])
     if (activeTab.value === 'monitoring' && selectedMonitorEkstraId.value === membersEkskul.value.id) {
       await loadMonitorData()
     }
   } catch (err: any) {
-    const fieldErr = err?.data?.errors?.source_academic_year_id?.[0] || err?.data?.errors?.target_academic_year_id?.[0]
+    const studentErrs = err?.data?.errors?.student_ids
+    if (Array.isArray(studentErrs) && studentErrs.length > 0) {
+      memberConflictErrors.value = studentErrs
+      await nextTick()
+      memberAlertRef.value?.focus()
+    }
+    const fieldErr =
+      studentErrs?.[0] ||
+      err?.data?.errors?.source_academic_year_id?.[0] ||
+      err?.data?.errors?.target_academic_year_id?.[0]
     toast.error(fieldErr || err?.data?.message || err?.message || 'Gagal menyalin anggota ekskul', 'Gagal')
   } finally {
     cloningMembers.value = false
@@ -282,6 +388,9 @@ const ekskulForm = reactive({
   name: '',
   instructor: '',
   schedule: '',
+  schedule_days: [] as number[],
+  schedule_start_time: '15:00',
+  schedule_end_time: '17:00',
   is_active: true
 })
 
@@ -290,6 +399,9 @@ const editForm = reactive({
   name: '',
   instructor: '',
   schedule: '',
+  schedule_days: [] as number[],
+  schedule_start_time: '15:00',
+  schedule_end_time: '17:00',
   is_active: true
 })
 
@@ -346,15 +458,37 @@ watch([activeTab, selectedMonitorEkstraId, selectedMonitorAcademicYearId, monito
   }
 })
 
+const createFormError = ref('')
+const editFormError = ref('')
+
+const buildExtracurricularPayload = (formObj: typeof ekskulForm) => {
+  const payload: Record<string, any> = {
+    name: formObj.name,
+    instructor: formObj.instructor,
+    schedule: formObj.schedule,
+    is_active: formObj.is_active
+  }
+  if (formObj.schedule_days.length > 0 && formObj.schedule_start_time && formObj.schedule_end_time) {
+    payload.schedule_days = [...formObj.schedule_days]
+    payload.schedule_start_time = formObj.schedule_start_time
+    payload.schedule_end_time = formObj.schedule_end_time
+  }
+  return payload
+}
+
 const handleCreateEkskul = async () => {
+  createFormError.value = ''
   try {
-    const res = await createExtracurricular(selectedSchoolId.value, { ...ekskulForm })
+    const res = await createExtracurricular(selectedSchoolId.value, buildExtracurricularPayload(ekskulForm))
     if (res.success) {
       showCreateModal.value = false
       Object.assign(ekskulForm, {
         name: '',
         instructor: '',
         schedule: '',
+        schedule_days: [],
+        schedule_start_time: '15:00',
+        schedule_end_time: '17:00',
         is_active: true
       })
     }
@@ -363,38 +497,51 @@ const handleCreateEkskul = async () => {
       const errorMsg = Object.entries(e.data.errors)
         .map(([field, msgs]: any) => `${field}: ${msgs.join(', ')}`)
         .join('\n')
-      alert(`Gagal menambah ekskul:\n${errorMsg}`)
+      createFormError.value = errorMsg
+      toast.error(errorMsg, 'Gagal menambah ekskul')
     } else {
-      alert(e?.message ?? 'Gagal menambah ekskul')
+      createFormError.value = e?.message ?? 'Gagal menambah ekskul'
+      toast.error(createFormError.value, 'Gagal')
     }
   }
 }
 
 const openEditModal = (ekskul: any) => {
   editingEkskulId.value = ekskul.id
+  editFormError.value = ''
   Object.assign(editForm, {
     name: ekskul.name,
     instructor: ekskul.instructor || '',
     schedule: ekskul.schedule || '',
+    schedule_days: Array.isArray(ekskul.schedule_days) ? [...ekskul.schedule_days] : [],
+    schedule_start_time: ekskul.schedule_start_time || '15:00',
+    schedule_end_time: ekskul.schedule_end_time || '17:00',
     is_active: !!ekskul.is_active
   })
   showEditModal.value = true
 }
 
 const handleUpdateEkskul = async () => {
+  editFormError.value = ''
   try {
-    const res = await updateExtracurricular(selectedSchoolId.value, editingEkskulId.value, { ...editForm })
+    const res = await updateExtracurricular(
+      selectedSchoolId.value,
+      editingEkskulId.value,
+      buildExtracurricularPayload(editForm)
+    )
     if (res.success) {
       showEditModal.value = false
     }
   } catch (e: any) {
     if (e.data?.errors) {
       const errorMsg = Object.entries(e.data.errors)
-        .map(([field, msgs]: any) => `${field}: ${msgs.join(', ')}`)
+        .map(([_field, msgs]: any) => msgs.join('; '))
         .join('\n')
-      alert(`Gagal memperbarui ekskul:\n${errorMsg}`)
+      editFormError.value = errorMsg
+      toast.error(errorMsg, 'Jadwal Bentrok / Validasi Gagal')
     } else {
-      alert(e?.message ?? 'Gagal memperbarui ekskul')
+      editFormError.value = e?.message ?? 'Gagal memperbarui ekskul'
+      toast.error(editFormError.value, 'Gagal')
     }
   }
 }
@@ -534,11 +681,14 @@ const handleDeleteEkskul = async (id: string) => {
                   type="button"
                   data-testid="btn-members-ekstra"
                   @click="openMembersModal(ekskul)"
-                  class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors inline-flex items-center gap-1 cursor-pointer"
-                  title="Kelola Anggota Ekskul"
+                  class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                  title="Lihat & Kelola Anggota Ekskul"
                 >
                   <Users :size="13" />
                   <span>Anggota</span>
+                  <span class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300">
+                    {{ ekskul.member_count ?? 0 }}
+                  </span>
                 </button>
                 <button @click="openEditModal(ekskul)" class="p-2 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
                   <Edit2 :size="14" />
@@ -562,25 +712,25 @@ const handleDeleteEkskul = async (id: string) => {
 
     <!-- TAB 2: Monitoring Berangkat & Pulang Ekstrakurikuler -->
     <div v-else class="space-y-4">
-      <div class="bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-sm">
-        <div class="flex flex-wrap items-center gap-3">
-          <div class="flex flex-col gap-1">
+      <div class="bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-4 flex flex-wrap items-end justify-between gap-3 shadow-sm">
+        <div class="flex flex-wrap items-end gap-3 w-full lg:w-auto">
+          <div class="flex flex-col gap-1 w-full sm:w-auto">
             <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pilih Ekstrakurikuler</label>
             <select
               v-model="selectedMonitorEkstraId"
               data-testid="monitor-ekstra-select"
-              class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600 min-w-[220px]"
+              class="h-9 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 transition-all min-w-[210px]"
             >
               <option value="" disabled>-- Pilih Ekskul --</option>
               <option v-for="ex in extracurriculars" :key="ex.id" :value="ex.id">{{ ex.name }}</option>
             </select>
           </div>
-          <div class="flex flex-col gap-1">
+          <div class="flex flex-col gap-1 w-full sm:w-auto">
             <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tahun Ajaran</label>
             <select
               v-model="selectedMonitorAcademicYearId"
               data-testid="monitor-ekstra-year"
-              class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600 min-w-[180px]"
+              class="h-9 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 transition-all min-w-[180px]"
             >
               <option value="" disabled>-- Tahun Ajaran --</option>
               <option v-for="ay in academicYears" :key="ay.id" :value="ay.id">
@@ -588,18 +738,19 @@ const handleDeleteEkskul = async (id: string) => {
               </option>
             </select>
           </div>
-          <div class="flex flex-col gap-1">
-            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tanggal</label>
-            <input
-              type="date"
+          <div class="w-full sm:w-auto sm:min-w-[230px]">
+            <BaseDateInput
               v-model="monitorDate"
+              label="Tanggal"
+              size="sm"
+              accent="violet"
+              :clearable="false"
               data-testid="monitor-ekstra-date"
-              class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600"
             />
           </div>
         </div>
 
-        <BaseButton variant="outline" @click="loadMonitorData" :disabled="loadingMonitor || !selectedMonitorEkstraId" class="gap-1.5 text-xs">
+        <BaseButton variant="outline" size="sm" @click="loadMonitorData" :disabled="loadingMonitor || !selectedMonitorEkstraId" class="h-9 gap-1.5 text-xs shrink-0">
           <RefreshCw :size="14" :class="loadingMonitor ? 'animate-spin' : ''" />
           <span>Muat Ulang</span>
         </BaseButton>
@@ -684,6 +835,13 @@ const handleDeleteEkskul = async (id: string) => {
     <!-- Create Modal -->
     <BaseModal :show="showCreateModal" title="Ekstrakurikuler Baru" @close="showCreateModal = false">
       <form @submit.prevent="handleCreateEkskul" class="space-y-4">
+        <div
+          v-if="createFormError"
+          role="alert"
+          class="rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 px-3.5 py-2.5 text-xs font-medium text-rose-700 dark:text-rose-300 whitespace-pre-line"
+        >
+          {{ createFormError }}
+        </div>
         <BaseInput v-model="ekskulForm.name" label="Nama Ekstrakurikuler" placeholder="Contoh: Pramuka Utama" required />
         <div class="flex flex-col gap-1.5">
           <label class="text-xs font-semibold text-slate-650 dark:text-zinc-400">Pelatih / Instruktur</label>
@@ -697,7 +855,51 @@ const handleDeleteEkskul = async (id: string) => {
             </option>
           </select>
         </div>
-        <BaseInput v-model="ekskulForm.schedule" label="Jadwal Kegiatan" placeholder="Contoh: Sabtu, 09.00 - 11.00 WIB" />
+
+        <!-- Structured Schedule Builder + Synced Label -->
+        <div class="space-y-2.5 rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-slate-50/60 dark:bg-zinc-950/60 p-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Atur Hari &amp; Jam (Deteksi Bentrok)</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            <button
+              v-for="day in WEEKDAY_OPTIONS"
+              :key="day.id"
+              type="button"
+              :aria-pressed="ekskulForm.schedule_days.includes(day.id)"
+              @click="toggleFormScheduleDay(ekskulForm, day.id)"
+              :class="[
+                'min-h-[34px] px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer',
+                ekskulForm.schedule_days.includes(day.id)
+                  ? 'bg-violet-600 text-white border-violet-600 shadow-sm'
+                  : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-800 hover:border-violet-400'
+              ]"
+            >
+              {{ day.short }}
+            </button>
+          </div>
+          <div v-if="ekskulForm.schedule_days.length > 0" class="grid grid-cols-2 gap-2.5 pt-1">
+            <div class="flex flex-col gap-1">
+              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Jam Mulai</label>
+              <input
+                type="time"
+                v-model="ekskulForm.schedule_start_time"
+                @change="syncScheduleBuilderToForm(ekskulForm)"
+                class="h-9 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600"
+              />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Jam Selesai</label>
+              <input
+                type="time"
+                v-model="ekskulForm.schedule_end_time"
+                @change="syncScheduleBuilderToForm(ekskulForm)"
+                class="h-9 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600"
+              />
+            </div>
+          </div>
+          <BaseInput v-model="ekskulForm.schedule" label="Jadwal Kegiatan" placeholder="Contoh: Sabtu, 09.00 - 11.00 WIB" />
+        </div>
         
         <div class="flex items-center gap-2 px-1 py-1">
           <input type="checkbox" id="is_active_ekskul_create" v-model="ekskulForm.is_active" class="rounded border-slate-350 dark:border-zinc-800 text-violet-600 focus:ring-violet-600/20" />
@@ -714,6 +916,13 @@ const handleDeleteEkskul = async (id: string) => {
     <!-- Edit Modal -->
     <BaseModal :show="showEditModal" title="Ubah Ekstrakurikuler" @close="showEditModal = false">
       <form @submit.prevent="handleUpdateEkskul" class="space-y-4">
+        <div
+          v-if="editFormError"
+          role="alert"
+          class="rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 px-3.5 py-2.5 text-xs font-medium text-rose-700 dark:text-rose-300 whitespace-pre-line"
+        >
+          {{ editFormError }}
+        </div>
         <BaseInput v-model="editForm.name" label="Nama Ekstrakurikuler" placeholder="Contoh: Pramuka Utama" required />
         <div class="flex flex-col gap-1.5">
           <label class="text-xs font-semibold text-slate-650 dark:text-zinc-400">Pelatih / Instruktur</label>
@@ -727,7 +936,51 @@ const handleDeleteEkskul = async (id: string) => {
             </option>
           </select>
         </div>
-        <BaseInput v-model="editForm.schedule" label="Jadwal Kegiatan" placeholder="Contoh: Sabtu, 09.00 - 11.00 WIB" />
+
+        <!-- Structured Schedule Builder + Synced Label -->
+        <div class="space-y-2.5 rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-slate-50/60 dark:bg-zinc-950/60 p-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Atur Hari &amp; Jam (Deteksi Bentrok)</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            <button
+              v-for="day in WEEKDAY_OPTIONS"
+              :key="day.id"
+              type="button"
+              :aria-pressed="editForm.schedule_days.includes(day.id)"
+              @click="toggleFormScheduleDay(editForm, day.id)"
+              :class="[
+                'min-h-[34px] px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer',
+                editForm.schedule_days.includes(day.id)
+                  ? 'bg-violet-600 text-white border-violet-600 shadow-sm'
+                  : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-800 hover:border-violet-400'
+              ]"
+            >
+              {{ day.short }}
+            </button>
+          </div>
+          <div v-if="editForm.schedule_days.length > 0" class="grid grid-cols-2 gap-2.5 pt-1">
+            <div class="flex flex-col gap-1">
+              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Jam Mulai</label>
+              <input
+                type="time"
+                v-model="editForm.schedule_start_time"
+                @change="syncScheduleBuilderToForm(editForm)"
+                class="h-9 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600"
+              />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Jam Selesai</label>
+              <input
+                type="time"
+                v-model="editForm.schedule_end_time"
+                @change="syncScheduleBuilderToForm(editForm)"
+                class="h-9 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600"
+              />
+            </div>
+          </div>
+          <BaseInput v-model="editForm.schedule" label="Jadwal Kegiatan" placeholder="Contoh: Sabtu, 09.00 - 11.00 WIB" />
+        </div>
         
         <div class="flex items-center gap-2 px-1 py-1">
           <input type="checkbox" id="is_active_ekskul_edit" v-model="editForm.is_active" class="rounded border-slate-350 dark:border-zinc-800 text-violet-600 focus:ring-violet-600/20" />
@@ -742,16 +995,50 @@ const handleDeleteEkskul = async (id: string) => {
     </BaseModal>
 
     <!-- Members Management Modal -->
-    <BaseModal :show="showMembersModal" :title="`Anggota Ekstrakurikuler: ${membersEkskul?.name || ''}`" @close="showMembersModal = false">
+    <BaseModal :show="showMembersModal" size="2xl" :title="`Anggota Ekstrakurikuler: ${membersEkskul?.name || ''}`" @close="showMembersModal = false">
       <div class="space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50/70 dark:bg-zinc-950/60 border border-slate-200/70 dark:border-zinc-800 rounded-xl p-3">
-          <div class="flex flex-col gap-1">
+        <!-- Club Schedule Summary Banner -->
+        <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-950/60 px-3.5 py-2.5 text-xs">
+          <div class="flex items-center gap-2 text-slate-600 dark:text-zinc-300">
+            <Clock :size="14" class="text-violet-600 dark:text-violet-400 shrink-0" />
+            <span>Jadwal Ekskul Ini:</span>
+            <span class="font-bold text-slate-900 dark:text-zinc-100">
+              {{ membersEkskul?.schedule || 'Belum diatur' }}
+            </span>
+          </div>
+          <span class="text-[11px] font-semibold text-slate-500 dark:text-zinc-400">
+            Validasi bentrok jadwal otomatis aktif per Tahun Ajaran
+          </span>
+        </div>
+
+        <!-- Inline Focusable Conflict / Validation Alert Summary (UI/UX Pro Max) -->
+        <div
+          v-if="memberConflictErrors.length > 0"
+          ref="memberAlertRef"
+          role="alert"
+          tabindex="-1"
+          class="rounded-xl border border-rose-300 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/40 p-3.5 text-xs text-rose-800 dark:text-rose-200 outline-none focus:ring-2 focus:ring-rose-500"
+        >
+          <div class="flex items-start gap-2.5">
+            <AlertTriangle :size="16" class="text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+            <div class="space-y-1 min-w-0">
+              <p class="font-bold">Jadwal Ekstrakurikuler Bentrok / Beririsan</p>
+              <ul class="list-disc pl-4 space-y-0.5 text-[11px]">
+                <li v-for="(err, idx) in memberConflictErrors" :key="idx">{{ err }}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Year Selector & Clone Bar (Overflow-safe Grid) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-50/70 dark:bg-zinc-950/60 border border-slate-200/70 dark:border-zinc-800 rounded-xl p-3">
+          <div class="flex flex-col gap-1 min-w-0">
             <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tahun Ajaran</label>
             <select
               v-model="selectedMemberAcademicYearId"
               data-testid="member-ekstra-year"
               @change="onMemberAcademicYearChange"
-              class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600"
+              class="h-9 w-full min-w-0 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600"
             >
               <option value="" disabled>-- Pilih Tahun Ajaran --</option>
               <option v-for="ay in academicYears" :key="ay.id" :value="ay.id">
@@ -760,13 +1047,13 @@ const handleDeleteEkskul = async (id: string) => {
             </select>
           </div>
 
-          <div v-if="otherMemberAcademicYears.length > 0" class="flex flex-col gap-1">
+          <div v-if="otherMemberAcademicYears.length > 0" class="flex flex-col gap-1 min-w-0">
             <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Salin dari Tahun Sebelumnya</label>
-            <div class="flex gap-1.5">
+            <div class="flex items-center gap-1.5 min-w-0">
               <select
                 v-model="cloneSourceAcademicYearId"
                 data-testid="member-clone-source-year"
-                class="flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600"
+                class="h-9 flex-1 min-w-0 truncate bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 text-xs font-semibold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600"
               >
                 <option value="" disabled>-- Sumber --</option>
                 <option v-for="ay in otherMemberAcademicYears" :key="ay.id" :value="ay.id">
@@ -779,7 +1066,7 @@ const handleDeleteEkskul = async (id: string) => {
                 data-testid="btn-clone-ekstra-members"
                 @click="handleCloneMembers"
                 :disabled="cloningMembers || !cloneSourceAcademicYearId || !selectedMemberAcademicYearId"
-                class="text-[11px] shrink-0"
+                class="h-9 px-3 text-[11px] shrink-0 whitespace-nowrap"
               >
                 {{ cloningMembers ? 'Menyalin...' : 'Salin' }}
               </BaseButton>
@@ -787,35 +1074,123 @@ const handleDeleteEkskul = async (id: string) => {
           </div>
         </div>
 
-        <div class="relative">
-          <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" :size="14" />
-          <input
-            type="text"
-            v-model="memberSearch"
-            placeholder="Cari nama atau NIS siswa..."
-            class="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 outline-none focus:border-violet-600"
-          />
+        <!-- View Filter Pills & Search -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              data-testid="member-filter-all"
+              @click="memberViewFilter = 'all'"
+              :class="[
+                'px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer',
+                memberViewFilter === 'all'
+                  ? 'bg-violet-600 text-white border-violet-600 shadow-sm'
+                  : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800'
+              ]"
+            >
+              Semua Siswa ({{ schoolStudents.length }})
+            </button>
+            <button
+              type="button"
+              data-testid="member-filter-enrolled"
+              @click="memberViewFilter = 'enrolled'"
+              :class="[
+                'px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer',
+                memberViewFilter === 'enrolled'
+                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                  : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800'
+              ]"
+            >
+              Anggota Terdaftar ({{ selectedMemberIds.length }})
+            </button>
+            <button
+              v-if="conflictingStudentsCount > 0"
+              type="button"
+              data-testid="member-filter-conflicts"
+              @click="memberViewFilter = 'conflicts'"
+              :class="[
+                'px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer',
+                memberViewFilter === 'conflicts'
+                  ? 'bg-rose-600 text-white border-rose-600 shadow-sm'
+                  : 'bg-white dark:bg-zinc-900 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/30'
+              ]"
+            >
+              Bentrok Jadwal ({{ conflictingStudentsCount }})
+            </button>
+          </div>
+
+          <div class="relative flex-1 sm:max-w-xs">
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" :size="14" />
+            <input
+              type="text"
+              v-model="memberSearch"
+              placeholder="Cari nama atau NIS siswa..."
+              class="w-full h-9 pl-9 pr-3 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 outline-none focus:border-violet-600"
+            />
+          </div>
         </div>
 
         <div v-if="loadingMembers" class="py-8 text-center text-xs text-slate-400">Memuat daftar siswa...</div>
         <div v-else class="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-xl">
           <div v-if="filteredSchoolStudents.length === 0" class="py-8 text-center text-xs text-slate-400">
-            Tidak ada siswa terdaftar pada tahun ajaran ini.
+            {{
+              memberViewFilter === 'enrolled'
+                ? 'Belum ada anggota terdaftar di ekstrakurikuler ini pada tahun ajaran yang dipilih.'
+                : 'Tidak ada siswa yang sesuai filter pada tahun ajaran ini.'
+            }}
           </div>
           <label
             v-for="s in filteredSchoolStudents"
             :key="s.id"
-            class="flex items-center justify-between px-3.5 py-2.5 text-xs hover:bg-slate-50 dark:hover:bg-zinc-800/40 cursor-pointer"
+            :aria-disabled="hasStudentScheduleConflict(s.id) && !selectedMemberIds.includes(s.id)"
+            :class="[
+              'flex items-start sm:items-center justify-between gap-3 px-3.5 py-2.5 text-xs transition-colors',
+              hasStudentScheduleConflict(s.id) && !selectedMemberIds.includes(s.id)
+                ? 'bg-rose-50/40 dark:bg-rose-950/20 cursor-not-allowed'
+                : 'hover:bg-slate-50 dark:hover:bg-zinc-800/40 cursor-pointer'
+            ]"
           >
-            <div>
-              <p class="font-bold text-slate-800 dark:text-zinc-200">{{ s.full_name }}</p>
-              <p class="text-[10px] text-slate-400">NIS: {{ s.student_number || '-' }}</p>
+            <div class="space-y-1 min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <p class="font-bold text-slate-800 dark:text-zinc-200 truncate">{{ s.full_name }}</p>
+                <span
+                  v-if="selectedMemberIds.includes(s.id)"
+                  class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
+                >
+                  Terdaftar
+                </span>
+                <span
+                  v-if="hasStudentScheduleConflict(s.id) && !selectedMemberIds.includes(s.id)"
+                  class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/20 inline-flex items-center gap-1"
+                >
+                  <AlertTriangle :size="10" /> Bentrok Jadwal
+                </span>
+              </div>
+              <p class="text-[10px] text-slate-400">
+                NIS: {{ s.student_number || '-' }}{{ s.class_name ? ` · ${s.class_name}` : '' }}
+              </p>
+              <div v-if="getStudentEnrollments(s.id).length > 0" class="flex flex-wrap gap-1 pt-0.5">
+                <span
+                  v-for="en in getStudentEnrollments(s.id)"
+                  :key="en.extracurricular_id"
+                  :class="[
+                    'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border',
+                    en.is_conflict
+                      ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900/60'
+                      : 'bg-slate-100 dark:bg-zinc-800/80 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-700'
+                  ]"
+                >
+                  <span>{{ en.is_conflict ? 'Bentrok:' : 'Ikut:' }} {{ en.extracurricular_name }}</span>
+                  <span v-if="en.schedule" class="opacity-75">({{ en.schedule }})</span>
+                </span>
+              </div>
             </div>
             <input
               type="checkbox"
               :checked="selectedMemberIds.includes(s.id)"
+              :disabled="hasStudentScheduleConflict(s.id) && !selectedMemberIds.includes(s.id)"
               @change="toggleMemberSelection(s.id)"
-              class="w-4 h-4 rounded text-violet-600 border-slate-300 cursor-pointer"
+              class="w-4 h-4 mt-0.5 sm:mt-0 rounded text-violet-600 border-slate-300 dark:border-zinc-700 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
             />
           </label>
         </div>

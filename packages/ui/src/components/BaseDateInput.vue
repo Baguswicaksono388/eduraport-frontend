@@ -13,6 +13,9 @@ const props = withDefaults(defineProps<{
   max?: string
   formatWithDay?: boolean
   align?: 'left' | 'right' | 'auto'
+  size?: 'md' | 'sm'
+  clearable?: boolean
+  accent?: 'blue' | 'violet'
 }>(), {
   modelValue: '',
   label: '',
@@ -23,8 +26,40 @@ const props = withDefaults(defineProps<{
   min: '',
   max: '',
   formatWithDay: true,
-  align: 'auto'
+  align: 'auto',
+  size: 'md',
+  clearable: true,
+  accent: 'blue'
 })
+
+const ACCENT_THEME = {
+  blue: {
+    openTrigger: 'border-blue-600 dark:border-blue-500 ring-4 ring-blue-500/10 dark:ring-blue-500/20 bg-white dark:bg-zinc-900',
+    iconActive: 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400',
+    chevronOpen: 'rotate-180 text-blue-600 dark:text-blue-400',
+    headerHover: 'group-hover:text-blue-600 dark:group-hover:text-blue-400',
+    daySelected: 'bg-blue-600 text-white font-bold shadow-md shadow-blue-600/30 ring-2 ring-blue-500/50 scale-105',
+    dayToday: 'ring-1.5 ring-blue-500 text-blue-600 dark:text-blue-400 font-bold bg-blue-50/50 dark:bg-blue-950/30',
+    dayDefault: 'text-slate-900 dark:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-blue-600 dark:hover:text-blue-400 font-medium',
+    tileSelected: 'bg-blue-600 text-white shadow-md shadow-blue-600/25',
+    actionText: 'text-blue-600 dark:text-blue-400',
+    footerBtn: 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/30'
+  },
+  violet: {
+    openTrigger: 'border-violet-600 dark:border-violet-500 ring-4 ring-violet-600/10 dark:ring-violet-500/20 bg-white dark:bg-zinc-900',
+    iconActive: 'bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400',
+    chevronOpen: 'rotate-180 text-violet-600 dark:text-violet-400',
+    headerHover: 'group-hover:text-violet-600 dark:group-hover:text-violet-400',
+    daySelected: 'bg-violet-600 text-white font-bold shadow-md shadow-violet-600/30 ring-2 ring-violet-500/50 scale-105',
+    dayToday: 'ring-1.5 ring-violet-500 text-violet-600 dark:text-violet-400 font-bold bg-violet-50/50 dark:bg-violet-950/30',
+    dayDefault: 'text-slate-900 dark:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-violet-600 dark:hover:text-violet-400 font-medium',
+    tileSelected: 'bg-violet-600 text-white shadow-md shadow-violet-600/25',
+    actionText: 'text-violet-600 dark:text-violet-400',
+    footerBtn: 'text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-950/30'
+  }
+} as const
+
+const theme = computed(() => ACCENT_THEME[props.accent])
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: string): void
@@ -309,51 +344,77 @@ const nextYearPage = () => {
 </script>
 
 <template>
-  <div ref="containerRef" class="flex flex-col gap-1.5 w-full relative select-none" :class="{ 'z-50': isOpen }">
-    <label v-if="label" class="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider px-0.5">
+  <div
+    ref="containerRef"
+    :class="['flex flex-col w-full relative select-none', size === 'sm' ? 'gap-1' : 'gap-1.5', { 'z-50': isOpen }]"
+  >
+    <label
+      v-if="label"
+      :class="[
+        'font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider',
+        size === 'sm' ? 'text-[10px]' : 'text-[11px] px-0.5'
+      ]"
+    >
       {{ label }}
       <span v-if="required" class="text-rose-500">*</span>
     </label>
 
     <!-- Trigger Input Box -->
     <div
+      data-date-trigger
+      role="button"
       @click="toggleOpen"
       tabindex="0"
       @keydown.enter.prevent="toggleOpen"
       @keydown.space.prevent="toggleOpen"
       :class="[
-        'w-full flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium border transition-all duration-200 cursor-pointer outline-none shadow-sm',
+        'w-full flex items-center justify-between border transition-all duration-200 cursor-pointer outline-none',
+        size === 'sm'
+          ? 'h-9 rounded-lg px-2.5 text-xs font-bold gap-2'
+          : 'rounded-xl px-3.5 py-2.5 text-sm font-medium shadow-sm',
         isOpen
-          ? 'border-blue-600 dark:border-blue-500 ring-4 ring-blue-500/10 dark:ring-blue-500/20 bg-white dark:bg-zinc-900'
+          ? theme.openTrigger
           : error
             ? 'border-rose-500 ring-4 ring-rose-500/10 bg-white dark:bg-zinc-950'
-            : 'border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 bg-white dark:bg-zinc-950',
+            : size === 'sm'
+              ? 'border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 bg-slate-50 dark:bg-zinc-950'
+              : 'border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 bg-white dark:bg-zinc-950',
         disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
       ]"
     >
-      <div class="flex items-center gap-2.5 overflow-hidden">
+      <div :class="['flex items-center overflow-hidden', size === 'sm' ? 'gap-2' : 'gap-2.5']">
         <div
           :class="[
-            'p-1.5 rounded-lg transition-colors',
-            modelValue ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400' : 'bg-slate-100 dark:bg-zinc-900 text-slate-400 dark:text-zinc-500'
+            'transition-colors shrink-0',
+            size === 'sm' ? 'p-1 rounded-md' : 'p-1.5 rounded-lg',
+            modelValue ? theme.iconActive : 'bg-slate-100 dark:bg-zinc-900 text-slate-400 dark:text-zinc-500'
           ]"
         >
-          <Calendar :size="15" />
+          <Calendar :size="size === 'sm' ? 13 : 15" />
         </div>
         <span
           v-if="modelValue"
-          class="text-slate-800 dark:text-zinc-100 truncate text-xs sm:text-sm font-semibold"
+          :class="[
+            'text-slate-800 dark:text-zinc-100 truncate',
+            size === 'sm' ? 'text-xs font-bold' : 'text-xs sm:text-sm font-semibold'
+          ]"
         >
           {{ formattedDisplay }}
         </span>
-        <span v-else class="text-slate-400 dark:text-zinc-500 truncate text-xs sm:text-sm">
+        <span
+          v-else
+          :class="[
+            'text-slate-400 dark:text-zinc-500 truncate',
+            size === 'sm' ? 'text-xs font-semibold' : 'text-xs sm:text-sm'
+          ]"
+        >
           {{ placeholder }}
         </span>
       </div>
 
       <div class="flex items-center gap-1 shrink-0">
         <button
-          v-if="modelValue && !disabled"
+          v-if="clearable && modelValue && !disabled"
           type="button"
           @click.stop="clearDate"
           class="p-1 text-slate-400 hover:text-rose-500 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
@@ -365,7 +426,7 @@ const nextYearPage = () => {
           :size="14"
           :class="[
             'text-slate-400 transition-transform duration-200',
-            isOpen ? 'rotate-180 text-blue-600 dark:text-blue-400' : ''
+            isOpen ? theme.chevronOpen : ''
           ]"
         />
       </div>
@@ -397,6 +458,7 @@ const nextYearPage = () => {
           <!-- Combined Month Year Dropdown Button -->
           <button
             type="button"
+            data-date-month-toggle
             @click="toggleMonthYearView"
             class="px-2 py-1 -ml-1 rounded-lg text-sm font-bold text-slate-900 dark:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors flex items-center gap-1.5 group"
           >
@@ -404,8 +466,9 @@ const nextYearPage = () => {
             <ChevronDown
               :size="14"
               :class="[
-                'text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-transform duration-200',
-                isPickerView !== 'days' ? 'rotate-180 text-blue-600 dark:text-blue-400' : ''
+                'text-slate-400 transition-transform duration-200',
+                theme.headerHover,
+                isPickerView !== 'days' ? theme.chevronOpen : ''
               ]"
             />
           </button>
@@ -452,6 +515,7 @@ const nextYearPage = () => {
             <template v-else-if="isPickerView === 'years'">
               <button
                 type="button"
+                data-date-year-prev
                 @click="prevYearPage"
                 class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 transition-colors"
                 title="12 Tahun sebelumnya"
@@ -460,6 +524,7 @@ const nextYearPage = () => {
               </button>
               <button
                 type="button"
+                data-date-year-next
                 @click="nextYearPage"
                 class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 transition-colors"
                 title="12 Tahun berikutnya"
@@ -492,16 +557,17 @@ const nextYearPage = () => {
               v-for="cell in calendarDays"
               :key="cell.date"
               type="button"
+              :data-date="cell.date"
               :disabled="cell.isDisabled"
               @click="selectDate(cell.date)"
               :class="[
                 'h-8 w-8 sm:h-9 sm:w-9 mx-auto rounded-lg text-xs font-semibold flex items-center justify-center transition-all duration-150',
                 cell.isSelected
-                  ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-600/30 ring-2 ring-blue-500/50 scale-105'
+                  ? theme.daySelected
                   : cell.isToday
-                    ? 'ring-1.5 ring-blue-500 text-blue-600 dark:text-blue-400 font-bold bg-blue-50/50 dark:bg-blue-950/30'
+                    ? theme.dayToday
                     : cell.isCurrentMonth
-                      ? 'text-slate-900 dark:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-blue-600 dark:hover:text-blue-400 font-medium'
+                      ? theme.dayDefault
                       : 'text-slate-400 dark:text-zinc-600 hover:text-slate-600 dark:hover:text-zinc-400',
                 cell.isDisabled ? 'opacity-20 cursor-not-allowed pointer-events-none' : ''
               ]"
@@ -517,8 +583,9 @@ const nextYearPage = () => {
             <span class="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Pilih Bulan</span>
             <button
               type="button"
+              data-date-year-view
               @click="isPickerView = 'years'"
-              class="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+              :class="['text-xs font-mono font-bold hover:underline flex items-center gap-1', theme.actionText]"
             >
               Ubah Tahun ({{ viewYear }})
               <ChevronRight :size="12" />
@@ -529,11 +596,12 @@ const nextYearPage = () => {
               v-for="(mName, idx) in MONTHS_SHORT_ID"
               :key="mName"
               type="button"
+              :data-date-month="idx"
               @click="viewMonth = idx; isPickerView = 'days'"
               :class="[
                 'py-2.5 rounded-xl text-xs font-bold transition-all',
                 viewMonth === idx
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
+                  ? theme.tileSelected
                   : 'hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300'
               ]"
             >
@@ -551,7 +619,7 @@ const nextYearPage = () => {
             <button
               type="button"
               @click="isPickerView = 'months'"
-              class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+              :class="['text-xs font-bold hover:underline flex items-center gap-1', theme.actionText]"
             >
               Pilih Bulan
               <ChevronRight :size="12" />
@@ -562,11 +630,12 @@ const nextYearPage = () => {
               v-for="y in yearList"
               :key="y"
               type="button"
+              :data-date-year="y"
               @click="viewYear = y; isPickerView = 'months'"
               :class="[
                 'py-2.5 rounded-xl text-xs font-bold transition-all font-mono',
                 viewYear === y
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
+                  ? theme.tileSelected
                   : 'hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300'
               ]"
             >
@@ -575,19 +644,25 @@ const nextYearPage = () => {
           </div>
         </div>
 
-        <!-- Footer: Clear & Today (Exact match to screenshot bottom actions) -->
-        <div class="flex items-center justify-between pt-3 mt-3 border-t border-slate-100 dark:border-zinc-800/80">
+        <!-- Footer: Clear & Today -->
+        <div
+          :class="[
+            'flex items-center pt-3 mt-3 border-t border-slate-100 dark:border-zinc-800/80',
+            clearable ? 'justify-between' : 'justify-end'
+          ]"
+        >
           <button
+            v-if="clearable"
             type="button"
             @click="clearDate"
-            class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors px-2 py-1 rounded-md hover:bg-blue-50 dark:hover:bg-blue-950/30"
+            :class="['text-xs font-bold transition-colors px-2 py-1 rounded-md', theme.footerBtn]"
           >
             Clear
           </button>
           <button
             type="button"
             @click="selectToday"
-            class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors px-2 py-1 rounded-md hover:bg-blue-50 dark:hover:bg-blue-950/30"
+            :class="['text-xs font-bold transition-colors px-2 py-1 rounded-md', theme.footerBtn]"
           >
             Today
           </button>
