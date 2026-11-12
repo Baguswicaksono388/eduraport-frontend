@@ -277,13 +277,18 @@ const formatMutabaahScanTime = (scannedAt?: string): string => {
 }
 
 // Master Yayasan Management Modal States
+const canManageFoundationMaster = isFoundationOwner
 const showMasterModal = ref(false)
-const masterTab = ref<'items' | 'assignments'>('items')
+const activeMasterTab = ref<'items' | 'assign'>('items')
 const foundationMasterItems = ref<any[]>([])
 const loadingFoundationItems = ref(false)
 const schoolAssignmentsData = ref<any[]>([])
 const selectedAssignSchoolId = ref<string>('')
 const savingAssignment = ref(false)
+
+const currentSchoolAssignments = computed(() => {
+  return schoolAssignmentsData.value.find((s: any) => s.school_id === selectedAssignSchoolId.value) || null
+})
 
 const masterItemForm = ref({
   id: '',
@@ -322,8 +327,13 @@ const loadFoundationMasterData = async () => {
   try {
     foundationMasterItems.value = await fetchFoundationMutabaahItems(selectedFoundationId.value)
     schoolAssignmentsData.value = await fetchFoundationSchoolAssignments(selectedFoundationId.value)
-    if (!selectedAssignSchoolId.value && schools.value.length > 0) {
-      selectedAssignSchoolId.value = selectedSchoolId.value || schools.value[0].id
+    const availableIds = new Set(schoolAssignmentsData.value.map((s: any) => s.school_id))
+    if (!selectedAssignSchoolId.value || !availableIds.has(selectedAssignSchoolId.value)) {
+      selectedAssignSchoolId.value =
+        (selectedSchoolId.value && availableIds.has(selectedSchoolId.value) ? selectedSchoolId.value : '') ||
+        schoolAssignmentsData.value[0]?.school_id ||
+        schools.value[0]?.id ||
+        ''
     }
   } catch (err) {
     console.error('Failed fetching master items:', err)
@@ -430,6 +440,7 @@ const handleSaveSchoolAssignments = async () => {
       assignments: payload
     })
     toast.success('Penugasan amalan ke unit sekolah berhasil disimpan')
+    await loadFoundationMasterData()
     if (selectedSchoolId.value === selectedAssignSchoolId.value) {
       await loadAssignedMutabaahItems(selectedSchoolId.value)
       if (selectedClassId.value) await loadCurrentData()
@@ -2342,6 +2353,7 @@ const handleSaveBulkIbadah = async () => {
               <button
                 v-if="canManageFoundationMaster"
                 type="button"
+                data-testid="btn-master-mutabaah"
                 @click="openMasterModal"
                 class="px-3 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                 title="Kelola bank amalan yayasan dan penugasan per unit sekolah"
@@ -2398,6 +2410,7 @@ const handleSaveBulkIbadah = async () => {
             <button
               v-if="canManageFoundationMaster"
               type="button"
+              data-testid="btn-master-mutabaah-empty"
               @click="openMasterModal"
               class="mt-4 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold inline-flex items-center gap-1.5 transition cursor-pointer"
             >
@@ -2742,6 +2755,7 @@ const handleSaveBulkIbadah = async () => {
     <!-- MODAL: KELOLA BANK AMALAN YAYASAN & PENUGASAN SEKOLAH -->
     <div
       v-if="showMasterModal"
+      data-testid="modal-master-mutabaah"
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
     >
       <div
@@ -2775,6 +2789,7 @@ const handleSaveBulkIbadah = async () => {
         <div class="flex border-b border-slate-200 dark:border-zinc-800 px-6 bg-slate-50/30 dark:bg-zinc-900/40">
           <button
             type="button"
+            data-testid="master-tab-items"
             @click="activeMasterTab = 'items'"
             :class="[
               'px-4 py-3 text-xs font-bold border-b-2 transition flex items-center gap-2 cursor-pointer',
@@ -2788,6 +2803,7 @@ const handleSaveBulkIbadah = async () => {
           </button>
           <button
             type="button"
+            data-testid="master-tab-assign"
             @click="activeMasterTab = 'assign'"
             :class="[
               'px-4 py-3 text-xs font-bold border-b-2 transition flex items-center gap-2 cursor-pointer',
@@ -2827,6 +2843,7 @@ const handleSaveBulkIbadah = async () => {
                   <label class="block font-bold text-slate-600 dark:text-zinc-400 mb-1">Nama Amalan *</label>
                   <input
                     type="text"
+                    data-testid="input-master-item-name"
                     v-model="masterItemForm.name"
                     placeholder="Contoh: Sholat Dhuha, Dzikir Pagi"
                     class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-purple-600 text-slate-900 dark:text-zinc-100"
@@ -2835,6 +2852,7 @@ const handleSaveBulkIbadah = async () => {
                 <div>
                   <label class="block font-bold text-slate-600 dark:text-zinc-400 mb-1">Kategori *</label>
                   <select
+                    data-testid="select-master-item-category"
                     v-model="masterItemForm.category"
                     class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-purple-600 text-slate-900 dark:text-zinc-100"
                   >
@@ -2861,6 +2879,7 @@ const handleSaveBulkIbadah = async () => {
               <div class="flex justify-end gap-2 pt-1">
                 <button
                   type="button"
+                  data-testid="btn-save-master-item"
                   @click="handleSaveMasterItem"
                   :disabled="savingMasterItem || !masterItemForm.name.trim()"
                   class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer shadow-xs"
@@ -2945,6 +2964,7 @@ const handleSaveBulkIbadah = async () => {
                 <span class="text-xs font-bold text-slate-800 dark:text-zinc-200">Pilih Unit Sekolah:</span>
               </div>
               <select
+                data-testid="select-assign-school"
                 v-model="selectedAssignSchoolId"
                 class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-semibold outline-none focus:border-purple-600 text-slate-900 dark:text-zinc-100 min-w-[200px]"
               >
@@ -2964,7 +2984,7 @@ const handleSaveBulkIbadah = async () => {
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60">
-                  <template v-if="currentSchoolAssignments">
+                  <template v-if="currentSchoolAssignments && currentSchoolAssignments.assigned_items?.length > 0">
                     <tr
                       v-for="item in currentSchoolAssignments.assigned_items"
                       :key="item.id"
@@ -3002,6 +3022,11 @@ const handleSaveBulkIbadah = async () => {
                       </td>
                     </tr>
                   </template>
+                  <tr v-else>
+                    <td colspan="4" class="py-8 text-center text-slate-400 text-xs">
+                      Belum ada amalan di Bank Amalan Yayasan. Tambahkan amalan terlebih dahulu di tab Bank Amalan Yayasan (Master).
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -3009,6 +3034,7 @@ const handleSaveBulkIbadah = async () => {
             <div class="flex justify-end gap-2 pt-2">
               <button
                 type="button"
+                data-testid="btn-save-school-assignments"
                 @click="handleSaveSchoolAssignments"
                 :disabled="savingAssignment || !selectedAssignSchoolId"
                 class="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer shadow-md"
