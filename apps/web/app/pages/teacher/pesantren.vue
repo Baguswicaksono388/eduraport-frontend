@@ -239,10 +239,16 @@ const tahfidzForm = ref({
 const tahfidzRecords = ref<any[]>([])
 
 // Dynamic Mutaba'ah State Model
+interface MutabaahScanSource {
+  method: string
+  scanned_at: string
+}
+
 interface StudentMutabaahState {
   check_data: Record<string, boolean>
   is_excused: boolean
   notes: string
+  scan_sources?: Record<string, MutabaahScanSource>
 }
 const ibadahGrid = ref<Record<string, StudentMutabaahState>>({})
 const assignedMutabaahItems = ref<any[]>([])
@@ -255,6 +261,19 @@ const ibadahStatusFilter = ref<'all' | 'hadir' | 'uzur' | 'incomplete'>('all')
 
 const markIbadahChanged = () => {
   hasUnsavedChanges.value = true
+}
+
+const getScanSource = (studentId: string, itemId: string): MutabaahScanSource | undefined => {
+  return ibadahGrid.value[studentId]?.scan_sources?.[itemId]
+}
+
+const formatMutabaahScanTime = (scannedAt?: string): string => {
+  if (!scannedAt) return ''
+  return new Date(scannedAt).toLocaleTimeString('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Jakarta'
+  })
 }
 
 // Master Yayasan Management Modal States
@@ -632,7 +651,7 @@ const loadCurrentData = async () => {
       targetDate,
       selectedClassId.value
     )
-    const existingMap = new Map(existing.map((e: any) => [e.student_id, e]))
+    const existingMap = new Map<string, any>(existing.map((e: any) => [e.student_id, e]))
 
     const newGrid: any = {}
     for (const s of classStudents.value) {
@@ -641,7 +660,8 @@ const loadCurrentData = async () => {
         newGrid[s.id] = {
           check_data: saved.check_data || {},
           is_excused: !!saved.is_excused,
-          notes: saved.notes || ''
+          notes: saved.notes || '',
+          scan_sources: saved.scan_sources || {}
         }
       } else {
         const defaultChecks: Record<string, boolean> = {}
@@ -651,7 +671,8 @@ const loadCurrentData = async () => {
         newGrid[s.id] = {
           check_data: defaultChecks,
           is_excused: false,
-          notes: ''
+          notes: '',
+          scan_sources: saved?.scan_sources || {}
         }
       }
     }
@@ -2651,20 +2672,29 @@ const handleSaveBulkIbadah = async () => {
                       🌸 Dikecualikan
                     </span>
 
-                    <!-- Checkbox Amalan -->
-                    <label
-                      v-else
-                      class="inline-flex items-center justify-center p-1 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 cursor-pointer transition"
-                    >
-                      <input
-                        type="checkbox"
-                        v-if="ibadahGrid[s.id] && ibadahGrid[s.id].check_data"
-                        v-model="ibadahGrid[s.id].check_data[item.id]"
-                        @change="markIbadahChanged"
-                        class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-zinc-700 dark:bg-zinc-800 cursor-pointer accent-emerald-600 transition"
-                        :title="`${s.full_name} - ${getItemName(item)}`"
-                      />
-                    </label>
+                    <!-- Checkbox Amalan + Kiosk Scan Badge -->
+                    <div v-else class="flex flex-col items-center gap-0.5">
+                      <label
+                        class="inline-flex items-center justify-center p-1 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 cursor-pointer transition"
+                      >
+                        <input
+                          type="checkbox"
+                          v-if="ibadahGrid[s.id] && ibadahGrid[s.id].check_data"
+                          v-model="ibadahGrid[s.id].check_data[item.id]"
+                          @change="markIbadahChanged"
+                          class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-zinc-700 dark:bg-zinc-800 cursor-pointer accent-emerald-600 transition"
+                          :title="`${s.full_name} - ${getItemName(item)}`"
+                        />
+                      </label>
+                      <span
+                        v-if="getScanSource(s.id, item.id)"
+                        class="inline-flex items-center gap-0.5 px-1 py-0.2 rounded text-[8px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300/60 dark:border-emerald-800"
+                        :title="`Otomatis tercatat via ${(getScanSource(s.id, item.id)?.method || 'kiosk').toUpperCase()} Kiosk`"
+                      >
+                        {{ getScanSource(s.id, item.id)?.method === 'rfid' ? '🏷️' : '📷' }}
+                        {{ formatMutabaahScanTime(getScanSource(s.id, item.id)?.scanned_at) }}
+                      </span>
+                    </div>
                   </td>
 
                   <!-- Kolom Progres Santri -->

@@ -78,7 +78,10 @@ const ruleForm = reactive({
 // 2. Notification Settings Form
 const notificationForm = reactive({
   notify_checkin_parents: true,
-  notify_absent_parents: true
+  notify_absent_parents: true,
+  notify_checkout_parents: false,
+  notify_ekstra_parents: false,
+  notify_shalat_parents: false
 })
 
 // 3. Discipline Integration Settings Form
@@ -314,6 +317,9 @@ const fetchAttendanceSettings = async (schoolId: string) => {
     if (res && res.data) {
       notificationForm.notify_checkin_parents = res.data.notify_checkin_parents !== false
       notificationForm.notify_absent_parents = res.data.notify_absent_parents !== false
+      notificationForm.notify_checkout_parents = res.data.notify_checkout_parents === true
+      notificationForm.notify_ekstra_parents = res.data.notify_ekstra_parents === true
+      notificationForm.notify_shalat_parents = res.data.notify_shalat_parents === true
       disciplineForm.sync_late_to_discipline = res.data.sync_late_to_discipline === true
       disciplineForm.late_rule_id = res.data.late_rule_id || null
     }
@@ -403,7 +409,10 @@ const saveNotificationSettings = async () => {
       method: 'PUT',
       body: {
         notify_checkin_parents: notificationForm.notify_checkin_parents,
-        notify_absent_parents: notificationForm.notify_absent_parents
+        notify_absent_parents: notificationForm.notify_absent_parents,
+        notify_checkout_parents: notificationForm.notify_checkout_parents,
+        notify_ekstra_parents: notificationForm.notify_ekstra_parents,
+        notify_shalat_parents: notificationForm.notify_shalat_parents
       }
     })
     notify('Pengaturan notifikasi WhatsApp berhasil disimpan', 'success')
@@ -843,9 +852,17 @@ const deleteCustomHoliday = async (item: any) => {
                 </div>
 
                 <div>
-                  <label class="block text-sm font-medium text-slate-300 mb-1">Mulai Absen Pulang</label>
-                  <BaseInput v-model="ruleForm.check_out_from" type="time" placeholder="14:00" />
-                  <p class="text-xs text-slate-500 mt-1">Scan pulang diterima mulai jam ini.</p>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block text-sm font-medium text-slate-300">Absen Pulang Sekolah (Check-out)</label>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" v-model="ruleForm.check_out_enabled" class="sr-only peer" data-testid="toggle-checkout-enabled" />
+                      <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-violet-600"></div>
+                    </label>
+                  </div>
+                  <BaseInput v-model="ruleForm.check_out_from" type="time" placeholder="14:00" :disabled="!ruleForm.check_out_enabled" />
+                  <p class="text-xs text-slate-500 mt-1">
+                    {{ ruleForm.check_out_enabled ? 'Scan pulang otomatis aktif mulai jam ini.' : 'Aktifkan toggle agar Kiosk bisa mencatat jam pulang otomatis.' }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -919,6 +936,54 @@ const deleteCustomHoliday = async (item: any) => {
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
                   <input type="checkbox" v-model="notificationForm.notify_absent_parents" class="sr-only peer" />
+                  <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+                </label>
+              </div>
+
+              <!-- Switch 3: Checkout Alert -->
+              <div class="flex items-start justify-between p-4 rounded-xl border border-slate-800 bg-slate-900/60">
+                <div class="pr-4">
+                  <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                    Notifikasi Kepulangan Siswa (Check-out Sekolah)
+                  </h4>
+                  <p class="text-xs text-slate-400 mt-1">
+                    Kirim pesan WhatsApp saat siswa tap kartu QR/RFID pada mode Pulang Sekolah.
+                  </p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                  <input type="checkbox" v-model="notificationForm.notify_checkout_parents" class="sr-only peer" data-testid="toggle-notify-checkout" />
+                  <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+                </label>
+              </div>
+
+              <!-- Switch 4: Shalat Alert -->
+              <div class="flex items-start justify-between p-4 rounded-xl border border-slate-800 bg-slate-900/60">
+                <div class="pr-4">
+                  <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                    Notifikasi Mutaba'ah Shalat (Kiosk QR/RFID)
+                  </h4>
+                  <p class="text-xs text-slate-400 mt-1">
+                    Kirim pesan WhatsApp saat santri tap kartu pada mode Shalat (Subuh, Dzuhur, Ashar, Maghrib, Isya).
+                  </p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                  <input type="checkbox" v-model="notificationForm.notify_shalat_parents" class="sr-only peer" data-testid="toggle-notify-shalat" />
+                  <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+                </label>
+              </div>
+
+              <!-- Switch 5: Ekstrakurikuler Alert -->
+              <div class="flex items-start justify-between p-4 rounded-xl border border-slate-800 bg-slate-900/60">
+                <div class="pr-4">
+                  <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                    Notifikasi Kehadiran Ekstrakurikuler (Berangkat &amp; Pulang)
+                  </h4>
+                  <p class="text-xs text-slate-400 mt-1">
+                    Kirim pesan WhatsApp saat siswa tap kartu berangkat atau selesai mengikuti kegiatan ekstrakurikuler.
+                  </p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                  <input type="checkbox" v-model="notificationForm.notify_ekstra_parents" class="sr-only peer" data-testid="toggle-notify-ekstra" />
                   <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
                 </label>
               </div>

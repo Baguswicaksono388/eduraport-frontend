@@ -1,5 +1,8 @@
 import Dexie from 'dexie';
 
+export type ScanActivityType = 'school' | 'shalat' | 'extracurricular';
+export type ScanDirection = 'in' | 'out';
+
 export interface ScanQueueItem {
   id?: number;
   client_scan_id: string; // UUID v4
@@ -8,6 +11,9 @@ export interface ScanQueueItem {
   student_name?: string;
   class_name?: string;
   method: 'qr' | 'manual_search' | 'rfid';
+  activity_type: ScanActivityType;
+  direction: ScanDirection;
+  reference_id?: string | null;
   mood?: string | null;
   timestamp: number;
   status: 'pending' | 'syncing' | 'failed';
@@ -23,9 +29,17 @@ export interface CachedStudent {
   rfid_uid?: string;
 }
 
+export interface CachedActivityItem {
+  id: string;
+  name: string;
+  meta?: string;
+}
+
 export class EduScannerDB extends Dexie {
   scanQueue!: Dexie.Table<ScanQueueItem, number>;
   studentsCache!: Dexie.Table<CachedStudent, string>;
+  extracurricularsCache!: Dexie.Table<CachedActivityItem, string>;
+  shalatItemsCache!: Dexie.Table<CachedActivityItem, string>;
 
   constructor() {
     super('EduScannerDB');
@@ -39,6 +53,12 @@ export class EduScannerDB extends Dexie {
     this.version(3).stores({
       scanQueue: '++id, client_scan_id, student_id, method, timestamp, status',
       studentsCache: 'student_id, student_name, nis, token, rfid_uid'
+    });
+    this.version(4).stores({
+      scanQueue: '++id, client_scan_id, student_id, method, activity_type, direction, timestamp, status',
+      studentsCache: 'student_id, student_name, nis, token, rfid_uid',
+      extracurricularsCache: 'id, name',
+      shalatItemsCache: 'id, name'
     });
   }
 }

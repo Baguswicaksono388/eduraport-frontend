@@ -98,6 +98,98 @@
       </NuxtLink>
     </nav>
 
+    <!-- Kiosk Multi-Activity Selector Bar (Sekolah / Shalat / Ekstra + Arah Masuk/Pulang) -->
+    <div class="bg-slate-900/95 border-b border-slate-800 px-4 py-2 flex flex-wrap items-center justify-between gap-2 z-20">
+      <div class="flex items-center gap-1.5">
+        <button
+          type="button"
+          data-testid="kiosk-mode-school"
+          @click="activityMode = 'school'"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all border"
+          :class="activityMode === 'school' ? 'bg-violet-600 text-white border-violet-500 shadow-sm' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'"
+        >
+          🏫 Sekolah
+        </button>
+        <button
+          type="button"
+          data-testid="kiosk-mode-shalat"
+          @click="activityMode = 'shalat'"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all border"
+          :class="activityMode === 'shalat' ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'"
+        >
+          🕌 Shalat
+        </button>
+        <button
+          type="button"
+          data-testid="kiosk-mode-ekstra"
+          @click="activityMode = 'extracurricular'"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all border"
+          :class="activityMode === 'extracurricular' ? 'bg-sky-600 text-white border-sky-500 shadow-sm' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'"
+        >
+          ⚽ Ekstra
+        </button>
+      </div>
+
+      <!-- Sub-options for Active Mode -->
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Shalat Selector -->
+        <template v-if="activityMode === 'shalat'">
+          <select
+            v-model="selectedShalatItemId"
+            data-testid="kiosk-shalat-select"
+            class="bg-slate-800 text-emerald-200 border border-emerald-500/40 rounded-xl px-3 py-1.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          >
+            <option value="" disabled>-- Pilih Waktu Shalat --</option>
+            <option v-for="item in shalatItems" :key="item.id" :value="item.id">
+              🕌 {{ item.name }}
+            </option>
+          </select>
+          <span v-if="shalatItems.length === 0" class="text-[11px] text-amber-400 font-semibold">
+            Belum ada amalan shalat aktif di Pesantren
+          </span>
+        </template>
+
+        <!-- Extracurricular Selector -->
+        <template v-else-if="activityMode === 'extracurricular'">
+          <select
+            v-model="selectedExtracurricularId"
+            data-testid="kiosk-ekstra-select"
+            class="bg-slate-800 text-sky-200 border border-sky-500/40 rounded-xl px-3 py-1.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-sky-500"
+          >
+            <option value="" disabled>-- Pilih Ekstrakurikuler --</option>
+            <option v-for="ex in extracurriculars" :key="ex.id" :value="ex.id">
+              ⚽ {{ ex.name }}
+            </option>
+          </select>
+          <span v-if="extracurriculars.length === 0" class="text-[11px] text-amber-400 font-semibold">
+            Belum ada ekstrakurikuler aktif
+          </span>
+        </template>
+
+        <!-- Direction Toggle (Sekolah & Ekstra) -->
+        <div v-if="activityMode !== 'shalat'" class="flex items-center bg-slate-800 border border-slate-700 rounded-xl p-0.5 text-xs font-bold">
+          <button
+            type="button"
+            data-testid="kiosk-dir-in"
+            @click="scanDirection = 'in'"
+            class="px-2.5 py-1 rounded-lg transition-all"
+            :class="scanDirection === 'in' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'"
+          >
+            {{ activityMode === 'school' ? '☀️ Berangkat' : '➡️ Berangkat Ekstra' }}
+          </button>
+          <button
+            type="button"
+            data-testid="kiosk-dir-out"
+            @click="scanDirection = 'out'"
+            class="px-2.5 py-1 rounded-lg transition-all"
+            :class="scanDirection === 'out' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'"
+          >
+            {{ activityMode === 'school' ? '🏠 Pulang' : '⬅️ Pulang Ekstra' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Main Content Area -->
     <main class="flex-1 relative bg-black flex flex-col overflow-hidden">
       
@@ -155,10 +247,13 @@
                 <p class="text-xs text-white/80 font-medium">
                   {{ arrivalFeedback.class_name || 'Siswa' }} <span v-if="arrivalFeedback.nis">· NIS: {{ arrivalFeedback.nis }}</span>
                 </p>
-                <div class="flex items-center gap-2 mt-1.5">
+                <div class="flex flex-wrap items-center gap-2 mt-1.5">
+                  <span v-if="arrivalFeedback.activity_label" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/15 text-white border border-white/25">
+                    {{ arrivalFeedback.activity_label }}
+                  </span>
                   <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm border"
                         :class="getFeedbackPillClass(arrivalFeedback.check_in_status)">
-                    {{ getFeedbackStatusLabel(arrivalFeedback.check_in_status, arrivalFeedback.late_minutes) }}
+                    {{ getFeedbackStatusLabel(arrivalFeedback.check_in_status, arrivalFeedback.late_minutes, arrivalFeedback.activity_type, arrivalFeedback.direction) }}
                   </span>
                   <span v-if="arrivalFeedback.method === 'rfid'" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-violet-500/20 text-violet-300 border border-violet-500/30">
                     🏷️ RFID Tap
@@ -367,15 +462,19 @@
         <div class="flex-1 overflow-y-auto divide-y divide-slate-800/80 my-4 pr-1">
           <div v-for="scan in recentScans" :key="scan.student_id" class="py-2.5 flex items-center justify-between text-xs">
             <div class="flex items-center gap-2.5">
-              <span class="text-xl">{{ MOOD_EMOJIS[scan.mood] || '🎒' }}</span>
+              <span class="text-xl">{{ MOOD_EMOJIS[scan.mood] || (activityMode === 'shalat' ? '🕌' : activityMode === 'extracurricular' ? '⚽' : '🎒') }}</span>
               <div>
                 <p class="font-bold text-white text-xs truncate max-w-[150px]">{{ scan.student_name }}</p>
-                <p class="text-[10px] text-slate-400">{{ scan.class_name || '-' }} · {{ formatTimeShort(scan.check_in_time) }}</p>
+                <p class="text-[10px] text-slate-400">
+                  {{ scan.class_name || '-' }}
+                  <span v-if="scan.check_in_time"> · Masuk {{ formatTimeShort(scan.check_in_time) }}</span>
+                  <span v-if="scan.check_out_time" class="text-amber-300"> · Pulang {{ formatTimeShort(scan.check_out_time) }}</span>
+                </p>
               </div>
             </div>
             <span class="px-2 py-0.5 rounded text-[10px] font-bold border"
-                  :class="getFeedbackPillClass(scan.check_in_status)">
-              {{ scan.check_in_status }}
+                  :class="getFeedbackPillClass(scan.check_in_status || 'tepat')">
+              {{ scan.check_out_time ? 'Pulang' : (scan.check_in_status || 'Hadir') }}
             </span>
           </div>
 
@@ -436,6 +535,7 @@ const showFeedDrawer = ref(false)
 const todaySummary = ref({
   total_students: 0,
   total_present: 0,
+  checked_out: 0,
   on_time: 0,
   late: 0,
   early: 0,
@@ -443,8 +543,14 @@ const todaySummary = ref({
 })
 const recentScans = ref([])
 
-// Time Rules Cache
+// Time Rules & Multi-Activity Kiosk Context
 const timeRules = ref([])
+const activityMode = ref('school') // 'school' | 'shalat' | 'extracurricular'
+const scanDirection = ref('in') // 'in' | 'out'
+const shalatItems = ref([])
+const selectedShalatItemId = ref('')
+const extracurriculars = ref([])
+const selectedExtracurricularId = ref('')
 
 const MOOD_EMOJIS = {
   senang: '😄',
@@ -550,7 +656,11 @@ watch(currentSchoolId, async (newVal) => {
   }
 })
 
-// Bootstrap Offline Student Cache & Settings
+watch([activityMode, selectedShalatItemId, selectedExtracurricularId], async () => {
+  await fetchTodaySummary()
+})
+
+// Bootstrap Offline Student Cache, Activities & Settings
 const loadBootstrapData = async () => {
   if (!currentSchoolId.value) return
   try {
@@ -558,17 +668,59 @@ const loadBootstrapData = async () => {
     if (res && res.data) {
       timeRules.value = res.data.time_rules || []
       const students = res.data.students || []
-      
-      // Cache into Dexie studentsCache
+      const ekstraList = res.data.extracurriculars || []
+      const shalatList = res.data.shalat_items || []
+
+      extracurriculars.value = ekstraList
+      shalatItems.value = shalatList
+
+      if (ekstraList.length > 0 && !selectedExtracurricularId.value) {
+        selectedExtracurricularId.value = ekstraList[0].id
+      }
+      if (shalatList.length > 0 && !selectedShalatItemId.value) {
+        selectedShalatItemId.value = shalatList[0].id
+      }
+
+      // Auto-suggest check-out direction if past check_out_from when check_out_enabled is active
+      const schoolRule = timeRules.value.find((r) => r.scope_type === 'school')
+      if (schoolRule?.check_out_enabled && schoolRule?.check_out_from) {
+        const now = new Date()
+        const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+        if (hhmm >= schoolRule.check_out_from) {
+          scanDirection.value = 'out'
+        }
+      }
+
+      // Cache into Dexie for offline kiosk operation
       if (students.length > 0) {
         await db.studentsCache.clear()
         await db.studentsCache.bulkPut(students)
+      }
+      if (ekstraList.length > 0) {
+        await db.extracurricularsCache.clear()
+        await db.extracurricularsCache.bulkPut(ekstraList.map((e) => ({ id: e.id, name: e.name, meta: e.schedule })))
+      }
+      if (shalatList.length > 0) {
+        await db.shalatItemsCache.clear()
+        await db.shalatItemsCache.bulkPut(shalatList.map((s) => ({ id: s.id, name: s.name, meta: s.category })))
       }
       cachedStudents.value = students
     }
   } catch (err) {
     console.warn('Failed to load online bootstrap data, loading from local Dexie cache...', err)
     cachedStudents.value = await db.studentsCache.toArray()
+    if (extracurriculars.value.length === 0) {
+      extracurriculars.value = await db.extracurricularsCache.toArray()
+      if (extracurriculars.value.length > 0 && !selectedExtracurricularId.value) {
+        selectedExtracurricularId.value = extracurriculars.value[0].id
+      }
+    }
+    if (shalatItems.value.length === 0) {
+      shalatItems.value = await db.shalatItemsCache.toArray()
+      if (shalatItems.value.length > 0 && !selectedShalatItemId.value) {
+        selectedShalatItemId.value = shalatItems.value[0].id
+      }
+    }
   }
 }
 
@@ -576,7 +728,14 @@ const loadBootstrapData = async () => {
 const fetchTodaySummary = async () => {
   if (!currentSchoolId.value || !isOnline.value) return
   try {
-    const res = await fetcher(`/school/${currentSchoolId.value}/attendance/scanner/today`)
+    const params = new URLSearchParams()
+    params.set('activity_type', activityMode.value)
+    if (activityMode.value === 'shalat' && selectedShalatItemId.value) {
+      params.set('reference_id', selectedShalatItemId.value)
+    } else if (activityMode.value === 'extracurricular' && selectedExtracurricularId.value) {
+      params.set('reference_id', selectedExtracurricularId.value)
+    }
+    const res = await fetcher(`/school/${currentSchoolId.value}/attendance/scanner/today?${params.toString()}`)
     if (res && res.data) {
       todaySummary.value = res.data.summary || todaySummary.value
       recentScans.value = res.data.recent_scans || []
@@ -628,12 +787,105 @@ const evaluateScanStatus = (scanDate) => {
   return { checkInStatus, lateMinutes }
 }
 
+// Unified Multi-Activity Dispatcher for QR, RFID & Manual Search
+const getActiveScanContext = () => {
+  const mode = activityMode.value
+  if (mode === 'shalat') {
+    if (!selectedShalatItemId.value) {
+      return { valid: false, error: 'Pilih waktu shalat terlebih dahulu.' }
+    }
+    const item = shalatItems.value.find((i) => i.id === selectedShalatItemId.value)
+    return {
+      valid: true,
+      activity_type: 'shalat',
+      direction: 'in',
+      reference_id: selectedShalatItemId.value,
+      activity_label: `🕌 ${item?.name || 'Shalat'}`
+    }
+  }
+  if (mode === 'extracurricular') {
+    if (!selectedExtracurricularId.value) {
+      return { valid: false, error: 'Pilih ekstrakurikuler terlebih dahulu.' }
+    }
+    const ex = extracurriculars.value.find((e) => e.id === selectedExtracurricularId.value)
+    const dirLabel = scanDirection.value === 'out' ? 'Pulang Ekstra' : 'Berangkat Ekstra'
+    return {
+      valid: true,
+      activity_type: 'extracurricular',
+      direction: scanDirection.value,
+      reference_id: selectedExtracurricularId.value,
+      activity_label: `⚽ ${dirLabel}: ${ex?.name || 'Ekskul'}`
+    }
+  }
+  const dirLabel = scanDirection.value === 'out' ? 'Pulang Sekolah' : 'Berangkat Sekolah'
+  return {
+    valid: true,
+    activity_type: 'school',
+    direction: scanDirection.value,
+    reference_id: null,
+    activity_label: scanDirection.value === 'out' ? `🏠 ${dirLabel}` : `🏫 ${dirLabel}`
+  }
+}
+
+const triggerStudentScan = async (student, method, payload) => {
+  const ctx = getActiveScanContext()
+  if (!ctx.valid) {
+    playAudioFeedback('error')
+    showResult(false, ctx.error)
+    scanning.value = false
+    return
+  }
+
+  const now = new Date()
+  const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+  const isSchoolCheckIn = ctx.activity_type === 'school' && ctx.direction === 'in'
+  const { checkInStatus, lateMinutes } = isSchoolCheckIn
+    ? evaluateScanStatus(now)
+    : { checkInStatus: 'tepat', lateMinutes: 0 }
+
+  playAudioFeedback('success')
+
+  arrivalFeedback.value = {
+    student_name: student ? student.student_name : 'Siswa Terdaftar',
+    class_name: student ? student.class_name : '',
+    nis: student ? student.nis : '',
+    check_in_status: checkInStatus,
+    late_minutes: lateMinutes,
+    time_str: timeStr,
+    method,
+    activity_type: ctx.activity_type,
+    direction: ctx.direction,
+    activity_label: ctx.activity_label
+  }
+
+  const scanDraft = {
+    client_scan_id: generateScanId(),
+    payload: payload || undefined,
+    student_id: student?.student_id,
+    student_name: student?.student_name,
+    class_name: student?.class_name,
+    method,
+    activity_type: ctx.activity_type,
+    direction: ctx.direction,
+    reference_id: ctx.reference_id,
+    timestamp: now.getTime()
+  }
+
+  // Only ask for Gate SEL Mood during Morning School Check-in to keep Pulang/Shalat/Ekstra fast
+  if (isSchoolCheckIn) {
+    pendingMoodScan.value = scanDraft
+    startMoodCountdown()
+  } else {
+    await enqueueScanRecord(scanDraft, null)
+  }
+}
+
 // UF-1: Handle QR Detection
 const onDetect = async (detectedCodes) => {
   if (!detectedCodes) return
   const codes = Array.isArray(detectedCodes) ? detectedCodes : [detectedCodes]
   if (codes.length === 0) return
-  
+
   if (scanning.value || pendingMoodScan.value) {
     return
   }
@@ -643,7 +895,7 @@ const onDetect = async (detectedCodes) => {
   if (!payload) return
 
   scanning.value = true
-  
+
   try {
     if (!payload.startsWith('ERQR1:')) {
       playAudioFeedback('error')
@@ -653,7 +905,6 @@ const onDetect = async (detectedCodes) => {
     }
 
     const rawToken = payload.substring(6)
-    // Find student in local cache
     let student = await db.studentsCache.where('token').equals(rawToken).first()
     if (!student) {
       student = await db.studentsCache.where('token').equals(payload).first()
@@ -662,7 +913,6 @@ const onDetect = async (detectedCodes) => {
       student = cachedStudents.value.find((s) => s.token === rawToken || s.token === payload)
     }
 
-    // UF-6 & AC-1: Revoked or unregistered token must be rejected immediately
     if (!student) {
       playAudioFeedback('error')
       showResult(false, 'Kartu tidak berlaku atau belum terdaftar.')
@@ -670,36 +920,7 @@ const onDetect = async (detectedCodes) => {
       return
     }
 
-    const now = new Date()
-    const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-    const { checkInStatus, lateMinutes } = evaluateScanStatus(now)
-
-    // Play pleasant bip
-    playAudioFeedback('success')
-
-    // Display rich arrival feedback
-    arrivalFeedback.value = {
-      student_name: student ? student.student_name : 'Siswa Terdaftar',
-      class_name: student ? student.class_name : '',
-      nis: student ? student.nis : '',
-      check_in_status: checkInStatus,
-      late_minutes: lateMinutes,
-      time_str: timeStr,
-      method: 'qr'
-    }
-
-    // Open Mood dialog with fast-path 5-second countdown
-    pendingMoodScan.value = {
-      client_scan_id: generateScanId(),
-      payload: payload,
-      student_id: student?.student_id,
-      student_name: student?.student_name,
-      class_name: student?.class_name,
-      method: 'qr',
-      timestamp: now.getTime()
-    }
-
-    startMoodCountdown()
+    await triggerStudentScan(student, 'qr', payload)
   } catch (err) {
     console.error('[Scanner] Error processing scan:', err)
     playAudioFeedback('error')
@@ -797,33 +1018,7 @@ const processRfidScan = async (scannedCode) => {
       return
     }
 
-    const now = new Date()
-    const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-    const { checkInStatus, lateMinutes } = evaluateScanStatus(now)
-
-    playAudioFeedback('success')
-
-    arrivalFeedback.value = {
-      student_name: student.student_name,
-      class_name: student.class_name,
-      nis: student.nis,
-      check_in_status: checkInStatus,
-      late_minutes: lateMinutes,
-      time_str: timeStr,
-      method: 'rfid'
-    }
-
-    pendingMoodScan.value = {
-      client_scan_id: generateScanId(),
-      payload: `ERRFID1:${cleanCode}`,
-      student_id: student.student_id,
-      student_name: student.student_name,
-      class_name: student.class_name,
-      method: 'rfid',
-      timestamp: now.getTime()
-    }
-
-    startMoodCountdown()
+    await triggerStudentScan(student, 'rfid', `ERRFID1:${cleanCode}`)
   } catch (err) {
     console.error('[RFID] Gagal memproses tap kartu:', err)
     playAudioFeedback('error')
@@ -846,34 +1041,9 @@ const filteredCachedStudents = computed(() => {
     .slice(0, 25)
 })
 
-const selectManualStudent = (student) => {
+const selectManualStudent = async (student) => {
   showManualSearch.value = false
-  const now = new Date()
-  const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-  const { checkInStatus, lateMinutes } = evaluateScanStatus(now)
-
-  playAudioFeedback('success')
-
-  arrivalFeedback.value = {
-    student_name: student.student_name,
-    class_name: student.class_name,
-    nis: student.nis,
-    check_in_status: checkInStatus,
-    late_minutes: lateMinutes,
-    time_str: timeStr,
-    method: 'manual_search'
-  }
-
-  pendingMoodScan.value = {
-    client_scan_id: generateScanId(),
-    student_id: student.student_id,
-    student_name: student.student_name,
-    class_name: student.class_name,
-    method: 'manual_search',
-    timestamp: now.getTime()
-  }
-
-  startMoodCountdown()
+  await triggerStudentScan(student, 'manual_search')
 }
 
 // Mood Dialog Countdown & Actions
@@ -899,30 +1069,27 @@ const skipMood = async () => {
   await persistScan(null)
 }
 
-const persistScan = async (mood) => {
-  if (!pendingMoodScan.value) return
-  
+const enqueueScanRecord = async (draft, mood) => {
   const scanData = {
-    client_scan_id: pendingMoodScan.value.client_scan_id,
-    payload: pendingMoodScan.value.payload || undefined,
-    student_id: pendingMoodScan.value.student_id || undefined,
-    student_name: pendingMoodScan.value.student_name || undefined,
-    class_name: pendingMoodScan.value.class_name || undefined,
-    method: pendingMoodScan.value.method,
+    client_scan_id: draft.client_scan_id,
+    payload: draft.payload || undefined,
+    student_id: draft.student_id || undefined,
+    student_name: draft.student_name || undefined,
+    class_name: draft.class_name || undefined,
+    method: draft.method,
+    activity_type: draft.activity_type || 'school',
+    direction: draft.direction || 'in',
+    reference_id: draft.reference_id || null,
     mood: mood || null,
-    timestamp: pendingMoodScan.value.timestamp,
+    timestamp: draft.timestamp,
     status: 'pending'
   }
-
-  pendingMoodScan.value = null
 
   try {
     await db.scanQueue.add(scanData)
     await updatePendingCount()
-
-    // Increment local summary count immediately
     todaySummary.value.total_present++
-    
+
     if (isOnline.value) {
       await syncQueue()
     }
@@ -932,15 +1099,22 @@ const persistScan = async (mood) => {
   } finally {
     setTimeout(() => {
       scanning.value = false
-    }, 800)
+    }, 600)
   }
+}
+
+const persistScan = async (mood) => {
+  if (!pendingMoodScan.value) return
+  const draft = pendingMoodScan.value
+  pendingMoodScan.value = null
+  await enqueueScanRecord(draft, mood)
 }
 
 // Offline Queue Synchronization (UF-4)
 const syncQueue = async () => {
   if (!isOnline.value) return
   if (!currentSchoolId.value) return
-  
+
   const pendingItems = await db.scanQueue.where('status').equals('pending').toArray()
   if (pendingItems.length === 0) return
 
@@ -951,6 +1125,9 @@ const syncQueue = async () => {
       payload: item.payload,
       student_id: item.student_id,
       method: item.method,
+      activity_type: item.activity_type || 'school',
+      direction: item.direction || 'in',
+      reference_id: item.reference_id || null,
       mood: item.mood,
       timestamp: item.timestamp
     }))
@@ -1033,7 +1210,12 @@ const getFeedbackPillClass = (status) => {
   }
 }
 
-const getFeedbackStatusLabel = (status, lateMinutes) => {
+const getFeedbackStatusLabel = (status, lateMinutes, activityType = 'school', direction = 'in') => {
+  if (activityType === 'shalat') return 'Tercatat Ibadah'
+  if (activityType === 'extracurricular') {
+    return direction === 'out' ? 'Pulang Ekstra' : 'Hadir Ekstra'
+  }
+  if (direction === 'out') return 'Pulang Sekolah'
   if (status === 'terlambat') {
     return lateMinutes > 0 ? `Terlambat ${lateMinutes} Menit` : 'Terlambat'
   }
