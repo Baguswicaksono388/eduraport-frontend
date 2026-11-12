@@ -60,6 +60,7 @@ const extracurricularList = ref<any[]>([])
 const selectedEkstraId = ref('')
 const loadingEkstra = ref(false)
 const savingEkstra = ref(false)
+const ekstraMembers = ref<Array<{ student_id: string; student_name: string; nis?: string | null; class_id?: string | null; class_name?: string | null }>>([])
 const ekstraAttendancesMap = ref<Record<string, { status: 'hadir' | 'izin' | 'sakit' | 'alpha'; note: string; check_in_time?: string | null; check_out_time?: string | null }>>({})
 
 const loadExtracurriculars = async () => {
@@ -79,14 +80,18 @@ const loadEkstraAttendances = async () => {
   if (!selectedSchoolId.value || !selectedEkstraId.value) return
   loadingEkstra.value = true
   try {
-    const res: any = await fetcher(`/school/${selectedSchoolId.value}/extracurricular/${selectedEkstraId.value}/attendances?date=${selectedDate.value}`)
-    const rows = res?.data || []
+    const [membersRes, attRes]: [any, any] = await Promise.all([
+      fetcher(`/school/${selectedSchoolId.value}/extracurricular/${selectedEkstraId.value}/members?date=${selectedDate.value}`),
+      fetcher(`/school/${selectedSchoolId.value}/extracurricular/${selectedEkstraId.value}/attendances?date=${selectedDate.value}`)
+    ])
+    const members = Array.isArray(membersRes?.data) ? membersRes.data : []
+    ekstraMembers.value = members
+    const rows = Array.isArray(attRes?.data) ? attRes.data : []
     const rowMap = new Map(rows.map((r: any) => [r.student_id, r]))
     const nextMap: typeof ekstraAttendancesMap.value = {}
-    const pool = classStudents.value.length > 0 ? classStudents.value : students.value
-    for (const s of pool) {
-      const existing: any = rowMap.get(s.id)
-      nextMap[s.id] = {
+    for (const m of members) {
+      const existing: any = rowMap.get(m.student_id)
+      nextMap[m.student_id] = {
         status: existing?.status || 'hadir',
         note: existing?.note || '',
         check_in_time: existing?.check_in_time || null,
@@ -96,6 +101,8 @@ const loadEkstraAttendances = async () => {
     ekstraAttendancesMap.value = nextMap
   } catch (err) {
     console.error('Failed to load extracurricular attendances:', err)
+    ekstraMembers.value = []
+    ekstraAttendancesMap.value = {}
   } finally {
     loadingEkstra.value = false
   }
@@ -116,14 +123,13 @@ const formatEkstraTime = (iso?: string | null): string => {
 }
 
 const handleSaveEkstra = async () => {
-  if (!selectedSchoolId.value || !selectedEkstraId.value) return
+  if (!selectedSchoolId.value || !selectedEkstraId.value || ekstraMembers.value.length === 0) return
   savingEkstra.value = true
   try {
-    const pool = classStudents.value.length > 0 ? classStudents.value : students.value
-    const payload = pool.map((s) => {
-      const st = ekstraAttendancesMap.value[s.id] || { status: 'hadir', note: '' }
+    const payload = ekstraMembers.value.map((m) => {
+      const st = ekstraAttendancesMap.value[m.student_id] || { status: 'hadir', note: '' }
       return {
-        student_id: s.id,
+        student_id: m.student_id,
         status: st.status,
         note: st.note || null,
       }
@@ -1122,7 +1128,7 @@ const handleSave = async () => {
             </option>
           </select>
         </div>
-        <BaseButton @click="handleSaveEkstra" :disabled="savingEkstra || !selectedEkstraId" class="gap-2 bg-sky-600 hover:bg-sky-700 text-white text-xs">
+        <BaseButton @click="handleSaveEkstra" :disabled="savingEkstra || !selectedEkstraId || ekstraMembers.length === 0" class="gap-2 bg-sky-600 hover:bg-sky-700 text-white text-xs">
           <Save v-if="!savingEkstra" :size="14" />
           <RefreshCw v-else class="animate-spin" :size="14" />
           <span>{{ savingEkstra ? 'Menyimpan...' : 'Simpan Presensi Ekstra' }}</span>
@@ -1131,29 +1137,36 @@ const handleSave = async () => {
 
       <div v-if="loadingEkstra" class="py-12 text-center text-xs text-slate-400">Memuat data ekstrakurikuler...</div>
 
+      <div v-else-if="selectedEkstraId && ekstraMembers.length === 0" class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-8 text-center text-xs text-slate-500 dark:text-zinc-400 space-y-2">
+        <p class="font-bold text-slate-700 dark:text-zinc-200">Belum ada anggota terdaftar pada ekstrakurikuler ini untuk tahun ajaran tanggal dipilih.</p>
+        <NuxtLink to="/extracurricular" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-sky-600 text-white font-bold hover:bg-sky-700">
+          Atur Anggota Ekstrakurikuler
+        </NuxtLink>
+      </div>
+
       <div v-else-if="selectedEkstraId" class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl divide-y divide-slate-100 dark:divide-zinc-800">
-        <div v-for="s in (classStudents.length > 0 ? classStudents : students)" :key="s.id" class="p-3.5 grid grid-cols-1 md:grid-cols-12 gap-3 items-center text-xs">
+        <div v-for="m in ekstraMembers" :key="m.student_id" class="p-3.5 grid grid-cols-1 md:grid-cols-12 gap-3 items-center text-xs">
           <div class="md:col-span-4">
-            <p class="font-bold text-slate-900 dark:text-zinc-100">{{ s.full_name }}</p>
-            <p class="text-[10px] text-slate-400">NIS: {{ s.student_number || '-' }}</p>
+            <p class="font-bold text-slate-900 dark:text-zinc-100">{{ m.student_name }}</p>
+            <p class="text-[10px] text-slate-400">NIS: {{ m.nis || '-' }} <span v-if="m.class_name">· {{ m.class_name }}</span></p>
           </div>
           <div class="md:col-span-3 flex flex-wrap gap-2 font-mono text-[11px]">
-            <span v-if="ekstraAttendancesMap[s.id]?.check_in_time" class="text-emerald-600 dark:text-emerald-400 font-bold">
-              Masuk: {{ formatEkstraTime(ekstraAttendancesMap[s.id]?.check_in_time) }}
+            <span v-if="ekstraAttendancesMap[m.student_id]?.check_in_time" class="text-emerald-600 dark:text-emerald-400 font-bold">
+              Masuk: {{ formatEkstraTime(ekstraAttendancesMap[m.student_id]?.check_in_time) }}
             </span>
-            <span v-if="ekstraAttendancesMap[s.id]?.check_out_time" class="text-amber-600 dark:text-amber-400 font-bold">
-              Pulang: {{ formatEkstraTime(ekstraAttendancesMap[s.id]?.check_out_time) }}
+            <span v-if="ekstraAttendancesMap[m.student_id]?.check_out_time" class="text-amber-600 dark:text-amber-400 font-bold">
+              Pulang: {{ formatEkstraTime(ekstraAttendancesMap[m.student_id]?.check_out_time) }}
             </span>
-            <span v-if="!ekstraAttendancesMap[s.id]?.check_in_time && !ekstraAttendancesMap[s.id]?.check_out_time" class="text-slate-400 italic">Manual</span>
+            <span v-if="!ekstraAttendancesMap[m.student_id]?.check_in_time && !ekstraAttendancesMap[m.student_id]?.check_out_time" class="text-slate-400 italic">Manual</span>
           </div>
           <div class="md:col-span-5 flex items-center gap-1.5 flex-wrap">
             <button
               v-for="st in (['hadir', 'izin', 'sakit', 'alpha'] as const)"
               :key="st"
               type="button"
-              @click="setEkstraStatus(s.id, st)"
+              @click="setEkstraStatus(m.student_id, st)"
               class="px-2.5 py-1 rounded text-[10px] font-bold capitalize border transition"
-              :class="ekstraAttendancesMap[s.id]?.status === st ? 'bg-sky-600 border-sky-600 text-white' : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-500'"
+              :class="ekstraAttendancesMap[m.student_id]?.status === st ? 'bg-sky-600 border-sky-600 text-white' : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-500'"
             >
               {{ st }}
             </button>

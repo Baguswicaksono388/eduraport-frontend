@@ -33,6 +33,7 @@ export interface CachedActivityItem {
   id: string;
   name: string;
   meta?: string;
+  member_student_ids?: string[];
 }
 
 export interface CachedAttendanceSettings {

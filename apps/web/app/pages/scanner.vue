@@ -707,7 +707,14 @@ const loadBootstrapData = async () => {
       }
       if (ekstraList.length > 0) {
         await db.extracurricularsCache.clear()
-        await db.extracurricularsCache.bulkPut(ekstraList.map((e) => ({ id: e.id, name: e.name, meta: e.schedule })))
+        await db.extracurricularsCache.bulkPut(
+          ekstraList.map((e) => ({
+            id: e.id,
+            name: e.name,
+            meta: e.schedule,
+            member_student_ids: Array.isArray(e.member_student_ids) ? e.member_student_ids : []
+          }))
+        )
       }
       if (shalatList.length > 0) {
         await db.shalatItemsCache.clear()
@@ -847,6 +854,16 @@ const triggerStudentScan = async (student, method, payload) => {
     showResult(false, ctx.error)
     scanning.value = false
     return
+  }
+
+  if (ctx.activity_type === 'extracurricular') {
+    const ex = extracurriculars.value.find((e) => e.id === ctx.reference_id)
+    if (Array.isArray(ex?.member_student_ids) && !ex.member_student_ids.includes(student.student_id)) {
+      playAudioFeedback('error')
+      showResult(false, `${student.student_name} bukan anggota ekskul ${ex.name} pada tahun ajaran aktif.`)
+      scanning.value = false
+      return
+    }
   }
 
   const now = new Date()
@@ -1151,6 +1168,24 @@ const syncQueue = async () => {
     })
 
     if (response) {
+      const resultItems = Array.isArray(response?.data?.items) ? response.data.items : []
+      const rejectedNonMember = resultItems.find(
+        (r) => r.status === 'rejected' && r.reject_reason === 'not_extracurricular_member'
+      )
+      const rejectedInactive = resultItems.find(
+        (r) => r.status === 'rejected' && r.reject_reason === 'student_inactive'
+      )
+      if (rejectedNonMember) {
+        playAudioFeedback('error')
+        showResult(
+          false,
+          `${rejectedNonMember.student_name || 'Siswa'} bukan anggota ekskul ${rejectedNonMember.activity_name || ''}.`
+        )
+      } else if (rejectedInactive) {
+        playAudioFeedback('error')
+        showResult(false, `${rejectedInactive.student_name || 'Siswa'} berstatus tidak aktif.`)
+      }
+
       const idsToDelete = pendingItems.map((item) => item.id).filter(Boolean)
       await db.scanQueue.bulkDelete(idsToDelete)
       await updatePendingCount()
