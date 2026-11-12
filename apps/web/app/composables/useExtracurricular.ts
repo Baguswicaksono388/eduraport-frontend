@@ -41,11 +41,31 @@ export const useExtracurricular = () => {
     return res
   }
 
+  const fetchExtracurricularMembers = async (schoolId: string, ekskulId: string) => {
+    const res: any = await fetcher(`/school/${schoolId}/extracurricular/${ekskulId}/members`)
+    return res.success ? res.data : []
+  }
+
+  const saveExtracurricularMembers = async (schoolId: string, ekskulId: string, studentIds: string[]) => {
+    return await fetcher(`/school/${schoolId}/extracurricular/${ekskulId}/members`, {
+      method: 'PUT',
+      body: { student_ids: studentIds }
+    })
+  }
+
+  const fetchExtracurricularAttendances = async (schoolId: string, ekskulId: string, date: string) => {
+    const res: any = await fetcher(`/school/${schoolId}/extracurricular/${ekskulId}/attendances?date=${date}`)
+    return res.success ? res.data : []
+  }
+
   return {
     extracurriculars,
     fetchExtracurriculars,
     createExtracurricular,
     updateExtracurricular,
-    deleteExtracurricular
+    deleteExtracurricular,
+    fetchExtracurricularMembers,
+    saveExtracurricularMembers,
+    fetchExtracurricularAttendances
   }
 }

@@ -35,11 +35,17 @@ export interface CachedActivityItem {
   meta?: string;
 }
 
+export interface CachedAttendanceSettings {
+  school_id: string;
+  mood_mode: 'gate' | 'classroom' | 'off';
+}
+
 export class EduScannerDB extends Dexie {
   scanQueue!: Dexie.Table<ScanQueueItem, number>;
   studentsCache!: Dexie.Table<CachedStudent, string>;
   extracurricularsCache!: Dexie.Table<CachedActivityItem, string>;
   shalatItemsCache!: Dexie.Table<CachedActivityItem, string>;
+  settingsCache!: Dexie.Table<CachedAttendanceSettings, string>;
 
   constructor() {
     super('EduScannerDB');
@@ -59,6 +65,13 @@ export class EduScannerDB extends Dexie {
       studentsCache: 'student_id, student_name, nis, token, rfid_uid',
       extracurricularsCache: 'id, name',
       shalatItemsCache: 'id, name'
+    });
+    this.version(5).stores({
+      scanQueue: '++id, client_scan_id, student_id, method, activity_type, direction, timestamp, status',
+      studentsCache: 'student_id, student_name, nis, token, rfid_uid',
+      extracurricularsCache: 'id, name',
+      shalatItemsCache: 'id, name',
+      settingsCache: 'school_id'
     });
   }
 }

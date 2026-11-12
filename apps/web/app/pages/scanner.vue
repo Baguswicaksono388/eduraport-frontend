@@ -11,7 +11,9 @@
             <h1 class="text-base sm:text-lg font-black tracking-tight flex items-center gap-2">
               EduScanner <span class="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">Gerbang Hybrid</span>
             </h1>
-            <p class="text-[11px] text-slate-400 font-medium">Presensi Real-time & Mood Siswa · QR & RFID</p>
+            <p class="text-[11px] text-slate-400 font-medium">
+              {{ moodMode === 'gate' ? 'Presensi Real-time & Mood Siswa · QR & RFID' : 'Presensi Real-time · QR & RFID' }}
+            </p>
           </div>
         </div>
 
@@ -545,6 +547,7 @@ const recentScans = ref([])
 
 // Time Rules & Multi-Activity Kiosk Context
 const timeRules = ref([])
+const moodMode = ref('gate') // 'gate' | 'classroom' | 'off' from DB attendance_settings
 const activityMode = ref('school') // 'school' | 'shalat' | 'extracurricular'
 const scanDirection = ref('in') // 'in' | 'out'
 const shalatItems = ref([])
@@ -667,6 +670,12 @@ const loadBootstrapData = async () => {
     const res = await fetcher(`/school/${currentSchoolId.value}/attendance/scanner/bootstrap`)
     if (res && res.data) {
       timeRules.value = res.data.time_rules || []
+      const serverMoodMode = ['gate', 'classroom', 'off'].includes(res.data.settings?.mood_mode)
+        ? res.data.settings.mood_mode
+        : 'gate'
+      moodMode.value = serverMoodMode
+      await db.settingsCache.put({ school_id: currentSchoolId.value, mood_mode: serverMoodMode })
+
       const students = res.data.students || []
       const ekstraList = res.data.extracurriculars || []
       const shalatList = res.data.shalat_items || []
@@ -708,6 +717,10 @@ const loadBootstrapData = async () => {
     }
   } catch (err) {
     console.warn('Failed to load online bootstrap data, loading from local Dexie cache...', err)
+    const cachedSetting = currentSchoolId.value ? await db.settingsCache.get(currentSchoolId.value) : null
+    if (cachedSetting?.mood_mode) {
+      moodMode.value = cachedSetting.mood_mode
+    }
     cachedStudents.value = await db.studentsCache.toArray()
     if (extracurriculars.value.length === 0) {
       extracurriculars.value = await db.extracurricularsCache.toArray()
@@ -871,8 +884,8 @@ const triggerStudentScan = async (student, method, payload) => {
     timestamp: now.getTime()
   }
 
-  // Only ask for Gate SEL Mood during Morning School Check-in to keep Pulang/Shalat/Ekstra fast
-  if (isSchoolCheckIn) {
+  // Ask for Gate SEL Mood ONLY during Morning School Check-in when DB setting mood_mode === 'gate'
+  if (isSchoolCheckIn && moodMode.value === 'gate') {
     pendingMoodScan.value = scanDraft
     startMoodCountdown()
   } else {

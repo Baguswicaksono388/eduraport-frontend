@@ -75,7 +75,11 @@ const ruleForm = reactive({
   is_active: true
 })
 
-// 2. Notification Settings Form
+// 2. Notification & Kiosk Mood Settings Form
+const kioskForm = reactive({
+  mood_mode: 'gate' as 'gate' | 'classroom' | 'off'
+})
+
 const notificationForm = reactive({
   notify_checkin_parents: true,
   notify_absent_parents: true,
@@ -320,6 +324,7 @@ const fetchAttendanceSettings = async (schoolId: string) => {
       notificationForm.notify_checkout_parents = res.data.notify_checkout_parents === true
       notificationForm.notify_ekstra_parents = res.data.notify_ekstra_parents === true
       notificationForm.notify_shalat_parents = res.data.notify_shalat_parents === true
+      kioskForm.mood_mode = (['gate', 'classroom', 'off'].includes(res.data.mood_mode) ? res.data.mood_mode : 'gate') as 'gate' | 'classroom' | 'off'
       disciplineForm.sync_late_to_discipline = res.data.sync_late_to_discipline === true
       disciplineForm.late_rule_id = res.data.late_rule_id || null
     }
@@ -391,8 +396,13 @@ const saveTimeRules = async () => {
       method: 'PUT',
       body: payload
     })
-    notify('Pengaturan jam masuk & hari kerja berhasil disimpan', 'success')
+    await fetcher(`/school/${selectedSchoolId.value}/attendance/attendance-settings`, {
+      method: 'PUT',
+      body: { mood_mode: kioskForm.mood_mode }
+    })
+    notify('Pengaturan jam masuk, hari kerja & mode mood Kiosk berhasil disimpan', 'success')
     await fetchTimeRules(selectedSchoolId.value)
+    await fetchAttendanceSettings(selectedSchoolId.value)
   } catch (error) {
     console.error('Failed to save time rules:', error)
     notify('Gagal menyimpan aturan jam masuk', 'error')
@@ -864,6 +874,65 @@ const deleteCustomHoliday = async (item: any) => {
                     {{ ruleForm.check_out_enabled ? 'Scan pulang otomatis aktif mulai jam ini.' : 'Aktifkan toggle agar Kiosk bisa mencatat jam pulang otomatis.' }}
                   </p>
                 </div>
+              </div>
+            </div>
+
+            <!-- Kiosk Mood Mode (Persisted to DB per School) -->
+            <div class="border-t border-slate-800 pt-5 mt-6">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <h3 class="text-sm font-semibold text-white">Input Suasana Hati (Mood Siswa) di Kiosk Scanner</h3>
+                  <p class="text-xs text-slate-400 mt-0.5">
+                    Tersimpan di database sekolah agar konsisten di semua perangkat Kiosk (HP/Tablet/PC).
+                  </p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <button
+                  type="button"
+                  data-testid="mood-mode-off"
+                  @click="kioskForm.mood_mode = 'off'"
+                  :class="[
+                    'p-3 rounded-xl border text-left transition-all cursor-pointer',
+                    kioskForm.mood_mode === 'off'
+                      ? 'border-emerald-500 bg-emerald-500/15 text-emerald-300 shadow-sm'
+                      : 'border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700'
+                  ]"
+                >
+                  <span class="block text-xs font-bold">⚡ Nonaktif (Tanpa Mood)</span>
+                  <span class="block text-[11px] text-slate-400 mt-1">Tap kartu / scan langsung tercatat hadir tanpa pop-up suasana hati.</span>
+                </button>
+
+                <button
+                  type="button"
+                  data-testid="mood-mode-gate"
+                  @click="kioskForm.mood_mode = 'gate'"
+                  :class="[
+                    'p-3 rounded-xl border text-left transition-all cursor-pointer',
+                    kioskForm.mood_mode === 'gate'
+                      ? 'border-violet-500 bg-violet-500/15 text-violet-300 shadow-sm'
+                      : 'border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700'
+                  ]"
+                >
+                  <span class="block text-xs font-bold">😊 Tanya di Kiosk Gerbang</span>
+                  <span class="block text-[11px] text-slate-400 mt-1">Tampilkan pilihan emoji perasaan (5 detik) saat siswa scan masuk pagi.</span>
+                </button>
+
+                <button
+                  type="button"
+                  data-testid="mood-mode-classroom"
+                  @click="kioskForm.mood_mode = 'classroom'"
+                  :class="[
+                    'p-3 rounded-xl border text-left transition-all cursor-pointer',
+                    kioskForm.mood_mode === 'classroom'
+                      ? 'border-sky-500 bg-sky-500/15 text-sky-300 shadow-sm'
+                      : 'border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700'
+                  ]"
+                >
+                  <span class="block text-xs font-bold">🏫 Input di Kelas (Wali)</span>
+                  <span class="block text-[11px] text-slate-400 mt-1">Kiosk gerbang langsung absen cepat; guru mencatat mood di kelas.</span>
+                </button>
               </div>
             </div>
 
