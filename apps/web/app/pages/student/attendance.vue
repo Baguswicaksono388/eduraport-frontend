@@ -250,8 +250,8 @@ const loadData = async () => {
     const classId = selectedClassId.value
     const date = selectedDate.value
 
-    // Fetch students of selected school
-    await fetchStudents(schoolId)
+    // Fetch all students of the selected class (avoid default 10-item school-wide pagination)
+    await fetchStudents(schoolId, 1, 500, undefined, classId)
 
     // Fetch existing daily attendance records, checkins, time rules, and approved leave requests
     const existingRes = await fetchDailyAttendances(schoolId, classId, date)
