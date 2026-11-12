@@ -41,15 +41,48 @@ export const useExtracurricular = () => {
     return res
   }
 
-  const fetchExtracurricularMembers = async (schoolId: string, ekskulId: string) => {
-    const res: any = await fetcher(`/school/${schoolId}/extracurricular/${ekskulId}/members`)
+  const fetchExtracurricularMembers = async (
+    schoolId: string,
+    ekskulId: string,
+    academicYearId?: string,
+    date?: string
+  ) => {
+    const params = new URLSearchParams()
+    if (academicYearId) params.set('academic_year_id', academicYearId)
+    if (date) params.set('date', date)
+    const qs = params.toString()
+    const url = `/school/${schoolId}/extracurricular/${ekskulId}/members${qs ? `?${qs}` : ''}`
+    const res: any = await fetcher(url)
     return res.success ? res.data : []
   }
 
-  const saveExtracurricularMembers = async (schoolId: string, ekskulId: string, studentIds: string[]) => {
+  const saveExtracurricularMembers = async (
+    schoolId: string,
+    ekskulId: string,
+    studentIds: string[],
+    academicYearId?: string
+  ) => {
     return await fetcher(`/school/${schoolId}/extracurricular/${ekskulId}/members`, {
       method: 'PUT',
-      body: { student_ids: studentIds }
+      body: {
+        student_ids: studentIds,
+        ...(academicYearId ? { academic_year_id: academicYearId } : {})
+      }
+    })
+  }
+
+  const cloneExtracurricularMembers = async (
+    schoolId: string,
+    ekskulId: string,
+    sourceAcademicYearId: string,
+    targetAcademicYearId?: string
+  ) => {
+    return await fetcher(`/school/${schoolId}/extracurricular/${ekskulId}/members/clone`, {
+      method: 'POST',
+      body: {
+        source_academic_year_id: sourceAcademicYearId,
+        ...(targetAcademicYearId ? { target_academic_year_id: targetAcademicYearId } : {})
+      }
     })
   }
 
@@ -66,6 +99,7 @@ export const useExtracurricular = () => {
     deleteExtracurricular,
     fetchExtracurricularMembers,
     saveExtracurricularMembers,
+    cloneExtracurricularMembers,
     fetchExtracurricularAttendances
   }
 }

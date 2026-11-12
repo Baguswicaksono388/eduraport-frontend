@@ -3,6 +3,8 @@ import { Trophy, Plus, Trash2, Edit2, ShieldAlert, CheckCircle2, User, Clock, Us
 import { BaseCard, BaseButton, BaseModal, BaseInput } from '@eduraport/ui'
 import { useExtracurricular } from '../composables/useExtracurricular'
 import { useTeacher } from '../composables/useTeacher'
+import { useAcademicYear } from '../composables/useAcademicYear'
+import { useToast } from '../composables/useToast'
 import { useApi } from '../composables/useApi'
 
 definePageMeta({
@@ -17,6 +19,7 @@ definePageMeta({
 })
 
 const { fetcher } = useApi()
+const toast = useToast()
 const { isSchoolLocked, selectedFoundationId, selectedSchoolId, foundations, schools, initContext, onFoundationChange } = useSchoolContext()
 const {
   extracurriculars,
@@ -26,13 +29,30 @@ const {
   deleteExtracurricular,
   fetchExtracurricularMembers,
   saveExtracurricularMembers,
+  cloneExtracurricularMembers,
   fetchExtracurricularAttendances
 } = useExtracurricular()
 const { teachers, fetchTeachers } = useTeacher()
+const { academicYears, fetchAcademicYears } = useAcademicYear()
 
 const activeTab = ref<'master' | 'monitoring'>('master')
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
+
+const resolveDefaultAcademicYearId = (): string => {
+  const active = academicYears.value.find((y: any) => y.is_active)
+  return active?.id || academicYears.value[0]?.id || ''
+}
+
+const findAcademicYearForDate = (dateStr: string): string => {
+  if (!dateStr || academicYears.value.length === 0) return ''
+  const matched = academicYears.value.find((y: any) => {
+    const start = String(y.start_date || '').slice(0, 10)
+    const end = String(y.end_date || '').slice(0, 10)
+    return start && end && dateStr >= start && dateStr <= end
+  })
+  return matched?.id || ''
+}
 
 // Monitoring state (Berangkat & Pulang Ekstrakurikuler)
 const todayWib = new Intl.DateTimeFormat('en-CA', {
@@ -43,6 +63,7 @@ const todayWib = new Intl.DateTimeFormat('en-CA', {
 }).format(new Date())
 const monitorDate = ref(todayWib)
 const selectedMonitorEkstraId = ref('')
+const selectedMonitorAcademicYearId = ref('')
 const loadingMonitor = ref(false)
 const monitorMembers = ref<any[]>([])
 const monitorAttendances = ref<any[]>([])
@@ -50,18 +71,30 @@ const monitorAttendances = ref<any[]>([])
 // Members Modal state
 const showMembersModal = ref(false)
 const membersEkskul = ref<any>(null)
+const selectedMemberAcademicYearId = ref('')
+const cloneSourceAcademicYearId = ref('')
 const schoolStudents = ref<any[]>([])
 const selectedMemberIds = ref<string[]>([])
 const memberSearch = ref('')
 const loadingMembers = ref(false)
 const savingMembers = ref(false)
+const cloningMembers = ref(false)
+
+const otherMemberAcademicYears = computed(() =>
+  academicYears.value.filter((y: any) => y.id !== selectedMemberAcademicYearId.value)
+)
 
 const loadMonitorData = async () => {
   if (!selectedSchoolId.value || !selectedMonitorEkstraId.value) return
   loadingMonitor.value = true
   try {
     const [mems, atts] = await Promise.all([
-      fetchExtracurricularMembers(selectedSchoolId.value, selectedMonitorEkstraId.value),
+      fetchExtracurricularMembers(
+        selectedSchoolId.value,
+        selectedMonitorEkstraId.value,
+        selectedMonitorAcademicYearId.value || undefined,
+        monitorDate.value || undefined
+      ),
       fetchExtracurricularAttendances(selectedSchoolId.value, selectedMonitorEkstraId.value, monitorDate.value)
     ])
     monitorMembers.value = mems || []
@@ -137,16 +170,17 @@ const formatMethodBadge = (method?: string | null): string => {
   return ''
 }
 
-const openMembersModal = async (ekskul: any) => {
-  if (!selectedSchoolId.value) return
-  membersEkskul.value = ekskul
-  memberSearch.value = ''
-  showMembersModal.value = true
+const loadMembersModalData = async () => {
+  if (!selectedSchoolId.value || !membersEkskul.value) return
   loadingMembers.value = true
   try {
+    const ayId = selectedMemberAcademicYearId.value || undefined
+    const studentParams = new URLSearchParams({ limit: '1000' })
+    if (ayId) studentParams.set('academic_year_id', ayId)
+
     const [membersRes, studentsRes]: [any[], any] = await Promise.all([
-      fetchExtracurricularMembers(selectedSchoolId.value, ekskul.id),
-      fetcher(`/school/${selectedSchoolId.value}/student?limit=1000`)
+      fetchExtracurricularMembers(selectedSchoolId.value, membersEkskul.value.id, ayId),
+      fetcher(`/school/${selectedSchoolId.value}/student?${studentParams.toString()}`)
     ])
     selectedMemberIds.value = (membersRes || []).map((m: any) => m.student_id)
     const rawStudents = studentsRes?.data?.data || studentsRes?.data || []
@@ -156,6 +190,28 @@ const openMembersModal = async (ekskul: any) => {
   } finally {
     loadingMembers.value = false
   }
+}
+
+const openMembersModal = async (ekskul: any) => {
+  if (!selectedSchoolId.value) return
+  membersEkskul.value = ekskul
+  memberSearch.value = ''
+  if (academicYears.value.length === 0) {
+    await fetchAcademicYears(selectedSchoolId.value)
+  }
+  selectedMemberAcademicYearId.value = resolveDefaultAcademicYearId()
+  cloneSourceAcademicYearId.value =
+    academicYears.value.find((y: any) => y.id !== selectedMemberAcademicYearId.value)?.id || ''
+  showMembersModal.value = true
+  await loadMembersModalData()
+}
+
+const onMemberAcademicYearChange = async () => {
+  if (cloneSourceAcademicYearId.value === selectedMemberAcademicYearId.value) {
+    cloneSourceAcademicYearId.value =
+      academicYears.value.find((y: any) => y.id !== selectedMemberAcademicYearId.value)?.id || ''
+  }
+  await loadMembersModalData()
 }
 
 const filteredSchoolStudents = computed(() => {
@@ -180,15 +236,45 @@ const handleSaveMembers = async () => {
   if (!selectedSchoolId.value || !membersEkskul.value) return
   savingMembers.value = true
   try {
-    await saveExtracurricularMembers(selectedSchoolId.value, membersEkskul.value.id, selectedMemberIds.value)
+    await saveExtracurricularMembers(
+      selectedSchoolId.value,
+      membersEkskul.value.id,
+      selectedMemberIds.value,
+      selectedMemberAcademicYearId.value || undefined
+    )
+    toast.success('Daftar anggota ekstrakurikuler berhasil disimpan.', 'Sukses')
     showMembersModal.value = false
     if (activeTab.value === 'monitoring' && selectedMonitorEkstraId.value === membersEkskul.value.id) {
       await loadMonitorData()
     }
   } catch (err: any) {
-    alert(err?.message ?? 'Gagal menyimpan anggota ekskul')
+    toast.error(err?.data?.message || err?.message || 'Gagal menyimpan anggota ekskul', 'Gagal')
   } finally {
     savingMembers.value = false
+  }
+}
+
+const handleCloneMembers = async () => {
+  if (!selectedSchoolId.value || !membersEkskul.value || !cloneSourceAcademicYearId.value) return
+  cloningMembers.value = true
+  try {
+    const res: any = await cloneExtracurricularMembers(
+      selectedSchoolId.value,
+      membersEkskul.value.id,
+      cloneSourceAcademicYearId.value,
+      selectedMemberAcademicYearId.value || undefined
+    )
+    const count = res?.data?.cloned ?? 0
+    toast.success(`Berhasil menyalin ${count} anggota dari tahun ajaran sumber.`, 'Sukses')
+    await loadMembersModalData()
+    if (activeTab.value === 'monitoring' && selectedMonitorEkstraId.value === membersEkskul.value.id) {
+      await loadMonitorData()
+    }
+  } catch (err: any) {
+    const fieldErr = err?.data?.errors?.source_academic_year_id?.[0] || err?.data?.errors?.target_academic_year_id?.[0]
+    toast.error(fieldErr || err?.data?.message || err?.message || 'Gagal menyalin anggota ekskul', 'Gagal')
+  } finally {
+    cloningMembers.value = false
   }
 }
 
@@ -210,8 +296,14 @@ const editForm = reactive({
 onMounted(async () => {
   const schoolId = await initContext()
   if (schoolId) {
-    await fetchExtracurriculars(schoolId)
-    await fetchTeachers(schoolId)
+    await Promise.all([
+      fetchExtracurriculars(schoolId),
+      fetchTeachers(schoolId),
+      fetchAcademicYears(schoolId)
+    ])
+    if (!selectedMonitorAcademicYearId.value) {
+      selectedMonitorAcademicYearId.value = resolveDefaultAcademicYearId()
+    }
     if (extracurriculars.value.length > 0 && !selectedMonitorEkstraId.value) {
       selectedMonitorEkstraId.value = extracurriculars.value[0].id
     }
@@ -222,8 +314,12 @@ watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
 watch(selectedSchoolId, async (newVal) => {
   if (newVal) {
-    await fetchExtracurriculars(newVal)
-    await fetchTeachers(newVal)
+    await Promise.all([
+      fetchExtracurriculars(newVal),
+      fetchTeachers(newVal),
+      fetchAcademicYears(newVal)
+    ])
+    selectedMonitorAcademicYearId.value = resolveDefaultAcademicYearId()
     selectedMonitorEkstraId.value = extracurriculars.value[0]?.id || ''
     if (activeTab.value === 'monitoring' && selectedMonitorEkstraId.value) {
       await loadMonitorData()
@@ -231,12 +327,20 @@ watch(selectedSchoolId, async (newVal) => {
   } else {
     extracurriculars.value = []
     selectedMonitorEkstraId.value = ''
+    selectedMonitorAcademicYearId.value = ''
     monitorMembers.value = []
     monitorAttendances.value = []
   }
 })
 
-watch([activeTab, selectedMonitorEkstraId, monitorDate], async () => {
+watch(monitorDate, (newDate) => {
+  const matchedAy = findAcademicYearForDate(newDate)
+  if (matchedAy && matchedAy !== selectedMonitorAcademicYearId.value) {
+    selectedMonitorAcademicYearId.value = matchedAy
+  }
+})
+
+watch([activeTab, selectedMonitorEkstraId, selectedMonitorAcademicYearId, monitorDate], async () => {
   if (activeTab.value === 'monitoring' && selectedMonitorEkstraId.value) {
     await loadMonitorData()
   }
@@ -472,6 +576,19 @@ const handleDeleteEkskul = async (id: string) => {
             </select>
           </div>
           <div class="flex flex-col gap-1">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tahun Ajaran</label>
+            <select
+              v-model="selectedMonitorAcademicYearId"
+              data-testid="monitor-ekstra-year"
+              class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600 min-w-[180px]"
+            >
+              <option value="" disabled>-- Tahun Ajaran --</option>
+              <option v-for="ay in academicYears" :key="ay.id" :value="ay.id">
+                {{ ay.name }}{{ ay.is_active ? ' (Aktif)' : '' }}
+              </option>
+            </select>
+          </div>
+          <div class="flex flex-col gap-1">
             <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tanggal</label>
             <input
               type="date"
@@ -627,6 +744,49 @@ const handleDeleteEkskul = async (id: string) => {
     <!-- Members Management Modal -->
     <BaseModal :show="showMembersModal" :title="`Anggota Ekstrakurikuler: ${membersEkskul?.name || ''}`" @close="showMembersModal = false">
       <div class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50/70 dark:bg-zinc-950/60 border border-slate-200/70 dark:border-zinc-800 rounded-xl p-3">
+          <div class="flex flex-col gap-1">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tahun Ajaran</label>
+            <select
+              v-model="selectedMemberAcademicYearId"
+              data-testid="member-ekstra-year"
+              @change="onMemberAcademicYearChange"
+              class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600"
+            >
+              <option value="" disabled>-- Pilih Tahun Ajaran --</option>
+              <option v-for="ay in academicYears" :key="ay.id" :value="ay.id">
+                {{ ay.name }}{{ ay.is_active ? ' (Aktif)' : '' }}
+              </option>
+            </select>
+          </div>
+
+          <div v-if="otherMemberAcademicYears.length > 0" class="flex flex-col gap-1">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Salin dari Tahun Sebelumnya</label>
+            <div class="flex gap-1.5">
+              <select
+                v-model="cloneSourceAcademicYearId"
+                data-testid="member-clone-source-year"
+                class="flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600"
+              >
+                <option value="" disabled>-- Sumber --</option>
+                <option v-for="ay in otherMemberAcademicYears" :key="ay.id" :value="ay.id">
+                  {{ ay.name }}{{ ay.is_active ? ' (Aktif)' : '' }}
+                </option>
+              </select>
+              <BaseButton
+                variant="outline"
+                size="sm"
+                data-testid="btn-clone-ekstra-members"
+                @click="handleCloneMembers"
+                :disabled="cloningMembers || !cloneSourceAcademicYearId || !selectedMemberAcademicYearId"
+                class="text-[11px] shrink-0"
+              >
+                {{ cloningMembers ? 'Menyalin...' : 'Salin' }}
+              </BaseButton>
+            </div>
+          </div>
+        </div>
+
         <div class="relative">
           <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" :size="14" />
           <input
@@ -639,6 +799,9 @@ const handleDeleteEkskul = async (id: string) => {
 
         <div v-if="loadingMembers" class="py-8 text-center text-xs text-slate-400">Memuat daftar siswa...</div>
         <div v-else class="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-xl">
+          <div v-if="filteredSchoolStudents.length === 0" class="py-8 text-center text-xs text-slate-400">
+            Tidak ada siswa terdaftar pada tahun ajaran ini.
+          </div>
           <label
             v-for="s in filteredSchoolStudents"
             :key="s.id"
