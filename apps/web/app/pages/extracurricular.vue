@@ -242,7 +242,38 @@ const loadMembersModalData = async () => {
     selectedMemberIds.value = (membersRes || []).map((m: any) => m.student_id)
     memberEnrollmentsMap.value = conflictsRes?.enrollments_by_student || {}
     const rawStudents = studentsRes?.data?.data || studentsRes?.data || []
-    schoolStudents.value = Array.isArray(rawStudents) ? rawStudents : []
+    
+    // Ensure all currently enrolled members in this academic year are guaranteed to exist in the candidates list
+    // even if the student is unassigned to a class in this academic year or from a bridged cohort.
+    const studentMap = new Map<string, any>()
+    const candidateList: any[] = Array.isArray(rawStudents) ? rawStudents : []
+    for (const s of candidateList) {
+      if (s && typeof s.id === 'string') {
+        studentMap.set(s.id, {
+          id: s.id,
+          full_name: s.full_name || '',
+          student_number: s.student_number || null,
+          class_id: s.class_id || null,
+          class_name: s.class_name || null,
+          gender: s.gender || null,
+          status: s.status || 'active'
+        })
+      }
+    }
+    for (const m of (membersRes || [])) {
+      if (m && typeof m.student_id === 'string' && !studentMap.has(m.student_id)) {
+        studentMap.set(m.student_id, {
+          id: m.student_id,
+          full_name: m.student_name || 'Siswa',
+          student_number: m.nis || null,
+          class_id: m.class_id || null,
+          class_name: m.class_name || null,
+          gender: null,
+          status: 'active'
+        })
+      }
+    }
+    schoolStudents.value = Array.from(studentMap.values())
   } catch (err) {
     console.error('Failed loading extracurricular members modal:', err)
   } finally {
@@ -1133,11 +1164,30 @@ const handleDeleteEkskul = async (id: string) => {
         <div v-if="loadingMembers" class="py-8 text-center text-xs text-slate-400">Memuat daftar siswa...</div>
         <div v-else class="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-xl">
           <div v-if="filteredSchoolStudents.length === 0" class="py-8 text-center text-xs text-slate-400">
-            {{
-              memberViewFilter === 'enrolled'
-                ? 'Belum ada anggota terdaftar di ekstrakurikuler ini pada tahun ajaran yang dipilih.'
-                : 'Tidak ada siswa yang sesuai filter pada tahun ajaran ini.'
-            }}
+            <template v-if="memberViewFilter === 'enrolled'">
+              <span v-if="memberSearch.trim()">
+                Tidak ada anggota terdaftar yang sesuai dengan pencarian "{{ memberSearch }}".
+              </span>
+              <span v-else>
+                Belum ada anggota terdaftar di ekstrakurikuler ini pada tahun ajaran yang dipilih.
+              </span>
+            </template>
+            <template v-else-if="memberViewFilter === 'conflicts'">
+              <span v-if="memberSearch.trim()">
+                Tidak ada siswa bentrok jadwal yang sesuai dengan pencarian "{{ memberSearch }}".
+              </span>
+              <span v-else>
+                Tidak ada siswa yang mengalami bentrok jadwal pada tahun ajaran ini.
+              </span>
+            </template>
+            <template v-else>
+              <span v-if="memberSearch.trim()">
+                Tidak ada siswa yang sesuai dengan pencarian "{{ memberSearch }}".
+              </span>
+              <span v-else>
+                Tidak ada siswa pada tahun ajaran ini.
+              </span>
+            </template>
           </div>
           <label
             v-for="s in filteredSchoolStudents"
