@@ -80,7 +80,7 @@ const printCards = () => {
         <button @click="$router.back()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 font-medium text-sm transition-colors">
           Kembali
         </button>
-        <button @click="printCards" class="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 font-medium text-sm transition-colors flex items-center gap-2 shadow-md shadow-violet-600/20">
+        <button @click="printCards" class="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 font-medium text-sm transition-colors flex items-center gap-2 shadow-md shadow-sm">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
           </svg>
@@ -91,7 +91,7 @@ const printCards = () => {
 
     <!-- Cards Grid Container -->
     <div v-if="loading" class="flex justify-center items-center py-20 print:hidden">
-      <div class="animate-spin w-8 h-8 border-4 border-violet-500 border-t-transparent rounded-full"></div>
+      <div class="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
     </div>
     
     <div v-else-if="cardsData && cardsData.students.length > 0" class="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-3 gap-6 print:grid-cols-2 print:gap-4 print:max-w-none">
@@ -123,7 +123,7 @@ const printCards = () => {
         <div class="text-center mb-6 w-full">
           <h3 class="font-bold text-slate-800 text-lg leading-tight mb-1 line-clamp-1">{{ student.name }}</h3>
           <p class="text-xs text-slate-500 font-mono">NIS: {{ student.nis_local || '-' }}</p>
-          <div class="mt-2 inline-block px-3 py-1 bg-violet-50 text-violet-700 font-bold text-xs rounded-full border border-violet-100">
+          <div class="mt-2 inline-block px-3 py-1 bg-blue-50/60 text-blue-900 font-bold text-xs rounded-full border border-blue-100">
             Kelas {{ cardsData.className }}
           </div>
         </div>
@@ -138,7 +138,7 @@ const printCards = () => {
             </svg>
             <p class="text-[10px] text-red-500 font-bold leading-tight mb-2">Token Belum<br/>Di-generate</p>
             
-            <button @click="generateToken(student.id)" class="print:hidden px-3 py-1 bg-violet-100 text-violet-700 hover:bg-violet-200 rounded-md text-[10px] font-bold transition-colors shadow-sm">
+            <button @click="generateToken(student.id)" class="print:hidden px-3 py-1 bg-blue-50 text-blue-900 hover:bg-blue-100 rounded-md text-[10px] font-bold transition-colors shadow-sm">
               Buat Token
             </button>
           </div>
@@ -153,7 +153,7 @@ const printCards = () => {
         <p class="text-[8px] text-slate-400 font-mono tracking-widest mt-1">SIMPAN KARTU INI</p>
         
         <!-- Decorative bg -->
-        <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-violet-50 rounded-full opacity-50 pointer-events-none"></div>
+        <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-blue-50/60 rounded-full opacity-50 pointer-events-none"></div>
         <div class="absolute -top-10 -left-10 w-24 h-24 bg-amber-50 rounded-full opacity-50 pointer-events-none"></div>
       </div>
 

@@ -33,7 +33,7 @@
 
       <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 space-y-2">
         <div class="font-bold text-slate-900 dark:text-white flex items-center space-x-1.5">
-          <GraduationCap class="w-4 h-4 text-violet-500" />
+          <GraduationCap class="w-4 h-4 text-blue-600" />
           <span>Maintenance B2C</span>
         </div>
         <p class="text-slate-500 dark:text-zinc-400">Verifikasi slip transfer manual guru solo, perpanjangan masa aktif, dan kuota AI.</p>

@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<{
   align?: 'left' | 'right' | 'auto'
   size?: 'md' | 'sm'
   clearable?: boolean
-  accent?: 'blue' | 'violet'
+  accent?: 'blue' | 'navy' | 'violet'
 }>(), {
   modelValue: '',
   label: '',
@@ -45,17 +45,29 @@ const ACCENT_THEME = {
     actionText: 'text-blue-600 dark:text-blue-400',
     footerBtn: 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/30'
   },
+  navy: {
+    openTrigger: 'border-blue-900 dark:border-blue-700 ring-4 ring-blue-900/10 dark:ring-blue-800/20 bg-white dark:bg-zinc-900',
+    iconActive: 'bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300',
+    chevronOpen: 'rotate-180 text-blue-900 dark:text-blue-300',
+    headerHover: 'group-hover:text-blue-900 dark:group-hover:text-blue-300',
+    daySelected: 'bg-blue-900 text-white font-bold shadow-sm ring-2 ring-blue-800/50 scale-105',
+    dayToday: 'ring-1.5 ring-blue-600 text-blue-900 dark:text-blue-300 font-bold bg-blue-50/50 dark:bg-blue-950/30',
+    dayDefault: 'text-slate-900 dark:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-blue-900 dark:hover:text-blue-300 font-medium',
+    tileSelected: 'bg-blue-900 text-white shadow-sm',
+    actionText: 'text-blue-900 dark:text-blue-300',
+    footerBtn: 'text-blue-900 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200 hover:bg-blue-50 dark:hover:bg-blue-950/30'
+  },
   violet: {
-    openTrigger: 'border-violet-600 dark:border-violet-500 ring-4 ring-violet-600/10 dark:ring-violet-500/20 bg-white dark:bg-zinc-900',
-    iconActive: 'bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400',
-    chevronOpen: 'rotate-180 text-violet-600 dark:text-violet-400',
-    headerHover: 'group-hover:text-violet-600 dark:group-hover:text-violet-400',
-    daySelected: 'bg-violet-600 text-white font-bold shadow-md shadow-violet-600/30 ring-2 ring-violet-500/50 scale-105',
-    dayToday: 'ring-1.5 ring-violet-500 text-violet-600 dark:text-violet-400 font-bold bg-violet-50/50 dark:bg-violet-950/30',
-    dayDefault: 'text-slate-900 dark:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-violet-600 dark:hover:text-violet-400 font-medium',
-    tileSelected: 'bg-violet-600 text-white shadow-md shadow-violet-600/25',
-    actionText: 'text-violet-600 dark:text-violet-400',
-    footerBtn: 'text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-950/30'
+    openTrigger: 'border-blue-900 dark:border-blue-700 ring-4 ring-blue-900/10 dark:ring-blue-800/20 bg-white dark:bg-zinc-900',
+    iconActive: 'bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300',
+    chevronOpen: 'rotate-180 text-blue-900 dark:text-blue-300',
+    headerHover: 'group-hover:text-blue-900 dark:group-hover:text-blue-300',
+    daySelected: 'bg-blue-900 text-white font-bold shadow-sm ring-2 ring-blue-800/50 scale-105',
+    dayToday: 'ring-1.5 ring-blue-600 text-blue-900 dark:text-blue-300 font-bold bg-blue-50/50 dark:bg-blue-950/30',
+    dayDefault: 'text-slate-900 dark:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-blue-900 dark:hover:text-blue-300 font-medium',
+    tileSelected: 'bg-blue-900 text-white shadow-sm',
+    actionText: 'text-blue-900 dark:text-blue-300',
+    footerBtn: 'text-blue-900 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200 hover:bg-blue-50 dark:hover:bg-blue-950/30'
   }
 } as const
 

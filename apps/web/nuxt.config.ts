@@ -45,27 +45,70 @@ export default defineNuxtConfig({
   pwa: {
     registerType: 'autoUpdate',
     manifest: {
-      name: 'EduRaport Scanner',
-      short_name: 'EduScanner',
-      theme_color: '#ffffff',
+      name: 'EduRaport - Sistem Informasi & Rapor Sekolah',
+      short_name: 'EduRaport',
+      description: 'Portal Rapor, Akademik, Presensi, dan Keuangan Sekolah Terpadu',
+      theme_color: '#1E3A8A',
+      background_color: '#F8FAFC',
+      display: 'standalone',
+      orientation: 'portrait-primary',
       icons: [
         {
-          src: 'pwa-192x192.png',
+          src: '/pwa-192x192.png',
           sizes: '192x192',
           type: 'image/png',
+          purpose: 'any maskable'
         },
         {
-          src: 'pwa-512x512.png',
+          src: '/pwa-512x512.png',
           sizes: '512x512',
           type: 'image/png',
+          purpose: 'any maskable'
+        }
+      ],
+      shortcuts: [
+        {
+          name: 'Scan Presensi',
+          short_name: 'Presensi',
+          description: 'Buka scanner QR presensi guru & siswa',
+          url: '/scanner',
+          icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }]
+        },
+        {
+          name: 'Input Nilai',
+          short_name: 'Nilai',
+          description: 'Input dan edit nilai mata pelajaran',
+          url: '/gradebook/input',
+          icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }]
+        },
+        {
+          name: 'Portal Wali Murid',
+          short_name: 'Wali Murid',
+          description: 'Akses dasbor informasi wali murid',
+          url: '/parent',
+          icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }]
         }
       ]
     },
     workbox: {
       navigateFallback: '/',
+      globPatterns: ['**/*.{js,css,html,png,svg,ico,woff2}'],
+      runtimeCaching: [
+        {
+          urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'google-fonts',
+            expiration: {
+              maxEntries: 10,
+              maxAgeSeconds: 60 * 60 * 24 * 365
+            }
+          }
+        }
+      ]
     },
     devOptions: {
-      enabled: true,
+      enabled: false,
       type: 'module',
     },
   },

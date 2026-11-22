@@ -125,14 +125,14 @@ const confirmDeleteCounselor = async () => {
     <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
-        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Yayasan</option>
           <option v-for="found in foundations" :key="found.id" :value="found.id">{{ found.name }}</option>
         </select>
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 disabled:opacity-50 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 disabled:opacity-50 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Unit Sekolah</option>
           <option v-for="school in filteredSchools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
@@ -193,14 +193,14 @@ const confirmDeleteCounselor = async () => {
       <div class="space-y-4">
         <div class="space-y-1.5">
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">Pilih Guru</label>
-          <select v-model="counselorForm.teacher_id" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="counselorForm.teacher_id" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>-- Pilih Guru --</option>
             <option v-for="teacher in teachers" :key="teacher.id" :value="teacher.id">{{ teacher.full_name }}</option>
           </select>
         </div>
         
         <div class="flex items-center gap-2">
-          <input type="checkbox" id="isActive" v-model="counselorForm.is_active" class="w-4 h-4 text-violet-600 rounded border-slate-300 focus:ring-violet-600">
+          <input type="checkbox" id="isActive" v-model="counselorForm.is_active" class="w-4 h-4 text-blue-900 rounded border-slate-300 focus:ring-blue-900/20">
           <label for="isActive" class="text-sm font-medium text-slate-700 dark:text-zinc-300">Status Aktif</label>
         </div>
       </div>

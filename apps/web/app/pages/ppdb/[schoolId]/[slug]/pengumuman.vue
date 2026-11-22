@@ -59,7 +59,7 @@ const filteredAcceptedList = computed(() => {
       </div>
 
       <!-- Header Card -->
-      <div class="bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+      <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
         <div class="absolute -right-10 -bottom-10 opacity-10">
           <GraduationCap :size="160" />
         </div>
@@ -68,13 +68,13 @@ const filteredAcceptedList = computed(() => {
             Hasil Seleksi
           </span>
           <h1 class="text-2xl sm:text-3xl font-black tracking-tight">Pengumuman Kelulusan PPDB</h1>
-          <p class="text-xs sm:text-sm text-violet-100 font-medium">Pengumuman resmi penerimaan calon siswa baru sekolah.</p>
+          <p class="text-xs sm:text-sm text-blue-100 font-medium">Pengumuman resmi penerimaan calon siswa baru sekolah.</p>
         </div>
       </div>
 
       <!-- Loading State -->
       <div v-if="loading" class="text-center py-20 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm">
-        <div class="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+        <div class="w-8 h-8 border-4 border-blue-900 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
         <p class="text-xs text-slate-400 font-medium">Memuat data pengumuman...</p>
       </div>
 
@@ -110,7 +110,7 @@ const filteredAcceptedList = computed(() => {
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div>
                 <h3 class="text-sm font-bold text-slate-800 dark:text-zinc-200 flex items-center gap-1.5">
-                  <ClipboardList class="text-violet-600" :size="16" />
+                  <ClipboardList class="text-blue-900" :size="16" />
                   <span>Daftar Calon Siswa yang Diterima</span>
                 </h3>
                 <p class="text-[10px] text-slate-400 mt-0.5">Total Diterima: {{ announcementData.accepted_list?.length || 0 }} siswa</p>
@@ -122,7 +122,7 @@ const filteredAcceptedList = computed(() => {
                   v-model="searchQuery" 
                   type="text" 
                   placeholder="Cari nama atau nomor..." 
-                  class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg pl-8 pr-3 py-1.5 text-xs outline-none focus:border-violet-600 shadow-sm"
+                  class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg pl-8 pr-3 py-1.5 text-xs outline-none focus:border-blue-900 shadow-sm"
                 />
                 <Search class="absolute left-2.5 top-2.5 text-slate-400" :size="12" />
               </div>
@@ -138,7 +138,7 @@ const filteredAcceptedList = computed(() => {
               <div 
                 v-for="(student, idx) in filteredAcceptedList" 
                 :key="student.registration_number"
-                class="bg-white dark:bg-zinc-900 border border-slate-200/50 dark:border-zinc-850 p-4 rounded-xl shadow-sm flex items-center gap-3 hover:border-violet-600/30 transition-colors"
+                class="bg-white dark:bg-zinc-900 border border-slate-200/50 dark:border-zinc-850 p-4 rounded-xl shadow-sm flex items-center gap-3 hover:border-blue-900/30 transition-colors"
               >
                 <div class="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0">
                   {{ idx + 1 }}

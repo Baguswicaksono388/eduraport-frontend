@@ -105,8 +105,8 @@ const addColumn = () => {
 <template>
   <div class="space-y-4">
     <!-- Header/Instructions -->
-    <div class="flex items-center gap-2 p-3 bg-violet-50/50 dark:bg-zinc-950/20 border border-violet-100 dark:border-zinc-800 rounded-xl text-xs text-slate-500 dark:text-zinc-400">
-      <AlertCircle class="text-violet-600 shrink-0" :size="14" />
+    <div class="flex items-center gap-2 p-3 bg-blue-50/50 dark:bg-zinc-950/20 border border-blue-100 dark:border-zinc-800 rounded-xl text-xs text-slate-500 dark:text-zinc-400">
+      <AlertCircle class="text-blue-900 shrink-0" :size="14" />
       <span>Kelola nama kolom, urutan, dan visibilitas kolom tabel. Minimal 1 kolom harus aktif/terlihat.</span>
     </div>
 
@@ -143,7 +143,7 @@ const addColumn = () => {
           type="button"
           @click="toggleVisibility(index)"
           class="p-2 rounded-lg shrink-0 transition-colors"
-          :class="col.visible ? 'bg-violet-600/10 text-violet-600 dark:text-violet-400' : 'bg-slate-200 dark:bg-zinc-800 text-slate-400'"
+          :class="col.visible ? 'bg-blue-600/10 text-blue-900 dark:text-blue-400' : 'bg-slate-200 dark:bg-zinc-800 text-slate-400'"
           :title="col.visible ? 'Sembunyikan Kolom' : 'Tampilkan Kolom'"
         >
           <Eye v-if="col.visible" :size="13" />
@@ -156,7 +156,7 @@ const addColumn = () => {
             type="text" 
             v-model="col.label" 
             @change="updateModel"
-            class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-violet-650"
+            class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-blue-900"
             placeholder="Label Kolom"
           />
         </div>
@@ -181,19 +181,19 @@ const addColumn = () => {
           type="text" 
           v-model="newColLabel" 
           placeholder="Label Kolom (contoh: Keterangan)" 
-          class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-violet-600"
+          class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-blue-900"
         />
         <input 
           type="text" 
           v-model="newColKey" 
           placeholder="Key Kolom (contoh: note)" 
-          class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-violet-600"
+          class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-blue-900"
         />
       </div>
       <button 
         type="button"
         @click="addColumn"
-        class="w-full bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 shadow-md shadow-violet-600/10"
+        class="w-full bg-blue-900 hover:bg-blue-800 text-white text-xs font-bold py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 shadow-md shadow-sm"
       >
         <Plus :size="12" /> Tambah Kolom
       </button>

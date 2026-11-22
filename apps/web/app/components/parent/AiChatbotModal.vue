@@ -80,7 +80,7 @@ const clearChat = () => {
     <!-- Floating Action Button -->
     <button
       @click="isOpen = true"
-      class="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white p-4 rounded-full shadow-2xl shadow-violet-500/30 flex items-center gap-2.5 transition-all transform hover:scale-105 active:scale-95 group border border-white/20"
+      class="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 hover:from-slate-800 hover:to-blue-900 text-white p-4 rounded-full shadow-2xl shadow-sm flex items-center gap-2.5 transition-all transform hover:scale-105 active:scale-95 group border border-white/20"
       title="Tanya AI Asisten Wali Murid"
     >
       <Bot class="w-6 h-6 animate-pulse" />
@@ -96,27 +96,27 @@ const clearChat = () => {
         class="bg-white dark:bg-zinc-900 w-full sm:w-[420px] h-[580px] rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-200 dark:border-zinc-800 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300"
       >
         <!-- Header -->
-        <div class="px-4 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white flex items-center justify-between">
+        <div class="px-4 py-3 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white flex items-center justify-between">
           <div class="flex items-center gap-2.5">
             <div class="p-1.5 bg-white/20 rounded-lg">
               <Bot class="w-5 h-5" />
             </div>
             <div>
               <h4 class="text-sm font-bold leading-tight">EduRaport AI Parent</h4>
-              <p class="text-[10px] text-violet-200">Asisten Pintar {{ studentName ? `&bull; ${studentName}` : '' }}</p>
+              <p class="text-[10px] text-blue-200">Asisten Pintar {{ studentName ? `&bull; ${studentName}` : '' }}</p>
             </div>
           </div>
           <div class="flex items-center gap-1">
             <button
               @click="clearChat"
-              class="p-1.5 hover:bg-white/20 rounded-lg text-violet-200 hover:text-white transition"
+              class="p-1.5 hover:bg-white/20 rounded-lg text-blue-200 hover:text-white transition"
               title="Bersihkan Chat"
             >
               <Trash2 class="w-4 h-4" />
             </button>
             <button
               @click="isOpen = false"
-              class="p-1.5 hover:bg-white/20 rounded-lg text-violet-200 hover:text-white transition"
+              class="p-1.5 hover:bg-white/20 rounded-lg text-blue-200 hover:text-white transition"
             >
               <X class="w-5 h-5" />
             </button>
@@ -134,7 +134,7 @@ const clearChat = () => {
               :class="[
                 'max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed shadow-sm',
                 msg.role === 'user'
-                  ? 'bg-violet-600 text-white rounded-br-none'
+                  ? 'bg-blue-900 text-white rounded-br-none'
                   : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 border border-slate-200/80 dark:border-zinc-800 rounded-bl-none'
               ]"
             >
@@ -142,7 +142,7 @@ const clearChat = () => {
               <p
                 :class="[
                   'text-[9px] mt-1 text-right',
-                  msg.role === 'user' ? 'text-violet-200' : 'text-slate-400'
+                  msg.role === 'user' ? 'text-blue-200' : 'text-slate-400'
                 ]"
               >
                 {{ msg.time }}
@@ -152,7 +152,7 @@ const clearChat = () => {
 
           <div v-if="isLoading" class="flex justify-start">
             <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl rounded-bl-none px-4 py-2.5 flex items-center gap-2 text-slate-500 text-xs">
-              <Loader2 class="w-4 h-4 animate-spin text-violet-600" />
+              <Loader2 class="w-4 h-4 animate-spin text-blue-900" />
               <span>AI sedang menganalisis data...</span>
             </div>
           </div>
@@ -164,7 +164,7 @@ const clearChat = () => {
             v-for="(prompt, idx) in suggestedPrompts"
             :key="idx"
             @click="sendMessage(prompt)"
-            class="whitespace-nowrap px-2.5 py-1 text-[10px] font-semibold bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-100 dark:border-violet-900/40 rounded-full hover:bg-violet-100 transition shrink-0"
+            class="whitespace-nowrap px-2.5 py-1 text-[10px] font-semibold bg-blue-50/60 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 border border-blue-100 dark:border-blue-900/30 rounded-full hover:bg-blue-50 transition shrink-0"
           >
             {{ prompt }}
           </button>
@@ -177,12 +177,12 @@ const clearChat = () => {
               v-model="inputMessage"
               type="text"
               placeholder="Ketik pertanyaan untuk AI..."
-              class="flex-1 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs outline-none focus:border-violet-600 text-slate-800 dark:text-zinc-100"
+              class="flex-1 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs outline-none focus:border-blue-900 text-slate-800 dark:text-zinc-100"
             />
             <BaseButton
               type="submit"
               size="sm"
-              class="!p-2.5 !rounded-xl bg-violet-600 hover:bg-violet-700 text-white shrink-0"
+              class="!p-2.5 !rounded-xl bg-blue-900 hover:bg-blue-800 text-white shrink-0"
               :disabled="!inputMessage.trim() || isLoading"
             >
               <Send class="w-4 h-4" />

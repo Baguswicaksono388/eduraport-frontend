@@ -85,7 +85,7 @@ const handlePay = async () => {
 <template>
   <div class="space-y-6 max-w-5xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
     <div class="flex items-center gap-3">
-      <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-violet-600 transition">
+      <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-blue-900 transition">
         <ArrowLeft :size="18" />
       </NuxtLink>
       <div>
@@ -98,7 +98,7 @@ const handlePay = async () => {
     </div>
 
     <div v-if="loading" class="flex justify-center py-20">
-      <div class="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-10 h-10 border-4 border-blue-900 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <div v-else class="space-y-4">
@@ -137,7 +137,7 @@ const handlePay = async () => {
             <BaseButton
               v-if="bill.status !== 'paid' && bill.status !== 'lunas' && bill.status !== 'pending'"
               size="sm"
-              class="bg-violet-600 hover:bg-violet-700 text-white font-semibold text-xs"
+              class="bg-blue-900 hover:bg-blue-800 text-white font-semibold text-xs"
               @click="openPayModal(bill)"
             >
               Bayar Sekarang
@@ -162,9 +162,9 @@ const handlePay = async () => {
     <!-- Modal Upload Bukti Bayar / Pembayaran -->
     <BaseModal v-model="isPaymentModalOpen" title="Konfirmasi & Bayar Tagihan">
       <div v-if="selectedBill" class="space-y-4 text-xs">
-        <div class="bg-violet-50 dark:bg-violet-950/30 p-3 rounded-lg border border-violet-100 dark:border-violet-900/40">
+        <div class="bg-blue-50/60 dark:bg-blue-950/30 p-3 rounded-lg border border-blue-100 dark:border-blue-900/30">
           <p class="font-bold text-slate-800 dark:text-zinc-200">{{ selectedBill.name || selectedBill.title }}</p>
-          <p class="text-base font-black text-violet-600 mt-1">Rp {{ Number(selectedBill.amount || 0).toLocaleString('id-ID') }}</p>
+          <p class="text-base font-black text-blue-900 mt-1">Rp {{ Number(selectedBill.amount || 0).toLocaleString('id-ID') }}</p>
         </div>
 
         <div>
@@ -178,7 +178,7 @@ const handlePay = async () => {
 
         <div>
           <label class="block font-bold text-slate-700 dark:text-zinc-300 mb-1">Upload Bukti Transfer (Opsional / Foto Struk)</label>
-          <div class="border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-xl p-4 text-center hover:border-violet-500 transition cursor-pointer relative">
+          <div class="border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-xl p-4 text-center hover:border-blue-600 transition cursor-pointer relative">
             <input type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" @change="handleFileUpload" />
             <Camera class="mx-auto text-slate-400 mb-1" :size="24" />
             <p class="text-[11px] font-semibold text-slate-600 dark:text-zinc-400">Pilih dari Galeri atau Foto Kamera</p>
@@ -191,7 +191,7 @@ const handlePay = async () => {
 
         <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-zinc-800">
           <BaseButton variant="outline" size="sm" @click="isPaymentModalOpen = false">Batal</BaseButton>
-          <BaseButton size="sm" class="bg-violet-600 hover:bg-violet-700 text-white" :disabled="submitting" @click="handlePay">
+          <BaseButton size="sm" class="bg-blue-900 hover:bg-blue-800 text-white" :disabled="submitting" @click="handlePay">
             {{ submitting ? 'Mengirim...' : 'Kirim Bukti Pembayaran' }}
           </BaseButton>
         </div>

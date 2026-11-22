@@ -85,7 +85,7 @@ const handleSignReport = async () => {
 <template>
   <div class="max-w-4xl mx-auto p-4 md:p-8 space-y-6">
     <div class="flex items-center gap-4 mb-6">
-      <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-500 hover:text-violet-600 transition-colors">
+      <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-500 hover:text-blue-900 transition-colors">
         <ArrowLeft :size="20" />
       </NuxtLink>
       <div>
@@ -95,19 +95,19 @@ const handleSignReport = async () => {
     </div>
 
     <div v-if="loading" class="flex justify-center py-20">
-      <div class="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-10 h-10 border-4 border-blue-900 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <div v-else-if="!reportData" class="text-center py-12 bg-white/50 dark:bg-zinc-900/50 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800">
       <FileText class="mx-auto text-slate-300 dark:text-zinc-700 mb-3" :size="40" />
       <p class="text-sm font-semibold text-slate-700 dark:text-zinc-300">Rapor tidak ditemukan</p>
-      <NuxtLink to="/" class="text-violet-600 text-xs mt-2 block hover:underline">Kembali ke Dashboard</NuxtLink>
+      <NuxtLink to="/" class="text-blue-900 text-xs mt-2 block hover:underline">Kembali ke Dashboard</NuxtLink>
     </div>
 
     <div v-else class="space-y-6">
       <!-- Report Header Info -->
       <BaseCard stripe class="relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-32 h-32 bg-violet-600/5 rounded-bl-full -z-10"></div>
+        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-bl-full -z-10"></div>
         <div class="flex flex-col md:flex-row justify-between gap-6">
           <div class="space-y-4">
             <div>
@@ -162,7 +162,7 @@ const handleSignReport = async () => {
               <BaseButton 
                 v-if="reportData.status !== 'APPROVED_BY_PARENT'" 
                 variant="primary" 
-                class="flex-1 md:flex-none justify-center shadow-lg shadow-violet-600/20"
+                class="flex-1 md:flex-none justify-center shadow-lg shadow-sm"
                 @click="showSignatureModal = true"
               >
                 Tandatangani Rapor
@@ -175,9 +175,9 @@ const handleSignReport = async () => {
       <!-- Teacher's Note -->
       <BaseCard v-if="reportData.teacher_notes" stripe>
         <h3 class="font-bold text-slate-900 dark:text-zinc-100 mb-3 flex items-center gap-2">
-          <FileText class="text-violet-600" :size="18" /> Catatan Wali Kelas
+          <FileText class="text-blue-900" :size="18" /> Catatan Wali Kelas
         </h3>
-        <div class="bg-violet-50/50 dark:bg-violet-900/10 p-4 rounded-lg text-sm text-slate-700 dark:text-zinc-300 italic border border-violet-100 dark:border-violet-900/30">
+        <div class="bg-blue-50/50 dark:bg-blue-950/10 p-4 rounded-lg text-sm text-slate-700 dark:text-zinc-300 italic border border-blue-100 dark:border-blue-950/30">
           "{{ reportData.teacher_notes }}"
         </div>
       </BaseCard>
@@ -248,7 +248,7 @@ const handleSignReport = async () => {
 
         <form @submit.prevent="handleSignReport" class="space-y-4">
           <label class="flex items-start gap-3 p-3 border border-slate-200 dark:border-zinc-700 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors">
-            <input type="checkbox" v-model="signatureForm.agree_to_terms" class="mt-0.5 w-4 h-4 text-violet-600 rounded border-slate-300 focus:ring-violet-600" />
+            <input type="checkbox" v-model="signatureForm.agree_to_terms" class="mt-0.5 w-4 h-4 text-blue-900 rounded border-slate-300 focus:ring-blue-900/20" />
             <span class="text-xs font-medium text-slate-700 dark:text-zinc-300">
               Saya menyetujui pernyataan pengesahan di atas dan menerima rapor ini.
             </span>

@@ -4,56 +4,72 @@
 
 @layer base {
   :root {
-    --bg: #f8fafc;
-    --panel: #ffffff;
-    --panel2: #f1f5f9;
-    --line: #e2e8f0;
-    --text: #0f172a;
-    --muted: #64748b;
-    --muted2: #94a3b8;
-    --vio: #8b5cf6;
-    --blue: #3b82f6;
-    --red: #ef4444;
-    --fg: #0f172a;
-    --vio-strong: #6d28d9;
-    --vio-soft: rgba(139,92,246,.14);
-    --green: #10b981;
-    --green-soft: rgba(45,212,167,.13);
-    --amber: #f59e0b;
-    --amber-soft: rgba(245,176,76,.13);
-    --r: 12px;
+    /* Swiss Modernism 2.0 / Academic SaaS Tokens */
+    --color-primary: #1E3A8A;
+    --color-primary-hover: #172554;
+    --color-accent: #2563EB;
+    
+    --bg: #F8FAFC;
+    --panel: #FFFFFF;
+    --panel2: #F1F5F9;
+    --line: #E2E8F0;
+    --text: #0F172A;
+    --muted: #475569;
+    --muted2: #94A3B8;
+
+    --blue: #2563EB;
+    --green: #059669;
+    --green-soft: rgba(5, 150, 105, 0.1);
+    --amber: #D97706;
+    --amber-soft: rgba(217, 119, 6, 0.1);
+    --red: #DC2626;
+    --red-soft: rgba(220, 38, 38, 0.1);
+    --r: 8px;
   }
   
   .dark {
-    --bg: #0e0e13;
-    --panel: #1a1a22;
-    --panel2: #20202a;
-    --line: #2b2b37;
-    --text: #e9e9f1;
-    --muted: #8f8fa3;
-    --muted2: #6c6c7e;
-    --vio: #8b5cf6;
-    --blue: #5ca8f4;
-    --red: #f4645c;
-    --fg: #ffffff;
-    --vio-strong: #7c4dff;
-    --vio-soft: rgba(139,92,246,.14);
-    --green: #2dd4a7;
-    --green-soft: rgba(45,212,167,.13);
-    --amber: #f5b04c;
-    --amber-soft: rgba(245,176,76,.13);
-    --r: 12px;
+    --color-primary: #3B82F6;
+    --color-primary-hover: #60A5FA;
+    --color-accent: #60A5FA;
+
+    --bg: #0B0F19;
+    --panel: #111827;
+    --panel2: #1F2937;
+    --line: #1F2937;
+    --text: #F8FAFC;
+    --muted: #94A3B8;
+    --muted2: #64748B;
+
+    --blue: #60A5FA;
+    --green: #10B981;
+    --green-soft: rgba(16, 185, 129, 0.15);
+    --amber: #F59E0B;
+    --amber-soft: rgba(245, 158, 11, 0.15);
+    --red: #EF4444;
+    --red-soft: rgba(239, 68, 68, 0.15);
+    --r: 8px;
   }
 
   body {
     @apply antialiased font-sans transition-colors duration-200;
     background-color: var(--bg);
     color: var(--text);
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
-/* Custom Scrollbar Hide */
+/* Ergonomic Mobile Helpers & Safe Area Utilities */
 @layer utilities {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 1rem);
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 1rem);
+  }
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }

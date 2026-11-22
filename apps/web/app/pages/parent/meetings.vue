@@ -89,7 +89,7 @@ const handleCancel = async (meetingId: string) => {
   <div class="space-y-6 max-w-4xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-violet-600 transition">
+        <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-blue-900 transition">
           <ArrowLeft :size="18" />
         </NuxtLink>
         <div>
@@ -101,13 +101,13 @@ const handleCancel = async (meetingId: string) => {
         </div>
       </div>
 
-      <BaseButton size="sm" class="bg-violet-600 hover:bg-violet-700 text-white font-semibold text-xs flex items-center gap-1.5" @click="openBookModal">
+      <BaseButton size="sm" class="bg-blue-900 hover:bg-blue-800 text-white font-semibold text-xs flex items-center gap-1.5" @click="openBookModal">
         <Plus :size="16" /> Booking Jadwal Baru
       </BaseButton>
     </div>
 
     <div v-if="loading" class="flex justify-center py-20">
-      <div class="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-10 h-10 border-4 border-blue-900 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <div v-else class="space-y-3">
@@ -193,7 +193,7 @@ const handleCancel = async (meetingId: string) => {
               :class="[
                 'p-2 rounded-xl text-center font-bold transition border',
                 !slot.available ? 'opacity-40 cursor-not-allowed bg-slate-100 dark:bg-zinc-800' :
-                bookForm.time === slot.time ? 'bg-violet-600 text-white border-violet-600' : 'bg-slate-50 dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300'
+                bookForm.time === slot.time ? 'bg-blue-900 text-white border-blue-900' : 'bg-slate-50 dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300'
               ]"
             >
               {{ slot.time }} WIB
@@ -203,7 +203,7 @@ const handleCancel = async (meetingId: string) => {
 
         <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-zinc-800">
           <BaseButton variant="outline" size="sm" @click="isBookModal = false">Batal</BaseButton>
-          <BaseButton size="sm" class="bg-violet-600 hover:bg-violet-700 text-white" :disabled="bookingLoading" @click="handleBook">
+          <BaseButton size="sm" class="bg-blue-900 hover:bg-blue-800 text-white" :disabled="bookingLoading" @click="handleBook">
             {{ bookingLoading ? 'Membooking...' : 'Konfirmasi Booking' }}
           </BaseButton>
         </div>

@@ -206,10 +206,10 @@ const totalPoints = computed(() => {
     </div>
 
     <!-- Student Point Summary -->
-    <div v-if="selectedStudentId" class="bg-violet-600 rounded-xl p-6 shadow-sm shadow-violet-600/20 text-white flex items-center justify-between">
+    <div v-if="selectedStudentId" class="bg-blue-900 rounded-xl p-6 shadow-sm shadow-sm text-white flex items-center justify-between">
       <div>
         <h3 class="font-bold text-lg">Total Poin Siswa</h3>
-        <p class="text-violet-200 text-sm mt-1">Akumulasi poin pada tahun ajaran ini</p>
+        <p class="text-blue-200 text-sm mt-1">Akumulasi poin pada tahun ajaran ini</p>
       </div>
       <div class="text-4xl font-black bg-white/20 px-6 py-2 rounded-xl backdrop-blur-sm">
         {{ totalPoints > 0 ? '+' : '' }}{{ totalPoints }}
@@ -284,7 +284,7 @@ const totalPoints = computed(() => {
       <div v-else class="space-y-4">
         <div class="space-y-1.5">
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">Pilih Aturan</label>
-          <select v-model="recordForm.rule_id" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="recordForm.rule_id" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>-- Cari Aturan --</option>
             <optgroup label="Pelanggaran (Poin Negatif)">
               <option v-if="pointRules.filter(r => r.category === 'violation').length === 0" disabled value="">
@@ -306,7 +306,7 @@ const totalPoints = computed(() => {
         </div>
         <div class="space-y-1.5">
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">Catatan Tambahan (Opsional)</label>
-          <textarea v-model="recordForm.notes" rows="3" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10" placeholder="Tambahkan detail kejadian..."></textarea>
+          <textarea v-model="recordForm.notes" rows="3" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10" placeholder="Tambahkan detail kejadian..."></textarea>
         </div>
       </div>
       <template #footer>

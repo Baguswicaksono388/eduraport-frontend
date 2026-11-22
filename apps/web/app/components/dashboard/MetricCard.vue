@@ -181,7 +181,7 @@ const freshnessLabel = computed(() => {
       <button
         @click="emit('recalculate', metric.metric_key)"
         :disabled="recalculating"
-        class="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-500 dark:text-zinc-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors disabled:opacity-50"
+        class="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-500 dark:text-zinc-400 hover:text-blue-900 dark:hover:text-blue-400 transition-colors disabled:opacity-50"
       >
         <RefreshCw :class="{ 'animate-spin': recalculating }" :size="12" />
         <span>Hitung Ulang</span>
@@ -204,7 +204,7 @@ const freshnessLabel = computed(() => {
       <button
         v-if="metric.drill_route"
         @click="emit('action', metric.drill_route)"
-        class="inline-flex items-center gap-0.5 text-[10px] font-bold text-violet-600 dark:text-violet-400 hover:underline"
+        class="inline-flex items-center gap-0.5 text-[10px] font-bold text-blue-900 dark:text-blue-400 hover:underline"
       >
         <span>Detail</span>
         <ArrowUpRight :size="11" />

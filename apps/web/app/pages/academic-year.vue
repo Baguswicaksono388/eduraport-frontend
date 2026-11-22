@@ -186,7 +186,7 @@ const handleCloneSubmit = async () => {
     <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
-        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Yayasan</option>
           <option v-for="found in foundations" :key="found.id" :value="found.id">{{ found.name }}</option>
         </select>
@@ -194,7 +194,7 @@ const handleCloneSubmit = async () => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Unit Sekolah</option>
           <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
@@ -217,7 +217,7 @@ const handleCloneSubmit = async () => {
           <tr v-for="year in academicYears" :key="year.id" class="border-b border-slate-100 dark:border-zinc-800/80 last:border-0 hover:bg-slate-50/20 dark:hover:bg-zinc-900/20 transition-colors">
             <td class="p-4 pl-6">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded bg-violet-50 dark:bg-zinc-850 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                <div class="w-8 h-8 rounded bg-blue-50/60 dark:bg-zinc-850 flex items-center justify-center text-blue-900 dark:text-blue-400">
                   <Calendar :size="16" />
                 </div>
                 <span class="font-bold text-slate-800 dark:text-zinc-200 text-sm">{{ year.name }}</span>
@@ -241,7 +241,7 @@ const handleCloneSubmit = async () => {
                 <BaseButton @click="openCloneModal(year.id)" variant="outline" class="py-1.5 px-3 text-[10px] font-bold text-blue-600 border-blue-200 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/30">
                   <Copy :size="12" class="mr-1" /> Salin Kelas
                 </BaseButton>
-                <button @click="openEditModal(year)" class="p-2 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors" title="Ubah">
+                <button @click="openEditModal(year)" class="p-2 text-slate-400 hover:text-blue-900 dark:hover:text-blue-400 transition-colors" title="Ubah">
                   <Edit2 :size="14" />
                 </button>
                 <button @click="handleDeleteYear(year.id)" :disabled="year.is_active" class="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-450 transition-colors disabled:opacity-30 disabled:pointer-events-none" title="Hapus">
@@ -270,7 +270,7 @@ const handleCloneSubmit = async () => {
           <BaseDateInput v-model="yearForm.end_date" label="Tanggal Selesai" required />
         </div>
         <div class="flex items-center gap-2 px-1 py-1">
-          <input type="checkbox" id="is_active_create" v-model="yearForm.is_active" class="rounded border-slate-350 dark:border-zinc-800 text-violet-600 focus:ring-violet-600/20" />
+          <input type="checkbox" id="is_active_create" v-model="yearForm.is_active" class="rounded border-slate-350 dark:border-zinc-800 text-blue-900 focus:ring-blue-900/20" />
           <label for="is_active_create" class="text-xs font-semibold text-slate-600 dark:text-zinc-400">Set sebagai tahun ajaran aktif</label>
         </div>
         <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
@@ -289,7 +289,7 @@ const handleCloneSubmit = async () => {
           <BaseDateInput v-model="editForm.end_date" label="Tanggal Selesai" required />
         </div>
         <div class="flex items-center gap-2 px-1 py-1">
-          <input type="checkbox" id="is_active_edit" v-model="editForm.is_active" class="rounded border-slate-350 dark:border-zinc-800 text-violet-600 focus:ring-violet-600/20" />
+          <input type="checkbox" id="is_active_edit" v-model="editForm.is_active" class="rounded border-slate-350 dark:border-zinc-800 text-blue-900 focus:ring-blue-900/20" />
           <label for="is_active_edit" class="text-xs font-semibold text-slate-600 dark:text-zinc-400">Set sebagai tahun ajaran aktif</label>
         </div>
         <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
@@ -313,7 +313,7 @@ const handleCloneSubmit = async () => {
 
         <div class="flex flex-col gap-1.5">
           <label class="text-xs font-semibold text-slate-700 dark:text-zinc-300">Tahun Ajaran Asal</label>
-          <select v-model="cloneSourceYearId" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 transition-all text-slate-900 dark:text-zinc-100">
+          <select v-model="cloneSourceYearId" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 transition-all text-slate-900 dark:text-zinc-100">
             <option value="" disabled>Pilih Tahun Ajaran...</option>
             <option v-for="y in availableSourceYears" :key="y.id" :value="y.id">{{ y.name }}</option>
           </select>

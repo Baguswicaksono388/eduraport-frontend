@@ -853,7 +853,7 @@ const filteredTeachersForQuota = computed(() => {
           variant="primary" 
           @click="openCreateType" 
           :disabled="!selectedSchoolId" 
-          class="py-2 px-4 text-xs font-bold shadow-lg shadow-violet-500/10 bg-violet-600 hover:bg-violet-750 border-none transition-transform active:scale-[0.98]"
+          class="py-2 px-4 text-xs font-bold shadow-lg shadow-sm bg-blue-900 hover:bg-blue-800 border-none transition-transform active:scale-[0.98]"
         >
           <Plus class="mr-1.5" :size="15" /> Tambah Jenis Izin
         </BaseButton>
@@ -1001,7 +1001,7 @@ const filteredTeachersForQuota = computed(() => {
             <!-- Approval actions -->
             <div class="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800 flex justify-end gap-2">
               <template v-if="req.status === 'pending'">
-                <BaseButton variant="outline" class="py-1 px-3 text-[10px] font-bold text-violet-650 border-violet-500/20 hover:bg-violet-500/5 rounded-lg" @click="openEditRequest(req)">
+                <BaseButton variant="outline" class="py-1 px-3 text-[10px] font-bold text-blue-900 border-blue-500/20 hover:bg-blue-600/5 rounded-lg" @click="openEditRequest(req)">
                   <Edit2 class="inline mr-1" :size="11" /> Ubah
                 </BaseButton>
                 <BaseButton variant="outline" class="py-1 px-3 text-[10px] font-bold text-rose-500 border-rose-500/20 hover:bg-rose-500/5 rounded-lg" @click="openDecideRequest(req, 'rejected')">
@@ -1186,7 +1186,7 @@ const filteredTeachersForQuota = computed(() => {
               </td>
               <td class="p-4 pr-6 text-right">
                 <div class="flex justify-end items-center gap-1">
-                  <button @click="openEditType(item)" class="p-2 text-slate-400 hover:text-violet-600 transition-colors">
+                  <button @click="openEditType(item)" class="p-2 text-slate-400 hover:text-blue-900 transition-colors">
                     <Edit2 :size="14" />
                   </button>
                   <button @click="handleDeleteLeaveType(item.id)" class="p-2 text-slate-400 hover:text-rose-600 transition-colors">
@@ -1232,7 +1232,7 @@ const filteredTeachersForQuota = computed(() => {
         <!-- Summary cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-            <div class="p-3 bg-violet-500/10 text-violet-600 dark:text-violet-400 rounded-xl">
+            <div class="p-3 bg-blue-600/10 text-blue-900 dark:text-blue-400 rounded-xl">
               <Clock :size="24" />
             </div>
             <div>
@@ -1320,7 +1320,7 @@ const filteredTeachersForQuota = computed(() => {
                   <div class="text-[10px] text-slate-400 font-bold mt-0.5">{{ item.room || '-' }}</div>
                 </td>
                 <td class="p-4">
-                  <span class="inline-flex px-2 py-0.5 rounded-md text-[10px] font-extrabold tracking-wide bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">
+                  <span class="inline-flex px-2 py-0.5 rounded-md text-[10px] font-extrabold tracking-wide bg-blue-600/10 text-blue-900 dark:text-blue-400 border border-blue-500/20">
                     {{ item.class_name }}
                   </span>
                 </td>
@@ -1589,7 +1589,7 @@ const filteredTeachersForQuota = computed(() => {
 
         <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
           <BaseButton variant="outline" type="button" @click="showCreateTypeModal = false" class="rounded-xl py-2 px-4 text-xs font-semibold">Batal</BaseButton>
-          <BaseButton variant="primary" type="submit" class="rounded-xl py-2 px-4 text-xs font-bold bg-violet-600 hover:bg-violet-750 border-none">Simpan Jenis Cuti</BaseButton>
+          <BaseButton variant="primary" type="submit" class="rounded-xl py-2 px-4 text-xs font-bold bg-blue-900 hover:bg-blue-800 border-none">Simpan Jenis Cuti</BaseButton>
         </div>
       </form>
     </BaseModal>
@@ -1622,7 +1622,7 @@ const filteredTeachersForQuota = computed(() => {
 
         <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
           <BaseButton variant="outline" type="button" @click="showEditTypeModal = false" class="rounded-xl py-2 px-4 text-xs font-semibold">Batal</BaseButton>
-          <BaseButton variant="primary" type="submit" class="rounded-xl py-2 px-4 text-xs font-bold bg-violet-650 hover:bg-violet-750 border-none">Simpan Perubahan</BaseButton>
+          <BaseButton variant="primary" type="submit" class="rounded-xl py-2 px-4 text-xs font-bold bg-blue-900 hover:bg-blue-800 border-none">Simpan Perubahan</BaseButton>
         </div>
       </form>
     </BaseModal>

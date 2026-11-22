@@ -2,11 +2,11 @@
   <div class="w-full flex flex-col p-2 sm:p-5 space-y-6 text-slate-800 dark:text-slate-100 font-sans">
     
     <!-- Sync Banner with Parent Filters (if active) -->
-    <div v-if="props.syncWithParentFilters" class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-violet-500/10 dark:bg-violet-950/20 border border-violet-500/20 dark:border-violet-900/40 rounded-2xl text-xs text-slate-600 dark:text-slate-300">
+    <div v-if="props.syncWithParentFilters" class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-blue-600/10 dark:bg-blue-950/20 border border-blue-500/20 dark:border-blue-900/30 rounded-2xl text-xs text-slate-600 dark:text-slate-300">
       <div class="flex items-center gap-2.5">
         <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
         <span class="font-bold text-slate-800 dark:text-slate-100">Filter Aktif Portal:</span>
-        <span class="font-mono text-[11px] bg-white dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-violet-700 dark:text-violet-300 font-bold shadow-2xs">
+        <span class="font-mono text-[11px] bg-white dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-blue-900 dark:text-blue-300 font-bold shadow-2xs">
           {{ props.classId ? 'Rombel Terpilih' : 'Semua Rombel' }} • {{ props.startDate || 'Awal Bulan' }} s/d {{ props.endDate || 'Hari Ini' }}
         </span>
       </div>
@@ -17,28 +17,28 @@
     <div class="flex flex-wrap items-center gap-2">
       <button 
         @click="activeView = 'class'" 
-        :class="activeView === 'class' ? 'bg-violet-600 text-white shadow-md shadow-violet-600/25 ring-2 ring-violet-500/20' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'"
+        :class="activeView === 'class' ? 'bg-blue-900 text-white shadow-md shadow-sm ring-2 ring-blue-600/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'"
         class="px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
       >
         Heatmap Kelas
       </button>
       <button 
         @click="activeView = 'student'" 
-        :class="activeView === 'student' ? 'bg-violet-600 text-white shadow-md shadow-violet-600/25 ring-2 ring-violet-500/20' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'"
+        :class="activeView === 'student' ? 'bg-blue-900 text-white shadow-md shadow-sm ring-2 ring-blue-600/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'"
         class="px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
       >
         Tren Individu
       </button>
       <button 
         @click="activeView = 'school'" 
-        :class="activeView === 'school' ? 'bg-violet-600 text-white shadow-md shadow-violet-600/25 ring-2 ring-violet-500/20' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'"
+        :class="activeView === 'school' ? 'bg-blue-900 text-white shadow-md shadow-sm ring-2 ring-blue-600/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'"
         class="px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
       >
         Ringkas Sekolah
       </button>
       <button 
         @click="activeView = 'arrival'" 
-        :class="activeView === 'arrival' ? 'bg-violet-600 text-white shadow-md shadow-violet-600/25 ring-2 ring-violet-500/20' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'"
+        :class="activeView === 'arrival' ? 'bg-blue-900 text-white shadow-md shadow-sm ring-2 ring-blue-600/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'"
         class="px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
       >
         Jam Kedatangan
@@ -57,7 +57,7 @@
 
     <!-- Loading State -->
     <div v-if="loadingHeatmap || loadingSummary" class="flex flex-col items-center justify-center py-20 gap-3">
-      <div class="animate-spin rounded-full h-10 w-10 border-2 border-violet-500 border-t-transparent"></div>
+      <div class="animate-spin rounded-full h-10 w-10 border-2 border-blue-600 border-t-transparent"></div>
       <p class="text-xs text-slate-400 font-medium">Memuat data emosional siswa...</p>
     </div>
 
@@ -96,7 +96,7 @@
                 class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group" 
                 @click="selectStudent(student)"
               >
-                <td class="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[180px] group-hover:text-violet-600 dark:group-hover:text-violet-400" :title="'Lihat grafik tren ' + student.name">
+                <td class="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[180px] group-hover:text-blue-900 dark:group-hover:text-blue-400" :title="'Lihat grafik tren ' + student.name">
                   {{ student.name }}
                 </td>
                 <td v-for="d in dates" :key="d" class="px-2 py-3 text-center">
@@ -153,7 +153,7 @@
             </div>
             <button 
               @click="activeView = 'class'" 
-              class="text-xs font-bold text-violet-600 dark:text-violet-400 hover:underline"
+              class="text-xs font-bold text-blue-900 dark:text-blue-400 hover:underline"
             >
               Lihat Siswa Lain
             </button>
@@ -171,7 +171,7 @@
                 <div class="text-2xl drop-shadow-sm transform translate-y-3 hover:scale-125 transition-transform" :title="MOOD_LABELS[mood] || 'Belum check-in'">
                   {{ MOOD_EMOJI[mood] || '⚪' }}
                 </div>
-                <div class="h-full w-px bg-violet-300 dark:bg-violet-700 mt-4 border-l border-dashed border-violet-400 dark:border-violet-600 opacity-60"></div>
+                <div class="h-full w-px bg-blue-200 dark:bg-blue-800 mt-4 border-l border-dashed border-blue-400 dark:border-blue-900 opacity-60"></div>
               </div>
             </div>
             <!-- X-axis Labels -->
@@ -184,7 +184,7 @@
         </div>
         <div v-else class="text-center py-16 text-slate-500 dark:text-slate-400">
           <p class="text-sm font-semibold">Pilih salah satu siswa dari Heatmap Kelas terlebih dahulu.</p>
-          <button @click="activeView = 'class'" class="mt-3 px-4 py-2 bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 rounded-xl font-bold text-xs hover:bg-violet-100 transition-colors">
+          <button @click="activeView = 'class'" class="mt-3 px-4 py-2 bg-blue-50/60 dark:bg-blue-950/40 text-blue-900 dark:text-blue-400 rounded-xl font-bold text-xs hover:bg-blue-50 transition-colors">
             Buka Heatmap Kelas
           </button>
         </div>
@@ -209,7 +209,7 @@
               <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-1 block mb-1">Sampai</label>
               <input type="date" v-model="summaryEndDate" class="w-[125px] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs font-semibold outline-none" />
             </div>
-            <button @click="loadSummaryData" class="px-3 py-1.5 bg-violet-600 text-white rounded-lg text-xs font-bold hover:bg-violet-700 transition-colors">Terapkan</button>
+            <button @click="loadSummaryData" class="px-3 py-1.5 bg-blue-900 text-white rounded-lg text-xs font-bold hover:bg-blue-800 transition-colors">Terapkan</button>
           </div>
         </div>
 
@@ -238,9 +238,9 @@
                   {{ c.class_name }} <span v-if="c.academic_year_name" class="font-normal text-xs text-slate-400">(TA {{ c.academic_year_name }})</span>
                 </div>
                 <div class="flex-1 h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div class="h-full rounded-full bg-violet-500 transition-all" :style="{ width: c.mood.total > 0 ? Math.round(((c.mood.senang + c.mood.biasa) / c.mood.total) * 100) + '%' : '0%' }"></div>
+                  <div class="h-full rounded-full bg-blue-50/600 transition-all" :style="{ width: c.mood.total > 0 ? Math.round(((c.mood.senang + c.mood.biasa) / c.mood.total) * 100) + '%' : '0%' }"></div>
                 </div>
-                <div class="font-bold text-xs text-violet-600 dark:text-violet-400 whitespace-nowrap">{{ c.mood.total > 0 ? Math.round(((c.mood.senang + c.mood.biasa) / c.mood.total) * 100) : 0 }}% Positif</div>
+                <div class="font-bold text-xs text-blue-900 dark:text-blue-400 whitespace-nowrap">{{ c.mood.total > 0 ? Math.round(((c.mood.senang + c.mood.biasa) / c.mood.total) * 100) : 0 }}% Positif</div>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400 transform transition-transform shrink-0" :class="expandedClasses.includes(c.class_id) ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
@@ -293,7 +293,7 @@
               <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-1 block mb-1">Sampai</label>
               <input type="date" v-model="summaryEndDate" class="w-[125px] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs font-semibold outline-none" />
             </div>
-            <button @click="loadSummaryData" class="px-3 py-1.5 bg-violet-600 text-white rounded-lg text-xs font-bold hover:bg-violet-700 transition-colors">Terapkan</button>
+            <button @click="loadSummaryData" class="px-3 py-1.5 bg-blue-900 text-white rounded-lg text-xs font-bold hover:bg-blue-800 transition-colors">Terapkan</button>
           </div>
         </div>
 
@@ -433,7 +433,7 @@
                 <button 
                   v-if="alert.status !== 'closed'"
                   @click="openFollowupModal(alert)"
-                  class="px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer"
+                  class="px-3 py-1.5 bg-blue-900 hover:bg-blue-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer"
                 >
                   <span>✏️ Catat Tindak Lanjut</span>
                 </button>
@@ -475,7 +475,7 @@
                   class="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-100 dark:border-slate-700/60 text-xs flex flex-col gap-1"
                 >
                   <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
-                    <span class="text-violet-600 dark:text-violet-400 font-bold">👤 {{ f.author_name || 'Konselor / Wali Kelas' }}</span>
+                    <span class="text-blue-900 dark:text-blue-400 font-bold">👤 {{ f.author_name || 'Konselor / Wali Kelas' }}</span>
                     <span>{{ formatDateTime(f.created_at) }}</span>
                   </div>
                   <p class="text-slate-700 dark:text-slate-200 leading-relaxed">{{ f.note }}</p>
@@ -511,7 +511,7 @@
             v-model="followupNote" 
             rows="4" 
             placeholder="Tuliskan hasil obrolan dengan siswa, konsultasi wali kelas, atau konfirmasi dengan wali murid..." 
-            class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs sm:text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs sm:text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-900/20"
           ></textarea>
         </div>
 
@@ -522,7 +522,7 @@
           <button 
             @click="submitFollowup" 
             :disabled="!followupNote.trim() || submittingAlert"
-            class="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs rounded-xl transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
+            class="px-4 py-2 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-xl transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
           >
             {{ submittingAlert ? 'Menyimpan...' : 'Simpan Tindak Lanjut' }}
           </button>
@@ -632,7 +632,7 @@
         <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
           <NuxtLink 
             :to="`/bk/sessions?student_id=${activeAlert?.student_id}&open_create=true&care_alert_id=${activeAlert?.id}&issue=${encodeURIComponent(bkForm.issue_category)}`"
-            class="text-[11px] font-bold text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1"
+            class="text-[11px] font-bold text-blue-900 dark:text-blue-400 hover:underline flex items-center gap-1"
           >
             Buka Halaman Modul BK Lengkap ↗
           </NuxtLink>

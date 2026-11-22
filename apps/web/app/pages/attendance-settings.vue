@@ -128,7 +128,7 @@ const holidayData = ref<{
 
 // Categories Configuration
 const HOLIDAY_CATEGORIES = [
-  { id: 'libur_semester', name: 'Libur Semester / Akhir Tahun', icon: '🎓', color: 'bg-violet-500/20 text-violet-300 border-violet-500/30' },
+  { id: 'libur_semester', name: 'Libur Semester / Akhir Tahun', icon: '🎓', color: 'bg-blue-600/15 text-blue-300 border-blue-500/30' },
   { id: 'keagamaan', name: 'Kegiatan Keagamaan / Ramadhan', icon: '🌙', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
   { id: 'haul_pondok', name: 'Haul / Agenda Pesantren', icon: '🕌', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
   { id: 'ujian_khusus', name: 'Masa Tenang / Ujian Khusus', icon: '📝', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
@@ -662,7 +662,7 @@ const deleteCustomHoliday = async (item: any) => {
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
-          <Settings class="text-violet-400" :size="28" />
+          <Settings class="text-blue-400" :size="28" />
           Pengaturan Presensi & Hari Operasional
         </h1>
         <p class="text-slate-400 mt-1">
@@ -676,14 +676,14 @@ const deleteCustomHoliday = async (item: any) => {
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div class="flex flex-col gap-1.5">
           <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 pl-1">Yayasan</label>
-          <select v-model="selectedFoundationId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="selectedFoundationId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option v-for="f in foundations" :key="f.id" :value="f.id">{{ f.name }}</option>
           </select>
         </div>
 
         <div class="flex flex-col gap-1.5">
           <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 pl-1">Unit Sekolah / Pesantren</label>
-          <select v-model="selectedSchoolId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="selectedSchoolId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option v-for="s in schools" :key="s.id" :value="s.id">{{ s.name }} ({{ s.level }})</option>
           </select>
         </div>
@@ -691,7 +691,7 @@ const deleteCustomHoliday = async (item: any) => {
     </BaseCard>
 
     <div v-if="isLoading" class="flex justify-center items-center py-20">
-      <Loader2 class="w-8 h-8 text-violet-500 animate-spin" />
+      <Loader2 class="w-8 h-8 text-blue-600 animate-spin" />
     </div>
 
     <div v-else-if="!selectedSchoolId" class="flex flex-col justify-center items-center py-20 text-slate-400">
@@ -707,7 +707,7 @@ const deleteCustomHoliday = async (item: any) => {
           :class="[
             'px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all flex items-center gap-2 border-b-2 -mb-px whitespace-nowrap',
             activeTab === 'time_rules'
-              ? 'border-violet-500 text-violet-400 bg-violet-500/10'
+              ? 'border-blue-600 text-blue-400 bg-blue-600/10'
               : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
           ]"
         >
@@ -720,7 +720,7 @@ const deleteCustomHoliday = async (item: any) => {
           :class="[
             'px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all flex items-center gap-2 border-b-2 -mb-px whitespace-nowrap',
             activeTab === 'notifications'
-              ? 'border-violet-500 text-violet-400 bg-violet-500/10'
+              ? 'border-blue-600 text-blue-400 bg-blue-600/10'
               : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
           ]"
         >
@@ -733,7 +733,7 @@ const deleteCustomHoliday = async (item: any) => {
           :class="[
             'px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all flex items-center gap-2 border-b-2 -mb-px whitespace-nowrap',
             activeTab === 'holidays'
-              ? 'border-violet-500 text-violet-400 bg-violet-500/10'
+              ? 'border-blue-600 text-blue-400 bg-blue-600/10'
               : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
           ]"
         >
@@ -746,7 +746,7 @@ const deleteCustomHoliday = async (item: any) => {
           :class="[
             'px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all flex items-center gap-2 border-b-2 -mb-px whitespace-nowrap',
             activeTab === 'discipline'
-              ? 'border-violet-500 text-violet-400 bg-violet-500/10'
+              ? 'border-blue-600 text-blue-400 bg-blue-600/10'
               : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
           ]"
         >
@@ -760,7 +760,7 @@ const deleteCustomHoliday = async (item: any) => {
         <div class="lg:col-span-2 space-y-6">
           <BaseCard class="p-6">
             <div class="flex items-center gap-2 mb-6">
-              <School class="text-violet-400" :size="20" />
+              <School class="text-blue-400" :size="20" />
               <h2 class="text-lg font-semibold text-white">Hari Masuk Mingguan Unit</h2>
             </div>
 
@@ -824,12 +824,12 @@ const deleteCustomHoliday = async (item: any) => {
                   :class="[
                     'py-2 px-3 rounded-lg border flex flex-col items-center justify-center transition-all',
                     isDayActive(d.id)
-                      ? 'border-violet-500 bg-violet-600/20 text-white font-bold'
+                      ? 'border-blue-600 bg-blue-600/20 text-white font-bold'
                       : 'border-slate-800 bg-slate-950/60 text-slate-500 hover:border-slate-700'
                   ]"
                 >
                   <span class="text-xs">{{ d.label }}</span>
-                  <span class="text-[10px] mt-0.5" :class="isDayActive(d.id) ? 'text-violet-300' : 'text-slate-600'">
+                  <span class="text-[10px] mt-0.5" :class="isDayActive(d.id) ? 'text-blue-300' : 'text-slate-600'">
                     {{ isDayActive(d.id) ? 'MASUK' : 'LIBUR' }}
                   </span>
                 </button>
@@ -838,7 +838,7 @@ const deleteCustomHoliday = async (item: any) => {
 
             <div class="border-t border-slate-800 pt-5">
               <div class="flex items-center gap-2 mb-4">
-                <Clock class="text-violet-400" :size="20" />
+                <Clock class="text-blue-400" :size="20" />
                 <h3 class="text-base font-semibold text-white">Jam Absensi</h3>
               </div>
 
@@ -866,7 +866,7 @@ const deleteCustomHoliday = async (item: any) => {
                     <label class="block text-sm font-medium text-slate-300">Absen Pulang Sekolah (Check-out)</label>
                     <label class="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" v-model="ruleForm.check_out_enabled" class="sr-only peer" data-testid="toggle-checkout-enabled" />
-                      <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-violet-600"></div>
+                      <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-900"></div>
                     </label>
                   </div>
                   <BaseInput v-model="ruleForm.check_out_from" type="time" placeholder="14:00" :disabled="!ruleForm.check_out_enabled" />
@@ -911,7 +911,7 @@ const deleteCustomHoliday = async (item: any) => {
                   :class="[
                     'p-3 rounded-xl border text-left transition-all cursor-pointer',
                     kioskForm.mood_mode === 'gate'
-                      ? 'border-violet-500 bg-violet-500/15 text-violet-300 shadow-sm'
+                      ? 'border-blue-600 bg-blue-600/10 text-blue-300 shadow-sm'
                       : 'border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700'
                   ]"
                 >
@@ -949,7 +949,7 @@ const deleteCustomHoliday = async (item: any) => {
         <div class="space-y-6">
           <BaseCard class="p-6 bg-slate-900/50 border border-slate-800">
             <h3 class="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
-              <HelpCircle class="text-violet-400" :size="18" />
+              <HelpCircle class="text-blue-400" :size="18" />
               Prinsip Cerdas EduRaport
             </h3>
             <ul class="space-y-2 text-xs text-slate-400 list-disc pl-4">
@@ -966,7 +966,7 @@ const deleteCustomHoliday = async (item: any) => {
         <div class="lg:col-span-2">
           <BaseCard class="p-6 space-y-6">
             <div class="flex items-center gap-2 mb-2">
-              <Bell class="text-violet-400" :size="20" />
+              <Bell class="text-blue-400" :size="20" />
               <h2 class="text-lg font-semibold text-white">Notifikasi Presensi ke Orang Tua</h2>
             </div>
             <p class="text-xs text-slate-400">
@@ -986,7 +986,7 @@ const deleteCustomHoliday = async (item: any) => {
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
                   <input type="checkbox" v-model="notificationForm.notify_checkin_parents" class="sr-only peer" />
-                  <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+                  <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-900"></div>
                 </label>
               </div>
 
@@ -1005,7 +1005,7 @@ const deleteCustomHoliday = async (item: any) => {
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
                   <input type="checkbox" v-model="notificationForm.notify_absent_parents" class="sr-only peer" />
-                  <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+                  <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-900"></div>
                 </label>
               </div>
 
@@ -1021,7 +1021,7 @@ const deleteCustomHoliday = async (item: any) => {
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
                   <input type="checkbox" v-model="notificationForm.notify_checkout_parents" class="sr-only peer" data-testid="toggle-notify-checkout" />
-                  <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+                  <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-900"></div>
                 </label>
               </div>
 
@@ -1037,7 +1037,7 @@ const deleteCustomHoliday = async (item: any) => {
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
                   <input type="checkbox" v-model="notificationForm.notify_shalat_parents" class="sr-only peer" data-testid="toggle-notify-shalat" />
-                  <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+                  <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-900"></div>
                 </label>
               </div>
 
@@ -1053,7 +1053,7 @@ const deleteCustomHoliday = async (item: any) => {
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
                   <input type="checkbox" v-model="notificationForm.notify_ekstra_parents" class="sr-only peer" data-testid="toggle-notify-ekstra" />
-                  <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+                  <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-900"></div>
                 </label>
               </div>
             </div>
@@ -1089,8 +1089,8 @@ const deleteCustomHoliday = async (item: any) => {
       <!-- TAB 3: Kalender Libur Nasional & Override Pesantren -->
       <div v-else-if="activeTab === 'holidays'" class="space-y-6">
         <!-- Banner Penjelasan Fitur Override -->
-        <div class="p-4 bg-gradient-to-r from-violet-950/50 to-slate-900 border border-violet-800/50 rounded-xl flex items-start gap-3">
-          <School class="text-violet-400 shrink-0 mt-1" :size="20" />
+        <div class="p-4 bg-gradient-to-r bg-slate-900 border border-blue-900/30 rounded-xl flex items-start gap-3">
+          <School class="text-blue-400 shrink-0 mt-1" :size="20" />
           <div class="text-xs">
             <h4 class="font-bold text-white mb-0.5">Pengaturan Kalender Khusus Pesantren & Madrasah</h4>
             <p class="text-slate-300">
@@ -1107,7 +1107,7 @@ const deleteCustomHoliday = async (item: any) => {
             <select
               v-model="selectedYear"
               @change="fetchHolidays(selectedSchoolId, selectedYear)"
-              class="bg-slate-950 border border-slate-700 text-white text-xs font-bold rounded-lg px-3 py-1.5 outline-none focus:border-violet-500"
+              class="bg-slate-950 border border-slate-700 text-white text-xs font-bold rounded-lg px-3 py-1.5 outline-none focus:border-blue-600"
             >
               <option :value="2025">2025</option>
               <option :value="2026">2026</option>
@@ -1132,7 +1132,7 @@ const deleteCustomHoliday = async (item: any) => {
             <BaseButton
               variant="primary"
               @click="openAddHolidayModal"
-              class="text-xs gap-2 py-1.5 shadow-md shadow-violet-900/30"
+              class="text-xs gap-2 py-1.5 shadow-md shadow-sm"
             >
               <Plus class="w-3.5 h-3.5" />
               Tambah Libur Khusus / Rentang
@@ -1179,7 +1179,7 @@ const deleteCustomHoliday = async (item: any) => {
                   </td>
                   <td class="py-3 px-4 font-semibold text-white">
                     {{ item.name }}
-                    <span v-if="item.note && item.override_type === 'custom_holiday' && item.note !== item.name" class="block text-[11px] text-violet-400 font-normal mt-0.5">
+                    <span v-if="item.note && item.override_type === 'custom_holiday' && item.note !== item.name" class="block text-[11px] text-blue-400 font-normal mt-0.5">
                       {{ item.note }}
                     </span>
                   </td>
@@ -1204,11 +1204,11 @@ const deleteCustomHoliday = async (item: any) => {
                     <span v-else-if="item.is_joint_leave" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                       👥 Cuti Bersama
                     </span>
-                    <span v-else-if="item.category" :class="['px-2.5 py-0.5 rounded-full text-[10px] font-bold border inline-flex items-center gap-1.5', getCategoryMeta(item.category)?.color || 'bg-violet-500/20 text-violet-300 border-violet-500/30']">
+                    <span v-else-if="item.category" :class="['px-2.5 py-0.5 rounded-full text-[10px] font-bold border inline-flex items-center gap-1.5', getCategoryMeta(item.category)?.color || 'bg-blue-600/15 text-blue-300 border-blue-500/30']">
                       <span>{{ getCategoryMeta(item.category)?.icon }}</span>
                       {{ getCategoryMeta(item.category)?.name }}
                     </span>
-                    <span v-else class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                    <span v-else class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-600/15 text-blue-300 border border-blue-500/30">
                       📌 Libur Khusus
                     </span>
 
@@ -1282,7 +1282,7 @@ const deleteCustomHoliday = async (item: any) => {
                 :class="[
                   'flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2',
                   holidayModalMode === 'single'
-                    ? 'bg-violet-600 text-white shadow-md'
+                    ? 'bg-blue-900 text-white shadow-md'
                     : 'text-slate-400 hover:text-white'
                 ]"
               >
@@ -1295,7 +1295,7 @@ const deleteCustomHoliday = async (item: any) => {
                 :class="[
                   'flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2',
                   holidayModalMode === 'range'
-                    ? 'bg-violet-600 text-white shadow-md'
+                    ? 'bg-blue-900 text-white shadow-md'
                     : 'text-slate-400 hover:text-white'
                 ]"
               >
@@ -1364,12 +1364,12 @@ const deleteCustomHoliday = async (item: any) => {
               </div>
 
               <!-- Live Duration Summary Banner -->
-              <div v-if="holidayForm.start_date && holidayForm.end_date" class="p-3 bg-violet-950/40 border border-violet-800/40 rounded-xl text-xs text-violet-200 flex items-center justify-between">
+              <div v-if="holidayForm.start_date && holidayForm.end_date" class="p-3 bg-blue-950/40 border border-blue-900/30 rounded-xl text-xs text-blue-200 flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                  <Calendar class="w-4 h-4 text-violet-400" />
+                  <Calendar class="w-4 h-4 text-blue-400" />
                   <span><strong>{{ formatIndonesianDate(holidayForm.start_date, false) }}</strong> s/d <strong>{{ formatIndonesianDate(holidayForm.end_date, false) }}</strong></span>
                 </div>
-                <span class="px-2.5 py-0.5 rounded-full bg-violet-600/40 text-violet-300 font-bold text-[11px] border border-violet-500/40">
+                <span class="px-2.5 py-0.5 rounded-full bg-blue-900/40 text-blue-300 font-bold text-[11px] border border-blue-600/40">
                   Total {{ rangeDaysCount }} Hari Kalender
                 </span>
               </div>
@@ -1387,7 +1387,7 @@ const deleteCustomHoliday = async (item: any) => {
                   :class="[
                     'p-2.5 rounded-xl border text-left text-xs font-medium transition-all flex items-center gap-2.5',
                     holidayForm.category === cat.id
-                      ? 'bg-violet-950/60 border-violet-500 text-white shadow-sm ring-1 ring-violet-500/50'
+                      ? 'bg-blue-950/60 border-blue-600 text-white shadow-sm ring-1 ring-blue-600/30'
                       : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
                   ]"
                 >
@@ -1411,11 +1411,11 @@ const deleteCustomHoliday = async (item: any) => {
                   :class="[
                     'p-3 rounded-xl border text-center text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5',
                     holidayForm.scope_type === 'school'
-                      ? 'bg-violet-950/60 border-violet-500 text-white shadow-sm ring-1 ring-violet-500/50'
+                      ? 'bg-blue-950/60 border-blue-600 text-white shadow-sm ring-1 ring-blue-600/30'
                       : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
                   ]"
                 >
-                  <School class="w-4 h-4 text-violet-400" />
+                  <School class="w-4 h-4 text-blue-400" />
                   <span>Semua Sekolah</span>
                   <span class="text-[9px] font-normal text-slate-400">Seluruh unit libur</span>
                 </button>
@@ -1603,7 +1603,7 @@ const deleteCustomHoliday = async (item: any) => {
                 type="text"
                 v-model="holidayForm.name"
                 :placeholder="getCategoryMeta(holidayForm.category)?.name || 'Contoh: Libur Akhir Semester Ganjil TA 2025/2026'"
-                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-violet-500 outline-none"
+                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-600 outline-none"
               />
             </div>
           </div>

@@ -67,7 +67,7 @@ const gridMetrics = computed(() => {
         </button>
         <button
           @click="isDigestModalOpen = true"
-          class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white transition-all shadow-md shadow-violet-600/10"
+          class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-900 hover:bg-blue-800 text-white transition-all shadow-md shadow-sm"
         >
           <Mail :size="13" />
           Jadwalkan Laporan (Digest)

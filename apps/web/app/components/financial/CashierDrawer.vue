@@ -281,7 +281,7 @@ const formatDate = (dateStr: string) => {
       <div class="flex-1 overflow-y-auto p-4 space-y-6">
         
         <div v-if="loading" class="flex justify-center p-8">
-          <div class="animate-spin h-6 w-6 border-2 border-violet-600 border-t-transparent rounded-full"></div>
+          <div class="animate-spin h-6 w-6 border-2 border-blue-900 border-t-transparent rounded-full"></div>
         </div>
 
         <template v-else-if="!receiptData">
@@ -292,7 +292,7 @@ const formatDate = (dateStr: string) => {
               <label class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 cursor-pointer">
                 <input 
                   type="checkbox" 
-                  class="rounded text-violet-600"
+                  class="rounded text-blue-900"
                   :checked="selectedBillIds.length === bills.length && bills.length > 0"
                   @change="toggleSelectAll"
                 >
@@ -307,10 +307,10 @@ const formatDate = (dateStr: string) => {
             <template v-else>
               <div v-for="bill in bills" :key="bill.id" 
                  class="flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer"
-                 :class="selectedBillIds.includes(bill.id) ? 'border-violet-500 bg-violet-50 dark:bg-violet-500/10' : 'border-slate-200 dark:border-slate-700 dark:border-zinc-800'"
+                 :class="selectedBillIds.includes(bill.id) ? 'border-blue-600 bg-blue-50/60 dark:bg-blue-600/10' : 'border-slate-200 dark:border-slate-700 dark:border-zinc-800'"
                  @click="toggleBill(bill.id)">
               
-              <input type="checkbox" :checked="selectedBillIds.includes(bill.id)" class="rounded text-violet-600 pointer-events-none">
+              <input type="checkbox" :checked="selectedBillIds.includes(bill.id)" class="rounded text-blue-900 pointer-events-none">
               
               <div class="flex-1 min-w-0">
                 <div class="font-semibold text-sm text-slate-800 dark:text-slate-200 dark:text-zinc-200 truncate">{{ bill.name }}</div>
@@ -325,7 +325,7 @@ const formatDate = (dateStr: string) => {
             
             <div class="flex justify-between font-bold p-3 bg-slate-50 dark:bg-slate-800/50 dark:bg-zinc-950 rounded-xl mt-2">
               <span class="text-sm">Total Terpilih</span>
-              <span class="font-mono text-violet-600">{{ formatNumber(totalSelectedAmount) }}</span>
+              <span class="font-mono text-blue-900">{{ formatNumber(totalSelectedAmount) }}</span>
             </div>
           </div>
 
@@ -403,7 +403,7 @@ const formatDate = (dateStr: string) => {
             <p class="text-sm text-slate-500 dark:text-slate-400">Kwitansi telah di-generate: <br><span class="font-mono font-bold text-slate-700 dark:text-slate-300 dark:text-zinc-300">{{ receiptData.receipt_number }}</span></p>
           </div>
           
-          <BaseButton @click="downloadReceipt" variant="outline" class="w-full gap-2 justify-center border-violet-200 text-violet-700 hover:bg-violet-50">
+          <BaseButton @click="downloadReceipt" variant="outline" class="w-full gap-2 justify-center border-blue-200 text-blue-900 hover:bg-blue-50/60">
             <FileDown :size="18" /> Unduh Kwitansi (PDF)
           </BaseButton>
           <BaseButton @click="closeDrawer" variant="primary" class="w-full justify-center">

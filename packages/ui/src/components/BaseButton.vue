@@ -23,18 +23,18 @@ withDefaults(defineProps<Props>(), {
     class="inline-flex items-center justify-center rounded-lg font-semibold tracking-wide transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
     :class="[
       {
-        'bg-violet-600 text-white hover:bg-violet-700 shadow-lg shadow-violet-600/15 dark:bg-violet-600 dark:hover:bg-violet-500 dark:shadow-violet-600/10': variant === 'primary',
-        'bg-slate-100 text-slate-800 hover:bg-slate-200/80 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700/80': variant === 'secondary',
-        'border border-slate-200 bg-transparent text-slate-700 hover:bg-slate-50 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900': variant === 'outline',
-        'bg-transparent hover:bg-slate-100/80 dark:hover:bg-zinc-900 dark:text-zinc-400': variant === 'ghost',
-        'bg-rose-600 text-white hover:bg-rose-700 shadow-md shadow-rose-600/10 dark:bg-rose-500/20 dark:text-rose-400 dark:hover:bg-rose-500/30': variant === 'danger',
-        'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-600/10 dark:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-500/30': variant === 'success',
+        'bg-blue-900 text-white hover:bg-blue-950 shadow-sm dark:bg-blue-600 dark:hover:bg-blue-700': variant === 'primary',
+        'bg-slate-100 text-slate-800 hover:bg-slate-200/80 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700/80': variant === 'secondary',
+        'border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800': variant === 'outline',
+        'bg-transparent hover:bg-slate-100/80 dark:hover:bg-slate-800 dark:text-slate-300': variant === 'ghost',
+        'bg-rose-600 text-white hover:bg-rose-700 shadow-sm dark:bg-rose-600 dark:hover:bg-rose-700': variant === 'danger',
+        'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm dark:bg-emerald-600 dark:hover:bg-emerald-700': variant === 'success',
       },
       {
-        'px-3 py-1.5 text-xs': size === 'sm',
-        'px-5 py-2.5 text-sm': size === 'md',
-        'px-8 py-4 text-base': size === 'lg',
-        'p-2.5': size === 'icon',
+        'px-3 py-1.5 text-xs min-h-[32px]': size === 'sm',
+        'px-4 py-2.5 text-sm min-h-[44px]': size === 'md',
+        'px-6 py-3 text-base min-h-[48px]': size === 'lg',
+        'p-2.5 min-h-[44px] min-w-[44px]': size === 'icon',
       }
     ]"
   >

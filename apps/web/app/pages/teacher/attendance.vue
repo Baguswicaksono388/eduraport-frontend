@@ -169,7 +169,7 @@ const handleSave = async () => {
     <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
-        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Yayasan</option>
           <option v-for="found in foundations" :key="found.id" :value="found.id">{{ found.name }}</option>
         </select>
@@ -177,7 +177,7 @@ const handleSave = async () => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Unit Sekolah</option>
           <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
@@ -187,12 +187,12 @@ const handleSave = async () => {
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-zinc-800">
       <div>
         <h1 class="text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-zinc-50 flex items-center gap-2.5">
-          <ClipboardCheck class="text-violet-600 dark:text-violet-400" :size="24" />
+          <ClipboardCheck class="text-blue-900 dark:text-blue-400" :size="24" />
           Absensi Harian Guru & Staf
         </h1>
         <p class="text-xs text-slate-500 dark:text-zinc-400 font-semibold mt-1.5 flex flex-wrap items-center gap-2">
           <span>Pilih tanggal. Periode aktif:</span>
-          <span class="px-2 py-0.5 bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 rounded font-black">{{ formattedDisplayDate }}</span>
+          <span class="px-2 py-0.5 bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 rounded font-black">{{ formattedDisplayDate }}</span>
         </p>
       </div>
 
@@ -238,7 +238,7 @@ const handleSave = async () => {
     <!-- Bulk Actions Panel -->
     <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4 rounded-xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div class="flex items-center gap-2">
-        <Users class="text-violet-500" :size="16" />
+        <Users class="text-blue-600" :size="16" />
         <span class="text-xs font-bold text-slate-700 dark:text-zinc-200">
           Jumlah Guru & Staf: {{ teachers.length }}
         </span>
@@ -260,7 +260,7 @@ const handleSave = async () => {
 
     <!-- Attendance Grid List -->
     <div v-if="loading" class="flex flex-col items-center justify-center py-20 space-y-4">
-      <div class="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-10 h-10 border-4 border-blue-900 border-t-transparent rounded-full animate-spin"></div>
       <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">Memuat data guru...</p>
     </div>
 
@@ -317,7 +317,7 @@ const handleSave = async () => {
                   v-model="attendanceMap[t.id].note"
                   type="text"
                   placeholder="Tambah alasan/keterangan..."
-                  class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded px-2.5 py-1 text-xs outline-none focus:border-violet-500"
+                  class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded px-2.5 py-1 text-xs outline-none focus:border-blue-600"
                 />
               </div>
             </div>
@@ -330,7 +330,7 @@ const handleSave = async () => {
         <BaseButton
           @click="handleSave"
           :disabled="saving"
-          class="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 text-white rounded-lg shadow-sm text-xs font-bold transition-all shadow-lg shadow-violet-600/10"
+          class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-900 hover:bg-blue-800 disabled:bg-slate-300 dark:disabled:bg-zinc-750 text-white rounded-lg shadow-sm text-xs font-bold transition-all shadow-lg shadow-sm"
         >
           <Save v-if="!saving" :size="14" />
           <RefreshCw v-else class="animate-spin" :size="14" />

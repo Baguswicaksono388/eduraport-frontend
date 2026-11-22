@@ -559,7 +559,7 @@ watch(activeTab, async (newTab) => {
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
       <div class="space-y-2">
         <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-zinc-100 flex items-center gap-2.5">
-          <Smartphone class="text-violet-600 dark:text-violet-400" :size="30" />
+          <Smartphone class="text-blue-900 dark:text-blue-400" :size="30" />
           Perangkat WhatsApp Gateway
         </h2>
         <p class="text-slate-500 dark:text-zinc-400 text-xs font-medium max-w-xl">
@@ -592,7 +592,7 @@ watch(activeTab, async (newTab) => {
         <BaseButton 
           v-if="selectedSchoolId"
           variant="primary" 
-          class="flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold px-4 py-2 rounded-xl text-xs h-9"
+          class="flex items-center justify-center gap-2 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white font-bold px-4 py-2 rounded-xl text-xs h-9"
           @click="handleAddClick"
         >
           <Plus :size="16" />
@@ -635,11 +635,11 @@ watch(activeTab, async (newTab) => {
         <div class="flex items-center justify-between">
           <div>
             <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Driver Official</p>
-            <h3 class="text-xl md:text-2xl font-black mt-1 text-violet-500">
+            <h3 class="text-xl md:text-2xl font-black mt-1 text-blue-600">
               {{ stats.official }}
             </h3>
           </div>
-          <div class="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-950/20 flex items-center justify-center text-violet-500">
+          <div class="w-8 h-8 rounded-lg bg-blue-50/60 dark:bg-blue-950/20 flex items-center justify-center text-blue-600">
             <Smartphone :size="16" />
           </div>
         </div>
@@ -669,7 +669,7 @@ watch(activeTab, async (newTab) => {
         :class="[
           'px-4 py-2 text-xs font-bold transition-all border-b-2 -mb-[2px]',
           activeTab === t.id 
-            ? 'border-violet-600 text-violet-600 dark:text-violet-400 font-extrabold' 
+            ? 'border-blue-900 text-blue-900 dark:text-blue-400 font-extrabold' 
             : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 hover:dark:text-zinc-200'
         ]"
       >
@@ -700,7 +700,7 @@ watch(activeTab, async (newTab) => {
 
       <!-- Loading State -->
       <div v-else-if="loading && devices.length === 0" class="flex items-center justify-center py-20">
-        <Loader2 class="animate-spin text-violet-600" :size="36" />
+        <Loader2 class="animate-spin text-blue-900" :size="36" />
       </div>
 
       <!-- Devices Grid -->
@@ -738,7 +738,7 @@ watch(activeTab, async (newTab) => {
                 <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400">
                   Target: {{ routingRules.find(r => r.notification_type === type.id)?.target || 'personal' }}
                 </span>
-                <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400">
+                <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-blue-50/60 dark:bg-blue-950/20 text-blue-900 dark:text-blue-400">
                   Driver: {{ routingRules.find(r => r.notification_type === type.id)?.driver || 'auto' }}
                 </span>
                 <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400">
@@ -795,7 +795,7 @@ watch(activeTab, async (newTab) => {
           </div>
 
           <div class="flex items-center gap-2 py-2">
-            <input type="checkbox" id="fallback_enabled" v-model="editingRule.fallback_enabled" class="rounded border-slate-350 text-violet-600 focus:ring-violet-500" />
+            <input type="checkbox" id="fallback_enabled" v-model="editingRule.fallback_enabled" class="rounded border-slate-350 text-blue-900 focus:ring-blue-900/20" />
             <label for="fallback_enabled" class="text-xs font-bold text-slate-600 dark:text-zinc-400">Aktifkan Fallback Lintas Saluran (In-App / SMS)</label>
           </div>
 
@@ -824,7 +824,7 @@ watch(activeTab, async (newTab) => {
 
           <div class="flex justify-end gap-3 pt-4">
             <BaseButton variant="secondary" @click="editingRule = null">Batal</BaseButton>
-            <BaseButton variant="primary" class="bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold" @click="handleSaveRule">Simpan</BaseButton>
+            <BaseButton variant="primary" class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white font-bold" @click="handleSaveRule">Simpan</BaseButton>
           </div>
         </div>
       </BaseModal>
@@ -848,7 +848,7 @@ watch(activeTab, async (newTab) => {
                   <p class="text-xs font-bold text-slate-900 dark:text-zinc-100">{{ map.group_name }}</p>
                   <p class="text-[10px] text-slate-400">{{ map.group_jid }} • {{ map.member_count }} Anggota</p>
                   <div class="flex gap-2">
-                    <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400">
+                    <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-blue-50/60 dark:bg-blue-950/20 text-blue-900 dark:text-blue-400">
                       Tipe: {{ map.map_type === 'class' ? 'Kelas' : 'Peran' }}
                     </span>
                     <span v-if="map.map_type === 'class'" class="text-[9px] font-bold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400">
@@ -938,7 +938,7 @@ watch(activeTab, async (newTab) => {
 
           <div class="flex justify-end gap-3 pt-4">
             <BaseButton variant="secondary" @click="editingMapping = null">Batal</BaseButton>
-            <BaseButton variant="primary" class="bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold" @click="handleSaveMappingState">Simpan</BaseButton>
+            <BaseButton variant="primary" class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white font-bold" @click="handleSaveMappingState">Simpan</BaseButton>
           </div>
         </div>
       </BaseModal>
@@ -998,7 +998,7 @@ watch(activeTab, async (newTab) => {
               ref="templateBodyRef"
               v-model="editingTemplate.body" 
               rows="8"
-              class="w-full text-xs font-mono rounded-b-lg rounded-t-none border border-slate-200 dark:border-slate-800 p-3 bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 leading-relaxed focus:ring-2 focus:ring-violet-500 outline-none"
+              class="w-full text-xs font-mono rounded-b-lg rounded-t-none border border-slate-200 dark:border-slate-800 p-3 bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 leading-relaxed focus:ring-2 focus:ring-blue-900/20 outline-none"
               placeholder="Contoh: {Halo|Hai|Selamat pagi} {{name}}, tagihan SPP Anda sebesar {{amount}}..."
             ></textarea>
           </div>
@@ -1012,15 +1012,15 @@ watch(activeTab, async (newTab) => {
               <div 
                 v-for="v in templateVariables[editingTemplate.notification_type] || []" 
                 :key="v.var"
-                class="flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-zinc-950 hover:border-violet-300 dark:hover:border-violet-700 transition-colors cursor-pointer group"
+                class="flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-zinc-950 hover:border-blue-300 dark:hover:border-blue-700 transition-colors cursor-pointer group"
                 @click="insertVariable(v.var)"
                 title="Klik untuk memasukkan ke dalam template"
               >
                 <div class="space-y-0.5 flex-1">
-                  <p class="text-[11px] font-mono font-bold text-violet-600 dark:text-violet-400">{{ v.var }}</p>
+                  <p class="text-[11px] font-mono font-bold text-blue-900 dark:text-blue-400">{{ v.var }}</p>
                   <p class="text-[9px] text-slate-500 dark:text-zinc-400 leading-tight">{{ v.desc }}</p>
                 </div>
-                <div class="bg-slate-100 dark:bg-zinc-800 text-slate-400 group-hover:bg-violet-100 dark:group-hover:bg-violet-900/30 group-hover:text-violet-600 dark:group-hover:text-violet-400 p-1 rounded transition-colors">
+                <div class="bg-slate-100 dark:bg-zinc-800 text-slate-400 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-900 dark:group-hover:text-blue-400 p-1 rounded transition-colors">
                   <Plus :size="14" />
                 </div>
               </div>
@@ -1035,7 +1035,7 @@ watch(activeTab, async (newTab) => {
 
           <div class="flex justify-end gap-3 pt-4">
             <BaseButton variant="secondary" @click="editingTemplate = null">Batal</BaseButton>
-            <BaseButton variant="primary" class="bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold" @click="handleSaveTemplateState">Simpan</BaseButton>
+            <BaseButton variant="primary" class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white font-bold" @click="handleSaveTemplateState">Simpan</BaseButton>
           </div>
         </div>
       </BaseModal>
@@ -1086,11 +1086,11 @@ watch(activeTab, async (newTab) => {
               type="button"
               class="p-4 rounded-xl border-2 text-left space-y-2 transition-all"
               :class="newDeviceForm.driver === 'official' 
-                ? 'border-violet-500 bg-violet-500/5' 
+                ? 'border-blue-600 bg-blue-600/5' 
                 : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'"
               @click="handleSelectDriver('official')"
             >
-              <Smartphone class="text-violet-500" :size="24" />
+              <Smartphone class="text-blue-600" :size="24" />
               <div>
                 <h5 class="font-bold text-slate-900 dark:text-zinc-100 text-sm leading-snug">Official (Meta API)</h5>
                 <p class="text-[10px] text-slate-500 mt-1 leading-normal">Resmi Meta. Butuh setup FB App. Hanya kirim personal.</p>
@@ -1173,7 +1173,7 @@ watch(activeTab, async (newTab) => {
             id="disclaimer"
             v-model="disclaimerAccepted"
             type="checkbox"
-            class="w-4 h-4 rounded text-violet-600 border-slate-300 focus:ring-violet-500"
+            class="w-4 h-4 rounded text-blue-900 border-slate-300 focus:ring-blue-900/20"
           />
           <label for="disclaimer" class="text-xs font-bold text-slate-700 dark:text-zinc-300 cursor-pointer">
             Saya memahami risiko dan menyetujui ketentuan di atas.
@@ -1218,7 +1218,7 @@ watch(activeTab, async (newTab) => {
             id="bypass-risk"
             v-model="bypassRiskAccepted"
             type="checkbox"
-            class="w-4 h-4 rounded text-violet-600 border-slate-300 focus:ring-violet-500"
+            class="w-4 h-4 rounded text-blue-900 border-slate-300 focus:ring-blue-900/20"
           />
           <label for="bypass-risk" class="text-xs font-bold text-slate-700 dark:text-zinc-300 cursor-pointer select-none">
             Saya setuju untuk menanggung risiko pemblokiran nomor secara penuh.

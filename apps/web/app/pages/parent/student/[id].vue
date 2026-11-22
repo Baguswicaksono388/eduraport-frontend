@@ -3,7 +3,7 @@
     <div class="flex items-center gap-4">
       <button 
         @click="$router.push('/')"
-        class="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-500 hover:text-violet-600 hover:border-violet-200 transition-colors"
+        class="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-500 hover:text-blue-900 hover:border-blue-200 transition-colors"
       >
         <ArrowLeft :size="20" />
       </button>
@@ -14,7 +14,7 @@
     </div>
 
     <div v-if="loading" class="flex justify-center py-20">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600"></div>
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-900"></div>
     </div>
 
     <div v-else-if="!studentDetail" class="text-center py-20 bg-white/50 rounded-2xl border border-dashed border-slate-200">
@@ -24,14 +24,14 @@
     <template v-else>
       <!-- Profile Header -->
       <BaseCard stripe class="relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-32 h-32 bg-violet-600/5 rounded-bl-full -z-10"></div>
+        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-bl-full -z-10"></div>
         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-          <div class="w-20 h-20 rounded-2xl bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 flex items-center justify-center font-bold text-4xl shadow-inner border border-violet-200/50">
+          <div class="w-20 h-20 rounded-2xl bg-blue-100 dark:bg-blue-950/40 text-blue-900 dark:text-blue-400 flex items-center justify-center font-bold text-4xl shadow-inner border border-blue-200/50">
             {{ studentDetail.profile.full_name[0] }}
           </div>
           <div class="flex-1">
             <h3 class="text-2xl font-bold text-slate-900 dark:text-zinc-100">{{ studentDetail.profile.full_name }}</h3>
-            <p class="font-medium text-violet-600 dark:text-violet-400 mt-1">
+            <p class="font-medium text-blue-900 dark:text-blue-400 mt-1">
               {{ studentDetail.profile.school_name }} ({{ studentDetail.profile.school_level }})
             </p>
             <div class="flex flex-wrap gap-4 mt-4">
@@ -55,7 +55,7 @@
           :key="tab.id"
           @click="activeTab = tab.id"
           class="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap"
-          :class="activeTab === tab.id ? 'bg-white dark:bg-zinc-800 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300 hover:bg-slate-200/50 dark:hover:bg-zinc-800/50'"
+          :class="activeTab === tab.id ? 'bg-white dark:bg-zinc-800 text-blue-900 dark:text-blue-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300 hover:bg-slate-200/50 dark:hover:bg-zinc-800/50'"
         >
           <component :is="tab.icon" :size="16" />
           {{ tab.label }}
@@ -104,7 +104,7 @@
             <!-- Keterlambatan -->
             <BaseCard class="p-6">
               <h3 class="text-sm font-bold text-slate-700 dark:text-zinc-300 mb-6 flex items-center gap-2">
-                <Clock :size="16" class="text-violet-500" /> Analitik Kedatangan
+                <Clock :size="16" class="text-blue-600" /> Analitik Kedatangan
               </h3>
               
               <div class="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800 mb-3">
@@ -159,7 +159,7 @@
             <!-- Mood Siswa -->
             <BaseCard class="p-6">
               <h3 class="text-sm font-bold text-slate-700 dark:text-zinc-300 mb-6 flex items-center gap-2">
-                <Smile :size="16" class="text-violet-500" /> Analitik Emosi & Mood Siswa
+                <Smile :size="16" class="text-blue-600" /> Analitik Emosi & Mood Siswa
               </h3>
 
               <div class="space-y-4">
@@ -245,7 +245,7 @@
             </div>
             <select 
               v-model="selectedPeriod"
-              class="px-4 py-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-sm font-semibold text-slate-700 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer"
+              class="px-4 py-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-sm font-semibold text-slate-700 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-900/20 cursor-pointer"
             >
               <option v-for="period in gradePeriods" :key="period" :value="period">
                 {{ period }}
@@ -269,7 +269,7 @@
                   <h3 class="font-bold text-slate-800 dark:text-zinc-100 text-base">{{ subject }}</h3>
                   <div class="flex items-center gap-3 mt-1">
                     <p class="text-xs text-slate-500">{{ grades.length }} Nilai Masuk</p>
-                    <span v-if="subjectFinalGrades[subject]" class="text-xs font-bold text-violet-600 dark:text-violet-400">
+                    <span v-if="subjectFinalGrades[subject]" class="text-xs font-bold text-blue-900 dark:text-blue-400">
                       Nilai Akhir: {{ subjectFinalGrades[subject].final_score || '-' }} ({{ subjectFinalGrades[subject].predicate || '-' }})
                     </span>
                   </div>
@@ -294,7 +294,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
                       <tr v-for="grade in grades" :key="grade.created_at" class="hover:bg-white dark:hover:bg-zinc-900/50">
-                        <td class="px-6 py-3 font-medium text-violet-600 dark:text-violet-400">
+                        <td class="px-6 py-3 font-medium text-blue-900 dark:text-blue-400">
                           {{ grade.component_name || '-' }}
                         </td>
                         <td class="px-6 py-3 font-medium text-slate-600 dark:text-zinc-400 text-xs">
@@ -324,7 +324,7 @@
           </div>
           <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <BaseCard v-for="(eks, i) in studentDetail.extracurriculars" :key="i" class="flex items-center gap-4 p-5">
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-violet-500/20">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-sm">
                 {{ eks.name[0] }}
               </div>
               <div>

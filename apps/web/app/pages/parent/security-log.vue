@@ -48,7 +48,7 @@ const getActionLabel = (action: string) => {
 <template>
   <div class="space-y-6 max-w-4xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
     <div class="flex items-center gap-3">
-      <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-violet-600 transition">
+      <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-blue-900 transition">
         <ArrowLeft :size="18" />
       </NuxtLink>
       <div>
@@ -61,7 +61,7 @@ const getActionLabel = (action: string) => {
     </div>
 
     <div v-if="loading" class="flex justify-center py-20">
-      <div class="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-10 h-10 border-4 border-blue-900 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <div v-else class="space-y-3">

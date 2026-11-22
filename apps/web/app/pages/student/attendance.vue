@@ -531,7 +531,7 @@ const handleSave = async () => {
     <div class="flex items-center justify-between">
       <NuxtLink
         to="/attendance-analytics"
-        class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-violet-600 dark:text-zinc-400 dark:hover:text-violet-400 transition-colors py-1 px-2.5 -ml-2 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800/60"
+        class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-blue-900 dark:text-zinc-400 dark:hover:text-blue-400 transition-colors py-1 px-2.5 -ml-2 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800/60"
       >
         <ArrowLeft :size="14" />
         <span>Kembali ke Analitik & Audit Presensi</span>
@@ -542,13 +542,13 @@ const handleSave = async () => {
     <div v-if="user?.role === 'super_admin'" class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white dark:bg-zinc-900 p-4 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm animate-in fade-in duration-200">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 pl-1">Yayasan</label>
-        <select v-model="selectedFoundationId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedFoundationId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option v-for="f in foundations" :key="f.id" :value="f.id" class="bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200">{{ f.name }}</option>
         </select>
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 pl-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSchoolId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option v-for="s in schools" :key="s.id" :value="s.id" class="bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200">{{ s.name }} ({{ s.level }})</option>
         </select>
       </div>
@@ -558,12 +558,12 @@ const handleSave = async () => {
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-zinc-800">
       <div>
         <h1 class="text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-zinc-50 flex items-center gap-2.5">
-          <ClipboardCheck class="text-violet-600 dark:text-violet-400" :size="24" />
+          <ClipboardCheck class="text-blue-900 dark:text-blue-400" :size="24" />
           Absensi Harian Siswa
         </h1>
         <p class="text-xs text-slate-500 dark:text-zinc-400 font-semibold mt-1.5 flex flex-wrap items-center gap-2">
           <span>Periode aktif:</span>
-          <span class="px-2 py-0.5 bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 rounded font-black">{{ formattedDisplayDate }}</span>
+          <span class="px-2 py-0.5 bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 rounded font-black">{{ formattedDisplayDate }}</span>
           
           <!-- Holiday Badge -->
           <span
@@ -595,7 +595,7 @@ const handleSave = async () => {
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider shrink-0">Kelas:</span>
           <select
             v-model="selectedClassId"
-            class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-zinc-200 outline-none cursor-pointer focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all w-[130px] sm:w-[160px] shadow-sm"
+            class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-zinc-200 outline-none cursor-pointer focus:border-blue-600 focus:ring-2 focus:ring-blue-900/20/20 transition-all w-[130px] sm:w-[160px] shadow-sm"
           >
             <option v-if="classes.length === 0" value="" disabled>Pilih Kelas</option>
             <option v-for="c in classes" :key="c.id" :value="c.id" class="bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200">{{ c.class_name }}</option>
@@ -646,7 +646,7 @@ const handleSave = async () => {
       <button 
         @click="currentViewTab = 'regular'" 
         class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
-        :class="currentViewTab === 'regular' ? 'bg-violet-600 text-white shadow-sm' : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800'"
+        :class="currentViewTab === 'regular' ? 'bg-blue-900 text-white shadow-sm' : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800'"
       >
         <span>📋 Rekap Presensi Kelas</span>
         <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="currentViewTab === 'regular' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300'">
@@ -760,7 +760,7 @@ const handleSave = async () => {
     <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4 rounded-xl shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
       <div class="flex items-center gap-4 flex-wrap">
         <div class="flex items-center gap-2">
-          <Users class="text-violet-500" :size="16" />
+          <Users class="text-blue-600" :size="16" />
           <span class="text-xs font-bold text-slate-700 dark:text-zinc-200">
             Total Siswa: {{ classStudents.length }}
           </span>
@@ -812,7 +812,7 @@ const handleSave = async () => {
 
     <!-- Attendance Grid List -->
     <div v-if="loading" class="flex flex-col items-center justify-center py-20 space-y-4">
-      <div class="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-10 h-10 border-4 border-blue-900 border-t-transparent rounded-full animate-spin"></div>
       <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">Memuat data siswa...</p>
     </div>
 
@@ -921,7 +921,7 @@ const handleSave = async () => {
                   class="w-full border rounded px-2.5 py-1 text-xs outline-none transition-colors"
                   :class="isHoliday 
                     ? 'bg-slate-100 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-800 text-slate-400 cursor-not-allowed opacity-60' 
-                    : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 focus:border-violet-500'"
+                    : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 focus:border-blue-600'"
                 />
               </div>
             </div>
@@ -939,7 +939,7 @@ const handleSave = async () => {
             </span>
           </template>
           <template v-else>
-            <Info :size="14" class="text-violet-500 shrink-0" />
+            <Info :size="14" class="text-blue-600 shrink-0" />
             <span v-if="!isRecordedInDb" class="text-slate-500 dark:text-zinc-400">
               Data belum pernah masuk ke database. Klik tombol di samping untuk mencatat secara resmi.
             </span>
@@ -972,8 +972,8 @@ const handleSave = async () => {
             :disabled="saving"
             class="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-bold text-white transition-all shadow-md cursor-pointer"
             :class="!isRecordedInDb
-              ? 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-violet-600/25 ring-2 ring-violet-500/20'
-              : 'bg-violet-600 hover:bg-violet-700 shadow-violet-600/10'"
+              ? 'bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 hover:from-slate-800 hover:to-blue-900 shadow-sm ring-2 ring-blue-600/30'
+              : 'bg-blue-900 hover:bg-blue-800 shadow-sm'"
           >
             <Save v-if="!saving" :size="14" />
             <RefreshCw v-else class="animate-spin" :size="14" />

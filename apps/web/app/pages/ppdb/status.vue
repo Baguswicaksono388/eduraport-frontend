@@ -258,7 +258,7 @@ const copyRegNumber = () => {
     <!-- Header -->
     <header class="bg-white dark:bg-zinc-900 border-b border-slate-200/60 dark:border-zinc-800/80 px-6 py-4 flex items-center justify-between shadow-sm">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 bg-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-violet-600/20">
+        <div class="w-9 h-9 bg-blue-900 rounded-lg flex items-center justify-center shadow-lg shadow-sm">
           <GraduationCap class="text-white" :size="18" />
         </div>
         <div>
@@ -284,9 +284,9 @@ const copyRegNumber = () => {
             type="text" 
             placeholder="Masukkan Nomor Pendaftaran (PPDB-YYYY-XXXXX)" 
             required 
-            class="flex-1 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider outline-none focus:border-violet-600"
+            class="flex-1 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider outline-none focus:border-blue-900"
           />
-          <BaseButton type="submit" variant="primary" :disabled="loading" class="py-2.5 px-4 text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-violet-600/10">
+          <BaseButton type="submit" variant="primary" :disabled="loading" class="py-2.5 px-4 text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-sm">
             <Search :size="14" /> {{ loading ? 'Mencari...' : 'Cari' }}
           </BaseButton>
         </form>
@@ -294,7 +294,7 @@ const copyRegNumber = () => {
 
       <!-- Loading State -->
       <div v-if="loading" class="text-center py-10 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-100 dark:border-zinc-800">
-        <div class="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+        <div class="w-8 h-8 border-4 border-blue-900 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
         <p class="text-xs text-slate-400 dark:text-zinc-500 font-medium">Mencari data pendaftaran...</p>
       </div>
 
@@ -390,10 +390,10 @@ const copyRegNumber = () => {
             <DollarSign :size="14" /> Informasi Rekening Pembayaran
           </h3>
 
-          <div class="bg-violet-600/5 border border-violet-500/10 p-4 rounded-xl space-y-2 text-xs">
+          <div class="bg-blue-600/5 border border-blue-500/10 p-4 rounded-xl space-y-2 text-xs">
             <p class="font-semibold text-slate-700 dark:text-zinc-300">Mohon lakukan pembayaran transfer ke rekening berikut:</p>
             <div class="font-bold text-slate-800 dark:text-zinc-100 space-y-1">
-              <p>Bank: <strong class="text-violet-600">Bank Central Asia (BCA)</strong></p>
+              <p>Bank: <strong class="text-blue-900">Bank Central Asia (BCA)</strong></p>
               <p>Nomor Rekening: <strong>8123-456-789</strong></p>
               <p>Atas Nama: <strong>YAYASAN PENDIDIKAN EDURAPORT</strong></p>
               <p class="pt-1.5">Nominal Transfer: <strong class="text-rose-600 text-sm">{{ new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(applicant.batch_registration_fee) }}</strong></p>
@@ -417,7 +417,7 @@ const copyRegNumber = () => {
             <!-- Upload File Box placeholder (Mock / Clickable) -->
             <div 
               @click="triggerFileSelect"
-              class="border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-xl p-6 text-center space-y-2 cursor-pointer hover:border-violet-600/40 transition-colors"
+              class="border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-xl p-6 text-center space-y-2 cursor-pointer hover:border-blue-900/40 transition-colors"
             >
               <input 
                 ref="fileInput" 
@@ -436,7 +436,7 @@ const copyRegNumber = () => {
             </div>
 
             <div class="flex justify-end pt-3">
-              <BaseButton type="submit" variant="primary" :disabled="uploading" class="w-full py-2.5 px-6 text-xs font-bold flex items-center justify-center gap-1.5 shadow-lg shadow-violet-600/10">
+              <BaseButton type="submit" variant="primary" :disabled="uploading" class="w-full py-2.5 px-6 text-xs font-bold flex items-center justify-center gap-1.5 shadow-lg shadow-sm">
                 <Upload :size="14" /> {{ uploading ? 'Mengirimkan Bukti...' : 'Kirim Bukti Pembayaran' }}
               </BaseButton>
             </div>
@@ -472,7 +472,7 @@ const copyRegNumber = () => {
               <a 
                 href="#"
                 @click.prevent="viewFullImage(applicant.payment_proof.file_url)" 
-                class="font-bold text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1"
+                class="font-bold text-blue-900 dark:text-blue-400 hover:underline flex items-center gap-1"
               >
                 {{ applicant.payment_proof.file_name || 'bukti_transfer.png' }}
               </a>
@@ -531,7 +531,7 @@ const copyRegNumber = () => {
                   <a 
                     href="#" 
                     @click.prevent="viewFullImage(doc.file_url)" 
-                    class="text-violet-600 font-bold hover:underline"
+                    class="text-blue-900 font-bold hover:underline"
                   >
                     Lihat
                   </a>
@@ -547,7 +547,7 @@ const copyRegNumber = () => {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="flex flex-col gap-1 text-left">
                 <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Jenis Dokumen</label>
-                <select v-model="docType" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-bold outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+                <select v-model="docType" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-bold outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100">
                   <option value="kartu_keluarga">Kartu Keluarga (KK)</option>
                   <option value="akte_kelahiran">Akta Kelahiran</option>
                   <option value="ijazah">Ijazah / SKL</option>
@@ -562,7 +562,7 @@ const copyRegNumber = () => {
             <!-- Upload File Box placeholder (Mock / Clickable) -->
             <div 
               @click="triggerDocFileSelect"
-              class="border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-xl p-6 text-center space-y-2 cursor-pointer hover:border-violet-600/40 transition-colors"
+              class="border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-xl p-6 text-center space-y-2 cursor-pointer hover:border-blue-900/40 transition-colors"
             >
               <input 
                 ref="docFileInput" 
@@ -581,7 +581,7 @@ const copyRegNumber = () => {
             </div>
 
             <div class="flex justify-end pt-3">
-              <BaseButton type="submit" variant="primary" :disabled="uploading" class="w-full py-2.5 px-6 text-xs font-bold flex items-center justify-center gap-1.5 shadow-lg shadow-violet-600/10">
+              <BaseButton type="submit" variant="primary" :disabled="uploading" class="w-full py-2.5 px-6 text-xs font-bold flex items-center justify-center gap-1.5 shadow-lg shadow-sm">
                 <Upload :size="14" /> {{ uploading ? 'Mengunggah Dokumen...' : 'Unggah Dokumen Persyaratan' }}
               </BaseButton>
             </div>

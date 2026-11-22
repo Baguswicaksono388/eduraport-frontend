@@ -166,7 +166,7 @@ const formatDate = (dateStr: string | null) => {
           v-model="searchInput"
           type="text"
           placeholder="Cari nomor target atau isi pesan..."
-          class="w-full text-xs pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-violet-500 shadow-sm"
+          class="w-full text-xs pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-900/20 shadow-sm"
         />
       </div>
 
@@ -210,7 +210,7 @@ const formatDate = (dateStr: string | null) => {
             <!-- Loading Row -->
             <tr v-if="loading && logs.length === 0">
               <td colspan="6" class="p-8 text-center text-slate-400 dark:text-zinc-500">
-                <RefreshCw class="animate-spin inline mr-2 text-violet-500" :size="16" />
+                <RefreshCw class="animate-spin inline mr-2 text-blue-600" :size="16" />
                 Memuat riwayat pengiriman...
               </td>
             </tr>
@@ -304,7 +304,7 @@ const formatDate = (dateStr: string | null) => {
                     v-if="msg.status !== 'sent' && msg.status !== 'delivered' && msg.status !== 'read'"
                     variant="outline" 
                     size="sm"
-                    class="px-2.5 py-1 text-[10px] font-bold border-violet-200 hover:bg-violet-50 dark:border-violet-900/50 hover:dark:bg-violet-950/20 text-violet-600 dark:text-violet-400 h-8 flex items-center gap-1"
+                    class="px-2.5 py-1 text-[10px] font-bold border-blue-200 hover:bg-blue-50/60 dark:border-blue-900/30 hover:dark:bg-blue-950/20 text-blue-900 dark:text-blue-400 h-8 flex items-center gap-1"
                     @click="handleResend(msg)"
                     :disabled="resendingId === msg.id"
                   >
@@ -390,7 +390,7 @@ const formatDate = (dateStr: string | null) => {
           <a 
             :href="selectedMessage.media_url" 
             target="_blank"
-            class="text-xs text-violet-600 dark:text-violet-400 underline font-semibold truncate block"
+            class="text-xs text-blue-900 dark:text-blue-400 underline font-semibold truncate block"
           >
             {{ selectedMessage.media_url }}
           </a>
@@ -403,7 +403,7 @@ const formatDate = (dateStr: string | null) => {
           <BaseButton 
             v-if="selectedMessage.status !== 'sent' && selectedMessage.status !== 'delivered' && selectedMessage.status !== 'read'"
             variant="primary" 
-            class="bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold"
+            class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white font-bold"
             @click="handleResend(selectedMessage)"
             :disabled="resendingId === selectedMessage.id"
           >

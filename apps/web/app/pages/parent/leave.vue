@@ -93,7 +93,7 @@ const handleSubmit = async () => {
   <div class="space-y-6 max-w-4xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-violet-600 transition">
+        <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-blue-900 transition">
           <ArrowLeft :size="18" />
         </NuxtLink>
         <div>
@@ -105,13 +105,13 @@ const handleSubmit = async () => {
         </div>
       </div>
 
-      <BaseButton size="sm" class="bg-violet-600 hover:bg-violet-700 text-white font-semibold text-xs flex items-center gap-1.5" @click="openFormModal">
+      <BaseButton size="sm" class="bg-blue-900 hover:bg-blue-800 text-white font-semibold text-xs flex items-center gap-1.5" @click="openFormModal">
         <Plus :size="16" /> Ajukan Izin Baru
       </BaseButton>
     </div>
 
     <div v-if="loading" class="flex justify-center py-20">
-      <div class="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-10 h-10 border-4 border-blue-900 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <div v-else class="space-y-3">
@@ -141,7 +141,7 @@ const handleSubmit = async () => {
                 v-if="item.attachment_url"
                 :href="item.attachment_url"
                 target="_blank"
-                class="inline-flex items-center gap-1 text-[10px] text-violet-600 font-semibold hover:underline mt-1"
+                class="inline-flex items-center gap-1 text-[10px] text-blue-900 font-semibold hover:underline mt-1"
               >
                 <Paperclip :size="12" /> Lihat Surat Keterangan / Dokter
               </a>
@@ -166,7 +166,7 @@ const handleSubmit = async () => {
       <div class="space-y-4 text-xs">
         <div>
           <label class="block font-bold text-slate-700 dark:text-zinc-300 mb-1">Pilih Siswa</label>
-          <select v-model="form.student_id" class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg p-2.5 font-semibold text-xs outline-none focus:border-violet-600">
+          <select v-model="form.student_id" class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg p-2.5 font-semibold text-xs outline-none focus:border-blue-900">
             <option v-for="c in myChildren" :key="c.student_id" :value="c.student_id">
               {{ c.student_name }}
             </option>
@@ -179,7 +179,7 @@ const handleSubmit = async () => {
             <input
               v-model="form.start_date"
               type="date"
-              class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg p-2 font-semibold text-xs outline-none focus:border-violet-600"
+              class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg p-2 font-semibold text-xs outline-none focus:border-blue-900"
             />
           </div>
           <div>
@@ -187,7 +187,7 @@ const handleSubmit = async () => {
             <input
               v-model="form.end_date"
               type="date"
-              class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg p-2 font-semibold text-xs outline-none focus:border-violet-600"
+              class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg p-2 font-semibold text-xs outline-none focus:border-blue-900"
             />
           </div>
         </div>
@@ -198,13 +198,13 @@ const handleSubmit = async () => {
             v-model="form.reason"
             rows="3"
             placeholder="Contoh: Sakit demam berdarah dan harus istirahat rawat inap."
-            class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg p-2.5 font-medium text-xs outline-none focus:border-violet-600"
+            class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg p-2.5 font-medium text-xs outline-none focus:border-blue-900"
           ></textarea>
         </div>
 
         <div>
           <label class="block font-bold text-slate-700 dark:text-zinc-300 mb-1">Upload Surat Dokter / Keterangan (Opsional)</label>
-          <div class="border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-xl p-3 text-center cursor-pointer relative hover:border-violet-500 transition">
+          <div class="border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-xl p-3 text-center cursor-pointer relative hover:border-blue-600 transition">
             <input type="file" accept="image/*,application/pdf" class="absolute inset-0 opacity-0 cursor-pointer" @change="handleFileUpload" />
             <Camera class="mx-auto text-slate-400 mb-1" :size="20" />
             <p class="text-[11px] font-semibold text-slate-600 dark:text-zinc-400">Pilih Dokumen / Foto Surat</p>
@@ -216,7 +216,7 @@ const handleSubmit = async () => {
 
         <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-zinc-800">
           <BaseButton variant="outline" size="sm" @click="isFormModalOpen = false">Batal</BaseButton>
-          <BaseButton size="sm" class="bg-violet-600 hover:bg-violet-700 text-white" :disabled="submitting" @click="handleSubmit">
+          <BaseButton size="sm" class="bg-blue-900 hover:bg-blue-800 text-white" :disabled="submitting" @click="handleSubmit">
             {{ submitting ? 'Mengirim...' : 'Kirim Pengajuan Izin' }}
           </BaseButton>
         </div>

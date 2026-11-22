@@ -1029,12 +1029,12 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         <p class="text-xs text-slate-500 dark:text-zinc-400">Atur tagihan SPP bulanan, pembayaran uang sekolah, dan pantau jurnal akuntansi double-entry terpusat.</p>
       </div>
       <div class="flex gap-2 flex-wrap" v-if="selectedSchoolId && activeTab === 'bills'">
-        <BaseButton variant="primary" @click="openSPPModal" class="py-2.5 px-4 text-xs font-bold shadow-lg shadow-violet-600/15">
+        <BaseButton variant="primary" @click="openSPPModal" class="py-2.5 px-4 text-xs font-bold shadow-lg shadow-sm">
           <Plus class="mr-1.5" :size="14" /> Buat Tagihan SPP Massal
         </BaseButton>
       </div>
       <div class="flex gap-2 flex-wrap" v-if="selectedSchoolId && activeTab === 'journals'">
-        <BaseButton variant="primary" @click="showJournalModal = true" class="py-2.5 px-4 text-xs font-bold shadow-lg shadow-violet-600/15">
+        <BaseButton variant="primary" @click="showJournalModal = true" class="py-2.5 px-4 text-xs font-bold shadow-lg shadow-sm">
           <Plus class="mr-1.5" :size="14" /> Tambah Jurnal Umum
         </BaseButton>
       </div>
@@ -1045,7 +1045,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         <BaseButton variant="outline" @click="showAssetImportModal = true" class="py-2.5 px-4 text-xs font-bold">
           <Upload class="mr-1.5" :size="14" /> Import Excel
         </BaseButton>
-        <BaseButton variant="primary" @click="showAssetModal = true" class="py-2.5 px-4 text-xs font-bold shadow-lg shadow-violet-600/15">
+        <BaseButton variant="primary" @click="showAssetModal = true" class="py-2.5 px-4 text-xs font-bold shadow-lg shadow-sm">
           <Plus class="mr-1.5" :size="14" /> Tambah Aset Sekolah
         </BaseButton>
       </div>
@@ -1055,7 +1055,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
     <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
-        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Yayasan</option>
           <option v-for="found in foundations" :key="found.id" :value="found.id">{{ found.name }}</option>
         </select>
@@ -1063,7 +1063,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Unit Sekolah</option>
           <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
@@ -1071,7 +1071,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
 
       <div class="flex flex-col gap-1.5" v-if="activeTab === 'bills'">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Kelas</label>
-        <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option value="">Semua Kelas</option>
           <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.class_name }}</option>
         </select>
@@ -1079,7 +1079,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
 
       <div class="flex flex-col gap-1.5" v-if="activeTab === 'bills'">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Status Tagihan</label>
-        <select v-model="filterStatus" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="filterStatus" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option value="">Semua Status</option>
           <option value="pending">Belum Lunas (Pending)</option>
           <option value="paid">Lunas (Paid)</option>
@@ -1089,7 +1089,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
 
     <!-- Active Workspace -->
     <div v-if="!selectedSchoolId" class="bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-16 text-center text-slate-400 dark:text-zinc-500">
-      <DollarSign class="mx-auto mb-3 opacity-40 text-violet-600" :size="40" />
+      <DollarSign class="mx-auto mb-3 opacity-40 text-blue-900" :size="40" />
       <h3 class="font-bold text-slate-700 dark:text-zinc-300 text-sm">Pilih Unit Sekolah Terlebih Dahulu</h3>
       <p class="text-xs mt-1 max-w-sm mx-auto">Gunakan filter di atas untuk memuat data transaksi keuangan dan tagihan SPP sekolah.</p>
     </div>
@@ -1100,28 +1100,28 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         <button 
           @click="activeTab = 'bills'" 
           class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap"
-          :class="[activeTab === 'bills' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300']"
+          :class="[activeTab === 'bills' ? 'border-blue-900 text-blue-900 dark:text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300']"
         >
           <CreditCard :size="14" /> Tagihan SPP Siswa
         </button>
         <button 
           @click="activeTab = 'journals'" 
           class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap"
-          :class="[activeTab === 'journals' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300']"
+          :class="[activeTab === 'journals' ? 'border-blue-900 text-blue-900 dark:text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300']"
         >
           <FileText :size="14" /> Jurnal Umum (Ledger)
         </button>
         <button 
           @click="activeTab = 'accounts'" 
           class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap"
-          :class="[activeTab === 'accounts' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300']"
+          :class="[activeTab === 'accounts' ? 'border-blue-900 text-blue-900 dark:text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300']"
         >
           <Layers :size="14" /> COA & Saldo Rekening
         </button>
         <button 
           @click="activeTab = 'reports'" 
           class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap"
-          :class="[activeTab === 'reports' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300']"
+          :class="[activeTab === 'reports' ? 'border-blue-900 text-blue-900 dark:text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300']"
         >
           <Scale :size="14" /> Laporan Keuangan
         </button>
@@ -1129,7 +1129,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         <button 
           @click="activeTab = 'settings'" 
           class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap"
-          :class="[activeTab === 'settings' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300']"
+          :class="[activeTab === 'settings' ? 'border-blue-900 text-blue-900 dark:text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300']"
         >
           <Settings :size="14" /> Setelan Keuangan
         </button>
@@ -1137,7 +1137,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
 
       <!-- Loading Overlay -->
       <div v-if="loading" class="py-20 text-center text-slate-400">
-        <div class="w-8 h-8 rounded-full border-2 border-violet-600 border-t-transparent animate-spin mx-auto mb-3"></div>
+        <div class="w-8 h-8 rounded-full border-2 border-blue-900 border-t-transparent animate-spin mx-auto mb-3"></div>
         <p class="text-xs font-semibold">Memuat data keuangan...</p>
       </div>
 
@@ -1173,7 +1173,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
           </div>
 
           <div v-if="billsList.length === 0" class="py-16 text-center text-slate-400 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl">
-            <Info class="mx-auto mb-2 text-violet-500 opacity-60" :size="30" />
+            <Info class="mx-auto mb-2 text-blue-600 opacity-60" :size="30" />
             <p class="text-xs font-bold text-slate-700 dark:text-zinc-300">Belum Ada Tagihan SPP</p>
             <p class="text-[10px] mt-1">Gunakan tombol 'Buat Tagihan SPP Bulanan' untuk menambahkan tagihan kelas.</p>
           </div>
@@ -1212,7 +1212,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
                       </span>
                     </td>
                     <td class="p-4 text-center pr-6">
-                      <button @click="openCashierDrawer(student)" class="text-xs font-bold text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300">
+                      <button @click="openCashierDrawer(student)" class="text-xs font-bold text-blue-900 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
                         Rincian & Bayar
                       </button>
                     </td>
@@ -1228,7 +1228,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
           <!-- Filter Tanggal Jurnal -->
           <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-2 shadow-sm gap-3">
             <div class="flex items-center gap-3 pl-3 text-xs text-slate-500 dark:text-zinc-400 font-medium">
-              <Calendar class="w-4 h-4 text-violet-500 hidden sm:block" />
+              <Calendar class="w-4 h-4 text-blue-600 hidden sm:block" />
               <span class="hidden sm:inline">Periode:</span>
               <div class="flex items-center bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg overflow-hidden flex-1">
                 <input 
@@ -1248,14 +1248,14 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
             </div>
             <button 
               @click="applyJournalFilter" 
-              class="w-full sm:w-auto bg-violet-50 hover:bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:hover:bg-violet-500/20 dark:text-violet-400 px-5 py-2 rounded-lg text-[11px] font-bold transition-colors flex items-center justify-center gap-2"
+              class="w-full sm:w-auto bg-blue-50/60 hover:bg-blue-50 text-blue-900 dark:bg-blue-600/10 dark:hover:bg-blue-600/15 dark:text-blue-400 px-5 py-2 rounded-lg text-[11px] font-bold transition-colors flex items-center justify-center gap-2"
             >
               <Search class="w-3.5 h-3.5" /> Terapkan Filter
             </button>
           </div>
 
           <div v-if="journalsList.length === 0" class="py-16 text-center text-slate-400 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl">
-            <Info class="mx-auto mb-2 text-violet-500 opacity-60" :size="30" />
+            <Info class="mx-auto mb-2 text-blue-600 opacity-60" :size="30" />
             <p class="text-xs font-bold text-slate-700 dark:text-zinc-300">Jurnal Masih Kosong</p>
             <p class="text-[10px] mt-1">Pembayaran SPP yang diselesaikan akan otomatis dibukukan ke dalam jurnal double-entry ini.</p>
           </div>
@@ -1327,7 +1327,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
                         :class="[
                           j.origin === 'auto' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
                           j.origin === 'reversal' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' :
-                          'bg-violet-500/10 text-violet-600 dark:text-violet-400'
+                          'bg-blue-600/10 text-blue-900 dark:text-blue-400'
                         ]"
                       >
                         {{ j.origin === 'auto' ? 'Otomatis' : j.origin === 'reversal' ? 'Koreksi' : 'Manual' }}
@@ -1341,7 +1341,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
                       <div class="flex items-center justify-center gap-3">
                         <button 
                           @click="openJournalDetail(j)" 
-                          class="text-xs font-bold text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
+                          class="text-xs font-bold text-blue-900 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                           title="Lihat Detail Transaksi"
                         >
                           Detail
@@ -1392,7 +1392,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         <div v-else-if="activeTab === 'accounts'" class="space-y-4 animate-in fade-in duration-300">
           <div class="flex items-center justify-between">
             <h3 class="text-sm font-bold text-slate-800 dark:text-zinc-100 flex items-center gap-2">
-              <Layers class="w-4 h-4 text-violet-500" />
+              <Layers class="w-4 h-4 text-blue-600" />
               Chart of Accounts (COA)
             </h3>
             <button @click="showAddAccountModal = true" class="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold transition-colors flex items-center gap-1.5 shadow-sm">
@@ -1414,7 +1414,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/80 font-medium">
                   <tr v-for="acc in accountsList" :key="acc.id" class="hover:bg-slate-50/30 dark:hover:bg-zinc-950/20 transition-all text-slate-700 dark:text-zinc-300">
-                    <td class="p-4 pl-6 font-mono font-extrabold text-violet-600 dark:text-violet-400">{{ acc.account_code }}</td>
+                    <td class="p-4 pl-6 font-mono font-extrabold text-blue-900 dark:text-blue-400">{{ acc.account_code }}</td>
                     <td class="p-4">
                       <div class="flex flex-col gap-1 items-start">
                         <div class="flex items-center gap-2 font-bold text-slate-800 dark:text-zinc-200">
@@ -1441,7 +1441,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
                           acc.type === 'asset' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' :
                           acc.type === 'liability' ? 'bg-rose-500/10 text-rose-600 border border-rose-500/20' :
                           acc.type === 'equity' ? 'bg-indigo-500/10 text-indigo-600 border border-indigo-500/20' :
-                          acc.type === 'revenue' ? 'bg-violet-500/10 text-violet-600 border border-violet-500/20' :
+                          acc.type === 'revenue' ? 'bg-blue-600/10 text-blue-900 border border-blue-500/20' :
                           'bg-amber-500/10 text-amber-600 border border-amber-500/20'
                         ]"
                       >
@@ -1453,7 +1453,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
                     </td>
                     <td class="p-4 pr-6 text-right">
                       <div class="flex items-center justify-end gap-3">
-                        <button v-if="!acc.is_system && !acc.is_archived" @click="openEditAccount(acc)" class="text-[10px] text-violet-400 hover:text-violet-600 dark:hover:text-violet-300 font-bold transition-colors">
+                        <button v-if="!acc.is_system && !acc.is_archived" @click="openEditAccount(acc)" class="text-[10px] text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 font-bold transition-colors">
                           Edit
                         </button>
                         <button v-if="!acc.is_system && !acc.is_archived" @click="handleArchiveAccount(acc)" class="text-[10px] text-rose-400 hover:text-rose-600 font-bold transition-colors">
@@ -1477,28 +1477,28 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
               <button 
                 @click="activeReportSubTab = 'balance-sheet'" 
                 class="px-4 py-2 text-xs font-bold rounded-lg transition-all"
-                :class="activeReportSubTab === 'balance-sheet' ? 'bg-violet-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'"
+                :class="activeReportSubTab === 'balance-sheet' ? 'bg-blue-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'"
               >
                 Neraca (Balance Sheet)
               </button>
               <button 
                 @click="activeReportSubTab = 'income-statement'" 
                 class="px-4 py-2 text-xs font-bold rounded-lg transition-all"
-                :class="activeReportSubTab === 'income-statement' ? 'bg-violet-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'"
+                :class="activeReportSubTab === 'income-statement' ? 'bg-blue-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'"
               >
                 Laba / Rugi
               </button>
               <button 
                 @click="activeReportSubTab = 'bos'" 
                 class="px-4 py-2 text-xs font-bold rounded-lg transition-all"
-                :class="activeReportSubTab === 'bos' ? 'bg-violet-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'"
+                :class="activeReportSubTab === 'bos' ? 'bg-blue-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'"
               >
                 Laporan BOS (K7a)
               </button>
               <button 
                 @click="activeReportSubTab = 'foundation'" 
                 class="px-4 py-2 text-xs font-bold rounded-lg transition-all"
-                :class="activeReportSubTab === 'foundation' ? 'bg-violet-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'"
+                :class="activeReportSubTab === 'foundation' ? 'bg-blue-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'"
               >
                 Laporan Yayasan
               </button>
@@ -1521,7 +1521,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
           <div v-else-if="activeReportSubTab === 'income-statement'" class="space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-2 shadow-sm gap-3">
               <div class="flex items-center gap-3 pl-3 text-xs text-slate-500 dark:text-zinc-400 font-medium">
-                <Calendar class="w-4 h-4 text-violet-500 hidden sm:block" />
+                <Calendar class="w-4 h-4 text-blue-600 hidden sm:block" />
                 <span class="hidden sm:inline">Periode:</span>
                 <div class="flex items-center bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg overflow-hidden flex-1">
                   <input 
@@ -1541,7 +1541,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
               </div>
               <button 
                 @click="applyIncomeStatementFilter" 
-                class="w-full sm:w-auto bg-violet-50 hover:bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:hover:bg-violet-500/20 dark:text-violet-400 px-5 py-2 rounded-lg text-[11px] font-bold transition-colors flex items-center justify-center gap-2"
+                class="w-full sm:w-auto bg-blue-50/60 hover:bg-blue-50 text-blue-900 dark:bg-blue-600/10 dark:hover:bg-blue-600/15 dark:text-blue-400 px-5 py-2 rounded-lg text-[11px] font-bold transition-colors flex items-center justify-center gap-2"
               >
                 <Search class="w-3.5 h-3.5" /> Terapkan Filter
               </button>
@@ -1657,7 +1657,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
                 </td>
                 <td class="py-3 px-4 text-center">
                   <div class="flex items-center justify-center gap-2">
-                    <button @click="openBosModal(comp)" class="p-1.5 text-slate-400 hover:text-violet-600 transition-colors rounded-lg hover:bg-violet-50">
+                    <button @click="openBosModal(comp)" class="p-1.5 text-slate-400 hover:text-blue-900 transition-colors rounded-lg hover:bg-blue-50/60">
                       <Wrench :size="14" />
                     </button>
                     <button @click="handleDeleteBosComp(comp.id)" class="p-1.5 text-slate-400 hover:text-rose-600 transition-colors rounded-lg hover:bg-rose-50">
@@ -1698,7 +1698,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
                 <td class="py-3 px-4">
                   <select 
                     v-model="cat.revenue_account_id" 
-                    class="w-full max-w-sm bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600 transition-all text-slate-900 dark:text-zinc-100"
+                    class="w-full max-w-sm bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900/20 transition-all text-slate-900 dark:text-zinc-100"
                   >
                     <option :value="null">-- Pilih Akun Pendapatan --</option>
                     <option v-for="acc in revenueAccounts" :key="acc.id" :value="acc.id">
@@ -1751,7 +1751,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
           <div 
             v-for="bill in activeStudent.bills" 
             :key="bill.id" 
-            class="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl hover:border-violet-600/30 transition-all"
+            class="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl hover:border-blue-900/30 transition-all"
           >
             <div class="space-y-1">
               <div class="flex items-center gap-2 flex-wrap">
@@ -1788,7 +1788,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
                 <button 
                   v-if="bill.status !== 'paid'"
                   @click="showDetailModal = false; openCashierDrawer(activeStudent)"
-                  class="px-3 py-1.5 bg-violet-600 hover:bg-violet-750 text-white rounded-lg text-[10px] font-bold transition-all shadow-sm shadow-violet-600/15"
+                  class="px-3 py-1.5 bg-blue-900 hover:bg-blue-800 text-white rounded-lg text-[10px] font-bold transition-all shadow-sm shadow-sm"
                 >
                   Bayar
                 </button>
@@ -1818,7 +1818,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
       <div class="space-y-4">
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Rombel Kelas (boleh lebih dari satu)</label>
-          <select v-model="sppForm.class_ids" multiple size="4" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+          <select v-model="sppForm.class_ids" multiple size="4" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100">
             <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.class_name }}</option>
           </select>
         </div>
@@ -1830,7 +1830,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
               <Info :size="14" class="text-slate-400 cursor-help" />
             </span>
           </div>
-          <select v-model="sppForm.category_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+          <select v-model="sppForm.category_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>Pilih Struktur Biaya</option>
             <option v-for="cat in categoriesList" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
           </select>
@@ -1846,14 +1846,14 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
                 <Info :size="14" class="text-slate-400 cursor-help" />
               </span>
             </div>
-            <select v-model="sppForm.period" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+            <select v-model="sppForm.period" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100">
               <option v-for="opt in periodOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
             </select>
           </div>
         </div>
         <BaseDateInput v-model="sppForm.due_date" label="Tanggal Jatuh Tempo" required />
 
-        <div class="p-3 bg-violet-50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-900/20 rounded-lg text-xs leading-relaxed text-slate-600 dark:text-zinc-400">
+        <div class="p-3 bg-blue-50/60 dark:bg-blue-950/10 border border-blue-100 dark:border-blue-900/20 rounded-lg text-xs leading-relaxed text-slate-600 dark:text-zinc-400">
           <template v-if="isPreviewLoading">
             <span class="animate-pulse">Menghitung pratinjau tagihan...</span>
           </template>
@@ -1884,7 +1884,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Kategori Aset</label>
-          <select v-model="assetForm.category" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+          <select v-model="assetForm.category" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100">
             <option v-for="cat in ASSET_CATEGORIES" :key="cat.value" :value="cat.value">{{ cat.label }}</option>
           </select>
         </div>
@@ -1898,7 +1898,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
           <BaseInput v-model="assetForm.quantity" label="Kuantitas (Pcs/Unit)" type="number" required />
           <div class="flex flex-col gap-1.5 w-full">
             <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Kondisi Fisik</label>
-            <select v-model="assetForm.condition" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+            <select v-model="assetForm.condition" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100">
               <option value="good">Baik (Good)</option>
               <option value="repair_needed">Perlu Perbaikan (Repair Needed)</option>
               <option value="broken">Rusak (Broken)</option>
@@ -1911,7 +1911,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5 w-full">
             <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Metode Penyusutan</label>
-            <select v-model="assetForm.depreciation_method" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+            <select v-model="assetForm.depreciation_method" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100">
               <option v-for="method in DEPRECIATION_METHODS" :key="method.value" :value="method.value">{{ method.label }}</option>
             </select>
           </div>
@@ -1933,7 +1933,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Akun Debit (Penggunaan Dana / Beban / Aset)</label>
-          <select v-model="journalForm.debit_account_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+          <select v-model="journalForm.debit_account_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>Pilih Akun Debit</option>
             <template v-for="(accounts, groupName) in debitAccountGroups" :key="'debgrp-'+groupName">
               <optgroup :label="String(groupName)" v-if="accounts.length > 0">
@@ -1948,7 +1948,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
 
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Akun Kredit (Sumber Dana / Kas / Pendapatan)</label>
-          <select v-model="journalForm.credit_account_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+          <select v-model="journalForm.credit_account_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>Pilih Akun Kredit</option>
             <template v-for="(accounts, groupName) in creditAccountGroups" :key="'credgrp-'+groupName">
               <optgroup :label="String(groupName)" v-if="accounts.length > 0">
@@ -1971,7 +1971,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
 
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Sumber Dana</label>
-          <select v-model="journalForm.funding_source" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+          <select v-model="journalForm.funding_source" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100">
             <option value="yayasan">Dana Yayasan / Pribadi</option>
             <option value="spp">Dana SPP</option>
             <option value="bos_reguler">Dana BOS Reguler</option>
@@ -1983,7 +1983,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
 
         <div class="flex flex-col gap-1.5 w-full" v-if="journalForm.funding_source.startsWith('bos_')">
           <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Komponen Pembiayaan BOS</label>
-          <select v-model="journalForm.bos_component_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+          <select v-model="journalForm.bos_component_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>Pilih Komponen BOS</option>
             <option v-for="comp in bosComponentsList" :key="comp.id" :value="comp.code">
               {{ comp.code }} - {{ comp.name }}
@@ -2013,7 +2013,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300">
                  {{ selectedJournalContext.payment_method === 'cash' ? 'Tunai' : selectedJournalContext.payment_method === 'transfer_manual' ? 'Transfer Bank' : selectedJournalContext.payment_method === 'transfer_auto' ? 'Virtual Account' : selectedJournalContext.payment_method }}
                </span>
-               <button v-if="selectedJournalContext.payment_proof_url" type="button" @click="proofImageUrl = selectedJournalContext.payment_proof_url; showProofModal = true" class="text-[10px] text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1 font-bold ml-2">
+               <button v-if="selectedJournalContext.payment_proof_url" type="button" @click="proofImageUrl = selectedJournalContext.payment_proof_url; showProofModal = true" class="text-[10px] text-blue-900 dark:text-blue-400 hover:underline flex items-center gap-1 font-bold ml-2">
                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.234 20.252 21 12.3"></path><path d="m16 6-8.414 8.586a2 2 0 0 0 0 2.828 2 2 0 0 0 2.828 0l8.414-8.586a4 4 0 0 0 0-5.656 4 4 0 0 0-5.656 0l-8.415 8.585a6 6 0 1 0 8.486 8.486"></path></svg>
                  Lihat Bukti Transfer
                </button>
@@ -2082,11 +2082,11 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
           <div class="flex gap-3">
             <div class="w-1/2 flex flex-col gap-1.5">
               <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Nomor Rekening</label>
-              <input type="text" v-model="editAccountForm.bank_account_number" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-600 transition-all font-mono" placeholder="Contoh: 1234567890" />
+              <input type="text" v-model="editAccountForm.bank_account_number" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-blue-900 transition-all font-mono" placeholder="Contoh: 1234567890" />
             </div>
             <div class="w-1/2 flex flex-col gap-1.5">
               <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Atas Nama</label>
-              <input type="text" v-model="editAccountForm.bank_account_name" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-600 transition-all" placeholder="Contoh: Yayasan Tursina" />
+              <input type="text" v-model="editAccountForm.bank_account_name" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-blue-900 transition-all" placeholder="Contoh: Yayasan Tursina" />
             </div>
           </div>
         </template>
@@ -2118,11 +2118,11 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
     <BaseModal :show="showAssetImportModal" title="Import Data Aset Sekolah via Excel" @close="showAssetImportModal = false; assetImportResult = null; assetImportFile = null">
       <div class="space-y-5">
         <!-- Instructions -->
-        <div class="flex items-start gap-3 p-4 bg-violet-50 dark:bg-violet-950/30 rounded-lg border border-violet-100 dark:border-violet-900/50">
-          <FileSpreadsheet class="text-violet-500 shrink-0 mt-0.5" :size="18" />
-          <div class="text-xs text-violet-700 dark:text-violet-300">
+        <div class="flex items-start gap-3 p-4 bg-blue-50/60 dark:bg-blue-950/30 rounded-lg border border-blue-100 dark:border-blue-900/30">
+          <FileSpreadsheet class="text-blue-600 shrink-0 mt-0.5" :size="18" />
+          <div class="text-xs text-blue-900 dark:text-blue-300">
             <p class="font-bold mb-1">Panduan Import</p>
-            <ol class="list-decimal ml-4 space-y-0.5 text-violet-600 dark:text-violet-400">
+            <ol class="list-decimal ml-4 space-y-0.5 text-blue-900 dark:text-blue-400">
               <li>Unduh template Excel terlebih dahulu melalui tombol <strong>Unduh Template</strong>.</li>
               <li>Isi data sesuai format pada baris ke-9 dan seterusnya (baris 1–8 adalah header dan contoh).</li>
               <li>Kolom <strong>Nama Barang Aset</strong>, <strong>Kode / Serial Aset</strong>, <strong>Kategori Aset</strong>, <strong>Tanggal Perolehan</strong>, <strong>Harga Perolehan</strong>, <strong>Kuantitas</strong>, dan <strong>Kondisi Fisik</strong> wajib diisi.</li>
@@ -2135,8 +2135,8 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
         <!-- File picker -->
         <div class="flex flex-col gap-1.5">
           <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Pilih File Excel (.xlsx)</label>
-          <label class="flex items-center gap-3 cursor-pointer border-2 border-dashed border-slate-200 dark:border-zinc-700 rounded-lg px-4 py-5 hover:border-violet-400 dark:hover:border-violet-600 transition-colors group">
-            <Upload class="text-slate-400 group-hover:text-violet-500 transition-colors" :size="20" />
+          <label class="flex items-center gap-3 cursor-pointer border-2 border-dashed border-slate-200 dark:border-zinc-700 rounded-lg px-4 py-5 hover:border-blue-400 dark:hover:border-blue-900 transition-colors group">
+            <Upload class="text-slate-400 group-hover:text-blue-600 transition-colors" :size="20" />
             <div class="flex-1 min-w-0">
               <p v-if="assetImportFile" class="text-sm font-semibold text-slate-800 dark:text-zinc-200 truncate">{{ assetImportFile.name }}</p>
               <p v-else class="text-sm text-slate-400 dark:text-zinc-500">Klik untuk memilih file atau seret ke sini</p>
@@ -2186,14 +2186,14 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
     <!-- Modal Tambah Akun COA -->
     <BaseModal :show="showAddAccountModal" title="Tambah Akun COA Baru" @close="showAddAccountModal = false">
       <form @submit.prevent="handleCreateAccount" class="space-y-4">
-        <div v-if="settings?.enable_sub_ledger" class="flex flex-col gap-1.5 w-full bg-violet-50 dark:bg-violet-900/10 p-3 rounded-xl border border-violet-100 dark:border-violet-900/20 mb-2">
-          <label class="text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest px-1">Jenis Pembuatan Akun</label>
+        <div v-if="settings?.enable_sub_ledger" class="flex flex-col gap-1.5 w-full bg-blue-50/60 dark:bg-blue-950/10 p-3 rounded-xl border border-blue-100 dark:border-blue-900/20 mb-2">
+          <label class="text-[10px] font-bold text-blue-900 dark:text-blue-400 uppercase tracking-widest px-1">Jenis Pembuatan Akun</label>
           <div class="flex gap-4 px-1 mt-1">
             <label class="flex items-center gap-2 text-sm cursor-pointer">
-              <input type="radio" v-model="newAccount.is_sub" :value="false" class="text-violet-600"> Akun Reguler
+              <input type="radio" v-model="newAccount.is_sub" :value="false" class="text-blue-900"> Akun Reguler
             </label>
             <label class="flex items-center gap-2 text-sm cursor-pointer">
-              <input type="radio" v-model="newAccount.is_sub" :value="true" class="text-violet-600"> Sub-Rekening Kas/Bank
+              <input type="radio" v-model="newAccount.is_sub" :value="true" class="text-blue-900"> Sub-Rekening Kas/Bank
             </label>
           </div>
         </div>
@@ -2202,7 +2202,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
           <div class="flex gap-3">
             <div class="w-1/2 flex flex-col gap-1.5">
               <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Induk Rekening</label>
-              <select v-model="newAccount.parent_code" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+              <select v-model="newAccount.parent_code" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100">
                 <option value="101">101 - Kas Tunai</option>
                 <option value="102">102 - Bank</option>
               </select>
@@ -2218,11 +2218,11 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
           <div class="flex gap-3" v-if="newAccount.parent_code === '102'">
             <div class="w-1/2 flex flex-col gap-1.5">
               <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Nomor Rekening</label>
-              <input type="text" v-model="newAccount.bank_account_number" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-600 transition-all font-mono" placeholder="Contoh: 1234567890" />
+              <input type="text" v-model="newAccount.bank_account_number" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-blue-900 transition-all font-mono" placeholder="Contoh: 1234567890" />
             </div>
             <div class="w-1/2 flex flex-col gap-1.5">
               <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Atas Nama</label>
-              <input type="text" v-model="newAccount.bank_account_name" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-600 transition-all" placeholder="Contoh: Yayasan Tursina" />
+              <input type="text" v-model="newAccount.bank_account_name" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-blue-900 transition-all" placeholder="Contoh: Yayasan Tursina" />
             </div>
           </div>
           <p class="text-[10px] text-slate-400 px-1 -mt-2">Otomatis berjenis Aset (Harta).</p>
@@ -2236,7 +2236,7 @@ const exportReport = (format: 'pdf' | 'xlsx') => {
                 <Info :size="14" class="text-slate-400 cursor-help" />
               </span>
             </div>
-            <select v-model="newAccount.type" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100" required>
+            <select v-model="newAccount.type" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100" required>
               <option value="" disabled>Pilih Tipe</option>
               <option value="asset">Aset (Harta)</option>
               <option value="liability">Kewajiban (Hutang)</option>

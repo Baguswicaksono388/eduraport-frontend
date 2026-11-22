@@ -300,7 +300,7 @@ const getStatusBadge = (status: string) => {
       <BaseCard v-for="session in sessions" :key="session.id" class="p-5 border-slate-200/60 dark:border-zinc-800/80 hover:shadow-md transition-all">
         <div class="flex justify-between items-start mb-4">
           <div>
-            <div class="text-xs font-semibold text-violet-600 dark:text-violet-400 mb-1">
+            <div class="text-xs font-semibold text-blue-900 dark:text-blue-400 mb-1">
               {{ formatDate(session.session_date) }}
             </div>
             <h3 class="font-bold text-slate-900 dark:text-white text-base leading-tight">
@@ -366,7 +366,7 @@ const getStatusBadge = (status: string) => {
         </div>
         <div class="space-y-1.5 md:col-span-2">
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">Rencana Tindak Lanjut</label>
-          <textarea v-model="sessionForm.action_plan" rows="2" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10"></textarea>
+          <textarea v-model="sessionForm.action_plan" rows="2" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10"></textarea>
         </div>
         <div class="space-y-1.5 md:col-span-2">
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300 text-amber-600">Catatan Rahasia (Hanya Guru BK)</label>
@@ -398,7 +398,7 @@ const getStatusBadge = (status: string) => {
         </div>
         <div class="space-y-1.5 md:col-span-2">
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">Rencana Tindak Lanjut</label>
-          <textarea v-model="sessionForm.action_plan" rows="2" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10"></textarea>
+          <textarea v-model="sessionForm.action_plan" rows="2" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10"></textarea>
         </div>
         <div class="space-y-1.5 md:col-span-2">
           <label class="text-sm font-medium text-amber-600">Catatan Rahasia (Hanya Guru BK)</label>

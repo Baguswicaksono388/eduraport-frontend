@@ -44,7 +44,7 @@ const goToUpgrade = () => {
     <div class="p-8 text-center relative overflow-hidden">
       <!-- Decor -->
       <div class="absolute -right-12 -top-12 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl"></div>
-      <div class="absolute -left-12 -bottom-12 w-32 h-32 bg-violet-600/10 rounded-full blur-2xl"></div>
+      <div class="absolute -left-12 -bottom-12 w-32 h-32 bg-blue-600/10 rounded-full blur-2xl"></div>
       
       <div class="relative z-10">
         <div class="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 text-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm border border-amber-200 dark:border-amber-800/50">

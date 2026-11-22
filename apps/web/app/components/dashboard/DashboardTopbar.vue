@@ -48,7 +48,7 @@ const setToday = () => {
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-zinc-800 animate-in fade-in duration-300">
     <div>
       <h1 class="text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-zinc-50 flex items-center gap-2.5">
-        <SlidersHorizontal class="text-violet-600 dark:text-violet-400" :size="24" />
+        <SlidersHorizontal class="text-blue-900 dark:text-blue-400" :size="24" />
         Dashboard Eksekutif
       </h1>
       <p class="text-xs text-slate-500 dark:text-zinc-400 font-semibold mt-1">
@@ -59,7 +59,7 @@ const setToday = () => {
     <div class="flex flex-wrap items-center gap-3">
       <!-- Role Switcher (Simulator view) -->
       <div class="flex items-center gap-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 shadow-sm">
-        <ShieldAlert class="text-violet-500" :size="15" />
+        <ShieldAlert class="text-blue-600" :size="15" />
         <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tampilan:</span>
         <select
           :value="role"
@@ -137,7 +137,7 @@ const setToday = () => {
       <button
         @click="emit('refresh')"
         :disabled="loading"
-        class="inline-flex items-center gap-2 px-3 py-2 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 text-white rounded-lg shadow-sm text-xs font-bold transition-all"
+        class="inline-flex items-center gap-2 px-3 py-2 bg-blue-900 hover:bg-blue-800 disabled:bg-slate-300 dark:disabled:bg-zinc-750 text-white rounded-lg shadow-sm text-xs font-bold transition-all"
       >
         <RefreshCw :class="{ 'animate-spin': loading }" :size="14" />
         <span>Segarkan</span>

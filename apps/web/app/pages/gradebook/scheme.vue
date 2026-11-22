@@ -543,14 +543,14 @@ const getAggregationLabel = (method: string) => {
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5 lg:col-span-2">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
       </div>
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Kelas</label>
-        <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Kelas</option>
           <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.class_name }}</option>
         </select>
@@ -558,7 +558,7 @@ const getAggregationLabel = (method: string) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Mata Pelajaran</label>
-        <select v-model="selectedSubjectId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSubjectId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Mapel</option>
           <option v-for="sub in subjects" :key="sub.id" :value="sub.id">{{ sub.name }}</option>
         </select>
@@ -566,14 +566,14 @@ const getAggregationLabel = (method: string) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tahun Ajaran</label>
-        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option v-for="y in academicYears" :key="y.id" :value="y.id">{{ y.name }}</option>
         </select>
       </div>
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Semester</label>
-        <select v-model="selectedSemester" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSemester" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option value="odd">Ganjil</option>
           <option value="even">Genap</option>
         </select>
@@ -581,10 +581,10 @@ const getAggregationLabel = (method: string) => {
     </div>
 
     <!-- TK/PAUD: Redirect Panel — Tidak memerlukan Setup Skema Penilaian Angka -->
-    <div v-if="isTKSchool" class="bg-white dark:bg-zinc-900 border border-violet-200 dark:border-violet-900/50 rounded-2xl p-8 shadow-sm">
+    <div v-if="isTKSchool" class="bg-white dark:bg-zinc-900 border border-blue-200 dark:border-blue-900/30 rounded-2xl p-8 shadow-sm">
       <div class="flex flex-col items-center text-center max-w-lg mx-auto">
-        <div class="w-16 h-16 rounded-2xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mb-4">
-          <Baby class="text-violet-600 dark:text-violet-400" :size="32" />
+        <div class="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-950/30 flex items-center justify-center mb-4">
+          <Baby class="text-blue-900 dark:text-blue-400" :size="32" />
         </div>
         <h3 class="text-lg font-black text-slate-900 dark:text-zinc-100 mb-2">Halaman Ini Tidak Diperlukan untuk TK/PAUD</h3>
         <p class="text-sm text-slate-500 dark:text-zinc-400 leading-relaxed mb-6">
@@ -594,8 +594,8 @@ const getAggregationLabel = (method: string) => {
         </p>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left w-full mb-8">
-          <div class="bg-violet-50 dark:bg-violet-900/20 rounded-xl p-4">
-            <p class="text-[10px] font-black text-violet-600 dark:text-violet-400 uppercase tracking-wider mb-1">Skala Nilai PAUD</p>
+          <div class="bg-blue-50/60 dark:bg-blue-950/20 rounded-xl p-4">
+            <p class="text-[10px] font-black text-blue-900 dark:text-blue-400 uppercase tracking-wider mb-1">Skala Nilai PAUD</p>
             <div class="space-y-1">
               <div class="flex items-center gap-2 text-xs text-slate-700 dark:text-zinc-300">
                 <span class="w-10 text-center font-black text-rose-500 bg-rose-50 dark:bg-rose-900/30 rounded px-1 py-0.5 text-[10px]">BB</span>
@@ -618,22 +618,22 @@ const getAggregationLabel = (method: string) => {
           <div class="bg-slate-50 dark:bg-zinc-800/40 rounded-xl p-4 space-y-2">
             <p class="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Cara Setup Penilaian TK</p>
             <div class="flex items-start gap-2">
-              <span class="shrink-0 w-5 h-5 rounded-full bg-violet-600 text-white text-[9px] font-black flex items-center justify-center">1</span>
+              <span class="shrink-0 w-5 h-5 rounded-full bg-blue-900 text-white text-[9px] font-black flex items-center justify-center">1</span>
               <p class="text-xs text-slate-600 dark:text-zinc-300">Buka menu <strong>Rapor → Pengaturan Template</strong></p>
             </div>
             <div class="flex items-start gap-2">
-              <span class="shrink-0 w-5 h-5 rounded-full bg-violet-600 text-white text-[9px] font-black flex items-center justify-center">2</span>
+              <span class="shrink-0 w-5 h-5 rounded-full bg-blue-900 text-white text-[9px] font-black flex items-center justify-center">2</span>
               <p class="text-xs text-slate-600 dark:text-zinc-300">Buat atau edit Template Rapor TK untuk menetapkan aspek & elemen penilaian</p>
             </div>
             <div class="flex items-start gap-2">
-              <span class="shrink-0 w-5 h-5 rounded-full bg-violet-600 text-white text-[9px] font-black flex items-center justify-center">3</span>
+              <span class="shrink-0 w-5 h-5 rounded-full bg-blue-900 text-white text-[9px] font-black flex items-center justify-center">3</span>
               <p class="text-xs text-slate-600 dark:text-zinc-300">Buka <strong>Input Nilai → Generate Draft Rapor</strong> untuk mulai mengisi penilaian</p>
             </div>
           </div>
         </div>
 
         <div class="flex flex-wrap gap-3 justify-center">
-          <NuxtLink to="/report/template" class="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs py-2.5 px-5 rounded-xl transition-colors shadow-lg shadow-violet-600/20">
+          <NuxtLink to="/report/template" class="inline-flex items-center gap-2 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs py-2.5 px-5 rounded-xl transition-colors shadow-lg shadow-sm">
             Pergi ke Pengaturan Template <ArrowRight :size="14" />
           </NuxtLink>
           <NuxtLink to="/gradebook/input" class="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 font-bold text-xs py-2.5 px-5 rounded-xl transition-colors">
@@ -646,7 +646,7 @@ const getAggregationLabel = (method: string) => {
     <!-- SD–SMA: Scheme State Panels -->
     <template v-else>
     <div v-if="loading" class="flex flex-col items-center justify-center py-20 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm animate-pulse">
-      <Calculator class="text-violet-500 animate-spin mb-4" :size="36" />
+      <Calculator class="text-blue-600 animate-spin mb-4" :size="36" />
       <p class="text-xs font-bold text-slate-500">Memuat konfigurasi skema penilaian...</p>
     </div>
 
@@ -661,10 +661,10 @@ const getAggregationLabel = (method: string) => {
       <p class="text-sm font-bold text-slate-700 dark:text-zinc-200">Skema Penilaian Belum Dibuat</p>
       <p class="text-xs text-slate-400 max-w-sm mt-1 mb-6">Mata pelajaran dan kelas yang dipilih belum memiliki skema penilaian aktif untuk semester ini.</p>
       <div class="flex items-center gap-3">
-        <BaseButton variant="primary" @click="handleCreateScheme" class="py-2.5 px-5 text-xs font-bold shadow-lg shadow-violet-600/15">
+        <BaseButton variant="primary" @click="handleCreateScheme" class="py-2.5 px-5 text-xs font-bold shadow-lg shadow-sm">
           <Plus class="mr-1.5" :size="14" /> Buat Skema Baru
         </BaseButton>
-        <BaseButton variant="outline" @click="showCopyModal = true" class="py-2.5 px-5 text-xs font-bold border-violet-200 text-violet-600 hover:bg-violet-50 dark:border-violet-900 dark:text-violet-400 dark:hover:bg-violet-900/30">
+        <BaseButton variant="outline" @click="showCopyModal = true" class="py-2.5 px-5 text-xs font-bold border-blue-200 text-blue-900 hover:bg-blue-50/60 dark:border-blue-950 dark:text-blue-400 dark:hover:bg-blue-950/40">
           <Copy class="mr-1.5" :size="14" /> Salin dari Kelas Lain
         </BaseButton>
       </div>
@@ -677,7 +677,7 @@ const getAggregationLabel = (method: string) => {
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         <!-- Formula Preview -->
-        <div class="md:col-span-2 bg-gradient-to-r from-violet-600 to-indigo-700 text-white rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+        <div class="md:col-span-2 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white rounded-2xl p-6 shadow-xl flex flex-col justify-between">
           <div>
             <div class="flex items-center gap-2 mb-2 opacity-90">
               <Percent :size="16" />
@@ -686,7 +686,7 @@ const getAggregationLabel = (method: string) => {
             <p class="text-lg font-black leading-snug tracking-tight mb-2">
               {{ formulaText }}
             </p>
-            <p class="text-xs text-violet-100 font-medium opacity-80">
+            <p class="text-xs text-blue-100 font-medium opacity-80">
               Kalkulasi dijalankan secara real-time pada database per-row saat guru menginput nilai siswa.
             </p>
           </div>
@@ -712,7 +712,7 @@ const getAggregationLabel = (method: string) => {
               type="number" 
               placeholder="KKM" 
               min="0" max="100"
-              class="w-24 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm font-black outline-none focus:border-violet-600 text-center"
+              class="w-24 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm font-black outline-none focus:border-blue-900 text-center"
             />
             <BaseButton variant="primary" @click="handleSaveKkm" class="py-2 px-3 text-xs font-bold flex-1">
               Simpan KKM
@@ -746,7 +746,7 @@ const getAggregationLabel = (method: string) => {
             <div>
               <div class="flex items-center gap-2">
                 <span class="text-sm font-black text-slate-800 dark:text-zinc-100">{{ group.name }}</span>
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-violet-600/10 text-violet-600 dark:text-violet-400 border border-violet-500/10">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-600/10 text-blue-900 dark:text-blue-400 border border-blue-500/10">
                   Bobot {{ Number(group.weight_percent) }}%
                 </span>
                 <span class="text-slate-300 dark:text-zinc-700">|</span>
@@ -754,7 +754,7 @@ const getAggregationLabel = (method: string) => {
               </div>
             </div>
             <div class="flex items-center gap-1">
-              <button @click="openEditGroup(group)" class="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg transition-colors">
+              <button @click="openEditGroup(group)" class="p-1.5 text-slate-400 hover:text-blue-900 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg transition-colors">
                 <Edit2 :size="13" />
               </button>
               <button @click="handleDeleteGroup(group.id)" class="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg transition-colors">
@@ -767,7 +767,7 @@ const getAggregationLabel = (method: string) => {
           <div class="space-y-3">
             <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 flex items-center justify-between">
               <span>Daftar Komponen Nilai (NH, UTS, UAS, dll)</span>
-              <button @click="openAddComponent(group.id)" class="text-xs text-violet-600 hover:text-violet-700 font-bold flex items-center gap-1 normal-case tracking-normal">
+              <button @click="openAddComponent(group.id)" class="text-xs text-blue-900 hover:text-blue-900 font-bold flex items-center gap-1 normal-case tracking-normal">
                 <Plus :size="12" /> Tambah Komponen
               </button>
             </div>
@@ -784,7 +784,7 @@ const getAggregationLabel = (method: string) => {
                   <div class="flex justify-between items-start">
                     <span class="text-xs font-black text-slate-800 dark:text-zinc-200">{{ comp.name }}</span>
                     <div class="flex items-center gap-0.5 opacity-0 group-hover/comp:opacity-100 transition-opacity">
-                      <button @click="openEditComponent(comp)" class="p-1 text-slate-400 hover:text-violet-600">
+                      <button @click="openEditComponent(comp)" class="p-1 text-slate-400 hover:text-blue-900">
                         <Edit2 :size="11" />
                       </button>
                       <button @click="handleDeleteComponent(comp.id)" class="p-1 text-slate-400 hover:text-rose-600">
@@ -826,7 +826,7 @@ const getAggregationLabel = (method: string) => {
               >
                 <ClipboardList class="opacity-45" :size="20" />
                 <span class="text-[10px] font-bold text-slate-400 dark:text-zinc-505">Belum ada komponen nilai</span>
-                <button @click="openAddComponent(group.id)" class="text-[10px] text-violet-600 font-bold hover:underline">
+                <button @click="openAddComponent(group.id)" class="text-[10px] text-blue-900 font-bold hover:underline">
                   + Klik untuk menambahkan komponen
                 </button>
               </div>
@@ -851,7 +851,7 @@ const getAggregationLabel = (method: string) => {
 
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Metode Agregasi Komponen</label>
-          <select v-model="groupForm.aggregation_method" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+          <select v-model="groupForm.aggregation_method" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
             <option value="simple_avg">Rata-rata Sederhana</option>
             <option value="weighted_avg">Rata-rata Tertimbang (Berdasarkan bobot komponen)</option>
             <option value="highest">Ambil Nilai Tertinggi</option>
@@ -896,7 +896,7 @@ const getAggregationLabel = (method: string) => {
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5 w-full">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tipe Nilai</label>
-            <select v-model="componentForm.type" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+            <select v-model="componentForm.type" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
               <option value="nilai_harian">Nilai Harian / Ulangan</option>
               <option value="tugas">Tugas / PR</option>
               <option value="pts">PTS / UTS</option>
@@ -937,16 +937,16 @@ const getAggregationLabel = (method: string) => {
 
         <div class="flex flex-col gap-2 px-1 py-1 mt-2">
           <div class="flex items-start gap-2.5">
-            <input type="checkbox" id="is_remedial_slot" v-model="componentForm.is_remedial_slot" class="rounded border-slate-350 dark:border-zinc-800 text-violet-600 mt-0.5" />
+            <input type="checkbox" id="is_remedial_slot" v-model="componentForm.is_remedial_slot" class="rounded border-slate-350 dark:border-zinc-800 text-blue-900 mt-0.5" />
             <div>
               <label for="is_remedial_slot" class="text-xs font-semibold text-slate-700 dark:text-zinc-300">Komponen ini adalah slot nilai remedial (perbaikan)</label>
               <p class="text-[9.5px] text-slate-500 dark:text-zinc-450 mt-0.5 leading-relaxed">Kolom nilai ini opsional (hanya diisi untuk siswa yang belum tuntas). Sangat disarankan untuk <strong>TIDAK mencentang</strong> kotak Wajib Diisi di bawah.</p>
             </div>
           </div>
 
-          <div v-if="componentForm.is_remedial_slot" class="ml-6 mt-1 p-3 bg-violet-50/50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-900/30 rounded-lg">
-            <label class="block text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-1.5">Komponen Utama (Yang Diremidi)</label>
-            <select v-model="componentForm.parent_component_id" required class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+          <div v-if="componentForm.is_remedial_slot" class="ml-6 mt-1 p-3 bg-blue-50/50 dark:bg-blue-950/10 border border-blue-100 dark:border-blue-950/30 rounded-lg">
+            <label class="block text-[10px] font-bold text-blue-900 dark:text-blue-400 uppercase tracking-widest mb-1.5">Komponen Utama (Yang Diremidi)</label>
+            <select v-model="componentForm.parent_component_id" required class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
               <option value="" disabled selected>-- Pilih Komponen Utama --</option>
               <option v-for="c in activeGroupBaseComponents" :key="c.id" :value="c.id">
                 {{ c.name }}
@@ -957,7 +957,7 @@ const getAggregationLabel = (method: string) => {
         </div>
 
         <div class="flex items-start gap-2.5 px-1 py-1">
-          <input type="checkbox" id="is_required" v-model="componentForm.is_required" class="rounded border-slate-350 dark:border-zinc-800 text-violet-600 mt-0.5" />
+          <input type="checkbox" id="is_required" v-model="componentForm.is_required" class="rounded border-slate-350 dark:border-zinc-800 text-blue-900 mt-0.5" />
           <div>
             <label for="is_required" class="text-xs font-semibold text-slate-700 dark:text-zinc-300">Komponen wajib diisi (Wajib Ada Nilai)</label>
             <p class="text-[9.5px] text-slate-500 dark:text-zinc-450 mt-0.5 leading-relaxed">Jika dicentang, sistem (Strict Mode) dapat menolak penguncian nilai apabila masih ada kotak siswa yang dibiarkan kosong.</p>
@@ -983,7 +983,7 @@ const getAggregationLabel = (method: string) => {
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5">
             <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Tahun Ajaran Sumber</label>
-            <select v-model="selectedSourceAcademicYearId" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-violet-600 dark:bg-zinc-950 dark:border-zinc-800 text-slate-900 dark:text-zinc-100">
+            <select v-model="selectedSourceAcademicYearId" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-blue-900 dark:bg-zinc-950 dark:border-zinc-800 text-slate-900 dark:text-zinc-100">
               <option value="" disabled>Pilih Tahun Ajaran</option>
               <option v-for="y in academicYears" :key="y.id" :value="y.id">{{ y.name }}</option>
             </select>
@@ -991,7 +991,7 @@ const getAggregationLabel = (method: string) => {
 
           <div class="flex flex-col gap-1.5">
             <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Semester Sumber</label>
-            <select v-model="selectedSourceSemester" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-violet-600 dark:bg-zinc-950 dark:border-zinc-800 text-slate-900 dark:text-zinc-100">
+            <select v-model="selectedSourceSemester" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-blue-900 dark:bg-zinc-950 dark:border-zinc-800 text-slate-900 dark:text-zinc-100">
               <option value="odd">Ganjil</option>
               <option value="even">Genap</option>
             </select>
@@ -1000,7 +1000,7 @@ const getAggregationLabel = (method: string) => {
 
         <div class="flex flex-col gap-1.5">
           <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Kelas Sumber</label>
-          <select v-model="selectedSourceClassId" required class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-violet-600 dark:bg-zinc-950 dark:border-zinc-800 text-slate-900 dark:text-zinc-100">
+          <select v-model="selectedSourceClassId" required class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-blue-900 dark:bg-zinc-950 dark:border-zinc-800 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>Pilih Kelas Sumber</option>
             <option v-for="c in (sourceClasses.length ? sourceClasses : classes).filter((cls: any) => cls.id !== selectedClassId)" :key="c.id" :value="c.id">{{ c.class_name }}</option>
           </select>

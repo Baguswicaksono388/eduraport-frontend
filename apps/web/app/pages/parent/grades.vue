@@ -64,12 +64,12 @@ const getScoreColor = (score: number) => {
   <div class="space-y-6 max-w-5xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-violet-600 transition">
+        <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-blue-900 dark:hover:text-blue-400 transition">
           <ArrowLeft :size="18" />
         </NuxtLink>
         <div>
           <h2 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
-            <Award class="text-violet-600" :size="24" />
+            <Award class="text-blue-900 dark:text-blue-400" :size="24" />
             Nilai, Sikap & Kedisiplinan
           </h2>
           <p class="text-xs text-slate-500">Pantau capaian akademik, ranking kelas, dan catatan perilaku anak</p>
@@ -78,7 +78,7 @@ const getScoreColor = (score: number) => {
 
       <!-- Child Selector -->
       <div v-if="myChildren.length > 1" class="w-48">
-        <select v-model="selectedChildId" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600">
+        <select v-model="selectedChildId" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-blue-700">
           <option v-for="c in myChildren" :key="c.student_id" :value="c.student_id">
             {{ c.student_name }}
           </option>
@@ -92,7 +92,7 @@ const getScoreColor = (score: number) => {
         @click="activeTab = 'akademik'"
         :class="[
           'pb-3 border-b-2 transition flex items-center gap-2',
-          activeTab === 'akademik' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+          activeTab === 'akademik' ? 'border-blue-900 text-blue-900 dark:border-blue-400 dark:text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700'
         ]"
       >
         <Trophy :size="16" /> Nilai Akademik & Ranking
@@ -101,7 +101,7 @@ const getScoreColor = (score: number) => {
         @click="activeTab = 'sikap'"
         :class="[
           'pb-3 border-b-2 transition flex items-center gap-2',
-          activeTab === 'sikap' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+          activeTab === 'sikap' ? 'border-blue-900 text-blue-900 dark:border-blue-400 dark:text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700'
         ]"
       >
         <HeartHandshake :size="16" /> Penilaian Sikap
@@ -110,7 +110,7 @@ const getScoreColor = (score: number) => {
         @click="activeTab = 'bk'"
         :class="[
           'pb-3 border-b-2 transition flex items-center gap-2',
-          activeTab === 'bk' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+          activeTab === 'bk' ? 'border-blue-900 text-blue-900 dark:border-blue-400 dark:text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700'
         ]"
       >
         <ShieldAlert :size="16" /> Poin Kedisiplinan & BK
@@ -118,14 +118,14 @@ const getScoreColor = (score: number) => {
     </div>
 
     <div v-if="loading" class="flex justify-center py-20">
-      <div class="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-10 h-10 border-4 border-blue-900 dark:border-blue-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <template v-else>
       <!-- TAB 1: AKADEMIK & RANKING -->
       <div v-if="activeTab === 'akademik'" class="space-y-6">
         <!-- Ranking Banner -->
-        <div v-if="gradesData.ranking" class="bg-gradient-to-r from-amber-500/10 via-violet-500/10 to-indigo-500/10 border border-amber-200 dark:border-amber-900/50 p-4 rounded-xl flex items-center justify-between">
+        <div v-if="gradesData.ranking" class="bg-gradient-to-r from-amber-500/10 via-blue-500/10 to-indigo-500/10 border border-amber-200 dark:border-amber-900/50 p-4 rounded-xl flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div class="p-3 bg-amber-500 text-white rounded-xl shadow-md">
               <Trophy :size="24" />
@@ -139,7 +139,7 @@ const getScoreColor = (score: number) => {
           </div>
           <div class="text-right">
             <p class="text-[10px] text-slate-500 uppercase">Rata-Rata Nilai</p>
-            <p class="text-2xl font-black text-violet-600">{{ Number(gradesData.ranking.rata_rata || 0).toFixed(1) }}</p>
+            <p class="text-2xl font-black text-blue-900">{{ Number(gradesData.ranking.rata_rata || 0).toFixed(1) }}</p>
           </div>
         </div>
 
@@ -156,7 +156,7 @@ const getScoreColor = (score: number) => {
             @click="gradeType = type.key"
             :class="[
               'px-3 py-1.5 rounded-lg font-semibold transition',
-              gradeType === type.key ? 'bg-violet-600 text-white' : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800'
+              gradeType === type.key ? 'bg-blue-900 dark:bg-blue-600 text-white shadow-sm' : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800'
             ]"
           >
             {{ type.label }}
@@ -165,7 +165,7 @@ const getScoreColor = (score: number) => {
 
         <!-- Grades Table / Cards -->
         <div v-if="gradesData.grades?.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <BaseCard v-for="(g, idx) in gradesData.grades" :key="idx" class="hover:border-violet-500 transition">
+          <BaseCard v-for="(g, idx) in gradesData.grades" :key="idx" class="hover:border-blue-600/60 transition">
             <div class="flex justify-between items-center">
               <div>
                 <h4 class="font-bold text-slate-900 dark:text-zinc-100 text-sm">{{ g.subject_name }}</h4>

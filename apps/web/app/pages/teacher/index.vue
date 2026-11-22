@@ -235,7 +235,7 @@ const getRoleLabel = (role: string) => {
     <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
-        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Yayasan</option>
           <option v-for="found in foundations" :key="found.id" :value="found.id">{{ found.name }}</option>
         </select>
@@ -243,7 +243,7 @@ const getRoleLabel = (role: string) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Unit Sekolah</option>
           <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
@@ -267,12 +267,12 @@ const getRoleLabel = (role: string) => {
           <tr v-for="t in teachers" :key="t.id" class="border-b border-slate-100 dark:border-zinc-800/80 last:border-0 hover:bg-slate-50/20 dark:hover:bg-zinc-900/20 transition-colors">
             <td class="p-4 pl-6">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-violet-50 dark:bg-zinc-850 flex items-center justify-center text-violet-600 dark:text-violet-400 font-black text-sm uppercase">
+                <div class="w-8 h-8 rounded-lg bg-blue-50/60 dark:bg-zinc-850 flex items-center justify-center text-blue-900 dark:text-blue-400 font-black text-sm uppercase">
                   {{ t.full_name[0] }}
                 </div>
                 <div>
                   <span class="font-bold text-slate-800 dark:text-zinc-200 text-sm block leading-snug">{{ t.full_name }}</span>
-                  <span v-if="t.id === currentUser?.id" class="inline-flex items-center mt-0.5 text-[8px] font-bold px-1 py-0.2 rounded bg-violet-600 text-white uppercase">Anda</span>
+                  <span v-if="t.id === currentUser?.id" class="inline-flex items-center mt-0.5 text-[8px] font-bold px-1 py-0.2 rounded bg-blue-900 text-white uppercase">Anda</span>
                 </div>
               </div>
             </td>
@@ -281,7 +281,7 @@ const getRoleLabel = (role: string) => {
             <td class="p-4">
               <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold"
                 :class="{
-                  'bg-violet-500/10 text-violet-600 border border-violet-500/20': t.role === 'principal',
+                  'bg-blue-600/10 text-blue-900 border border-blue-500/20': t.role === 'principal',
                   'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20': t.role === 'teacher',
                   'bg-amber-500/10 text-amber-600 border border-amber-500/20': t.role === 'treasurer',
                   'bg-indigo-500/10 text-indigo-600 border border-indigo-500/20': t.role === 'tu'
@@ -299,7 +299,7 @@ const getRoleLabel = (role: string) => {
             </td>
             <td class="p-4 pr-6 text-right">
               <div class="flex justify-end items-center gap-1">
-                <button @click="openEditModal(t)" class="p-2 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+                <button @click="openEditModal(t)" class="p-2 text-slate-400 hover:text-blue-900 dark:hover:text-blue-400 transition-colors">
                   <Edit2 :size="14" />
                 </button>
                 <button 
@@ -344,7 +344,7 @@ const getRoleLabel = (role: string) => {
         
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Jabatan / Peran (Role)</label>
-          <select v-model="teacherForm.role" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="teacherForm.role" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option value="teacher">Guru</option>
             <option value="principal">Kepala Sekolah</option>
             <option value="treasurer">Bendahara Sekolah</option>
@@ -353,7 +353,7 @@ const getRoleLabel = (role: string) => {
         </div>
 
         <div class="flex items-center gap-2 px-1 py-1">
-          <input type="checkbox" id="is_active_teacher_create" v-model="teacherForm.is_active" class="rounded border-slate-350 dark:border-zinc-800 text-violet-600 focus:ring-violet-600/20" />
+          <input type="checkbox" id="is_active_teacher_create" v-model="teacherForm.is_active" class="rounded border-slate-350 dark:border-zinc-800 text-blue-900 focus:ring-blue-900/20" />
           <label for="is_active_teacher_create" class="text-xs font-semibold text-slate-600 dark:text-zinc-400">Aktifkan akun pengguna ini</label>
         </div>
 
@@ -376,7 +376,7 @@ const getRoleLabel = (role: string) => {
         
         <div class="flex flex-col gap-1.5 w-full" v-if="editingTeacherId !== currentUser?.id">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Jabatan / Peran (Role)</label>
-          <select v-model="editForm.role" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="editForm.role" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option value="teacher">Guru</option>
             <option value="principal">Kepala Sekolah</option>
             <option value="treasurer">Bendahara Sekolah</option>
@@ -385,7 +385,7 @@ const getRoleLabel = (role: string) => {
         </div>
 
         <div class="flex items-center gap-2 px-1 py-1" v-if="editingTeacherId !== currentUser?.id">
-          <input type="checkbox" id="is_active_teacher_edit" v-model="editForm.is_active" class="rounded border-slate-350 dark:border-zinc-800 text-violet-600 focus:ring-violet-600/20" />
+          <input type="checkbox" id="is_active_teacher_edit" v-model="editForm.is_active" class="rounded border-slate-350 dark:border-zinc-800 text-blue-900 focus:ring-blue-900/20" />
           <label for="is_active_teacher_edit" class="text-xs font-semibold text-slate-600 dark:text-zinc-400">Akun pengguna aktif</label>
         </div>
 
@@ -400,11 +400,11 @@ const getRoleLabel = (role: string) => {
     <BaseModal :show="showImportModal" title="Import Data Guru & Staf via Excel" @close="showImportModal = false; importResult = null; importFile = null">
       <div class="space-y-5">
         <!-- Instructions -->
-        <div class="flex items-start gap-3 p-4 bg-violet-50 dark:bg-violet-950/30 rounded-lg border border-violet-100 dark:border-violet-900/50">
-          <FileSpreadsheet class="text-violet-500 shrink-0 mt-0.5" :size="18" />
-          <div class="text-xs text-violet-700 dark:text-violet-300">
+        <div class="flex items-start gap-3 p-4 bg-blue-50/60 dark:bg-blue-950/30 rounded-lg border border-blue-100 dark:border-blue-900/30">
+          <FileSpreadsheet class="text-blue-600 shrink-0 mt-0.5" :size="18" />
+          <div class="text-xs text-blue-900 dark:text-blue-300">
             <p class="font-bold mb-1">Panduan Import</p>
-            <ol class="list-decimal ml-4 space-y-0.5 text-violet-600 dark:text-violet-400">
+            <ol class="list-decimal ml-4 space-y-0.5 text-blue-900 dark:text-blue-400">
               <li>Unduh template Excel terlebih dahulu melalui tombol <strong>Unduh Template</strong>.</li>
               <li>Isi data sesuai format pada baris ke-9 dan seterusnya (baris 1–8 adalah header dan contoh).</li>
               <li>Kolom <strong>Nama Lengkap</strong> dan <strong>Email</strong> wajib diisi. Kolom <strong>Password</strong> bersifat opsional (default: 12345678).</li>
@@ -416,8 +416,8 @@ const getRoleLabel = (role: string) => {
         <!-- File picker -->
         <div class="flex flex-col gap-1.5">
           <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Pilih File Excel (.xlsx)</label>
-          <label class="flex items-center gap-3 cursor-pointer border-2 border-dashed border-slate-200 dark:border-zinc-700 rounded-lg px-4 py-5 hover:border-violet-400 dark:hover:border-violet-600 transition-colors group">
-            <Upload class="text-slate-400 group-hover:text-violet-500 transition-colors" :size="20" />
+          <label class="flex items-center gap-3 cursor-pointer border-2 border-dashed border-slate-200 dark:border-zinc-700 rounded-lg px-4 py-5 hover:border-blue-400 dark:hover:border-blue-900 transition-colors group">
+            <Upload class="text-slate-400 group-hover:text-blue-600 transition-colors" :size="20" />
             <div class="flex-1 min-w-0">
               <p v-if="importFile" class="text-sm font-semibold text-slate-800 dark:text-zinc-200 truncate">{{ importFile.name }}</p>
               <p v-else class="text-sm text-slate-400 dark:text-zinc-500">Klik untuk memilih file atau seret ke sini</p>

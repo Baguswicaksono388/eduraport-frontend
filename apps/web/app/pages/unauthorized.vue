@@ -41,7 +41,7 @@ const goBack = () => {
                 <div class="text-sm font-bold text-slate-800 dark:text-zinc-200">{{ user.name || user.email }}</div>
                 <div class="text-xs text-slate-400 dark:text-zinc-500">{{ user.email }}</div>
               </div>
-              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-400 border border-violet-100 dark:border-violet-900/30 uppercase tracking-wider">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50/60 dark:bg-blue-950/30 text-blue-900 dark:text-blue-400 border border-blue-100 dark:border-blue-950/30 uppercase tracking-wider">
                 {{ user.role }}
               </span>
             </div>

@@ -59,7 +59,7 @@ const confirm = () => {
         <button
           @click="confirm"
           :disabled="loading"
-          class="inline-flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 text-white text-xs font-bold rounded-lg shadow-sm transition-all"
+          class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-900 hover:bg-blue-800 disabled:bg-slate-300 dark:disabled:bg-zinc-750 text-white text-xs font-bold rounded-lg shadow-sm transition-all"
         >
           <Check v-if="!loading" :size="14" />
           <div v-else class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

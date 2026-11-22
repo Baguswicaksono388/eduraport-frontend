@@ -68,7 +68,7 @@ const submit = async () => {
     <div class="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-slate-200 dark:border-zinc-800 p-8">
       
       <div class="mb-8 text-center">
-        <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 mb-4">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-400 mb-4">
           <Sparkles :size="24" />
         </div>
         <h1 class="text-2xl font-bold text-slate-900 dark:text-white">EduRaport Solo</h1>
@@ -77,9 +77,9 @@ const submit = async () => {
 
       <!-- Step Indicator -->
       <div class="flex items-center justify-center gap-2 mb-8">
-        <div class="w-3 h-3 rounded-full transition-colors" :class="step >= 1 ? 'bg-violet-600' : 'bg-slate-200 dark:bg-zinc-800'"></div>
-        <div class="w-10 h-0.5" :class="step >= 2 ? 'bg-violet-600' : 'bg-slate-200 dark:bg-zinc-800'"></div>
-        <div class="w-3 h-3 rounded-full transition-colors" :class="step >= 2 ? 'bg-violet-600' : 'bg-slate-200 dark:bg-zinc-800'"></div>
+        <div class="w-3 h-3 rounded-full transition-colors" :class="step >= 1 ? 'bg-blue-900 dark:bg-blue-500' : 'bg-slate-200 dark:bg-zinc-800'"></div>
+        <div class="w-10 h-0.5" :class="step >= 2 ? 'bg-blue-900 dark:bg-blue-500' : 'bg-slate-200 dark:bg-zinc-800'"></div>
+        <div class="w-3 h-3 rounded-full transition-colors" :class="step >= 2 ? 'bg-blue-900 dark:bg-blue-500' : 'bg-slate-200 dark:bg-zinc-800'"></div>
       </div>
 
       <!-- Form Step 1: Account -->
@@ -147,7 +147,7 @@ const submit = async () => {
 
       <div class="mt-8 text-center text-sm text-slate-500">
         Sudah punya akun? 
-        <NuxtLink to="/login" class="text-violet-600 dark:text-violet-400 font-semibold hover:underline">
+        <NuxtLink to="/login" class="text-blue-900 dark:text-blue-400 font-semibold hover:underline">
           Masuk di sini
         </NuxtLink>
       </div>

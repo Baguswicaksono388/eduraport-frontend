@@ -175,7 +175,7 @@ const confirmDeleteParent = async () => {
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
         <h1 class="text-2xl font-black text-slate-900 dark:text-zinc-100 tracking-tight flex items-center gap-3">
-          <div class="p-2.5 bg-violet-600 rounded-xl text-white shadow-lg shadow-violet-600/20">
+          <div class="p-2.5 bg-blue-900 rounded-xl text-white shadow-lg shadow-sm">
             <Users :size="24" />
           </div>
           Data Orang Tua
@@ -202,7 +202,7 @@ const confirmDeleteParent = async () => {
           <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="flex flex-col gap-1.5" v-if="!isSchoolLocked">
               <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
-              <select v-model="selectedFoundationId" @change="onFoundationChange" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 dark:text-zinc-100">
+              <select v-model="selectedFoundationId" @change="onFoundationChange" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 dark:text-zinc-100">
                 <option value="">Pilih Yayasan</option>
                 <option v-for="f in foundations" :key="f.id" :value="f.id">{{ f.name }}</option>
               </select>
@@ -214,7 +214,7 @@ const confirmDeleteParent = async () => {
                 <span>Seluruh Sekolah</span>
                 <span class="text-[9px] bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Global</span>
               </div>
-              <select v-else v-model="selectedSchoolId" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 dark:text-zinc-100" :disabled="!selectedFoundationId">
+              <select v-else v-model="selectedSchoolId" class="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 dark:text-zinc-100" :disabled="!selectedFoundationId">
                 <option value="">Pilih Unit Sekolah</option>
                 <option v-for="s in schools" :key="s.id" :value="s.id">{{ s.name }} ({{ s.level }})</option>
               </select>
@@ -225,9 +225,9 @@ const confirmDeleteParent = async () => {
           <div class="md:w-72 mt-auto">
             <div class="relative group">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search class="h-4 w-4 text-slate-400 group-focus-within:text-violet-500 transition-colors" />
+                <Search class="h-4 w-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
               </div>
-              <input v-model="searchQuery" type="text" placeholder="Cari nama orang tua, siswa, atau no HP..." class="block w-full pl-10 pr-3 py-2 border border-slate-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-950 text-sm focus:outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 transition-all dark:text-zinc-300" :disabled="!selectedSchoolId" />
+              <input v-model="searchQuery" type="text" placeholder="Cari nama orang tua, siswa, atau no HP..." class="block w-full pl-10 pr-3 py-2 border border-slate-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-950 text-sm focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-900/20/10 transition-all dark:text-zinc-300" :disabled="!selectedSchoolId" />
             </div>
           </div>
         </div>
@@ -238,10 +238,10 @@ const confirmDeleteParent = async () => {
         <button 
           @click="changeTab('linked')"
           class="px-5 py-3 text-sm font-semibold transition-all relative"
-          :class="activeTab === 'linked' ? 'text-violet-600 dark:text-violet-400' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200'"
+          :class="activeTab === 'linked' ? 'text-blue-900 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200'"
         >
           Terhubung
-          <div v-if="activeTab === 'linked'" class="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-600 dark:bg-violet-400 rounded-t-full"></div>
+          <div v-if="activeTab === 'linked'" class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-900 dark:bg-blue-400 rounded-t-full"></div>
         </button>
         <button 
           @click="changeTab('unlinked')"
@@ -272,13 +272,13 @@ const confirmDeleteParent = async () => {
             >
               <td class="px-6 py-4">
                 <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-lg bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 flex items-center justify-center font-bold text-sm">
+                  <div class="w-9 h-9 rounded-lg bg-blue-50/60 dark:bg-blue-950/40 text-blue-900 dark:text-blue-400 flex items-center justify-center font-bold text-sm">
                     {{ parent.name[0] }}
                   </div>
                   <div>
                     <p class="font-bold text-sm text-slate-900 dark:text-zinc-100">{{ parent.name }}</p>
                     <div class="flex items-center gap-2 mt-0.5">
-                      <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide bg-violet-50 text-violet-700 border border-violet-100 dark:bg-violet-900/30 dark:text-violet-400 dark:border-violet-800/50">
+                      <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide bg-blue-50/60 text-blue-900 border border-blue-100 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/50">
                         {{ ['Father', 'Ayah'].includes(parent.relationship) ? 'Ayah' : ['Mother', 'Ibu'].includes(parent.relationship) ? 'Ibu' : 'Wali' }}
                       </span>
                       <span v-if="parent.user_id" class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50" title="Akun Terhubung">
@@ -306,7 +306,7 @@ const confirmDeleteParent = async () => {
               </td>
               <td class="px-6 py-4 text-right">
                 <div class="flex items-center justify-end gap-2">
-                  <button @click="handleEditParentClick(parent)" class="p-1.5 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg transition-colors" :title="parent.data_type === 'unlinked' ? 'Hubungkan Siswa' : 'Edit'">
+                  <button @click="handleEditParentClick(parent)" class="p-1.5 text-slate-400 hover:text-blue-900 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg transition-colors" :title="parent.data_type === 'unlinked' ? 'Hubungkan Siswa' : 'Edit'">
                     <Edit2 :size="14" v-if="parent.data_type !== 'unlinked'" />
                     <Link2 :size="14" v-else />
                   </button>
@@ -342,7 +342,7 @@ const confirmDeleteParent = async () => {
         
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Siswa / Anak</label>
-          <select v-model="parentForm.student_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="parentForm.student_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>— Pilih Siswa —</option>
             <option v-for="s in students" :key="s.id" :value="s.id">
               {{ s.full_name }} ({{ s.national_student_number || '-' }})
@@ -354,7 +354,7 @@ const confirmDeleteParent = async () => {
         
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Hubungan</label>
-          <select v-model="parentForm.relationship" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="parentForm.relationship" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option value="Father">Ayah</option>
             <option value="Mother">Ibu</option>
             <option value="Guardian">Wali</option>

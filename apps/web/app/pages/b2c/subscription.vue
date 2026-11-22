@@ -31,8 +31,8 @@ const plans = [
     name: 'Basic',
     price: 'Rp 29.000',
     period: '/ 1 bulan',
-    color: 'border-violet-500',
-    bg: 'bg-violet-50 dark:bg-violet-900/10',
+    color: 'border-blue-600',
+    bg: 'bg-blue-50/60 dark:bg-blue-950/10',
     features: [
       '1 Sekolah',
       '5 Rombel',
@@ -116,7 +116,7 @@ const isTrial = computed(() => subscription.value?.status === 'trial')
       </div>
       <!-- Active Plan Banner (Wait for loading to avoid flicker) -->
       <div v-if="!pending" class="px-4 py-2 bg-white dark:bg-zinc-900 rounded-lg border border-slate-200 dark:border-zinc-800 shadow-sm flex items-center gap-3">
-        <div class="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 flex items-center justify-center">
+        <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950/30 text-blue-900 flex items-center justify-center">
           <Crown :size="16" />
         </div>
         <div>
@@ -143,7 +143,7 @@ const isTrial = computed(() => subscription.value?.status === 'trial')
            class="bg-white dark:bg-zinc-900 rounded-2xl border-2 transition-all hover:-translate-y-1 hover:shadow-xl relative overflow-hidden"
            :class="(subscription?.plan_id || 'starter') === plan.id ? plan.color : 'border-slate-200 dark:border-zinc-800'">
         
-        <div v-if="(subscription?.plan_id || 'starter') === plan.id" class="absolute top-0 right-0 bg-violet-600 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-bl-lg">
+        <div v-if="(subscription?.plan_id || 'starter') === plan.id" class="absolute top-0 right-0 bg-blue-900 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-bl-lg">
           Sedang Aktif
         </div>
         
@@ -183,10 +183,10 @@ const isTrial = computed(() => subscription.value?.status === 'trial')
       @close="showUpgradeModal = false" 
       size="md"
     >
-      <div class="bg-violet-50 dark:bg-violet-900/20 border border-violet-100 dark:border-violet-800 rounded-xl p-4 mb-6">
+      <div class="bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-800 rounded-xl p-4 mb-6">
         <div class="flex justify-between items-center mb-2">
           <span class="text-sm font-semibold text-slate-600 dark:text-slate-400">Total Tagihan</span>
-          <span class="text-xl font-bold text-violet-700 dark:text-violet-400">{{ selectedPlan?.price }}</span>
+          <span class="text-xl font-bold text-blue-900 dark:text-blue-400">{{ selectedPlan?.price }}</span>
         </div>
         <p class="text-xs text-slate-500">Silakan transfer ke rekening berikut:</p>
         <div class="mt-3 p-3 bg-white dark:bg-zinc-800 rounded-lg border border-slate-200 dark:border-zinc-700 flex items-center gap-3">

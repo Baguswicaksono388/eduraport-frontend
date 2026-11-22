@@ -95,12 +95,12 @@ const resetDefaults = () => {
   <div class="space-y-6 max-w-4xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-violet-600 transition">
+        <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-blue-900 transition">
           <ArrowLeft :size="18" />
         </NuxtLink>
         <div>
           <h2 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
-            <Bell class="text-violet-600" :size="24" />
+            <Bell class="text-blue-900" :size="24" />
             Pengaturan Notifikasi & Ambang Batas
           </h2>
           <p class="text-xs text-slate-500">Pilih channel notifikasi dan tentukan batas peringatan otomatis</p>
@@ -109,21 +109,21 @@ const resetDefaults = () => {
 
       <div class="flex gap-2">
         <BaseButton variant="outline" size="sm" @click="resetDefaults">Reset Default</BaseButton>
-        <BaseButton size="sm" class="bg-violet-600 hover:bg-violet-700 text-white" :disabled="saving" @click="handleSave">
+        <BaseButton size="sm" class="bg-blue-900 hover:bg-blue-800 text-white" :disabled="saving" @click="handleSave">
           {{ saving ? 'Menyimpan...' : 'Simpan Pengaturan' }}
         </BaseButton>
       </div>
     </div>
 
     <div v-if="loading" class="flex justify-center py-20">
-      <div class="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-10 h-10 border-4 border-blue-900 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <div v-else class="space-y-6">
       <!-- Channel Preferences -->
-      <BaseCard stripe class="border-t-4 border-t-violet-600">
+      <BaseCard stripe class="border-t-4 border-t-blue-900">
         <h3 class="font-bold text-slate-900 dark:text-zinc-100 text-base mb-4 flex items-center gap-2">
-          <Sliders :size="18" class="text-violet-600" />
+          <Sliders :size="18" class="text-blue-900 dark:text-blue-400" />
           Kanal Notifikasi
         </h3>
 
@@ -138,7 +138,7 @@ const resetDefaults = () => {
                 <p class="text-slate-400 text-[10px]">Pemberitahuan absensi langsung, rekap nilai & tagihan</p>
               </div>
             </div>
-            <input type="checkbox" v-model="channels.whatsapp_enabled" class="w-5 h-5 accent-violet-600 cursor-pointer" />
+            <input type="checkbox" v-model="channels.whatsapp_enabled" class="w-5 h-5 accent-blue-900 cursor-pointer" />
           </div>
 
           <div class="flex items-center justify-between pt-4">
@@ -151,7 +151,7 @@ const resetDefaults = () => {
                 <p class="text-slate-400 text-[10px]">Pop-up instan di handphone saat ada pembaruan status</p>
               </div>
             </div>
-            <input type="checkbox" v-model="channels.push_enabled" class="w-5 h-5 accent-violet-600 cursor-pointer" />
+            <input type="checkbox" v-model="channels.push_enabled" class="w-5 h-5 accent-blue-900 cursor-pointer" />
           </div>
 
           <div class="flex items-center justify-between pt-4">
@@ -164,7 +164,7 @@ const resetDefaults = () => {
                 <p class="text-slate-400 text-[10px]">Kirim rekap rapor dan kwitansi tagihan ke email</p>
               </div>
             </div>
-            <input type="checkbox" v-model="channels.email_enabled" class="w-5 h-5 accent-violet-600 cursor-pointer" />
+            <input type="checkbox" v-model="channels.email_enabled" class="w-5 h-5 accent-blue-900 cursor-pointer" />
           </div>
         </div>
       </BaseCard>
@@ -180,7 +180,7 @@ const resetDefaults = () => {
           <div>
             <div class="flex justify-between font-bold mb-1.5">
               <span class="text-slate-700 dark:text-zinc-300">Peringatan Kehadiran Minimal</span>
-              <span class="text-violet-600">{{ t.attendance_threshold }}%</span>
+              <span class="text-blue-900 dark:text-blue-400 font-bold">{{ t.attendance_threshold }}%</span>
             </div>
             <input
               type="range"
@@ -188,7 +188,7 @@ const resetDefaults = () => {
               max="95"
               step="5"
               v-model.number="t.attendance_threshold"
-              class="w-full accent-violet-600 cursor-pointer"
+              class="w-full accent-blue-900 cursor-pointer"
             />
             <p class="text-[10px] text-slate-400 mt-1">Kirim peringatan jika kehadiran ananda turun di bawah angka ini.</p>
           </div>
@@ -197,7 +197,7 @@ const resetDefaults = () => {
           <div>
             <div class="flex justify-between font-bold mb-1.5">
               <span class="text-slate-700 dark:text-zinc-300">Peringatan Nilai Minimal</span>
-              <span class="text-violet-600">{{ t.grade_threshold }}</span>
+              <span class="text-blue-900 dark:text-blue-400 font-bold">{{ t.grade_threshold }}</span>
             </div>
             <input
               type="range"
@@ -205,7 +205,7 @@ const resetDefaults = () => {
               max="90"
               step="5"
               v-model.number="t.grade_threshold"
-              class="w-full accent-violet-600 cursor-pointer"
+              class="w-full accent-blue-900 cursor-pointer"
             />
             <p class="text-[10px] text-slate-400 mt-1">Kirim peringatan saat nilai ujian atau tugas berada di bawah standar.</p>
           </div>
@@ -214,7 +214,7 @@ const resetDefaults = () => {
           <div>
             <div class="flex justify-between font-bold mb-1.5">
               <span class="text-slate-700 dark:text-zinc-300">Peringatan Saldo Kantin Rendah</span>
-              <span class="text-violet-600">Rp {{ Number(t.wallet_balance_threshold).toLocaleString('id-ID') }}</span>
+              <span class="text-blue-900">Rp {{ Number(t.wallet_balance_threshold).toLocaleString('id-ID') }}</span>
             </div>
             <input
               type="range"
@@ -222,7 +222,7 @@ const resetDefaults = () => {
               max="50000"
               step="5000"
               v-model.number="t.wallet_balance_threshold"
-              class="w-full accent-violet-600 cursor-pointer"
+              class="w-full accent-blue-900 cursor-pointer"
             />
             <p class="text-[10px] text-slate-400 mt-1">Kirim notifikasi untuk segera isi ulang saldo dompet kantin anak.</p>
           </div>

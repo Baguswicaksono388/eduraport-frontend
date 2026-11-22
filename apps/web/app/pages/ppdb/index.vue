@@ -738,12 +738,12 @@ const copyActiveAnnouncementLink = () => {
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100 flex items-center gap-2.5">
-          <UserPlus class="text-violet-600" :size="26" /> Penerimaan Siswa Baru (PPDB)
+          <UserPlus class="text-blue-900" :size="26" /> Penerimaan Siswa Baru (PPDB)
         </h2>
         <p class="text-xs text-slate-500 dark:text-zinc-400">Kelola gelombang pendaftaran, formulir kustom, verifikasi, dan kelulusan.</p>
       </div>
       <div class="flex gap-2" v-if="activeTab === 'batches'">
-        <BaseButton variant="primary" @click="showCreateBatchModal = true" :disabled="!selectedSchoolId" class="py-2.5 px-4 text-xs font-bold shadow-lg shadow-violet-600/15">
+        <BaseButton variant="primary" @click="showCreateBatchModal = true" :disabled="!selectedSchoolId" class="py-2.5 px-4 text-xs font-bold shadow-lg shadow-sm">
           <Plus class="mr-1.5" :size="14" /> Buat Gelombang PPDB
         </BaseButton>
       </div>
@@ -753,7 +753,7 @@ const copyActiveAnnouncementLink = () => {
     <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
-        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Yayasan</option>
           <option v-for="found in foundations" :key="found.id" :value="found.id">{{ found.name }}</option>
         </select>
@@ -761,7 +761,7 @@ const copyActiveAnnouncementLink = () => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Unit Sekolah</option>
           <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
@@ -775,7 +775,7 @@ const copyActiveAnnouncementLink = () => {
         :class="[
           'px-5 py-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all duration-200 flex items-center gap-2',
           activeTab === 'batches' 
-            ? 'border-violet-600 text-violet-600 dark:text-violet-400' 
+            ? 'border-blue-900 text-blue-900 dark:text-blue-400' 
             : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-zinc-400 dark:hover:text-zinc-200'
         ]"
       >
@@ -786,7 +786,7 @@ const copyActiveAnnouncementLink = () => {
         :class="[
           'px-5 py-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all duration-200 flex items-center gap-2',
           activeTab === 'applicants' 
-            ? 'border-violet-600 text-violet-600 dark:text-violet-400' 
+            ? 'border-blue-900 text-blue-900 dark:text-blue-400' 
             : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-zinc-400 dark:hover:text-zinc-200'
         ]"
       >
@@ -797,7 +797,7 @@ const copyActiveAnnouncementLink = () => {
         :class="[
           'px-5 py-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all duration-200 flex items-center gap-2',
           activeTab === 'admissions' 
-            ? 'border-violet-600 text-violet-600 dark:text-violet-400' 
+            ? 'border-blue-900 text-blue-900 dark:text-blue-400' 
             : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-zinc-400 dark:hover:text-zinc-200'
         ]"
       >
@@ -808,7 +808,7 @@ const copyActiveAnnouncementLink = () => {
         :class="[
           'px-5 py-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all duration-200 flex items-center gap-2',
           activeTab === 'announcements' 
-            ? 'border-violet-600 text-violet-600 dark:text-violet-400' 
+            ? 'border-blue-900 text-blue-900 dark:text-blue-400' 
             : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-zinc-400 dark:hover:text-zinc-200'
         ]"
       >
@@ -819,7 +819,7 @@ const copyActiveAnnouncementLink = () => {
         :class="[
           'px-5 py-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all duration-200 flex items-center gap-2',
           activeTab === 'stats' 
-            ? 'border-violet-600 text-violet-600 dark:text-violet-400' 
+            ? 'border-blue-900 text-blue-900 dark:text-blue-400' 
             : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-zinc-400 dark:hover:text-zinc-200'
         ]"
       >
@@ -852,7 +852,7 @@ const copyActiveAnnouncementLink = () => {
               {{ batch.status === 'open' ? 'Buka' : batch.status === 'closed' ? 'Tutup' : batch.status === 'announced' ? 'Diumumkan' : 'Draft' }}
             </span>
             <div class="flex items-center gap-1">
-              <span v-if="batch.is_public" class="text-[10px] font-bold text-violet-600 dark:text-violet-400 bg-violet-600/10 px-2 py-0.5 rounded-full border border-violet-500/20">Publik</span>
+              <span v-if="batch.is_public" class="text-[10px] font-bold text-blue-900 dark:text-blue-400 bg-blue-600/10 px-2 py-0.5 rounded-full border border-blue-500/20">Publik</span>
               <span v-else class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full dark:bg-zinc-800 border dark:border-zinc-700">Internal</span>
             </div>
           </div>
@@ -889,7 +889,7 @@ const copyActiveAnnouncementLink = () => {
           <!-- Share Link Section -->
           <div v-if="['open', 'announced'].includes(batch.status) && batch.is_public" class="mb-2 bg-slate-50 dark:bg-zinc-950 p-2.5 rounded-lg border border-slate-100 dark:border-zinc-850 flex items-center justify-between gap-2">
             <div class="flex items-center gap-1.5 min-w-0">
-              <Link class="text-violet-600 shrink-0" :size="12" />
+              <Link class="text-blue-900 shrink-0" :size="12" />
               <span class="text-[10px] text-slate-500 font-mono truncate select-all">Link Pendaftaran</span>
             </div>
             <button 
@@ -906,7 +906,7 @@ const copyActiveAnnouncementLink = () => {
 
           <div v-if="batch.status === 'announced' && batch.is_public" class="mb-4 bg-slate-50 dark:bg-zinc-950 p-2.5 rounded-lg border border-slate-100 dark:border-zinc-850 flex items-center justify-between gap-2">
             <div class="flex items-center gap-1.5 min-w-0">
-              <Megaphone class="text-violet-600 shrink-0" :size="12" />
+              <Megaphone class="text-blue-900 shrink-0" :size="12" />
               <span class="text-[10px] text-slate-500 font-mono truncate select-all">Link Pengumuman</span>
             </div>
             <button 
@@ -943,13 +943,13 @@ const copyActiveAnnouncementLink = () => {
         <div class="flex flex-wrap items-center gap-4 w-full md:w-auto">
           <div class="flex items-center gap-2">
             <label class="text-xs font-bold text-slate-500 uppercase shrink-0">Gelombang:</label>
-            <select v-model="selectedBatchId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+            <select v-model="selectedBatchId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100">
               <option v-for="b in ppdbBatches" :key="b.id" :value="b.id">{{ b.name }} ({{ b.level }})</option>
             </select>
           </div>
           <div class="flex items-center gap-2">
             <label class="text-xs font-bold text-slate-500 uppercase shrink-0">Status:</label>
-            <select v-model="selectedStatusFilter" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+            <select v-model="selectedStatusFilter" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100">
               <option value="">Semua Status</option>
               <option value="pending">Menunggu Pembayaran</option>
               <option value="payment_review">Review Pembayaran</option>
@@ -967,7 +967,7 @@ const copyActiveAnnouncementLink = () => {
             v-model="applicantSearchQuery" 
             type="text" 
             placeholder="Cari nama, nomor reg, atau ortu..." 
-            class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg pl-8 pr-3 py-2 text-xs outline-none focus:border-violet-600 font-semibold"
+            class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg pl-8 pr-3 py-2 text-xs outline-none focus:border-blue-900 font-semibold"
           />
           <Search class="absolute left-2.5 top-2.5 text-slate-400" :size="12" />
         </div>
@@ -975,7 +975,7 @@ const copyActiveAnnouncementLink = () => {
  
       <!-- Loading State -->
       <div v-if="applicantsLoading" class="text-center py-20 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl">
-        <div class="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+        <div class="w-8 h-8 border-4 border-blue-900 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
         <p class="text-xs text-slate-400 font-medium">Memuat data pendaftar...</p>
       </div>
  
@@ -1002,7 +1002,7 @@ const copyActiveAnnouncementLink = () => {
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-zinc-850">
               <tr v-for="app in paginatedApplicants" :key="app.id" class="hover:bg-slate-50/50 dark:hover:bg-zinc-950/40 transition-colors">
-                <td class="px-5 py-3.5 font-bold text-violet-600 dark:text-violet-400 font-mono tracking-wider">{{ app.registration_number }}</td>
+                <td class="px-5 py-3.5 font-bold text-blue-900 dark:text-blue-400 font-mono tracking-wider">{{ app.registration_number }}</td>
                 <td class="px-5 py-3.5 font-bold text-slate-800 dark:text-zinc-250">{{ app.full_name }}</td>
                 <td class="px-5 py-3.5">
                   <div class="font-medium text-slate-700 dark:text-zinc-350">{{ app.parent_name }}</div>
@@ -1037,7 +1037,7 @@ const copyActiveAnnouncementLink = () => {
                   <button 
                     type="button"
                     @click="openApplicantDetail(app)" 
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 hover:bg-violet-100 dark:bg-violet-950/30 dark:hover:bg-violet-950/60 text-violet-700 dark:text-violet-300 font-extrabold text-[10px] rounded-lg tracking-wider uppercase transition-all duration-200 active:scale-95 group shadow-sm border border-violet-100 dark:border-violet-900/30 outline-none"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50/60 hover:bg-blue-50 dark:bg-blue-950/30 dark:hover:bg-blue-950/60 text-blue-900 dark:text-blue-300 font-extrabold text-[10px] rounded-lg tracking-wider uppercase transition-all duration-200 active:scale-95 group shadow-sm border border-blue-100 dark:border-blue-950/30 outline-none"
                   >
                     <span>Kelola</span>
                     <ChevronRight :size="10" class="group-hover:translate-x-0.5 transition-transform" />
@@ -1067,7 +1067,7 @@ const copyActiveAnnouncementLink = () => {
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
         <div class="lg:col-span-1 flex flex-col gap-1.5 justify-center">
           <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Pilih Gelombang PPDB</label>
-          <select v-model="selectedBatchId" class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2.5 text-xs font-semibold outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+          <select v-model="selectedBatchId" class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2.5 text-xs font-semibold outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100">
             <option v-for="b in ppdbBatches" :key="b.id" :value="b.id">{{ b.name }} ({{ b.level }})</option>
           </select>
         </div>
@@ -1091,7 +1091,7 @@ const copyActiveAnnouncementLink = () => {
       </div>
 
       <!-- Bulk Actions Bar (only when checking boxes) -->
-      <div v-if="selectedApplicantIds.length > 0" class="bg-violet-600 text-white px-5 py-3.5 rounded-xl shadow-lg flex items-center justify-between gap-4 animate-in slide-in-from-top-3 duration-300">
+      <div v-if="selectedApplicantIds.length > 0" class="bg-blue-900 text-white px-5 py-3.5 rounded-xl shadow-lg flex items-center justify-between gap-4 animate-in slide-in-from-top-3 duration-300">
         <span class="text-xs font-bold">{{ selectedApplicantIds.length }} pendaftar dipilih</span>
         <div class="flex gap-2">
           <BaseButton type="button" variant="outline" @click="handleBulkStatusChange('accepted')" class="bg-emerald-600 hover:bg-emerald-700 border-none text-white py-1.5 px-3 text-[10px] font-bold shadow-sm">
@@ -1103,13 +1103,13 @@ const copyActiveAnnouncementLink = () => {
           <BaseButton type="button" variant="outline" @click="handleBulkStatusChange('rejected')" class="bg-rose-600 hover:bg-rose-700 border-none text-white py-1.5 px-3 text-[10px] font-bold shadow-sm">
             Tolak
           </BaseButton>
-          <button type="button" @click="selectedApplicantIds = []" class="text-xs font-bold text-violet-200 hover:text-white px-2">Batal</button>
+          <button type="button" @click="selectedApplicantIds = []" class="text-xs font-bold text-blue-200 hover:text-white px-2">Batal</button>
         </div>
       </div>
 
       <!-- Loading State -->
       <div v-if="applicantsLoading" class="text-center py-20 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm">
-        <div class="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+        <div class="w-8 h-8 border-4 border-blue-900 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
         <p class="text-xs text-slate-400 font-medium">Memuat data...</p>
       </div>
 
@@ -1129,7 +1129,7 @@ const copyActiveAnnouncementLink = () => {
                   type="checkbox" 
                   :checked="selectedApplicantIds.length === applicants.filter(a => a.status === 'reviewing').length"
                   @change="toggleSelectAllApplicants"
-                  class="rounded text-violet-600"
+                  class="rounded text-blue-900"
                 />
               </th>
               <th class="px-5 py-4">No. Registrasi</th>
@@ -1145,10 +1145,10 @@ const copyActiveAnnouncementLink = () => {
                   type="checkbox" 
                   :value="app.id" 
                   v-model="selectedApplicantIds" 
-                  class="rounded text-violet-600"
+                  class="rounded text-blue-900"
                 />
               </td>
-              <td class="px-5 py-3.5 font-bold text-violet-600 dark:text-violet-400 font-mono tracking-wider">{{ app.registration_number }}</td>
+              <td class="px-5 py-3.5 font-bold text-blue-900 dark:text-blue-400 font-mono tracking-wider">{{ app.registration_number }}</td>
               <td class="px-5 py-3.5 font-bold text-slate-800 dark:text-zinc-250">{{ app.full_name }}</td>
               <td class="px-5 py-3.5">
                 <div class="font-medium text-slate-700 dark:text-zinc-355">{{ app.parent_name }}</div>
@@ -1173,17 +1173,17 @@ const copyActiveAnnouncementLink = () => {
       <div class="flex justify-between items-center bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-4 shadow-sm">
         <div class="flex items-center gap-3">
           <label class="text-xs font-bold text-slate-500 uppercase shrink-0">Gelombang:</label>
-          <select v-model="selectedBatchId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+          <select v-model="selectedBatchId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100">
             <option v-for="b in ppdbBatches" :key="b.id" :value="b.id">{{ b.name }} ({{ b.level }})</option>
           </select>
         </div>
-        <BaseButton variant="primary" @click="openCreateAnnouncement" class="py-2 px-4 text-xs font-bold shadow-lg shadow-violet-600/10">
+        <BaseButton variant="primary" @click="openCreateAnnouncement" class="py-2 px-4 text-xs font-bold shadow-lg shadow-sm">
           + Buat Pengumuman Baru
         </BaseButton>
       </div>
 
       <div v-if="announcementsLoading" class="text-center py-20 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl">
-        <div class="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+        <div class="w-8 h-8 border-4 border-blue-900 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
         <p class="text-xs text-slate-400 font-medium">Memuat data pengumuman...</p>
       </div>
 
@@ -1210,7 +1210,7 @@ const copyActiveAnnouncementLink = () => {
           <!-- Share Link Section in Tab 4 -->
           <div v-if="ann.status === 'published'" class="bg-slate-50 dark:bg-zinc-950 p-2.5 rounded-xl border border-slate-100 dark:border-zinc-850/50 flex items-center justify-between gap-2 text-xs">
             <div class="flex items-center gap-1.5 min-w-0">
-              <Megaphone class="text-violet-600 shrink-0" :size="12" />
+              <Megaphone class="text-blue-900 shrink-0" :size="12" />
               <span class="text-[10px] text-slate-500 font-mono truncate select-all">Link Pengumuman Publik</span>
             </div>
             <button 
@@ -1227,14 +1227,14 @@ const copyActiveAnnouncementLink = () => {
 
           <div class="flex items-center justify-between text-[10px] text-slate-400 pt-2">
             <div>
-              <span v-if="ann.show_accepted_list" class="bg-violet-600/10 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded font-bold mr-2">✓ Menampilkan Daftar Lulus</span>
+              <span v-if="ann.show_accepted_list" class="bg-blue-600/10 text-blue-900 dark:text-blue-400 px-2 py-0.5 rounded font-bold mr-2">✓ Menampilkan Daftar Lulus</span>
               <span v-if="ann.published_at">Diterbitkan pada: {{ new Date(ann.published_at).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}) }}</span>
             </div>
             <div class="flex items-center gap-2">
               <button 
                 type="button" 
                 @click="openEditAnnouncement(ann)" 
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 hover:bg-violet-100 dark:bg-violet-950/30 dark:hover:bg-violet-950/60 text-violet-700 dark:text-violet-300 font-extrabold text-[10px] rounded-lg tracking-wider uppercase transition-all duration-200 active:scale-95 border border-violet-100 dark:border-violet-900/30 outline-none"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50/60 hover:bg-blue-50 dark:bg-blue-950/30 dark:hover:bg-blue-950/60 text-blue-900 dark:text-blue-300 font-extrabold text-[10px] rounded-lg tracking-wider uppercase transition-all duration-200 active:scale-95 border border-blue-100 dark:border-blue-950/30 outline-none"
               >
                 <Edit2 :size="10" />
                 <span>Ubah</span>
@@ -1258,14 +1258,14 @@ const copyActiveAnnouncementLink = () => {
       <!-- Selector Batch -->
       <div class="flex items-center gap-3 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-4 shadow-sm">
         <label class="text-xs font-bold text-slate-500 uppercase shrink-0">Gelombang:</label>
-        <select v-model="selectedBatchId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedBatchId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option v-for="b in ppdbBatches" :key="b.id" :value="b.id">{{ b.name }} ({{ b.level }})</option>
         </select>
       </div>
 
       <!-- Loading State -->
       <div v-if="statsLoading || !statsData" class="text-center py-20 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm">
-        <div class="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+        <div class="w-8 h-8 border-4 border-blue-900 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
         <p class="text-xs text-slate-400 font-medium">Memuat statistik gelombang...</p>
       </div>
 
@@ -1314,7 +1314,7 @@ const copyActiveAnnouncementLink = () => {
           <!-- Funnel Bar Chart Card -->
           <div class="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-slate-200/60 dark:border-zinc-800/80 shadow-sm space-y-5 lg:col-span-1 text-left">
             <h3 class="text-xs font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-widest border-b pb-2 flex items-center gap-1.5">
-              <TrendingUp :size="14" class="text-violet-600" />
+              <TrendingUp :size="14" class="text-blue-900" />
               <span>Funnel Pendaftaran</span>
             </h3>
             
@@ -1326,7 +1326,7 @@ const copyActiveAnnouncementLink = () => {
                   <span class="font-bold">{{ Object.values(statsData.status_counts).reduce((a, b) => a + b, 0) }}</span>
                 </div>
                 <div class="w-full bg-slate-100 dark:bg-zinc-950 h-2.5 rounded-full overflow-hidden">
-                  <div class="bg-violet-600 h-full w-full"></div>
+                  <div class="bg-blue-900 h-full w-full"></div>
                 </div>
               </div>
 
@@ -1392,7 +1392,7 @@ const copyActiveAnnouncementLink = () => {
           <div class="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-slate-200/60 dark:border-zinc-800/80 shadow-sm space-y-4 lg:col-span-2 text-left">
             <div class="flex items-center justify-between border-b pb-2">
               <h3 class="text-xs font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-widest flex items-center gap-1.5">
-                <Clipboard :size="14" class="text-violet-600" />
+                <Clipboard :size="14" class="text-blue-900" />
                 <span>Pendaftar Menunggu Konversi</span>
               </h3>
               
@@ -1402,7 +1402,7 @@ const copyActiveAnnouncementLink = () => {
                 variant="primary" 
                 @click="selectedApplicantIds = applicants.filter(a => a.status === 'accepted' && !a.is_converted).map(a => a.id); handleBulkConvert()"
                 :disabled="bulkConverting"
-                class="py-1 px-3 text-[10px] font-bold shadow-sm shadow-violet-500/10 flex items-center gap-1"
+                class="py-1 px-3 text-[10px] font-bold shadow-sm shadow-sm flex items-center gap-1"
               >
                 <span>Konversi Massal Semua ({{ applicants.filter(a => a.status === 'accepted' && !a.is_converted).length }})</span>
               </BaseButton>
@@ -1433,7 +1433,7 @@ const copyActiveAnnouncementLink = () => {
                     :key="app.id" 
                     class="hover:bg-slate-50/50 dark:hover:bg-zinc-950/40 transition-colors"
                   >
-                    <td class="px-3 py-3 font-bold text-violet-600 dark:text-violet-400 font-mono tracking-wider">{{ app.registration_number }}</td>
+                    <td class="px-3 py-3 font-bold text-blue-900 dark:text-blue-400 font-mono tracking-wider">{{ app.registration_number }}</td>
                     <td class="px-3 py-3 font-bold text-slate-800 dark:text-zinc-250">{{ app.full_name }}</td>
                     <td class="px-3 py-3">{{ app.parent_name }}</td>
                     <td class="px-3 py-3 text-right">
@@ -1463,12 +1463,12 @@ const copyActiveAnnouncementLink = () => {
         
         <div class="flex flex-col gap-1.5 text-left">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Isi Detail Pengumuman</label>
-          <textarea v-model="announcementForm.content" rows="6" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600" placeholder="Tulis rincian pengumuman kelulusan, jadwal pendaftaran ulang, berkas yang harus disiapkan, dll..." required></textarea>
+          <textarea v-model="announcementForm.content" rows="6" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900" placeholder="Tulis rincian pengumuman kelulusan, jadwal pendaftaran ulang, berkas yang harus disiapkan, dll..." required></textarea>
         </div>
 
         <div class="flex flex-col gap-3 bg-slate-50 dark:bg-zinc-900/60 p-4 rounded-xl text-left">
           <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-zinc-300 select-none cursor-pointer">
-            <input type="checkbox" v-model="announcementForm.show_accepted_list" class="rounded border-slate-300 text-violet-600 focus:ring-violet-600" />
+            <input type="checkbox" v-model="announcementForm.show_accepted_list" class="rounded border-slate-300 text-blue-900 focus:ring-blue-900/20" />
             <span>Tampilkan Daftar Nama Calon Siswa yang Diterima (Lulus)</span>
           </label>
           
@@ -1495,7 +1495,7 @@ const copyActiveAnnouncementLink = () => {
     <!-- Applicant Detail Modal -->
     <BaseModal :show="showApplicantDetailModal" title="Detail Data Pendaftar" width="large" @close="showApplicantDetailModal = false">
       <div v-if="!selectedApplicant" class="text-center py-20">
-        <div class="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+        <div class="w-8 h-8 border-4 border-blue-900 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
         <p class="text-xs text-slate-400 font-medium">Memuat rincian pendaftar...</p>
       </div>
 
@@ -1505,7 +1505,7 @@ const copyActiveAnnouncementLink = () => {
         <div class="bg-slate-50 dark:bg-zinc-950 p-4 rounded-xl border border-slate-200/50 dark:border-zinc-850 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h3 class="text-sm font-bold text-slate-900 dark:text-zinc-100">{{ selectedApplicant.full_name }}</h3>
-            <p class="text-[10px] font-mono text-violet-600 dark:text-violet-400 font-bold uppercase tracking-wider mt-0.5">{{ selectedApplicant.registration_number }}</p>
+            <p class="text-[10px] font-mono text-blue-900 dark:text-blue-400 font-bold uppercase tracking-wider mt-0.5">{{ selectedApplicant.registration_number }}</p>
           </div>
           <span :class="[
             'px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider',
@@ -1560,13 +1560,13 @@ const copyActiveAnnouncementLink = () => {
                 <div class="flex justify-between"><span class="text-slate-400">Pengirim BCA / Bank Asal:</span> <strong>{{ selectedApplicant.payment_proof.bank_name }} - {{ selectedApplicant.payment_proof.transfer_from_name }}</strong></div>
                 <div class="flex justify-between"><span class="text-slate-400">Jumlah di-Klaim:</span> <strong>{{ new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(selectedApplicant.payment_proof.amount_claimed) }}</strong></div>
                 <div class="flex justify-between"><span class="text-slate-400">Tanggal Transfer:</span> <strong>{{ selectedApplicant.payment_proof.transfer_date }}</strong></div>
-                <div class="flex justify-between"><span class="text-slate-400">Status Pembayaran:</span> <strong class="uppercase text-violet-600">{{ selectedApplicant.payment_proof.status }}</strong></div>
+                <div class="flex justify-between"><span class="text-slate-400">Status Pembayaran:</span> <strong class="uppercase text-blue-900">{{ selectedApplicant.payment_proof.status }}</strong></div>
                 <div class="flex justify-between items-center py-0.5">
                   <span class="text-slate-400">File Bukti:</span>
                   <a 
                     href="#"
                     @click.prevent="viewFullImage(selectedApplicant.payment_proof.file_url)" 
-                    class="font-bold text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1"
+                    class="font-bold text-blue-900 dark:text-blue-400 hover:underline flex items-center gap-1"
                   >
                     {{ selectedApplicant.payment_proof.file_name || 'bukti_transfer.png' }}
                   </a>
@@ -1581,12 +1581,12 @@ const copyActiveAnnouncementLink = () => {
                 title="Klik untuk melihat ukuran penuh"
               >
                 <img :src="selectedApplicant.payment_proof.file_url" class="max-h-28 object-contain rounded" alt="Bukti Transfer" />
-                <span class="text-[9px] text-slate-400 group-hover:text-violet-600 dark:group-hover:text-violet-400 mt-1">*Klik untuk memperbesar</span>
+                <span class="text-[9px] text-slate-400 group-hover:text-blue-900 dark:group-hover:text-blue-400 mt-1">*Klik untuk memperbesar</span>
               </a>
             </div>
 
             <!-- Verification Action Box (only visible when status is pending / payment_review) -->
-            <div v-if="selectedApplicant.payment_proof.status === 'pending' || selectedApplicant.status === 'payment_review'" class="bg-violet-600/5 p-4 rounded-xl border border-violet-500/10 space-y-3">
+            <div v-if="selectedApplicant.payment_proof.status === 'pending' || selectedApplicant.status === 'payment_review'" class="bg-blue-600/5 p-4 rounded-xl border border-blue-500/10 space-y-3">
               <span class="text-xs font-bold text-slate-700 dark:text-zinc-300">Tentukan Kelayakan Bukti Pembayaran:</span>
               <div class="flex flex-col gap-3">
                 <div class="flex gap-2">
@@ -1627,7 +1627,7 @@ const copyActiveAnnouncementLink = () => {
             >
               <div class="flex items-start justify-between gap-3">
                 <div class="flex gap-2.5">
-                  <div class="p-2 bg-violet-600/10 text-violet-600 dark:text-violet-400 rounded-lg shrink-0 h-max">
+                  <div class="p-2 bg-blue-600/10 text-blue-900 dark:text-blue-400 rounded-lg shrink-0 h-max">
                     <FileText :size="16" />
                   </div>
                   <div>
@@ -1651,7 +1651,7 @@ const copyActiveAnnouncementLink = () => {
                 <a 
                   href="#" 
                   @click.prevent="viewFullImage(doc.file_url)" 
-                  class="inline-flex items-center gap-1.5 text-xs text-violet-600 dark:text-violet-400 font-extrabold hover:underline"
+                  class="inline-flex items-center gap-1.5 text-xs text-blue-900 dark:text-blue-400 font-extrabold hover:underline"
                 >
                   <FileText :size="12" />
                   <span>Lihat Lampiran Berkas</span>
@@ -1698,7 +1698,7 @@ const copyActiveAnnouncementLink = () => {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="flex flex-col gap-1.5">
               <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pilih Status Baru</label>
-              <select v-model="statusUpdateVal" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+              <select v-model="statusUpdateVal" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded px-3 py-2 text-xs font-semibold outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100">
                 <option value="pending">Menunggu Pembayaran (Pending)</option>
                 <option value="payment_review">Review Pembayaran</option>
                 <option value="reviewing">Berkas / Seleksi Direview (Reviewing)</option>
@@ -1721,7 +1721,7 @@ const copyActiveAnnouncementLink = () => {
           </div>
 
           <div class="flex justify-end pt-2">
-            <BaseButton type="button" @click="handleSaveStatusUpdate(selectedApplicant.id)" class="py-2 px-6 text-xs font-bold bg-violet-600 text-white shadow-lg">
+            <BaseButton type="button" @click="handleSaveStatusUpdate(selectedApplicant.id)" class="py-2 px-6 text-xs font-bold bg-blue-900 text-white shadow-lg">
               Simpan Update Status
             </BaseButton>
           </div>
@@ -1801,12 +1801,12 @@ const copyActiveAnnouncementLink = () => {
 
         <div class="flex flex-col gap-1.5">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Informasi / Deskripsi Singkat</label>
-          <textarea v-model="batchForm.description" rows="3" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600" placeholder="Info gelombang pendaftaran, persyaratan berkas, atau petunjuk pembayaran..."></textarea>
+          <textarea v-model="batchForm.description" rows="3" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900" placeholder="Info gelombang pendaftaran, persyaratan berkas, atau petunjuk pembayaran..."></textarea>
         </div>
 
         <div class="flex items-center gap-4 bg-slate-50 dark:bg-zinc-900/60 p-4 rounded-xl">
           <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-zinc-300 select-none cursor-pointer">
-            <input type="checkbox" v-model="batchForm.is_public" class="rounded border-slate-300 text-violet-600 focus:ring-violet-600" />
+            <input type="checkbox" v-model="batchForm.is_public" class="rounded border-slate-300 text-blue-900 focus:ring-blue-900/20" />
             <span>Aktifkan Formulir Pendaftaran Publik</span>
           </label>
         </div>
@@ -1863,7 +1863,7 @@ const copyActiveAnnouncementLink = () => {
 
         <div class="flex flex-col gap-1.5">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Informasi / Deskripsi Singkat</label>
-          <textarea v-model="editBatchForm.description" rows="3" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600"></textarea>
+          <textarea v-model="editBatchForm.description" rows="3" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900"></textarea>
         </div>
 
         <div class="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-zinc-900/60 p-4 rounded-xl">
@@ -1878,7 +1878,7 @@ const copyActiveAnnouncementLink = () => {
           </div>
           <div class="flex items-center pt-5">
             <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-zinc-300 select-none cursor-pointer">
-              <input type="checkbox" v-model="editBatchForm.is_public" class="rounded border-slate-300 text-violet-600 focus:ring-violet-600" />
+              <input type="checkbox" v-model="editBatchForm.is_public" class="rounded border-slate-300 text-blue-900 focus:ring-blue-900/20" />
               <span>Publik (Dapat diakses)</span>
             </label>
           </div>
@@ -1912,15 +1912,15 @@ const copyActiveAnnouncementLink = () => {
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800/80 p-3 rounded-lg flex items-center justify-between text-xs shadow-sm">
               <span class="font-bold text-slate-700 dark:text-zinc-300">Nama Lengkap Siswa</span>
-              <span class="text-[9px] font-bold text-violet-600 bg-violet-600/10 px-2 py-0.5 rounded-full">Text (Wajib)</span>
+              <span class="text-[9px] font-bold text-blue-900 bg-blue-600/10 px-2 py-0.5 rounded-full">Text (Wajib)</span>
             </div>
             <div class="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800/80 p-3 rounded-lg flex items-center justify-between text-xs shadow-sm">
               <span class="font-bold text-slate-700 dark:text-zinc-300">Nama Orang Tua/Wali</span>
-              <span class="text-[9px] font-bold text-violet-600 bg-violet-600/10 px-2 py-0.5 rounded-full">Text (Wajib)</span>
+              <span class="text-[9px] font-bold text-blue-900 bg-blue-600/10 px-2 py-0.5 rounded-full">Text (Wajib)</span>
             </div>
             <div class="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800/80 p-3 rounded-lg flex items-center justify-between text-xs shadow-sm">
               <span class="font-bold text-slate-700 dark:text-zinc-300">Nomor WA Orang Tua</span>
-              <span class="text-[9px] font-bold text-violet-600 bg-violet-600/10 px-2 py-0.5 rounded-full">Text/Phone (Wajib)</span>
+              <span class="text-[9px] font-bold text-blue-900 bg-blue-600/10 px-2 py-0.5 rounded-full">Text/Phone (Wajib)</span>
             </div>
           </div>
         </div>
@@ -1936,12 +1936,12 @@ const copyActiveAnnouncementLink = () => {
             <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
               <div class="md:col-span-3 flex flex-col gap-1">
                 <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Key Field (Unik, huruf kecil & _)</label>
-                <input v-model="field.field_key" type="text" class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600" placeholder="e.g. asal_sekolah" required />
+                <input v-model="field.field_key" type="text" class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-blue-900" placeholder="e.g. asal_sekolah" required />
               </div>
               
               <div class="md:col-span-4 flex flex-col gap-1">
                 <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Pertanyaan / Label Form</label>
-                <input v-model="field.label" type="text" class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600" placeholder="e.g. Asal Sekolah Calon Siswa" required />
+                <input v-model="field.label" type="text" class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-blue-900" placeholder="e.g. Asal Sekolah Calon Siswa" required />
               </div>
 
               <div class="md:col-span-4 flex flex-col gap-1">
@@ -1979,7 +1979,7 @@ const copyActiveAnnouncementLink = () => {
               </div>
               <div class="md:col-span-2 flex items-center pb-2.5">
                 <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-zinc-400 select-none cursor-pointer">
-                  <input type="checkbox" v-model="field.is_required" class="rounded border-slate-350 text-violet-600" />
+                  <input type="checkbox" v-model="field.is_required" class="rounded border-slate-350 text-blue-900" />
                   <span>Wajib diisi</span>
                 </label>
               </div>
@@ -2014,7 +2014,7 @@ const copyActiveAnnouncementLink = () => {
 
         <!-- Add Field Control -->
         <div class="flex justify-start">
-          <BaseButton type="button" variant="outline" @click="addCustomField" class="py-2.5 px-4 text-xs font-bold border-violet-600/30 text-violet-600 hover:bg-violet-600/5">
+          <BaseButton type="button" variant="outline" @click="addCustomField" class="py-2.5 px-4 text-xs font-bold border-blue-900/30 text-blue-900 hover:bg-blue-600/5">
             + Tambah Pertanyaan Kustom
           </BaseButton>
         </div>

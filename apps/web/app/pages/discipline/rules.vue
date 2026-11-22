@@ -176,7 +176,7 @@ const handleDeleteRule = async (id: string) => {
               </td>
               <td class="px-6 py-4 text-right">
                 <div class="flex items-center justify-end gap-2">
-                  <button @click="openEditModal(rule)" class="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors" title="Edit">
+                  <button @click="openEditModal(rule)" class="p-2 text-slate-400 hover:text-blue-900 hover:bg-blue-50/60 dark:hover:bg-blue-950/20 rounded-lg transition-colors" title="Edit">
                     <Edit2 :size="16" />
                   </button>
                   <button @click="handleDeleteRule(rule.id)" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors" title="Hapus">
@@ -210,7 +210,7 @@ const handleDeleteRule = async (id: string) => {
         
         <div class="space-y-1.5">
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">Tipe Aturan</label>
-          <select v-model="ruleForm.category" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="ruleForm.category" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option value="violation">Pelanggaran (Poin Negatif)</option>
             <option value="achievement">Prestasi (Poin Positif)</option>
           </select>
@@ -218,7 +218,7 @@ const handleDeleteRule = async (id: string) => {
 
         <div class="space-y-1.5">
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">Deskripsi Aturan</label>
-          <textarea v-model="ruleForm.name" rows="3" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10"></textarea>
+          <textarea v-model="ruleForm.name" rows="3" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10"></textarea>
         </div>
 
         <div class="space-y-1.5">
@@ -246,7 +246,7 @@ const handleDeleteRule = async (id: string) => {
         
         <div class="space-y-1.5">
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">Tipe Aturan</label>
-          <select v-model="ruleForm.category" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="ruleForm.category" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option value="violation">Pelanggaran (Poin Negatif)</option>
             <option value="achievement">Prestasi (Poin Positif)</option>
           </select>
@@ -254,7 +254,7 @@ const handleDeleteRule = async (id: string) => {
 
         <div class="space-y-1.5">
           <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">Deskripsi Aturan</label>
-          <textarea v-model="ruleForm.name" rows="3" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10"></textarea>
+          <textarea v-model="ruleForm.name" rows="3" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10"></textarea>
         </div>
 
         <div class="space-y-1.5">

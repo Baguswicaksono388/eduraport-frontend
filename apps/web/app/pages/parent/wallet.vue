@@ -103,12 +103,12 @@ const handleSaveLimits = async () => {
   <div class="space-y-6 max-w-4xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-violet-600 transition">
+        <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-blue-900 transition">
           <ArrowLeft :size="18" />
         </NuxtLink>
         <div>
           <h2 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
-            <Wallet class="text-violet-600" :size="24" />
+            <Wallet class="text-blue-900" :size="24" />
             Dompet Digital & Kantin Cashless
           </h2>
           <p class="text-xs text-slate-500">Kelola saldo kartu jajan kantin sekolah dan atur batas pengeluaran</p>
@@ -116,7 +116,7 @@ const handleSaveLimits = async () => {
       </div>
 
       <div v-if="myChildren.length > 1" class="w-44">
-        <select v-model="selectedChildId" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600">
+        <select v-model="selectedChildId" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-blue-900">
           <option v-for="c in myChildren" :key="c.student_id" :value="c.student_id">
             {{ c.student_name }}
           </option>
@@ -125,25 +125,25 @@ const handleSaveLimits = async () => {
     </div>
 
     <div v-if="loading" class="flex justify-center py-20">
-      <div class="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-10 h-10 border-4 border-blue-900 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <template v-else>
       <!-- Saldo Card -->
-      <div class="bg-gradient-to-r from-violet-600 to-indigo-700 text-white p-6 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white p-6 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <span class="text-[10px] font-bold uppercase tracking-widest text-violet-200">Saldo Kartu Kantin &bull; {{ activeChild?.student_name }}</span>
+          <span class="text-[10px] font-bold uppercase tracking-widest text-blue-200">Saldo Kartu Kantin &bull; {{ activeChild?.student_name }}</span>
           <h3 class="text-3xl md:text-4xl font-black mt-1">
             Rp {{ Number(walletData?.balance || 0).toLocaleString('id-ID') }}
           </h3>
-          <p class="text-xs text-violet-200 mt-2">
+          <p class="text-xs text-blue-200 mt-2">
             Pengeluaran hari ini: Rp {{ Number(walletData?.today_spending || 0).toLocaleString('id-ID') }}
             {{ walletData?.limits?.daily_limit ? `(Limit harian: Rp ${Number(walletData.limits.daily_limit).toLocaleString('id-ID')})` : '' }}
           </p>
         </div>
 
         <div class="flex gap-2 w-full md:w-auto">
-          <BaseButton size="sm" class="bg-white text-violet-700 hover:bg-slate-100 font-bold text-xs flex items-center gap-1.5" @click="isTopupModal = true">
+          <BaseButton size="sm" class="bg-white text-blue-900 hover:bg-slate-100 font-bold text-xs flex items-center gap-1.5" @click="isTopupModal = true">
             <Plus :size="16" /> Top Up Saldo
           </BaseButton>
           <BaseButton size="sm" variant="outline" class="border-white/30 text-white hover:bg-white/10 font-bold text-xs flex items-center gap-1.5" @click="isLimitsModal = true">
@@ -204,7 +204,7 @@ const handleSaveLimits = async () => {
               @click="topupAmount = amt"
               :class="[
                 'p-2.5 rounded-xl border font-bold text-center transition',
-                topupAmount === amt ? 'bg-violet-600 text-white border-violet-600' : 'bg-slate-50 dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300'
+                topupAmount === amt ? 'bg-blue-900 dark:bg-blue-600 text-white border-blue-900 dark:border-blue-600 shadow-sm' : 'bg-slate-50 dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300'
               ]"
             >
               Rp {{ amt.toLocaleString('id-ID') }}
@@ -223,7 +223,7 @@ const handleSaveLimits = async () => {
 
         <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-zinc-800">
           <BaseButton variant="outline" size="sm" @click="isTopupModal = false">Batal</BaseButton>
-          <BaseButton size="sm" class="bg-violet-600 hover:bg-violet-700 text-white" :disabled="processing" @click="handleTopup">
+          <BaseButton variant="primary" size="sm" :disabled="processing" @click="handleTopup">
             {{ processing ? 'Memproses...' : 'Lanjut Pembayaran' }}
           </BaseButton>
         </div>
@@ -246,7 +246,7 @@ const handleSaveLimits = async () => {
 
         <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-zinc-800">
           <BaseButton variant="outline" size="sm" @click="isLimitsModal = false">Batal</BaseButton>
-          <BaseButton size="sm" class="bg-violet-600 hover:bg-violet-700 text-white" :disabled="processing" @click="handleSaveLimits">
+          <BaseButton size="sm" class="bg-blue-900 hover:bg-blue-800 text-white" :disabled="processing" @click="handleSaveLimits">
             Simpan Limit
           </BaseButton>
         </div>

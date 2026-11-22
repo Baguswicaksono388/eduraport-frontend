@@ -4,12 +4,12 @@
     <header class="p-3 sm:p-4 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center shadow-lg z-20 gap-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-500 flex items-center justify-center shadow-md shadow-violet-500/20 font-black text-white text-lg">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center shadow-md shadow-sm font-black text-white text-lg">
             ⚡
           </div>
           <div>
             <h1 class="text-base sm:text-lg font-black tracking-tight flex items-center gap-2">
-              EduScanner <span class="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">Gerbang Hybrid</span>
+              EduScanner <span class="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-blue-600/15 text-blue-300 border border-blue-500/30">Gerbang Hybrid</span>
             </h1>
             <p class="text-[11px] text-slate-400 font-medium">
               {{ moodMode === 'gate' ? 'Presensi Real-time & Mood Siswa · QR & RFID' : 'Presensi Real-time · QR & RFID' }}
@@ -33,7 +33,7 @@
       
       <div class="flex flex-wrap sm:flex-nowrap justify-between sm:justify-end items-center gap-2.5">
         <!-- School Selector -->
-        <select v-if="!isSchoolLocked" v-model="currentSchoolId" class="bg-slate-800 text-slate-200 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-violet-500">
+        <select v-if="!isSchoolLocked" v-model="currentSchoolId" class="bg-slate-800 text-slate-200 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-900/20">
           <option v-for="school in schools" :key="school.id" :value="school.id">
             {{ school.name }}
           </option>
@@ -78,7 +78,7 @@
     <!-- Top Navigation Bar -->
     <nav class="bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 py-2">
       <div class="flex items-center gap-2">
-        <span class="px-3 py-1 font-bold text-xs sm:text-sm text-violet-400 border-b-2 border-violet-400 bg-violet-500/10 rounded-t-lg flex items-center gap-2">
+        <span class="px-3 py-1 font-bold text-xs sm:text-sm text-blue-400 border-b-2 border-blue-400 bg-blue-600/10 rounded-t-lg flex items-center gap-2">
           <span>📷 Kamera QR</span>
           <span class="text-slate-600">/</span>
           <span class="flex items-center gap-1.5 text-emerald-400 font-semibold text-[11px] sm:text-xs">
@@ -108,7 +108,7 @@
           data-testid="kiosk-mode-school"
           @click="activityMode = 'school'"
           class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all border"
-          :class="activityMode === 'school' ? 'bg-violet-600 text-white border-violet-500 shadow-sm' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'"
+          :class="activityMode === 'school' ? 'bg-blue-900 text-white border-blue-600 shadow-sm' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'"
         >
           🏫 Sekolah
         </button>
@@ -208,25 +208,25 @@
         >
           <!-- Viewfinder Target Reticle -->
           <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div class="w-64 h-64 sm:w-80 sm:h-80 border-2 border-dashed border-violet-400/60 rounded-3xl relative flex items-center justify-center">
-              <div class="absolute -top-3 px-3 py-1 bg-slate-900/90 text-[10px] font-bold text-violet-300 rounded-full border border-violet-500/30 uppercase tracking-widest flex items-center gap-1.5 shadow-md">
+            <div class="w-64 h-64 sm:w-80 sm:h-80 border-2 border-dashed border-blue-400/60 rounded-3xl relative flex items-center justify-center">
+              <div class="absolute -top-3 px-3 py-1 bg-slate-900/90 text-[10px] font-bold text-blue-300 rounded-full border border-blue-500/30 uppercase tracking-widest flex items-center gap-1.5 shadow-md">
                 <span>📷 Scan QR / 🏷️ Tap RFID</span>
               </div>
-              <div class="w-12 h-1 bg-violet-400/70 absolute top-0 left-0 rounded-tl-3xl"></div>
-              <div class="w-1 h-12 bg-violet-400/70 absolute top-0 left-0 rounded-tl-3xl"></div>
-              <div class="w-12 h-1 bg-violet-400/70 absolute top-0 right-0 rounded-tr-3xl"></div>
-              <div class="w-1 h-12 bg-violet-400/70 absolute top-0 right-0 rounded-tr-3xl"></div>
-              <div class="w-12 h-1 bg-violet-400/70 absolute bottom-0 left-0 rounded-bl-3xl"></div>
-              <div class="w-1 h-12 bg-violet-400/70 absolute bottom-0 left-0 rounded-bl-3xl"></div>
-              <div class="w-12 h-1 bg-violet-400/70 absolute bottom-0 right-0 rounded-br-3xl"></div>
-              <div class="w-1 h-12 bg-violet-400/70 absolute bottom-0 right-0 rounded-br-3xl"></div>
+              <div class="w-12 h-1 bg-blue-500/80 absolute top-0 left-0 rounded-tl-3xl"></div>
+              <div class="w-1 h-12 bg-blue-500/80 absolute top-0 left-0 rounded-tl-3xl"></div>
+              <div class="w-12 h-1 bg-blue-500/80 absolute top-0 right-0 rounded-tr-3xl"></div>
+              <div class="w-1 h-12 bg-blue-500/80 absolute top-0 right-0 rounded-tr-3xl"></div>
+              <div class="w-12 h-1 bg-blue-500/80 absolute bottom-0 left-0 rounded-bl-3xl"></div>
+              <div class="w-1 h-12 bg-blue-500/80 absolute bottom-0 left-0 rounded-bl-3xl"></div>
+              <div class="w-12 h-1 bg-blue-500/80 absolute bottom-0 right-0 rounded-br-3xl"></div>
+              <div class="w-1 h-12 bg-blue-500/80 absolute bottom-0 right-0 rounded-br-3xl"></div>
             </div>
           </div>
         </qrcode-stream>
 
         <!-- Processing Indicator Overlay -->
         <div v-if="scanning && !pendingMoodScan" class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm flex flex-col items-center justify-center z-20">
-          <div class="w-14 h-14 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <div class="w-14 h-14 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
           <p class="text-sm font-bold text-slate-200 tracking-wide">Membaca Kartu Siswa...</p>
         </div>
 
@@ -257,7 +257,7 @@
                         :class="getFeedbackPillClass(arrivalFeedback.check_in_status)">
                     {{ getFeedbackStatusLabel(arrivalFeedback.check_in_status, arrivalFeedback.late_minutes, arrivalFeedback.activity_type, arrivalFeedback.direction) }}
                   </span>
-                  <span v-if="arrivalFeedback.method === 'rfid'" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                  <span v-if="arrivalFeedback.method === 'rfid'" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-600/15 text-blue-300 border border-blue-500/30">
                     🏷️ RFID Tap
                   </span>
                   <span v-else-if="arrivalFeedback.method === 'qr'" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
@@ -299,7 +299,7 @@
             <div class="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col items-center text-center">
               
               <!-- Student Header in Dialog -->
-              <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-2xl font-black text-white shadow-lg mb-3">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center text-2xl font-black text-white shadow-lg mb-3">
                 {{ pendingMoodScan.student_name ? pendingMoodScan.student_name[0] : '🎒' }}
               </div>
               <h2 class="text-lg sm:text-xl font-black text-white tracking-tight">
@@ -336,7 +336,7 @@
 
                 <!-- 5s Auto-Dismiss Countdown -->
                 <p class="text-[11px] text-slate-400 font-medium">
-                  Otomatis ditutup dalam <span class="text-violet-400 font-black">{{ moodCountdown }}</span> detik...
+                  Otomatis ditutup dalam <span class="text-blue-400 font-black">{{ moodCountdown }}</span> detik...
                 </p>
               </div>
 
@@ -397,7 +397,7 @@
               v-model="manualSearchKeyword"
               type="text" 
               placeholder="Ketik nama atau NIS siswa..." 
-              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-900/20"
               autofocus
             />
             <span v-if="manualSearchKeyword" @click="manualSearchKeyword = ''" class="absolute right-3 top-2.5 text-slate-400 hover:text-white cursor-pointer text-xs">
@@ -414,11 +414,11 @@
               class="py-3 px-3 rounded-xl hover:bg-slate-800/60 cursor-pointer transition-colors flex items-center justify-between group"
             >
               <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-violet-600/20 text-violet-300 border border-violet-500/30 flex items-center justify-center font-bold text-sm">
+                <div class="w-9 h-9 rounded-xl bg-blue-600/20 text-blue-300 border border-blue-500/30 flex items-center justify-center font-bold text-sm">
                   {{ s.student_name[0] }}
                 </div>
                 <div>
-                  <p class="text-xs sm:text-sm font-bold text-white group-hover:text-violet-300 transition-colors">
+                  <p class="text-xs sm:text-sm font-bold text-white group-hover:text-blue-300 transition-colors">
                     {{ s.student_name }}
                   </p>
                   <p class="text-[11px] text-slate-400">
@@ -427,7 +427,7 @@
                 </div>
               </div>
 
-              <span class="text-xs px-2.5 py-1 bg-violet-500/20 text-violet-300 border border-violet-500/30 rounded-lg font-bold group-hover:bg-violet-600 group-hover:text-white transition-all">
+              <span class="text-xs px-2.5 py-1 bg-blue-600/15 text-blue-300 border border-blue-500/30 rounded-lg font-bold group-hover:bg-blue-900 group-hover:text-white transition-all">
                 Pilih Siswa →
               </span>
             </div>
@@ -1222,7 +1222,7 @@ const paintBoundingBox = (detectedCodes, ctx) => {
   for (const detectedCode of detectedCodes) {
     const { boundingBox: { x, y, width, height } } = detectedCode
     ctx.lineWidth = 4
-    ctx.strokeStyle = '#8b5cf6'
+    ctx.strokeStyle = '#2563EB'
     ctx.strokeRect(x, y, width, height)
   }
 }

@@ -260,7 +260,7 @@ const getStatusBadgeClass = (status: string) => {
     draft: 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-350 border-slate-200/60 dark:border-zinc-700',
     submitted: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
     approved: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
-    published: 'bg-violet-600/10 text-violet-600 dark:text-violet-400 border-violet-500/20'
+    published: 'bg-blue-600/10 text-blue-900 dark:text-blue-400 border-blue-500/20'
   }
   return classes[status] || 'bg-slate-100 text-slate-600'
 }
@@ -285,10 +285,10 @@ const getStatusLabel = (status: string) => {
         <p class="text-xs text-slate-500 dark:text-zinc-400">Generate draft rapor, approval Kepala Sekolah, dan cetak format resmi e-raport Kurikulum Merdeka.</p>
       </div>
       <div class="flex gap-2 flex-wrap" v-if="selectedClassId">
-        <BaseButton v-if="['super_admin', 'principal', 'treasurer', 'user'].includes(currentUser?.role)" variant="secondary" @click="handleCheckBlast" class="py-2.5 px-4 text-xs font-bold border-violet-200 text-violet-600 hover:bg-violet-50">
+        <BaseButton v-if="['super_admin', 'principal', 'treasurer', 'user'].includes(currentUser?.role)" variant="secondary" @click="handleCheckBlast" class="py-2.5 px-4 text-xs font-bold border-blue-200 text-blue-900 hover:bg-blue-50/60">
           <MessageCircle class="mr-1.5" :size="14" /> Blast Rapor ke WA
         </BaseButton>
-        <BaseButton variant="primary" @click="handleGenerate" :disabled="generating" class="py-2.5 px-4 text-xs font-bold shadow-lg shadow-violet-600/15">
+        <BaseButton variant="primary" @click="handleGenerate" :disabled="generating" class="py-2.5 px-4 text-xs font-bold shadow-lg shadow-sm">
           <Play class="mr-1.5" :size="14" /> {{ generating ? 'Memproses...' : 'Generate / Refresh Draft Rapor' }}
         </BaseButton>
       </div>
@@ -299,7 +299,7 @@ const getStatusLabel = (status: string) => {
          :class="!isSchoolLocked ? 'md:grid-cols-5' : 'md:grid-cols-3'">
       <div v-if="!isSchoolLocked" class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
-        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Yayasan</option>
           <option v-for="found in foundations" :key="found.id" :value="found.id">{{ found.name }}</option>
         </select>
@@ -307,7 +307,7 @@ const getStatusLabel = (status: string) => {
 
       <div v-if="!isSchoolLocked" class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Unit Sekolah</option>
           <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
@@ -315,7 +315,7 @@ const getStatusLabel = (status: string) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tahun Ajaran</label>
-        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Tahun Ajaran</option>
           <option v-for="year in academicYears" :key="year.id" :value="year.id">
             {{ year.name }} {{ year.is_active ? '(Aktif)' : '' }}
@@ -325,7 +325,7 @@ const getStatusLabel = (status: string) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Kelas</label>
-        <select v-model="selectedClassId" :disabled="filteredClassesList.length === 0" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedClassId" :disabled="filteredClassesList.length === 0" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Kelas</option>
           <option v-for="c in filteredClassesList" :key="c.id" :value="c.id">{{ c.class_name }}</option>
         </select>
@@ -333,7 +333,7 @@ const getStatusLabel = (status: string) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Semester</label>
-        <select v-model="selectedSemester" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSemester" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option value="odd">Ganjil</option>
           <option value="even">Genap</option>
         </select>
@@ -342,14 +342,14 @@ const getStatusLabel = (status: string) => {
 
     <!-- Empty State -->
     <div v-if="!selectedClassId" class="bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-16 text-center text-slate-400 dark:text-zinc-500">
-      <FileText class="mx-auto mb-3 opacity-40 text-violet-600" :size="40" />
+      <FileText class="mx-auto mb-3 opacity-40 text-blue-900" :size="40" />
       <h3 class="font-bold text-slate-700 dark:text-zinc-300 text-sm">Belum Ada Kelas yang Dipilih</h3>
       <p class="text-xs mt-1 max-w-sm mx-auto">Silakan tentukan unit sekolah, tahun ajaran, dan kelas rombel untuk memuat status rapor siswa.</p>
     </div>
 
     <!-- Loading -->
     <div v-else-if="loading" class="py-20 text-center text-slate-400">
-      <div class="w-8 h-8 rounded-full border-2 border-violet-600 border-t-transparent animate-spin mx-auto mb-3"></div>
+      <div class="w-8 h-8 rounded-full border-2 border-blue-900 border-t-transparent animate-spin mx-auto mb-3"></div>
       <p class="text-xs font-semibold">Memuat data rapor...</p>
     </div>
 
@@ -426,7 +426,7 @@ const getStatusLabel = (status: string) => {
                     <button 
                       v-if="rep.report_id && rep.status === 'approved' && ['principal', 'super_admin', 'user'].includes(currentUser?.role)"
                       @click="handleStatusChange(rep.report_id, 'published')"
-                      class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-violet-600 text-white hover:bg-violet-700 rounded-lg text-[10px] font-bold transition-colors shadow-sm"
+                      class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-900 text-white hover:bg-blue-800 rounded-lg text-[10px] font-bold transition-colors shadow-sm"
                     >
                       <CheckCircle :size="12" /> Publish
                     </button>

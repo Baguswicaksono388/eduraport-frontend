@@ -196,7 +196,7 @@ const handleDeleteSubject = async (id: string) => {
     <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
-        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Yayasan</option>
           <option v-for="found in foundations" :key="found.id" :value="found.id">{{ found.name }}</option>
         </select>
@@ -204,7 +204,7 @@ const handleDeleteSubject = async (id: string) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Unit Sekolah</option>
           <option v-for="school in filteredSchools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
@@ -212,7 +212,7 @@ const handleDeleteSubject = async (id: string) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tipe Mapel</label>
-        <select v-model="typeFilter" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="typeFilter" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="">Semua Tipe</option>
           <option v-for="cat in curriculumCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
         </select>
@@ -237,7 +237,7 @@ const handleDeleteSubject = async (id: string) => {
             <td class="p-4 pl-6 text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase">{{ sub.code }}</td>
             <td class="p-4">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded bg-violet-50 dark:bg-zinc-850 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                <div class="w-8 h-8 rounded bg-blue-50/60 dark:bg-zinc-850 flex items-center justify-center text-blue-900 dark:text-blue-400">
                   <Bookmark :size="16" />
                 </div>
                 <span class="font-bold text-slate-800 dark:text-zinc-200 text-sm">{{ sub.name }}</span>
@@ -247,7 +247,7 @@ const handleDeleteSubject = async (id: string) => {
             <td class="p-4">
               <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold"
                 :class="{
-                  'bg-violet-500/10 text-violet-600 border border-violet-500/20': sub.category_code === 'INTRA' || sub.type === 'intrakurikuler',
+                  'bg-blue-600/10 text-blue-900 border border-blue-500/20': sub.category_code === 'INTRA' || sub.type === 'intrakurikuler',
                   'bg-amber-500/10 text-amber-600 border border-amber-500/20': sub.category_code === 'KOKURI' || sub.type === 'kokurikuler',
                   'bg-indigo-500/10 text-indigo-600 border border-indigo-500/20': sub.category_code === 'EKSKUL' || sub.type === 'ekstrakurikuler',
                   'bg-slate-500/10 text-slate-600 border border-slate-500/20': sub.category_code !== 'INTRA' && sub.category_code !== 'KOKURI' && sub.category_code !== 'EKSKUL' && sub.type !== 'intrakurikuler' && sub.type !== 'kokurikuler' && sub.type !== 'ekstrakurikuler'
@@ -265,7 +265,7 @@ const handleDeleteSubject = async (id: string) => {
             </td>
             <td class="p-4 pr-6 text-right">
               <div class="flex justify-end items-center gap-1">
-                <button @click="openEditModal(sub)" class="p-2 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+                <button @click="openEditModal(sub)" class="p-2 text-slate-400 hover:text-blue-900 dark:hover:text-blue-400 transition-colors">
                   <Edit2 :size="14" />
                 </button>
                 <button @click="handleDeleteSubject(sub.id)" class="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-450 transition-colors">
@@ -313,14 +313,14 @@ const handleDeleteSubject = async (id: string) => {
         
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tipe Mapel</label>
-          <select v-model="subjectForm.subject_category_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="subjectForm.subject_category_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>Pilih Tipe Mapel</option>
             <option v-for="cat in curriculumCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
           </select>
         </div>
 
         <div class="flex items-center gap-2 px-1 py-1">
-          <input type="checkbox" id="is_active_subject_create" v-model="subjectForm.is_active" class="rounded border-slate-350 dark:border-zinc-800 text-violet-600 focus:ring-violet-600/20" />
+          <input type="checkbox" id="is_active_subject_create" v-model="subjectForm.is_active" class="rounded border-slate-350 dark:border-zinc-800 text-blue-900 focus:ring-blue-900/20" />
           <label for="is_active_subject_create" class="text-xs font-semibold text-slate-600 dark:text-zinc-400">Aktifkan mata pelajaran ini</label>
         </div>
 
@@ -351,14 +351,14 @@ const handleDeleteSubject = async (id: string) => {
         
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tipe Mapel</label>
-          <select v-model="editForm.subject_category_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="editForm.subject_category_id" required class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option value="" disabled>Pilih Tipe Mapel</option>
             <option v-for="cat in curriculumCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
           </select>
         </div>
 
         <div class="flex items-center gap-2 px-1 py-1">
-          <input type="checkbox" id="is_active_subject_edit" v-model="editForm.is_active" class="rounded border-slate-350 dark:border-zinc-800 text-violet-600 focus:ring-violet-600/20" />
+          <input type="checkbox" id="is_active_subject_edit" v-model="editForm.is_active" class="rounded border-slate-350 dark:border-zinc-800 text-blue-900 focus:ring-blue-900/20" />
           <label for="is_active_subject_edit" class="text-xs font-semibold text-slate-600 dark:text-zinc-400">Mata pelajaran aktif</label>
         </div>
 

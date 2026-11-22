@@ -125,7 +125,7 @@ const copyRegNumber = () => {
     <!-- Header -->
     <header class="bg-white dark:bg-zinc-900 border-b border-slate-200/60 dark:border-zinc-800/80 px-6 py-4 flex items-center justify-between shadow-sm">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 bg-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-violet-600/20">
+        <div class="w-9 h-9 bg-blue-900 rounded-lg flex items-center justify-center shadow-lg shadow-sm">
           <GraduationCap class="text-white" :size="18" />
         </div>
         <div>
@@ -133,7 +133,7 @@ const copyRegNumber = () => {
           <span class="text-[8px] uppercase tracking-wider text-amber-500 font-bold">Penerimaan Siswa Baru</span>
         </div>
       </div>
-      <NuxtLink to="/ppdb/status" class="text-xs font-bold text-violet-600 dark:text-violet-400 hover:underline">
+      <NuxtLink to="/ppdb/status" class="text-xs font-bold text-blue-900 dark:text-blue-400 hover:underline">
         Cek Status Pendaftaran
       </NuxtLink>
     </header>
@@ -143,7 +143,7 @@ const copyRegNumber = () => {
       
       <!-- Loading state -->
       <div v-if="loading" class="text-center py-20 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-100 dark:border-zinc-800">
-        <div class="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <div class="w-10 h-10 border-4 border-blue-900 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
         <p class="text-xs text-slate-400 dark:text-zinc-500 font-semibold">Memuat formulir pendaftaran...</p>
       </div>
 
@@ -174,7 +174,7 @@ const copyRegNumber = () => {
           <div class="bg-slate-50 dark:bg-zinc-950 p-5 rounded-xl border border-slate-200/60 dark:border-zinc-850/80 max-w-sm mx-auto space-y-3">
             <span class="text-[9px] uppercase tracking-widest font-bold text-slate-400">Nomor Pendaftaran Anda</span>
             <div class="flex items-center justify-center gap-2">
-              <span class="text-lg font-extrabold text-violet-600 tracking-wider">{{ generatedRegNumber }}</span>
+              <span class="text-lg font-extrabold text-blue-900 tracking-wider">{{ generatedRegNumber }}</span>
               <button 
                 type="button" 
                 @click="copyRegNumber" 
@@ -191,7 +191,7 @@ const copyRegNumber = () => {
           </div>
 
           <div class="pt-4 border-t border-slate-100 dark:border-zinc-800 flex flex-col sm:flex-row gap-3 justify-center">
-            <NuxtLink :to="`/ppdb/status?reg=${generatedRegNumber}`" class="inline-flex justify-center items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs shadow-lg shadow-violet-600/10">
+            <NuxtLink :to="`/ppdb/status?reg=${generatedRegNumber}`" class="inline-flex justify-center items-center gap-2 bg-blue-900 hover:bg-blue-800 text-white font-bold py-2.5 px-6 rounded-xl text-xs shadow-lg shadow-sm">
               Lanjutkan Pembayaran & Cek Status <ArrowRight :size="14" />
             </NuxtLink>
           </div>
@@ -261,7 +261,7 @@ const copyRegNumber = () => {
                   :type="field.field_type"
                   :placeholder="field.placeholder || ''"
                   :required="!!field.is_required"
-                  class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10"
+                  class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10"
                 />
 
                 <textarea
@@ -270,7 +270,7 @@ const copyRegNumber = () => {
                   :placeholder="field.placeholder || ''"
                   :required="!!field.is_required"
                   rows="3"
-                  class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10"
+                  class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10"
                 ></textarea>
 
                 <!-- Select Dropdown -->
@@ -278,7 +278,7 @@ const copyRegNumber = () => {
                   v-else-if="field.field_type === 'select'"
                   v-model="form.form_answers[field.field_key]"
                   :required="!!field.is_required"
-                  class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100"
+                  class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100"
                 >
                   <option value="" disabled>{{ field.placeholder || 'Pilih salah satu...' }}</option>
                   <option v-for="opt in field.options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
@@ -292,7 +292,7 @@ const copyRegNumber = () => {
                       v-model="form.form_answers[field.field_key]" 
                       :value="opt.value" 
                       :required="!!field.is_required"
-                      class="text-violet-600 focus:ring-violet-600 border-slate-350"
+                      class="text-blue-900 focus:ring-blue-900/20 border-slate-350"
                     />
                     <span>{{ opt.label }}</span>
                   </label>
@@ -306,7 +306,7 @@ const copyRegNumber = () => {
 
           <!-- Form Submit Button -->
           <div class="pt-6 border-t border-slate-100 dark:border-zinc-850 flex justify-end">
-            <BaseButton type="submit" variant="primary" :disabled="submitting" class="w-full sm:w-auto py-2.5 px-6 text-xs font-bold flex items-center justify-center gap-1.5 shadow-lg shadow-violet-600/10">
+            <BaseButton type="submit" variant="primary" :disabled="submitting" class="w-full sm:w-auto py-2.5 px-6 text-xs font-bold flex items-center justify-center gap-1.5 shadow-lg shadow-sm">
               {{ submitting ? 'Mengirimkan Pendaftaran...' : 'Kirim Pendaftaran Siswa Baru' }}
               <ArrowRight v-if="!submitting" :size="14" />
             </BaseButton>

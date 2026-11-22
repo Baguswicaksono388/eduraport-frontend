@@ -208,7 +208,7 @@ const viewStudents = async (cObj: any) => {
     <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
-        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Yayasan</option>
           <option v-for="found in foundations" :key="found.id" :value="found.id">{{ found.name }}</option>
         </select>
@@ -216,7 +216,7 @@ const viewStudents = async (cObj: any) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Unit Sekolah</option>
           <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
@@ -224,7 +224,7 @@ const viewStudents = async (cObj: any) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tahun Ajaran</label>
-        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Tahun Ajaran</option>
           <option v-for="year in academicYears" :key="year.id" :value="year.id">
             {{ year.name }} {{ year.is_active ? '(Aktif)' : '' }}
@@ -249,7 +249,7 @@ const viewStudents = async (cObj: any) => {
           <tr v-for="cObj in classes" :key="cObj.id" class="border-b border-slate-100 dark:border-zinc-800/80 last:border-0 hover:bg-slate-50/20 dark:hover:bg-zinc-900/20 transition-colors">
             <td class="p-4 pl-6">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded bg-violet-50 dark:bg-zinc-850 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                <div class="w-8 h-8 rounded bg-blue-50/60 dark:bg-zinc-850 flex items-center justify-center text-blue-900 dark:text-blue-400">
                   <LayoutGrid :size="16" />
                 </div>
                 <span class="font-bold text-slate-800 dark:text-zinc-200 text-sm">{{ cObj.class_name }}</span>
@@ -264,13 +264,13 @@ const viewStudents = async (cObj: any) => {
             </td>
             <td class="p-4 pr-6 text-right">
               <div class="flex justify-end items-center gap-1">
-                <BaseButton variant="outline" @click="$router.push(`/class/${cObj.id}/qr-cards`)" class="py-1.5 px-2.5 text-[10px] font-bold flex items-center gap-1 text-violet-600 border-violet-200 hover:bg-violet-50 dark:border-violet-800 dark:hover:bg-violet-900/30">
+                <BaseButton variant="outline" @click="$router.push(`/class/${cObj.id}/qr-cards`)" class="py-1.5 px-2.5 text-[10px] font-bold flex items-center gap-1 text-blue-900 border-blue-200 hover:bg-blue-50/60 dark:border-blue-800 dark:hover:bg-blue-950/40">
                   <QrCode :size="11" /> Cetak QR
                 </BaseButton>
                 <BaseButton variant="outline" @click="viewStudents(cObj)" class="py-1.5 px-2.5 text-[10px] font-bold flex items-center gap-1">
                   <Eye :size="11" /> Detail Siswa
                 </BaseButton>
-                <button @click="openEditModal(cObj)" class="p-2 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+                <button @click="openEditModal(cObj)" class="p-2 text-slate-400 hover:text-blue-900 dark:hover:text-blue-400 transition-colors">
                   <Edit2 :size="14" />
                 </button>
                 <button @click="handleDeleteClass(cObj.id)" class="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-450 transition-colors">
@@ -305,7 +305,7 @@ const viewStudents = async (cObj: any) => {
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5 w-full">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tingkat (Level)</label>
-            <select v-model="classForm.level" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100" required>
+            <select v-model="classForm.level" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100" required>
               <option value="" disabled>Pilih Tingkat (Level)</option>
               <option v-for="lvl in classLevelOptions" :key="lvl" :value="lvl">{{ lvl }}</option>
             </select>
@@ -315,7 +315,7 @@ const viewStudents = async (cObj: any) => {
         
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tahun Ajaran</label>
-          <select v-model="classForm.academic_year_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="classForm.academic_year_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option value="">Gunakan Tahun Ajaran Aktif saat ini</option>
             <option v-for="year in academicYears" :key="year.id" :value="year.id">{{ year.name }}</option>
           </select>
@@ -323,7 +323,7 @@ const viewStudents = async (cObj: any) => {
 
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Wali Kelas</label>
-          <select v-model="classForm.homeroom_teacher_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="classForm.homeroom_teacher_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option value="">Pilih Wali Kelas (Opsional)</option>
             <option v-for="t in teachers" :key="t.id" :value="t.id">{{ t.full_name }} ({{ t.role }})</option>
           </select>
@@ -343,7 +343,7 @@ const viewStudents = async (cObj: any) => {
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5 w-full">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tingkat (Level)</label>
-            <select v-model="editForm.level" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100" required>
+            <select v-model="editForm.level" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100" required>
               <option value="" disabled>Pilih Tingkat (Level)</option>
               <option v-for="lvl in classLevelOptions" :key="lvl" :value="lvl">{{ lvl }}</option>
             </select>
@@ -353,14 +353,14 @@ const viewStudents = async (cObj: any) => {
         
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tahun Ajaran</label>
-          <select v-model="editForm.academic_year_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100" required>
+          <select v-model="editForm.academic_year_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100" required>
             <option v-for="year in academicYears" :key="year.id" :value="year.id">{{ year.name }}</option>
           </select>
         </div>
 
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Wali Kelas</label>
-          <select v-model="editForm.homeroom_teacher_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="editForm.homeroom_teacher_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option value="">Pilih Wali Kelas (Opsional)</option>
             <option v-for="t in teachers" :key="t.id" :value="t.id">{{ t.full_name }} ({{ t.role }})</option>
           </select>

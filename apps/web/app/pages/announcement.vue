@@ -244,13 +244,13 @@ const totalReadsCount = computed(() => {
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/70 dark:border-zinc-800/80">
       <div class="flex items-center gap-3">
-        <div class="p-2.5 bg-gradient-to-tr from-violet-600 to-indigo-500 text-white rounded-xl shadow-lg shadow-violet-500/20">
+        <div class="p-2.5 bg-gradient-to-tr from-slate-900 via-blue-950 to-slate-900 text-white rounded-xl shadow-lg shadow-sm">
           <Bell :size="24" />
         </div>
         <div>
           <h2 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100 flex items-center gap-2">
             Pengumuman Sekolah
-            <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300">
+            <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-900 dark:text-blue-300">
               {{ announcementsMeta.total }} Rilis
             </span>
           </h2>
@@ -263,7 +263,7 @@ const totalReadsCount = computed(() => {
       <BaseButton 
         variant="primary" 
         size="sm" 
-        class="bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs shadow-md shadow-violet-500/15 flex items-center gap-1.5 self-start sm:self-auto"
+        class="bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs shadow-md shadow-sm flex items-center gap-1.5 self-start sm:self-auto"
         @click="openCreateModal"
       >
         <Plus :size="16" /> Buat Pengumuman Baru
@@ -274,7 +274,7 @@ const totalReadsCount = computed(() => {
     <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-4 shadow-sm">
       <div class="flex flex-col gap-1">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
-        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-medium outline-none focus:border-violet-600">
+        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-medium outline-none focus:border-blue-900">
           <option value="" disabled>Pilih Yayasan</option>
           <option v-for="found in foundations" :key="found.id" :value="found.id">{{ found.name }}</option>
         </select>
@@ -282,7 +282,7 @@ const totalReadsCount = computed(() => {
 
       <div class="flex flex-col gap-1">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-medium outline-none focus:border-violet-600">
+        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-medium outline-none focus:border-blue-900">
           <option value="" disabled>Pilih Unit Sekolah</option>
           <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
@@ -292,7 +292,7 @@ const totalReadsCount = computed(() => {
     <!-- Overview Stats Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div class="p-4 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/60 dark:border-zinc-800 shadow-sm flex items-center gap-3">
-        <div class="p-2.5 bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 rounded-lg">
+        <div class="p-2.5 bg-blue-50/60 dark:bg-blue-950/40 text-blue-900 dark:text-blue-400 rounded-lg">
           <MessageSquare :size="20" />
         </div>
         <div>
@@ -331,7 +331,7 @@ const totalReadsCount = computed(() => {
           v-model="searchQuery" 
           type="text" 
           placeholder="Cari judul atau isi pengumuman..."
-          class="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg text-xs font-medium outline-none focus:border-violet-600 text-slate-800 dark:text-zinc-200"
+          class="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg text-xs font-medium outline-none focus:border-blue-900 text-slate-800 dark:text-zinc-200"
         />
       </div>
 
@@ -348,7 +348,7 @@ const totalReadsCount = computed(() => {
           <button 
             @click="selectedTargetType = 'school'" 
             class="px-3 py-1 rounded-md transition"
-            :class="selectedTargetType === 'school' ? 'bg-white dark:bg-zinc-900 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400'"
+            :class="selectedTargetType === 'school' ? 'bg-white dark:bg-zinc-900 text-blue-900 dark:text-blue-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400'"
           >
             Seluruh Sekolah
           </button>
@@ -365,7 +365,7 @@ const totalReadsCount = computed(() => {
         <select 
           v-if="selectedTargetType === 'class'"
           v-model="selectedClassFilter" 
-          class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-violet-600"
+          class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-blue-900"
         >
           <option value="">Semua Kelas</option>
           <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.class_name }}</option>
@@ -375,7 +375,7 @@ const totalReadsCount = computed(() => {
 
     <!-- Announcement Feed / Cards -->
     <div v-if="loading" class="py-20 text-center text-slate-400">
-      <div class="w-8 h-8 rounded-full border-2 border-violet-600 border-t-transparent animate-spin mx-auto mb-2"></div>
+      <div class="w-8 h-8 rounded-full border-2 border-blue-900 border-t-transparent animate-spin mx-auto mb-2"></div>
       <p class="text-xs font-semibold">Memuat data pengumuman...</p>
     </div>
 
@@ -385,7 +385,7 @@ const totalReadsCount = computed(() => {
       <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
         Belum ada pengumuman yang diterbitkan untuk filter ini. Klik tombol di bawah untuk membuat pengumuman pertama Anda.
       </p>
-      <BaseButton size="sm" class="mt-4 bg-violet-600 hover:bg-violet-700 text-white font-semibold text-xs" @click="openCreateModal">
+      <BaseButton size="sm" class="mt-4 bg-blue-900 hover:bg-blue-800 text-white font-semibold text-xs" @click="openCreateModal">
         <Plus :size="15" /> Terbitkan Pengumuman
       </BaseButton>
     </div>
@@ -394,7 +394,7 @@ const totalReadsCount = computed(() => {
       <div 
         v-for="item in announcements" 
         :key="item.id"
-        class="bg-white dark:bg-zinc-900 border border-slate-200/70 dark:border-zinc-800 rounded-xl p-5 shadow-sm hover:border-violet-300 dark:hover:border-violet-800/50 transition-all duration-200 group"
+        class="bg-white dark:bg-zinc-900 border border-slate-200/70 dark:border-zinc-800 rounded-xl p-5 shadow-sm hover:border-blue-300 dark:hover:border-blue-900/30 transition-all duration-200 group"
       >
         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div class="space-y-1.5 flex-1">
@@ -402,7 +402,7 @@ const totalReadsCount = computed(() => {
             <div class="flex flex-wrap items-center gap-2">
               <span 
                 v-if="item.target_type === 'school'" 
-                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-900/50"
+                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50/60 text-blue-900 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-900/30"
               >
                 <School :size="12" /> Seluruh Sekolah (Semua Wali)
               </span>
@@ -419,7 +419,7 @@ const totalReadsCount = computed(() => {
             </div>
 
             <!-- Title -->
-            <h3 class="text-base font-bold text-slate-900 dark:text-zinc-100 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+            <h3 class="text-base font-bold text-slate-900 dark:text-zinc-100 group-hover:text-blue-900 dark:group-hover:text-blue-400 transition-colors">
               {{ item.title }}
             </h3>
 
@@ -433,7 +433,7 @@ const totalReadsCount = computed(() => {
           <div v-if="canModify(item)" class="flex items-center gap-1 self-end sm:self-start">
             <button 
               @click="openEditModal(item)" 
-              class="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-zinc-800 rounded-lg transition"
+              class="p-2 text-slate-400 hover:text-blue-900 hover:bg-blue-50/60 dark:hover:bg-zinc-800 rounded-lg transition"
               title="Edit Pengumuman"
             >
               <Edit3 :size="15" />
@@ -501,7 +501,7 @@ const totalReadsCount = computed(() => {
             v-model="form.title" 
             type="text" 
             placeholder="Contoh: Jadwal Ujian Akhir Semester & Pembagian Rapor"
-            class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg p-2.5 font-semibold text-xs outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100"
+            class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg p-2.5 font-semibold text-xs outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100"
           />
         </div>
 
@@ -513,7 +513,7 @@ const totalReadsCount = computed(() => {
               @click="form.target_type = 'school'"
               class="p-2.5 rounded-lg border text-left font-semibold transition flex items-center gap-2"
               :class="form.target_type === 'school' 
-                ? 'border-violet-600 bg-violet-50/60 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300' 
+                ? 'border-blue-900 bg-blue-50/60/60 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300' 
                 : 'border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400'"
             >
               <School :size="15" /> Seluruh Sekolah (Semua Wali)
@@ -523,7 +523,7 @@ const totalReadsCount = computed(() => {
               @click="form.target_type = 'class'"
               class="p-2.5 rounded-lg border text-left font-semibold transition flex items-center gap-2"
               :class="form.target_type === 'class' 
-                ? 'border-violet-600 bg-violet-50/60 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300' 
+                ? 'border-blue-900 bg-blue-50/60/60 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300' 
                 : 'border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400'"
             >
               <Users :size="15" /> Kelas Tertentu
@@ -535,7 +535,7 @@ const totalReadsCount = computed(() => {
           <label class="block font-bold text-slate-700 dark:text-zinc-300 mb-1">Pilih Kelas Sasaran</label>
           <select 
             v-model="form.target_class_id" 
-            class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg p-2.5 font-semibold text-xs outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100"
+            class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg p-2.5 font-semibold text-xs outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100"
           >
             <option value="" disabled>Pilih Kelas</option>
             <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.class_name }}</option>
@@ -548,7 +548,7 @@ const totalReadsCount = computed(() => {
             v-model="form.content" 
             rows="6"
             placeholder="Tuliskan isi pengumuman atau instruksi secara jelas kepada orang tua / siswa..."
-            class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg p-2.5 font-medium text-xs outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100"
+            class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg p-2.5 font-medium text-xs outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100"
           ></textarea>
         </div>
 
@@ -556,7 +556,7 @@ const totalReadsCount = computed(() => {
           <BaseButton variant="outline" size="sm" @click="showCreateModal = false">Batal</BaseButton>
           <BaseButton 
             size="sm" 
-            class="bg-violet-600 hover:bg-violet-700 text-white font-bold" 
+            class="bg-blue-900 hover:bg-blue-800 text-white font-bold" 
             :disabled="submitting" 
             @click="handleSubmit"
           >

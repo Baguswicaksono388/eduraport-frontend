@@ -112,7 +112,7 @@ onUnmounted(() => {
     <div class="space-y-2">
       <NuxtLink 
         to="/wa/devices" 
-        class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-violet-600 transition-colors font-semibold"
+        class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-blue-900 transition-colors font-semibold"
       >
         <ChevronLeft :size="14" />
         Kembali ke Daftar Perangkat
@@ -203,7 +203,7 @@ onUnmounted(() => {
             v-if="!qrCodeText" 
             class="flex flex-col items-center justify-center space-y-3"
           >
-            <Loader2 class="animate-spin text-violet-600" :size="32" />
+            <Loader2 class="animate-spin text-blue-900" :size="32" />
             <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider animate-pulse">Menghubungkan Baileys...</span>
           </div>
 

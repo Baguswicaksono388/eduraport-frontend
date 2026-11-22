@@ -23,21 +23,21 @@ onMounted(() => {
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       
       <!-- Welcome Card -->
-      <div class="col-span-1 md:col-span-2 bg-gradient-to-br from-violet-600 to-indigo-700 text-white rounded-xl p-8 relative overflow-hidden shadow-lg">
+      <div class="col-span-1 md:col-span-2 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white rounded-xl p-8 relative overflow-hidden shadow-lg">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
         <div class="relative z-10">
           <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider mb-4 border border-white/20 shadow-sm backdrop-blur-sm">
             Solo Teacher Edition
           </div>
           <h2 class="text-2xl font-bold mb-2">Halo, {{ user?.full_name }}! 👋</h2>
-          <p class="text-violet-100 text-sm max-w-md">
+          <p class="text-blue-100 text-sm max-w-md">
             Selamat datang di EduRaport Solo. Anda mengelola data kelas, mata pelajaran, dan siswa secara independen.
           </p>
           <div class="mt-6 flex flex-wrap gap-3">
-            <NuxtLink to="/class" class="px-4 py-2 bg-white text-violet-700 rounded-lg text-sm font-bold shadow-sm hover:bg-slate-50 transition-colors">
+            <NuxtLink to="/class" class="px-4 py-2 bg-white text-blue-900 rounded-lg text-sm font-bold shadow-sm hover:bg-slate-50 transition-colors">
               Mulai Setup Kelas
             </NuxtLink>
-            <NuxtLink to="/student" class="px-4 py-2 bg-violet-800/50 text-white border border-violet-500/50 rounded-lg text-sm font-bold hover:bg-violet-800 transition-colors">
+            <NuxtLink to="/student" class="px-4 py-2 bg-blue-950/50 text-white border border-blue-600/50 rounded-lg text-sm font-bold hover:bg-blue-900 transition-colors">
               Tambah Siswa
             </NuxtLink>
           </div>

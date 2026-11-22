@@ -410,7 +410,7 @@ watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
     <div v-if="!isSchoolLocked || currentRole === 'foundation'" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-zinc-900 p-4 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm animate-in fade-in duration-200">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 pl-1">Yayasan</label>
-        <select v-model="selectedFoundationId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedFoundationId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option 
             v-for="f in foundations" 
             :key="f.id" 
@@ -423,7 +423,7 @@ watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
       </div>
       <div v-if="currentRole !== 'foundation'" class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 pl-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSchoolId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option 
             v-for="s in schools" 
             :key="s.id" 
@@ -438,7 +438,7 @@ watch(selectedFoundationId, (newVal) => onFoundationChange(newVal))
 
     <!-- Main Content Panel based on selected simulator role -->
     <div v-if="loading && metrics.length === 0 && consolidatedData.schools.length === 0" class="flex flex-col items-center justify-center py-20 space-y-4">
-      <div class="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-10 h-10 border-4 border-blue-900 border-t-transparent rounded-full animate-spin"></div>
       <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">Memuat metrik eksekutif...</p>
     </div>
 

@@ -51,7 +51,7 @@ const openDetail = async (item: any) => {
 <template>
   <div class="space-y-6 max-w-4xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
     <div class="flex items-center gap-3">
-      <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-violet-600 transition">
+      <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-blue-900 transition">
         <ArrowLeft :size="18" />
       </NuxtLink>
       <div>
@@ -64,7 +64,7 @@ const openDetail = async (item: any) => {
     </div>
 
     <div v-if="loading" class="flex justify-center py-20">
-      <div class="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-10 h-10 border-4 border-blue-900 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <div v-else class="space-y-3">
@@ -72,7 +72,7 @@ const openDetail = async (item: any) => {
         <BaseCard
           v-for="item in announcements"
           :key="item.id"
-          class="cursor-pointer hover:border-violet-500 hover:shadow-md transition-all group"
+          class="cursor-pointer hover:border-blue-600 hover:shadow-md transition-all group"
           @click="openDetail(item)"
         >
           <div class="flex items-start justify-between gap-4">
@@ -80,7 +80,7 @@ const openDetail = async (item: any) => {
               <div class="flex items-center gap-2">
                 <span
                   v-if="!item.is_read"
-                  class="w-2 h-2 rounded-full bg-violet-600 animate-ping"
+                  class="w-2 h-2 rounded-full bg-blue-900 animate-ping"
                 ></span>
                 <span
                   class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
@@ -93,7 +93,7 @@ const openDetail = async (item: any) => {
                 </span>
               </div>
 
-              <h3 class="font-bold text-slate-900 dark:text-zinc-100 text-sm group-hover:text-violet-600 transition">
+              <h3 class="font-bold text-slate-900 dark:text-zinc-100 text-sm group-hover:text-blue-900 transition">
                 {{ item.title }}
               </h3>
               <p class="text-xs text-slate-500 line-clamp-2 leading-relaxed">
@@ -101,7 +101,7 @@ const openDetail = async (item: any) => {
               </p>
             </div>
 
-            <ChevronRight class="text-slate-400 group-hover:text-violet-600 transition shrink-0" :size="20" />
+            <ChevronRight class="text-slate-400 group-hover:text-blue-900 transition shrink-0" :size="20" />
           </div>
         </BaseCard>
       </div>

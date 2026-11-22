@@ -627,10 +627,10 @@ const selectedTemplateId = computed({
                     <input type="text" v-model="sub.label" class="builder-input text-[11px] py-1" placeholder="Indikator">
                     <button @click="it.subs.splice(si, 1); snapshot()" class="text-red-500 font-bold px-1" title="Hapus">&times;</button>
                   </div>
-                  <button @click="it.subs.push({label:'', ref_id: generateUid()}); snapshot()" class="text-[10px] text-violet-600 font-bold mt-1">+ Tambah Indikator</button>
+                  <button @click="it.subs.push({label:'', ref_id: generateUid()}); snapshot()" class="text-[10px] text-blue-900 font-bold mt-1">+ Tambah Indikator</button>
                 </div>
               </div>
-              <button @click="selectedWidgetProps.props.items.push({name:'Elemen Baru', label:'Elemen Baru', subs:[]}); snapshot()" class="w-full text-xs py-1.5 border border-dashed border-violet-400 text-violet-600 rounded font-bold">+ Tambah Elemen</button>
+              <button @click="selectedWidgetProps.props.items.push({name:'Elemen Baru', label:'Elemen Baru', subs:[]}); snapshot()" class="w-full text-xs py-1.5 border border-dashed border-blue-400 text-blue-900 rounded font-bold">+ Tambah Elemen</button>
             </div>
             <div class="divider"></div>
             <div class="field"><label>Skala Penilaian</label>
@@ -695,7 +695,7 @@ const selectedTemplateId = computed({
                   <input type="text" id="grade-col-label" placeholder="Label Kolom (contoh: UTS)" class="builder-input flex-1 text-[11px]">
                   <input type="text" id="grade-col-key" placeholder="Key Kolom (contoh: uts)" class="builder-input w-28 text-[11px]">
                 </div>
-                <button class="w-full py-1.5 bg-violet-600 text-white text-[11px] font-bold rounded hover:bg-violet-500 transition-all"
+                <button class="w-full py-1.5 bg-blue-900 text-white text-[11px] font-bold rounded hover:bg-blue-50/600 transition-all"
                   @click="() => {
                     const lbl = document.getElementById('grade-col-label')?.value?.trim();
                     const key = document.getElementById('grade-col-key')?.value?.trim();
@@ -760,7 +760,7 @@ const selectedTemplateId = computed({
                   selectedWidgetProps.props.items.push({ name: 'Mata Pelajaran Baru', label: 'Mata Pelajaran Baru', hidden: false });
                   snapshot();
                 }"
-                class="w-full text-xs py-1.5 border border-dashed border-violet-400 text-violet-600 rounded font-bold hover:bg-violet-50 transition-colors">
+                class="w-full text-xs py-1.5 border border-dashed border-blue-400 text-blue-900 rounded font-bold hover:bg-blue-50/60 transition-colors">
                 + Tambah Mata Pelajaran
               </button>
             </div>
@@ -806,7 +806,7 @@ const selectedTemplateId = computed({
                   <input type="text" id="ekskul-col-label" placeholder="Label Kolom (contoh: Kategori)" class="builder-input flex-1 text-[11px]">
                   <input type="text" id="ekskul-col-key" placeholder="Key Kolom (contoh: cat)" class="builder-input w-28 text-[11px]">
                 </div>
-                <button class="w-full py-1.5 bg-violet-600 text-white text-[11px] font-bold rounded hover:bg-violet-500 transition-all"
+                <button class="w-full py-1.5 bg-blue-900 text-white text-[11px] font-bold rounded hover:bg-blue-50/600 transition-all"
                   @click="() => {
                     const lbl = document.getElementById('ekskul-col-label')?.value?.trim();
                     const key = document.getElementById('ekskul-col-key')?.value?.trim();
@@ -871,7 +871,7 @@ const selectedTemplateId = computed({
                   selectedWidgetProps.props.items.push({ name: 'Ekskul Baru', label: 'Ekskul Baru', hidden: false });
                   snapshot();
                 }"
-                class="w-full text-xs py-1.5 border border-dashed border-violet-400 text-violet-600 rounded font-bold hover:bg-violet-50 transition-colors">
+                class="w-full text-xs py-1.5 border border-dashed border-blue-400 text-blue-900 rounded font-bold hover:bg-blue-50/60 transition-colors">
                 + Tambah Ekstrakurikuler
               </button>
             </div>

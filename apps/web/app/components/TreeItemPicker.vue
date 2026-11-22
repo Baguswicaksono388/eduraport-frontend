@@ -196,7 +196,7 @@ const deleteSubItem = (parent: SelectedItem, subIndex: number) => {
           <button 
             type="button" 
             @click="toggleParent(master)"
-            class="text-violet-600 shrink-0 transition-transform active:scale-95"
+            class="text-blue-900 shrink-0 transition-transform active:scale-95"
           >
             <CheckSquare v-if="getParentSelection(master.id)" :size="16" />
             <Square v-else class="text-slate-400" :size="16" />
@@ -220,13 +220,13 @@ const deleteSubItem = (parent: SelectedItem, subIndex: number) => {
         </div>
 
         <!-- Inline Label Override Input (only visible if checked) -->
-        <div v-if="getParentSelection(master.id)" class="px-4 py-2 border-b border-slate-100 dark:border-zinc-850 bg-violet-50/10 dark:bg-violet-950/5 flex items-center gap-2">
-          <span class="text-[9px] font-bold uppercase text-violet-500 shrink-0">Override Label Tampil:</span>
+        <div v-if="getParentSelection(master.id)" class="px-4 py-2 border-b border-slate-100 dark:border-zinc-850 bg-blue-50/60/10 dark:bg-blue-950/5 flex items-center gap-2">
+          <span class="text-[9px] font-bold uppercase text-blue-600 shrink-0">Override Label Tampil:</span>
           <input 
             type="text" 
             v-model="getParentSelection(master.id)!.label"
             @change="updateModel"
-            class="flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-1 text-xs outline-none focus:border-violet-600"
+            class="flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-1 text-xs outline-none focus:border-blue-900"
             placeholder="Tulis override nama tampilan disini..."
           />
         </div>
@@ -242,7 +242,7 @@ const deleteSubItem = (parent: SelectedItem, subIndex: number) => {
             <button 
               type="button" 
               @click="toggleSub(master, sub)"
-              class="text-violet-600 shrink-0 pt-0.5"
+              class="text-blue-900 shrink-0 pt-0.5"
             >
               <CheckSquare v-if="getSubSelection(master.id, sub.id)" :size="14" />
               <Square v-else class="text-slate-400" :size="14" />
@@ -259,12 +259,12 @@ const deleteSubItem = (parent: SelectedItem, subIndex: number) => {
 
               <!-- Inline Label Override for Child (if checked) -->
               <div v-if="getSubSelection(master.id, sub.id)" class="flex items-center gap-2 mt-1">
-                <span class="text-[9px] font-bold text-violet-500 whitespace-nowrap">Override:</span>
+                <span class="text-[9px] font-bold text-blue-600 whitespace-nowrap">Override:</span>
                 <input 
                   type="text" 
                   v-model="getSubSelection(master.id, sub.id)!.label"
                   @change="updateModel"
-                  class="flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded px-2 py-0.5 text-[11px] outline-none focus:border-violet-650"
+                  class="flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded px-2 py-0.5 text-[11px] outline-none focus:border-blue-900"
                   placeholder="Kustomisasi kalimat indikator..."
                 />
               </div>
@@ -285,14 +285,14 @@ const deleteSubItem = (parent: SelectedItem, subIndex: number) => {
               <input 
                 type="text" 
                 v-model="customSubName"
-                class="flex-1 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-2.5 py-1 text-xs outline-none focus:border-violet-600"
+                class="flex-1 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg px-2.5 py-1 text-xs outline-none focus:border-blue-900"
                 placeholder="Tulis sub-indikator kustom..."
                 @keyup.enter="addCustomSub(getParentSelection(master.id)!)"
               />
               <button 
                 type="button" 
                 @click="addCustomSub(getParentSelection(master.id)!)" 
-                class="bg-violet-600 hover:bg-violet-750 text-white text-[11px] font-bold px-3 rounded-lg"
+                class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold px-3 rounded-lg"
               >
                 Tambah
               </button>
@@ -308,7 +308,7 @@ const deleteSubItem = (parent: SelectedItem, subIndex: number) => {
               v-else
               type="button"
               @click="activeAddCustomSubId = master.id; customSubName = ''"
-              class="text-[10px] text-violet-600 dark:text-violet-400 font-bold hover:underline flex items-center gap-1"
+              class="text-[10px] text-blue-900 dark:text-blue-400 font-bold hover:underline flex items-center gap-1"
             >
               + Tambah Sub-Indikator Kustom
             </button>
@@ -317,15 +317,15 @@ const deleteSubItem = (parent: SelectedItem, subIndex: number) => {
       </div>
 
       <!-- Selected Custom Items (Non-master items added by user) -->
-      <div v-for="(it, idx) in items.filter(i => i.custom)" :key="'custom_' + idx" class="border border-violet-200/50 dark:border-violet-800/40 rounded-xl overflow-hidden bg-violet-50/10 dark:bg-zinc-950/20 shadow-sm">
+      <div v-for="(it, idx) in items.filter(i => i.custom)" :key="'custom_' + idx" class="border border-blue-200/50 dark:border-blue-800/40 rounded-xl overflow-hidden bg-blue-50/60/10 dark:bg-zinc-950/20 shadow-sm">
         <div class="flex items-center justify-between gap-3 p-3">
           <div class="flex-1 flex items-center gap-2">
-            <span class="text-[9px] font-bold text-violet-500 uppercase tracking-wider bg-violet-600/10 px-1 py-0.5 rounded">KUSTOM</span>
+            <span class="text-[9px] font-bold text-blue-600 uppercase tracking-wider bg-blue-600/10 px-1 py-0.5 rounded">KUSTOM</span>
             <input 
               type="text" 
               v-model="it.label" 
               @change="updateModel"
-              class="flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-violet-650"
+              class="flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-blue-900"
             />
           </div>
           <button type="button" @click="deleteItem(items.indexOf(it))" class="text-slate-400 hover:text-rose-500 transition-colors">
@@ -334,13 +334,13 @@ const deleteSubItem = (parent: SelectedItem, subIndex: number) => {
         </div>
 
         <!-- Custom Sub Items List -->
-        <div class="pl-6 border-l-2 border-violet-200/60 dark:border-zinc-800/60 pb-3 space-y-2 bg-white/40 dark:bg-zinc-900/10">
+        <div class="pl-6 border-l-2 border-blue-200/60 dark:border-zinc-800/60 pb-3 space-y-2 bg-white/40 dark:bg-zinc-900/10">
           <div v-for="(sub, sIdx) in it.subs" :key="sIdx" class="flex items-center justify-between gap-3 p-2 text-xs">
             <input 
               type="text" 
               v-model="sub.label" 
               @change="updateModel"
-              class="flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-850 rounded px-2 py-1 text-xs outline-none focus:border-violet-650"
+              class="flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-850 rounded px-2 py-1 text-xs outline-none focus:border-blue-900"
             />
             <button type="button" @click="deleteSubItem(it, sIdx)" class="text-slate-450 hover:text-rose-500 transition-colors">
               <Trash2 :size="12" />
@@ -353,14 +353,14 @@ const deleteSubItem = (parent: SelectedItem, subIndex: number) => {
               <input 
                 type="text" 
                 v-model="customSubName"
-                class="flex-1 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded px-2 py-1 text-xs outline-none focus:border-violet-600"
+                class="flex-1 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded px-2 py-1 text-xs outline-none focus:border-blue-900"
                 placeholder="Tulis sub-indikator kustom..."
                 @keyup.enter="addCustomSub(it)"
               />
               <button 
                 type="button" 
                 @click="addCustomSub(it)" 
-                class="bg-violet-600 hover:bg-violet-750 text-white text-[11px] font-bold px-3 rounded"
+                class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold px-3 rounded"
               >
                 Tambah
               </button>
@@ -376,7 +376,7 @@ const deleteSubItem = (parent: SelectedItem, subIndex: number) => {
               v-else
               type="button"
               @click="activeAddCustomSubId = 'custom_' + idx; customSubName = ''"
-              class="text-[10px] text-violet-605 dark:text-violet-400 font-bold hover:underline flex items-center gap-1"
+              class="text-[10px] text-blue-900 dark:text-blue-400 font-bold hover:underline flex items-center gap-1"
             >
               + Tambah Sub-Indikator Kustom
             </button>
@@ -394,14 +394,14 @@ const deleteSubItem = (parent: SelectedItem, subIndex: number) => {
           <input 
             type="text" 
             v-model="customParentName"
-            class="flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-violet-600"
+            class="flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-blue-900"
             placeholder="Contoh: Perkembangan Fisik"
             @keyup.enter="addCustomParent"
           />
           <button 
             type="button" 
             @click="addCustomParent" 
-            class="bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold px-4 rounded-lg shadow-md shadow-violet-600/10"
+            class="bg-blue-900 hover:bg-blue-800 text-white text-xs font-bold px-4 rounded-lg shadow-md shadow-sm"
           >
             Simpan
           </button>

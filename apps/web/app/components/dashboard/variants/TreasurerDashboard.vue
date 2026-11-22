@@ -93,12 +93,12 @@ const handleWaReminder = (student: any) => {
                 Grafik Kolektibilitas SPP (Tagihan Bulan Berjalan)
               </p>
             </div>
-            <TrendingUp class="text-violet-500" :size="20" />
+            <TrendingUp class="text-blue-600" :size="20" />
           </div>
 
           <!-- Sparkline rendering -->
           <div class="flex items-center justify-center py-4 bg-slate-50/50 dark:bg-zinc-950/20 rounded-lg border border-slate-100 dark:border-zinc-900/60">
-            <SparkLine :data="trendData" :width="380" :height="80" strokeColor="#8b5cf6" fillColor="#c084fc" />
+            <SparkLine :data="trendData" :width="380" :height="80" strokeColor="#2563EB" fillColor="#93C5FD" />
           </div>
         </div>
 

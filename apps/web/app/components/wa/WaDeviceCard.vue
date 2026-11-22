@@ -125,7 +125,7 @@ const formatDate = (dateStr: string | null) => {
               <span 
                 class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded border tracking-wider"
                 :class="props.device.driver === 'official' 
-                  ? 'bg-violet-500/10 text-violet-500 border-violet-500/20' 
+                  ? 'bg-blue-600/10 text-blue-600 border-blue-500/20' 
                   : 'bg-amber-500/10 text-amber-500 border-amber-500/20'"
               >
                 {{ props.device.driver }}
@@ -171,7 +171,7 @@ const formatDate = (dateStr: string | null) => {
               <button 
                 v-if="props.device.warmup_stage !== 'mature'"
                 type="button" 
-                class="text-[10px] font-bold text-violet-600 dark:text-violet-400 hover:underline"
+                class="text-[10px] font-bold text-blue-900 dark:text-blue-400 hover:underline"
                 title="Lewati Pemanasan (Bypass)"
                 @click="emit('bypass-warmup', props.device.id)"
               >
@@ -194,7 +194,7 @@ const formatDate = (dateStr: string | null) => {
         <div class="space-y-1.5">
           <div class="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-zinc-400">
             <span class="flex items-center gap-1">
-              <Activity :size="14" class="text-violet-500" />
+              <Activity :size="14" class="text-blue-600" />
               Circuit Breaker
             </span>
             <span 

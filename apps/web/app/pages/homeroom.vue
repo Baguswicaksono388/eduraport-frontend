@@ -505,7 +505,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
     <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-5 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
-        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Yayasan</option>
           <option v-for="found in foundations" :key="found.id" :value="found.id">{{ found.name }}</option>
         </select>
@@ -513,7 +513,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Unit Sekolah</option>
           <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
@@ -521,7 +521,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tahun Ajaran</label>
-        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Tahun Ajaran</option>
           <option v-for="year in academicYears" :key="year.id" :value="year.id">
             {{ year.name }} {{ year.is_active ? '(Aktif)' : '' }}
@@ -531,7 +531,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Kelas Rombel</label>
-        <select v-model="selectedClassId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedClassId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option v-if="activeTab === 'leave_requests' || ['super_admin', 'principal', 'tu', 'user'].includes(currentUser?.role)" value="">
             Semua Kelas (Seluruh Unit Sekolah)
           </option>
@@ -544,7 +544,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Semester</label>
-        <select v-model="selectedSemester" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSemester" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="odd">Ganjil (Odd)</option>
           <option value="even">Genap (Even)</option>
         </select>
@@ -558,7 +558,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
         class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5 shrink-0"
         :class="[
           activeTab === 'attendance'
-            ? 'border-violet-600 text-violet-600 dark:text-violet-400'
+            ? 'border-blue-900 text-blue-900 dark:text-blue-400'
             : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'
         ]"
       >
@@ -569,7 +569,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
         class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5 shrink-0"
         :class="[
           activeTab === 'extracurricular'
-            ? 'border-violet-600 text-violet-600 dark:text-violet-400'
+            ? 'border-blue-900 text-blue-900 dark:text-blue-400'
             : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'
         ]"
       >
@@ -580,7 +580,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
         class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5 shrink-0"
         :class="[
           activeTab === 'notes'
-            ? 'border-violet-600 text-violet-600 dark:text-violet-400'
+            ? 'border-blue-900 text-blue-900 dark:text-blue-400'
             : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'
         ]"
       >
@@ -592,7 +592,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
         class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5 shrink-0"
         :class="[
           activeTab === 'photos'
-            ? 'border-violet-600 text-violet-600 dark:text-violet-400'
+            ? 'border-blue-900 text-blue-900 dark:text-blue-400'
             : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'
         ]"
       >
@@ -603,7 +603,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
         class="pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-1.5 shrink-0"
         :class="[
           activeTab === 'leave_requests'
-            ? 'border-violet-600 text-violet-600 dark:text-violet-400'
+            ? 'border-blue-900 text-blue-900 dark:text-blue-400'
             : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'
         ]"
       >
@@ -624,9 +624,9 @@ const removePhoto = (studentId: string, slotIndex: number) => {
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-slate-100 dark:border-zinc-800">
           <div>
             <h4 class="text-sm font-bold text-slate-800 dark:text-zinc-100 flex items-center gap-2">
-              <CalendarRange class="text-violet-500" :size="18" />
+              <CalendarRange class="text-blue-600" :size="18" />
               Permohonan Izin & Sakit Siswa
-              <span v-if="!selectedClassId" class="text-[10px] bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 px-2 py-0.5 rounded-full font-semibold">Semua Kelas</span>
+              <span v-if="!selectedClassId" class="text-[10px] bg-blue-50 text-blue-900 dark:bg-blue-950/60 dark:text-blue-300 px-2 py-0.5 rounded-full font-semibold">Semua Kelas</span>
               <span v-else class="text-[10px] bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 px-2 py-0.5 rounded-full font-semibold">Kelas Terpilih</span>
             </h4>
             <p class="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
@@ -672,7 +672,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
 
         <!-- Loading state -->
         <div v-if="leaveLoading" class="py-12 text-center text-slate-400">
-          <div class="w-6 h-6 border-2 border-violet-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+          <div class="w-6 h-6 border-2 border-blue-900 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
           <p class="text-xs">Memuat permohonan izin...</p>
         </div>
 
@@ -712,7 +712,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
                 </td>
                 <td class="p-3.5">
                   <div class="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-zinc-300">
-                    <Calendar :size="13" class="text-violet-500 shrink-0" />
+                    <Calendar :size="13" class="text-blue-600 shrink-0" />
                     <span>{{ item.start_date }} <span class="text-slate-400">s/d</span> {{ item.end_date }}</span>
                   </div>
                 </td>
@@ -725,7 +725,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
                   <button
                     v-if="item.attachment_url"
                     @click="selectedLeaveAttachment = item.attachment_url"
-                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-violet-50 text-violet-600 hover:bg-violet-100 dark:bg-violet-950/40 dark:text-violet-300 transition"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-blue-50/60 text-blue-900 hover:bg-blue-50 dark:bg-blue-950/40 dark:text-blue-300 transition"
                   >
                     <Paperclip :size="12" /> Lihat Surat
                   </button>
@@ -791,7 +791,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
 
     <!-- Empty State for Academic Tabs when no class is selected -->
     <div v-else-if="!selectedClassId" class="bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-16 text-center text-slate-400 dark:text-zinc-500">
-      <LayoutGrid class="mx-auto mb-3 opacity-40 animate-pulse text-violet-600 dark:text-violet-400" :size="40" />
+      <LayoutGrid class="mx-auto mb-3 opacity-40 animate-pulse text-blue-900 dark:text-blue-400" :size="40" />
       <h3 class="font-bold text-slate-700 dark:text-zinc-300 text-sm">Belum Ada Kelas yang Dipilih</h3>
       <p class="text-xs mt-1 max-w-sm mx-auto">Silakan pilih Unit Sekolah, Tahun Ajaran, dan Kelas Rombel untuk memuat formulir input akademik.</p>
     </div>
@@ -801,7 +801,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
 
       <!-- Loading Overlay -->
       <div v-if="loading" class="py-20 text-center text-slate-400">
-        <div class="w-8 h-8 rounded-full border-2 border-violet-600 border-t-transparent animate-spin mx-auto mb-3"></div>
+        <div class="w-8 h-8 rounded-full border-2 border-blue-900 border-t-transparent animate-spin mx-auto mb-3"></div>
         <p class="text-xs font-semibold">Memuat data siswa...</p>
       </div>
 
@@ -836,7 +836,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
                     type="number" 
                     v-model.number="student.attendance.sick" 
                     min="0"
-                    class="w-20 bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-center text-xs font-semibold outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10"
+                    class="w-20 bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-center text-xs font-semibold outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10"
                   />
                 </td>
                 <td class="p-4 text-center">
@@ -844,7 +844,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
                     type="number" 
                     v-model.number="student.attendance.leave" 
                     min="0"
-                    class="w-20 bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-center text-xs font-semibold outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10"
+                    class="w-20 bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-center text-xs font-semibold outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10"
                   />
                 </td>
                 <td class="p-4 text-center">
@@ -852,7 +852,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
                     type="number" 
                     v-model.number="student.attendance.absent" 
                     min="0"
-                    class="w-20 bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-center text-xs font-semibold outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10"
+                    class="w-20 bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-center text-xs font-semibold outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10"
                   />
                 </td>
               </tr>
@@ -878,7 +878,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
                   <span class="text-[10px] text-slate-400 dark:text-zinc-500">NIS: {{ student.student_number || '-' }}</span>
                 </td>
                 <td class="p-4">
-                  <select v-model="student.extracurricular.extracurricular_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+                  <select v-model="student.extracurricular.extracurricular_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
                     <option value="">Tidak Mengikuti Ekskul</option>
                     <option v-for="e in activeExtracurriculars" :key="e.id" :value="e.id">{{ e.name }}</option>
                   </select>
@@ -889,7 +889,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
                     v-model="student.extracurricular.grade"
                     :disabled="!student.extracurricular.extracurricular_id"
                     placeholder="Nilai (misal: A)"
-                    class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 disabled:opacity-40"
+                    class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 disabled:opacity-40"
                   />
                 </td>
                 <td class="p-4 pr-6">
@@ -898,7 +898,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
                     v-model="student.extracurricular.description"
                     :disabled="!student.extracurricular.extracurricular_id"
                     placeholder="Keterangan pencapaian ekskul"
-                    class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 disabled:opacity-40"
+                    class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 disabled:opacity-40"
                   />
                 </td>
               </tr>
@@ -926,7 +926,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
                     v-model="student.homeroom_notes"
                     rows="2"
                     placeholder="Tuliskan catatan perkembangan umum perkembangan murid..."
-                    class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 resize-none leading-relaxed"
+                    class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 resize-none leading-relaxed"
                   ></textarea>
                 </td>
               </tr>
@@ -990,11 +990,11 @@ const removePhoto = (studentId: string, slotIndex: number) => {
     <BaseModal :show="showImportModal" title="Import Data Akademik Rapor Kelas via Excel" @close="showImportModal = false; importResult = null; importFile = null">
       <div class="space-y-5">
         <!-- Instructions -->
-        <div class="flex items-start gap-3 p-4 bg-violet-50 dark:bg-violet-950/30 rounded-lg border border-violet-100 dark:border-violet-900/50">
-          <FileSpreadsheet class="text-violet-500 shrink-0 mt-0.5" :size="18" />
-          <div class="text-xs text-violet-700 dark:text-violet-300">
+        <div class="flex items-start gap-3 p-4 bg-blue-50/60 dark:bg-blue-950/30 rounded-lg border border-blue-100 dark:border-blue-900/30">
+          <FileSpreadsheet class="text-blue-600 shrink-0 mt-0.5" :size="18" />
+          <div class="text-xs text-blue-900 dark:text-blue-300">
             <p class="font-bold mb-1">Panduan Import</p>
-            <ol class="list-decimal ml-4 space-y-0.5 text-violet-600 dark:text-violet-400">
+            <ol class="list-decimal ml-4 space-y-0.5 text-blue-900 dark:text-blue-400">
               <li>Unduh template Excel ter-update terlebih dahulu dengan menekan tombol <strong>Unduh Template</strong> di halaman ini.</li>
               <li>Isi atau edit baris data siswa yang terletak di bagian bawah (baris ke-9 dan seterusnya).</li>
               <li>Jangan merubah kolom <strong>ID Siswa</strong>, NIS, NISN, atau Nama agar sinkronisasi data tidak gagal.</li>
@@ -1006,8 +1006,8 @@ const removePhoto = (studentId: string, slotIndex: number) => {
         <!-- File picker -->
         <div class="flex flex-col gap-1.5">
           <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Pilih File Excel (.xlsx)</label>
-          <label class="flex items-center gap-3 cursor-pointer border-2 border-dashed border-slate-200 dark:border-zinc-700 rounded-lg px-4 py-5 hover:border-violet-400 dark:hover:border-violet-600 transition-colors group">
-            <Upload class="text-slate-400 group-hover:text-violet-500 transition-colors" :size="20" />
+          <label class="flex items-center gap-3 cursor-pointer border-2 border-dashed border-slate-200 dark:border-zinc-700 rounded-lg px-4 py-5 hover:border-blue-400 dark:hover:border-blue-900 transition-colors group">
+            <Upload class="text-slate-400 group-hover:text-blue-600 transition-colors" :size="20" />
             <div class="flex-1 min-w-0">
               <p v-if="importFile" class="text-sm font-semibold text-slate-800 dark:text-zinc-200 truncate">{{ importFile.name }}</p>
               <p v-else class="text-sm text-slate-400 dark:text-zinc-555 truncate">Klik untuk memilih file atau seret ke sini</p>
@@ -1070,7 +1070,7 @@ const removePhoto = (studentId: string, slotIndex: number) => {
           />
         </div>
         <div class="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
-          <a :href="selectedLeaveAttachment || '#'" target="_blank" class="px-3 py-1.5 text-xs font-semibold text-violet-600 hover:underline flex items-center gap-1">
+          <a :href="selectedLeaveAttachment || '#'" target="_blank" class="px-3 py-1.5 text-xs font-semibold text-blue-900 hover:underline flex items-center gap-1">
             <Eye :size="13" /> Buka Tab Baru
           </a>
           <BaseButton variant="outline" size="sm" @click="selectedLeaveAttachment = null">Tutup</BaseButton>

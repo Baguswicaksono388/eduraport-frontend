@@ -25,11 +25,11 @@ const aiQuotaPercent = computed(() => {
   
   <div v-else-if="subscription" class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm relative overflow-hidden">
     <!-- Background Decor -->
-    <div class="absolute -right-6 -top-6 w-32 h-32 bg-violet-600/5 rounded-full blur-2xl pointer-events-none"></div>
+    <div class="absolute -right-6 -top-6 w-32 h-32 bg-blue-600/5 rounded-full blur-2xl pointer-events-none"></div>
 
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-2">
-        <div class="p-2 rounded-lg bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400">
+        <div class="p-2 rounded-lg bg-blue-100 dark:bg-blue-950/30 text-blue-900 dark:text-blue-400">
           <Crown :size="20" v-if="isPro" class="text-amber-500" />
           <Sparkles :size="20" v-else />
         </div>
@@ -55,7 +55,7 @@ const aiQuotaPercent = computed(() => {
           <span class="font-semibold text-slate-800 dark:text-slate-200">{{ subscription.ai_generation_used }} / {{ subscription.ai_generation_limit }}</span>
         </div>
         <div class="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-2">
-          <div class="bg-violet-600 h-2 rounded-full transition-all" :style="{ width: `${aiQuotaPercent}%` }" :class="{'bg-red-500': aiQuotaPercent >= 100}"></div>
+          <div class="bg-blue-900 h-2 rounded-full transition-all" :style="{ width: `${aiQuotaPercent}%` }" :class="{'bg-red-500': aiQuotaPercent >= 100}"></div>
         </div>
       </div>
 
@@ -69,7 +69,7 @@ const aiQuotaPercent = computed(() => {
     </div>
 
     <div class="mt-6 pt-4 border-t border-slate-100 dark:border-zinc-800">
-      <NuxtLink to="/b2c/subscription" class="text-sm font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 flex items-center gap-1">
+      <NuxtLink to="/b2c/subscription" class="text-sm font-semibold text-blue-900 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 flex items-center gap-1">
         Upgrade Paket <ArrowRight :size="14" />
       </NuxtLink>
     </div>

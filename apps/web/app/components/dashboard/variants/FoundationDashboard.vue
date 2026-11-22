@@ -58,13 +58,13 @@ const getMetricValue = (key: string) => {
 <template>
   <div class="space-y-6">
     <!-- Header Greeting for Yayasan -->
-    <div class="bg-gradient-to-r from-violet-600 to-indigo-700 dark:from-violet-900 dark:to-indigo-950 text-white rounded-2xl p-6 shadow-md relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in duration-300">
+    <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 dark:from-slate-900 dark:to-blue-950 text-white rounded-2xl p-6 shadow-md relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in duration-300">
       <div class="space-y-2 relative z-10">
         <h2 class="text-xl md:text-2xl font-black tracking-tight flex items-center gap-2.5">
-          <Building2 :size="24" class="text-violet-200" />
+          <Building2 :size="24" class="text-blue-200" />
           Selamat Datang, Pengurus Yayasan
         </h2>
-        <p class="text-xs md:text-sm text-violet-100 font-semibold max-w-2xl leading-relaxed">
+        <p class="text-xs md:text-sm text-blue-100 font-semibold max-w-2xl leading-relaxed">
           Dashboard Konsolidasi Yayasan menyajikan performa agregat dari seluruh unit sekolah yang Anda naungi. Pantau kehadiran, finansial, dan kelengkapan akademik secara terpadu.
         </p>
       </div>
@@ -161,7 +161,7 @@ const getMetricValue = (key: string) => {
             </div>
             <div class="w-full bg-slate-100 dark:bg-zinc-800 h-2.5 rounded-full overflow-hidden relative">
               <div 
-                class="bg-violet-500 h-full rounded-full transition-all duration-1000 ease-out"
+                class="bg-blue-50/600 h-full rounded-full transition-all duration-1000 ease-out"
                 :style="{ width: Math.min(100, ((r.occupancyPayload.total_students || 0) / (r.occupancyPayload.total_capacity || 1)) * 100) + '%' }"
               ></div>
             </div>
@@ -183,7 +183,7 @@ const getMetricValue = (key: string) => {
             Komparasi metriks operasional, finansial, dan kesehatan sekolah secara real-time.
           </p>
         </div>
-        <TrendingUp class="text-violet-500 hidden sm:block" :size="20" />
+        <TrendingUp class="text-blue-600 hidden sm:block" :size="20" />
       </div>
 
       <div class="overflow-x-auto">

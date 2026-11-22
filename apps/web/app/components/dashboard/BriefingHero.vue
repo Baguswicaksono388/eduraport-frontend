@@ -23,9 +23,9 @@ const todayStr = computed(() => {
 </script>
 
 <template>
-  <div class="relative bg-gradient-to-br from-violet-900 via-indigo-950 to-slate-950 text-white rounded-xl p-6 md:p-8 border border-slate-800 shadow-xl overflow-hidden animate-in zoom-in-95 duration-500">
+  <div class="relative bg-gradient-to-br bg-slate-900 text-white rounded-xl p-6 md:p-8 border border-slate-800 shadow-xl overflow-hidden animate-in zoom-in-95 duration-500">
     <!-- Sophisticated decorative glow elements -->
-    <div class="absolute -right-16 -top-16 w-64 h-64 bg-violet-600/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -right-16 -top-16 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
     <div class="absolute -left-16 -bottom-16 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
     <div class="relative z-10 space-y-4">

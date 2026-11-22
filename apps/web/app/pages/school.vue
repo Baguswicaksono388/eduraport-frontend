@@ -412,7 +412,7 @@ const handleDeleteSchool = async (id: string) => {
             class="w-full text-left p-4 rounded-lg border cursor-pointer transition-all flex items-center justify-between group"
             :class="[
               selectedFoundationId === foundation.id
-                ? 'bg-violet-50/50 border-violet-600 dark:bg-violet-950/20 dark:border-violet-400 text-violet-900 dark:text-violet-300 shadow-sm'
+                ? 'bg-blue-50/50 border-blue-900 dark:bg-blue-950/20 dark:border-blue-400 text-blue-950 dark:text-blue-300 shadow-sm'
                 : 'bg-white dark:bg-zinc-900/60 border-slate-200/60 dark:border-zinc-800/80 text-slate-700 dark:text-zinc-300 hover:border-slate-300 dark:hover:border-zinc-700'
             ]"
           >
@@ -487,7 +487,7 @@ const handleDeleteSchool = async (id: string) => {
         <div v-if="selectedFoundation" class="bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm space-y-4">
           <div class="flex items-center justify-between">
             <h3 class="text-sm font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
-              <BookOpen class="text-violet-600 dark:text-violet-400" :size="16" />
+              <BookOpen class="text-blue-900 dark:text-blue-400" :size="16" />
               Master Kurikulum Yayasan
             </h3>
             <BaseButton variant="outline" @click="openCreateCurriculumModal" class="py-1.5 px-2.5 text-[11px] font-bold flex items-center gap-1">
@@ -500,17 +500,17 @@ const handleDeleteSchool = async (id: string) => {
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
                   <p class="font-bold text-xs text-slate-800 dark:text-zinc-200 leading-snug">{{ curr.name }}</p>
-                  <span v-if="curr.code" class="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 border border-violet-100 dark:border-violet-900/30 uppercase">
+                  <span v-if="curr.code" class="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold bg-blue-50/60 dark:bg-blue-950/40 text-blue-900 dark:text-blue-400 border border-blue-100 dark:border-blue-950/30 uppercase">
                     {{ curr.code }}
                   </span>
                 </div>
                 <p class="text-[10px] text-slate-500 dark:text-zinc-450 leading-relaxed">{{ curr.description || 'Tidak ada deskripsi' }}</p>
               </div>
               <div class="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2">
-                <button @click="openCategoriesModal(curr)" class="p-1 text-slate-450 hover:text-violet-600 transition-colors" title="Kelola Kategori Mapel">
+                <button @click="openCategoriesModal(curr)" class="p-1 text-slate-450 hover:text-blue-900 transition-colors" title="Kelola Kategori Mapel">
                   <BookOpen :size="12" />
                 </button>
-                <button @click="openEditCurriculumModal(curr)" class="p-1 text-slate-450 hover:text-violet-600 transition-colors">
+                <button @click="openEditCurriculumModal(curr)" class="p-1 text-slate-450 hover:text-blue-900 transition-colors">
                   <Edit2 :size="12" />
                 </button>
                 <button @click="handleDeleteCurriculum(curr.id)" class="p-1 text-slate-450 hover:text-rose-600 transition-colors">
@@ -531,11 +531,11 @@ const handleDeleteSchool = async (id: string) => {
             <BaseCard v-for="school in schools" :key="school.id" stripe class="relative group hover:border-slate-300 dark:hover:border-zinc-700">
               <div class="flex items-start justify-between">
                 <div class="flex gap-4">
-                  <div class="w-10 h-10 bg-violet-50 dark:bg-zinc-800/80 rounded-lg flex items-center justify-center text-violet-600 dark:text-violet-400">
+                  <div class="w-10 h-10 bg-blue-50/60 dark:bg-zinc-800/80 rounded-lg flex items-center justify-center text-blue-900 dark:text-blue-400">
                     <School :size="20" />
                   </div>
                   <div class="space-y-1">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 border border-violet-100 dark:border-violet-900/30">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-50/60 dark:bg-blue-950/40 text-blue-900 dark:text-blue-400 border border-blue-100 dark:border-blue-950/30">
                       {{ school.level }}
                     </span>
                     <h4 class="font-bold text-sm text-slate-900 dark:text-zinc-100 pt-1 leading-snug">{{ school.name }}</h4>
@@ -546,7 +546,7 @@ const handleDeleteSchool = async (id: string) => {
                 <div class="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     @click="openEditSchoolModal(school)"
-                    class="p-1.5 text-slate-300 hover:text-violet-500 transition-colors"
+                    class="p-1.5 text-slate-300 hover:text-blue-600 transition-colors"
                     title="Edit Detail"
                   >
                     <Edit2 :size="16" />
@@ -599,19 +599,19 @@ const handleDeleteSchool = async (id: string) => {
             <div v-if="schoolForm.logo" class="w-16 h-16 rounded overflow-hidden border mb-2">
               <img :src="schoolForm.logo" class="w-full h-full object-cover" />
             </div>
-            <input type="file" accept="image/*" @change="(e) => logoFile = (e.target as HTMLInputElement).files?.[0] || null" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-1.5 text-xs font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" />
+            <input type="file" accept="image/*" @change="(e) => logoFile = (e.target as HTMLInputElement).files?.[0] || null" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-1.5 text-xs font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-blue-50/60 file:text-blue-900 hover:file:bg-blue-50" />
           </div>
           <div class="flex flex-col gap-1.5 w-full">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Logo Dinas/Yayasan (Opsional)</label>
             <div v-if="schoolForm.logo_dinas" class="w-16 h-16 rounded overflow-hidden border mb-2">
               <img :src="schoolForm.logo_dinas" class="w-full h-full object-cover" />
             </div>
-            <input type="file" accept="image/*" @change="(e) => logoDinasFile = (e.target as HTMLInputElement).files?.[0] || null" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-1.5 text-xs font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" />
+            <input type="file" accept="image/*" @change="(e) => logoDinasFile = (e.target as HTMLInputElement).files?.[0] || null" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-1.5 text-xs font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-blue-50/60 file:text-blue-900 hover:file:bg-blue-50" />
           </div>
         </div>
         <div class="flex flex-col gap-1.5 w-full">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Jenjang</label>
-          <select v-model="schoolForm.level" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="schoolForm.level" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option value="TK">TK / KB / PAUD</option>
             <option value="SD">SD</option>
             <option value="SMP">SMP</option>
@@ -626,7 +626,7 @@ const handleDeleteSchool = async (id: string) => {
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5 w-full">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Kurikulum</label>
-            <select v-model="schoolForm.curriculum_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+            <select v-model="schoolForm.curriculum_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
               <option value="">Pilih Kurikulum</option>
               <option v-for="curr in curriculums" :key="curr.id" :value="curr.id">{{ curr.name }}</option>
             </select>
@@ -692,7 +692,7 @@ const handleDeleteSchool = async (id: string) => {
               <p class="text-[10px] text-slate-500 dark:text-zinc-450 leading-relaxed">{{ cat.description || 'Tidak ada deskripsi' }}</p>
             </div>
             <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2">
-              <button @click="openEditCategory(cat)" class="p-1 text-slate-450 hover:text-violet-600 transition-colors">
+              <button @click="openEditCategory(cat)" class="p-1 text-slate-450 hover:text-blue-900 transition-colors">
                 <Edit2 :size="12" />
               </button>
               <button @click="handleDeleteCategory(cat.id)" class="p-1 text-slate-450 hover:text-rose-600 transition-colors">

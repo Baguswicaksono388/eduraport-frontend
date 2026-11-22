@@ -9,8 +9,8 @@ const props = defineProps<{
 
 const w = computed(() => props.width || 120)
 const h = computed(() => props.height || 40)
-const stroke = computed(() => props.strokeColor || '#8b5cf6') // violet-500
-const fill = computed(() => props.fillColor || '#c084fc') // violet-400
+const stroke = computed(() => props.strokeColor || '#2563EB') // blue-600
+const fill = computed(() => props.fillColor || '#93C5FD') // blue-300
 
 const points = computed(() => {
   if (!props.data || props.data.length < 2) return ''

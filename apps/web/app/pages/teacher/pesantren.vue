@@ -1506,7 +1506,7 @@ const handleSaveBulkIbadah = async () => {
           <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-xl p-4 shadow-xs relative overflow-hidden">
             <div class="flex items-center justify-between">
               <span class="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Log Mutaaba'ah</span>
-              <span class="p-2 rounded-lg bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-400">
+              <span class="p-2 rounded-lg bg-blue-50 text-blue-900 dark:bg-blue-950/60 dark:text-blue-400">
                 <Activity :size="16" />
               </span>
             </div>
@@ -1516,11 +1516,11 @@ const handleSaveBulkIbadah = async () => {
             </div>
             <div class="mt-2 flex items-center justify-between text-xs">
               <span class="text-slate-500 dark:text-zinc-400">{{ analyticsData.overview?.active_ibadah_students ?? 0 }} santri terdata</span>
-              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50/60 text-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
                 Presensi Ibadah
               </span>
             </div>
-            <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 to-purple-400"></div>
+            <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-blue-400"></div>
           </div>
         </div>
 

@@ -96,14 +96,14 @@ const reports = computed(() => {
 
 const quickActions = [
   { label: 'Kehadiran', to: '/parent/attendance', icon: CalendarCheck, color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40' },
-  { label: 'Nilai & Sikap', to: '/parent/grades', icon: Award, color: 'text-violet-600 bg-violet-50 dark:bg-violet-950/40' },
+  { label: 'Nilai & Sikap', to: '/parent/grades', icon: Award, color: 'text-blue-900 bg-blue-50/60 dark:bg-blue-950/40' },
   { label: 'Tagihan SPP', to: '/parent/bills', icon: DollarSign, color: 'text-rose-500 bg-rose-50 dark:bg-rose-950/40' },
   { label: 'Jadwal Pelajaran', to: '/parent/schedule', icon: Clock, color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-950/40' },
   { label: 'Pesan Guru', to: '/parent/messages', icon: MessageSquare, color: 'text-blue-500 bg-blue-50 dark:bg-blue-950/40' },
   { label: 'Ajukan Izin', to: '/parent/leave', icon: FileEdit, color: 'text-amber-500 bg-amber-50 dark:bg-amber-950/40' },
   { label: 'Dompet Kantin', to: '/parent/wallet', icon: Wallet, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40' },
   { label: 'Tahfidz Pesantren', to: '/parent/pesantren', icon: BookMarked, color: 'text-teal-600 bg-teal-50 dark:bg-teal-950/40' },
-  { label: 'Janji Temu PTM', to: '/parent/meetings', icon: CalendarCheck, color: 'text-violet-500 bg-violet-50 dark:bg-violet-950/40' },
+  { label: 'Janji Temu PTM', to: '/parent/meetings', icon: CalendarCheck, color: 'text-blue-600 bg-blue-50/60 dark:bg-blue-950/40' },
   { label: 'Pengumuman', to: '/parent/announcements', icon: Bell, color: 'text-orange-500 bg-orange-50 dark:bg-orange-950/40' },
   { label: 'Notifikasi', to: '/parent/notification-preferences', icon: Bell, color: 'text-slate-600 bg-slate-100 dark:bg-zinc-800' },
   { label: 'Log Keamanan', to: '/parent/security-log', icon: ShieldCheck, color: 'text-slate-600 bg-slate-100 dark:bg-zinc-800' }
@@ -113,7 +113,7 @@ const quickActions = [
 <template>
   <div class="space-y-6">
     <div v-if="loading" class="flex justify-center py-20">
-      <div class="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-10 h-10 border-4 border-blue-900 dark:border-blue-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <div v-else-if="!dashboardData || !dashboardData.students?.length" class="text-center py-12 bg-white/50 dark:bg-zinc-900/50 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800">
@@ -134,8 +134,8 @@ const quickActions = [
             :class="[
               'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 border shrink-0',
               selectedChildId === student.id
-                ? 'bg-violet-600 text-white border-violet-600 shadow-lg shadow-violet-500/25'
-                : 'bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-800 hover:border-violet-300'
+                ? 'bg-blue-900 dark:bg-blue-600 text-white border-blue-900 dark:border-blue-600 shadow-sm'
+                : 'bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-800 hover:border-blue-300'
             ]"
           >
             <div class="w-2 h-2 rounded-full" :class="selectedChildId === student.id ? 'bg-amber-300' : 'bg-slate-300'"></div>
@@ -153,12 +153,12 @@ const quickActions = [
             v-for="action in quickActions"
             :key="action.to"
             :to="action.to"
-            class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 hover:border-violet-500 p-3 rounded-2xl flex flex-col items-center justify-center text-center group hover:shadow-md transition-all"
+            class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 hover:border-blue-600/60 p-3 rounded-xl flex flex-col items-center justify-center text-center group hover:shadow-sm transition-all"
           >
-            <div :class="['p-2.5 rounded-xl mb-2 group-hover:scale-110 transition-transform', action.color]">
+            <div :class="['p-2.5 rounded-xl mb-2 group-hover:scale-105 transition-transform', action.color]">
               <component :is="action.icon" :size="20" />
             </div>
-            <span class="text-[11px] font-bold text-slate-800 dark:text-zinc-200 line-clamp-1 group-hover:text-violet-600 transition">
+            <span class="text-[11px] font-bold text-slate-800 dark:text-zinc-200 line-clamp-1 group-hover:text-blue-900 dark:group-hover:text-blue-400 transition">
               {{ action.label }}
             </span>
           </NuxtLink>
@@ -241,12 +241,12 @@ const quickActions = [
       <!-- Latest Reports List -->
       <div class="mt-8">
         <h3 class="text-lg font-bold text-slate-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
-          <FileText class="text-violet-600 dark:text-violet-400" :size="20" />
+          <FileText class="text-blue-900 dark:text-blue-400" :size="20" />
           Rapor Digital Terbaru
         </h3>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <BaseCard v-for="report in reports" :key="report.id" class="hover:border-violet-500 hover:shadow-md transition-all group">
+          <BaseCard v-for="report in reports" :key="report.id" class="hover:border-blue-600 hover:shadow-md transition-all group">
             <div class="flex justify-between items-start">
               <div>
                 <h4 class="font-bold text-slate-900 dark:text-zinc-100 text-base">{{ report.title || `Rapor Semester ${report.semester || ''}` }}</h4>
@@ -264,7 +264,7 @@ const quickActions = [
                   </span>
                 </div>
               </div>
-              <NuxtLink :to="`/parent/report/${report.id}?studentId=${selectedChildId}`" class="p-2 bg-slate-50 dark:bg-zinc-900 text-slate-400 group-hover:text-violet-600 group-hover:bg-violet-50 dark:group-hover:bg-violet-900/30 rounded-lg transition-colors">
+              <NuxtLink :to="`/parent/report/${report.id}?studentId=${selectedChildId}`" class="p-2 bg-slate-50 dark:bg-zinc-900 text-slate-400 group-hover:text-blue-900 group-hover:bg-blue-50/60 dark:group-hover:bg-blue-950/40 rounded-lg transition-colors">
                 <ArrowRight :size="20" />
               </NuxtLink>
             </div>

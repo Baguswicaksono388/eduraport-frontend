@@ -156,14 +156,14 @@ const toggleRole = (roleVal: string) => {
             class="p-4 rounded-xl border transition-all"
             :class="[
               editingKey === m.metric_key 
-                ? 'border-violet-500 bg-violet-50/10 dark:bg-violet-950/10' 
+                ? 'border-blue-600 bg-blue-50/60/10 dark:bg-blue-950/10' 
                 : 'border-slate-100 dark:border-zinc-800 bg-slate-50/30 dark:bg-zinc-950/10 hover:border-slate-200 dark:hover:border-zinc-700'
             ]"
           >
             <!-- Header of Card -->
             <div class="flex flex-wrap items-start justify-between gap-4">
               <div class="space-y-1 max-w-[70%]">
-                <span class="text-[10px] font-bold tracking-widest text-violet-500 uppercase">
+                <span class="text-[10px] font-bold tracking-widest text-blue-600 uppercase">
                   {{ m.metric_key }}
                 </span>
                 <h4 class="text-xs font-bold text-slate-700 dark:text-zinc-100">
@@ -198,7 +198,7 @@ const toggleRole = (roleVal: string) => {
                   :class="[
                     getThresholdForMetric(m.metric_key)
                       ? 'bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300'
-                      : 'bg-violet-600 hover:bg-violet-700 text-white shadow-sm shadow-violet-600/20'
+                      : 'bg-blue-900 hover:bg-blue-800 text-white shadow-sm shadow-sm'
                   ]"
                 >
                   <Edit2 v-if="getThresholdForMetric(m.metric_key)" :size="10" />
@@ -220,7 +220,7 @@ const toggleRole = (roleVal: string) => {
                     <label class="text-[9px] font-bold text-slate-400 uppercase pl-0.5">Operator</label>
                     <select 
                       v-model="form.operator" 
-                      class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-violet-600"
+                      class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-blue-900"
                     >
                       <option value="lt">&lt; (Kurang dari)</option>
                       <option value="lte">&le; (Kurang dari/Sama)</option>
@@ -235,7 +235,7 @@ const toggleRole = (roleVal: string) => {
                       type="number" 
                       v-model.number="form.threshold_value" 
                       step="any"
-                      class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-violet-600"
+                      class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-blue-900"
                     />
                   </div>
                 </div>
@@ -246,7 +246,7 @@ const toggleRole = (roleVal: string) => {
                     <input 
                       type="number" 
                       v-model.number="form.notify_cooldown_hours" 
-                      class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-violet-600"
+                      class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-blue-900"
                     />
                   </div>
 
@@ -255,7 +255,7 @@ const toggleRole = (roleVal: string) => {
                       <input 
                         type="checkbox" 
                         v-model="form.is_active" 
-                        class="rounded border-slate-300 dark:border-zinc-700 text-violet-600 focus:ring-violet-600 w-3.5 h-3.5"
+                        class="rounded border-slate-300 dark:border-zinc-700 text-blue-900 focus:ring-blue-900/20 w-3.5 h-3.5"
                       />
                       <span class="text-xs font-bold text-slate-600 dark:text-zinc-300">Aktifkan Aturan</span>
                     </label>
@@ -298,7 +298,7 @@ const toggleRole = (roleVal: string) => {
                   <button
                     @click="save"
                     :disabled="saving"
-                    class="flex items-center gap-1 px-3.5 py-1.5 rounded-lg text-[10px] font-bold bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-50 transition-all shadow-md shadow-violet-600/10"
+                    class="flex items-center gap-1 px-3.5 py-1.5 rounded-lg text-[10px] font-bold bg-blue-900 hover:bg-blue-800 text-white disabled:opacity-50 transition-all shadow-md shadow-sm"
                   >
                     <Check :size="11" />
                     {{ saving ? 'Menyimpan...' : 'Simpan' }}

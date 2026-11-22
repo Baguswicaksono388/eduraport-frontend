@@ -309,7 +309,7 @@ const getTKGradeLabel = (grade: string) => {
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100 flex items-center gap-2">
-          <BarChart3 class="text-violet-600" /> Rekapitulasi & Analitik Nilai
+          <BarChart3 class="text-blue-900" /> Rekapitulasi & Analitik Nilai
         </h2>
         <p class="text-xs text-slate-500 dark:text-zinc-400">
           Analisis hasil pembelajaran siswa, rekap kelas otomatis, visualisasi sebaran nilai, dan peringatan dini ketuntasan.
@@ -321,14 +321,14 @@ const getTKGradeLabel = (grade: string) => {
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5 lg:col-span-2">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
       </div>
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Kelas</label>
-        <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Kelas</option>
           <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.class_name }}</option>
         </select>
@@ -336,14 +336,14 @@ const getTKGradeLabel = (grade: string) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tahun Ajaran</label>
-        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option v-for="y in academicYears" :key="y.id" :value="y.id">{{ y.name }}</option>
         </select>
       </div>
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Semester</label>
-        <select v-model="selectedSemester" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSemester" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option value="odd">Ganjil</option>
           <option value="even">Genap</option>
         </select>
@@ -365,28 +365,28 @@ const getTKGradeLabel = (grade: string) => {
         <button 
           @click="handleTabChange('recap')"
           class="px-5 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-1.5"
-          :class="activeTab === 'recap' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200'"
+          :class="activeTab === 'recap' ? 'border-blue-900 text-blue-900 dark:text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200'"
         >
           <Users :size="14" /> Rekapitulasi Kelas
         </button>
         <button 
           @click="handleTabChange('subject')"
           class="px-5 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-1.5"
-          :class="activeTab === 'subject' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200'"
+          :class="activeTab === 'subject' ? 'border-blue-900 text-blue-900 dark:text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200'"
         >
           <BookOpen :size="14" /> Analisis Mapel
         </button>
         <button 
           @click="handleTabChange('progression')"
           class="px-5 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-1.5"
-          :class="activeTab === 'progression' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200'"
+          :class="activeTab === 'progression' ? 'border-blue-900 text-blue-900 dark:text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200'"
         >
           <LineChart :size="14" /> Perkembangan Siswa
         </button>
         <button 
           @click="handleTabChange('warning')"
           class="px-5 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-1.5"
-          :class="activeTab === 'warning' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200'"
+          :class="activeTab === 'warning' ? 'border-blue-900 text-blue-900 dark:text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200'"
         >
           <AlertTriangle :size="14" /> Early Warning
         </button>
@@ -394,7 +394,7 @@ const getTKGradeLabel = (grade: string) => {
 
       <!-- Loading Panel -->
       <div v-if="loading" class="flex flex-col items-center justify-center py-32 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm">
-        <div class="w-8 h-8 border-4 border-violet-500/20 border-t-violet-500 rounded-full animate-spin mb-4"></div>
+        <div class="w-8 h-8 border-4 border-blue-500/20 border-t-blue-900 rounded-full animate-spin mb-4"></div>
         <p class="text-xs font-bold text-slate-500">Mengkalkulasi analitik kelas...</p>
       </div>
 
@@ -402,8 +402,8 @@ const getTKGradeLabel = (grade: string) => {
       <div v-else-if="activeTab === 'recap' && recapData" class="space-y-6">
         <!-- Dashboard recap stats -->
         <div v-if="recapData.level !== 'TK'" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div class="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-2xl p-5 text-white shadow-md">
-            <p class="text-[10px] font-bold text-violet-200 uppercase tracking-wider">Rata-rata Kelas</p>
+          <div class="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 rounded-2xl p-5 text-white shadow-md">
+            <p class="text-[10px] font-bold text-blue-200 uppercase tracking-wider">Rata-rata Kelas</p>
             <h3 class="text-3xl font-black mt-2">
               {{ 
                 recapData.students?.length > 0 
@@ -411,7 +411,7 @@ const getTKGradeLabel = (grade: string) => {
                   : '-'
               }}
             </h3>
-            <p class="text-[9px] text-violet-200 mt-1">Akumulasi seluruh mata pelajaran</p>
+            <p class="text-[9px] text-blue-200 mt-1">Akumulasi seluruh mata pelajaran</p>
           </div>
           <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm">
             <p class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Ketuntasan KKM</p>
@@ -451,7 +451,7 @@ const getTKGradeLabel = (grade: string) => {
               v-model="searchQuery"
               type="text" 
               placeholder="Cari murid..." 
-              class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg pl-9 pr-4 py-2 text-xs font-semibold outline-none focus:border-violet-600"
+              class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg pl-9 pr-4 py-2 text-xs font-semibold outline-none focus:border-blue-900"
             />
           </div>
 
@@ -461,7 +461,7 @@ const getTKGradeLabel = (grade: string) => {
               @click="showRanking = !showRanking" 
               type="button" 
               class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
-              :class="showRanking ? 'bg-violet-600' : 'bg-slate-350 dark:bg-zinc-800'"
+              :class="showRanking ? 'bg-blue-900' : 'bg-slate-350 dark:bg-zinc-800'"
             >
               <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" :class="showRanking ? 'translate-x-5' : 'translate-x-0'"></span>
             </button>
@@ -544,7 +544,7 @@ const getTKGradeLabel = (grade: string) => {
                       </span>
                       <span v-else class="text-slate-300 dark:text-zinc-700">-</span>
                     </td>
-                    <td class="p-4 text-center font-black bg-slate-50/20 dark:bg-zinc-950/10 text-violet-600 dark:text-violet-400 text-sm">
+                    <td class="p-4 text-center font-black bg-slate-50/20 dark:bg-zinc-950/10 text-blue-900 dark:text-blue-400 text-sm">
                       {{ std.average_score !== null ? std.average_score : '-' }}
                     </td>
                   </template>
@@ -579,7 +579,7 @@ const getTKGradeLabel = (grade: string) => {
                   >
                     {{ sub.class_average !== null ? sub.class_average : '-' }}
                   </td>
-                  <td class="p-4 text-center text-sm font-black text-violet-600 dark:text-violet-400 bg-slate-50/60 dark:bg-zinc-950/35">
+                  <td class="p-4 text-center text-sm font-black text-blue-900 dark:text-blue-400 bg-slate-50/60 dark:bg-zinc-950/35">
                     {{ 
                       recapData.students?.length > 0 
                         ? (recapData.students.reduce((acc: number, s: any) => acc + (s.average_score || 0), 0) / recapData.students.filter((s: any) => s.average_score !== null).length).toFixed(2)
@@ -600,7 +600,7 @@ const getTKGradeLabel = (grade: string) => {
           <label class="text-xs font-bold text-slate-600 dark:text-zinc-400">
             {{ recapData.level === 'TK' ? 'Pilih Elemen Perkembangan:' : 'Pilih Mata Pelajaran:' }}
           </label>
-          <select v-model="selectedSchemeId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 min-w-[200px] text-slate-900 dark:text-zinc-100">
+          <select v-model="selectedSchemeId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-blue-900 min-w-[200px] text-slate-900 dark:text-zinc-100">
             <template v-if="recapData.level === 'TK'">
               <option v-for="el in recapData.elements" :key="el.id" :value="el.id">
                 {{ el.name }}
@@ -619,7 +619,7 @@ const getTKGradeLabel = (grade: string) => {
           <div v-if="recapData.level === 'TK'" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm text-center">
               <p class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Total Penilaian</p>
-              <h3 class="text-3xl font-black text-violet-600 dark:text-violet-400 mt-2">
+              <h3 class="text-3xl font-black text-blue-900 dark:text-blue-400 mt-2">
                 {{ distributionData.stats.total_students }}
               </h3>
               <p class="text-[9px] text-slate-400 mt-1">Siswa teramati</p>
@@ -648,7 +648,7 @@ const getTKGradeLabel = (grade: string) => {
           <div v-else class="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm text-center">
               <p class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Rata-rata Kelas</p>
-              <h3 class="text-3xl font-black text-violet-600 dark:text-violet-400 mt-2">{{ distributionData.stats.average || '-' }}</h3>
+              <h3 class="text-3xl font-black text-blue-900 dark:text-blue-400 mt-2">{{ distributionData.stats.average || '-' }}</h3>
             </div>
             <div class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm text-center">
               <p class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Nilai Tertinggi</p>
@@ -750,7 +750,7 @@ const getTKGradeLabel = (grade: string) => {
         <!-- Sub selector for students -->
         <div class="flex items-center gap-3 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 p-4 rounded-xl shadow-sm">
           <label class="text-xs font-bold text-slate-600 dark:text-zinc-400">Pilih Murid:</label>
-          <select v-model="selectedStudentId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 min-w-[200px] text-slate-900 dark:text-zinc-100">
+          <select v-model="selectedStudentId" class="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-blue-900 min-w-[200px] text-slate-900 dark:text-zinc-100">
             <option v-for="std in recapData.students" :key="std.id" :value="std.id">
               {{ std.full_name }}
             </option>
@@ -768,7 +768,7 @@ const getTKGradeLabel = (grade: string) => {
                 <h4 class="text-sm font-bold text-slate-800 dark:text-zinc-200">{{ sub.subject_name }}</h4>
                 <p class="text-[10px] text-slate-400 font-medium">{{ sub.subject_code }}</p>
               </div>
-              <div class="p-2 bg-violet-600/10 rounded-lg text-violet-600">
+              <div class="p-2 bg-blue-600/10 rounded-lg text-blue-900">
                 <TrendingUp :size="16" />
               </div>
             </div>
@@ -781,7 +781,7 @@ const getTKGradeLabel = (grade: string) => {
                 class="relative"
               >
                 <!-- Dot marker -->
-                <span class="absolute -left-[31px] top-1.5 w-4.5 h-4.5 rounded-full border-4 border-white dark:border-zinc-900 bg-violet-600 flex items-center justify-center">
+                <span class="absolute -left-[31px] top-1.5 w-4.5 h-4.5 rounded-full border-4 border-white dark:border-zinc-900 bg-blue-900 flex items-center justify-center">
                   <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
                 </span>
                 

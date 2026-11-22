@@ -62,12 +62,12 @@ const isCurrentLive = (day: string, startTime: string, endTime: string) => {
   <div class="space-y-6 max-w-5xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-violet-600 transition">
+        <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-blue-900 dark:hover:text-blue-400 transition">
           <ArrowLeft :size="18" />
         </NuxtLink>
         <div>
           <h2 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
-            <Clock class="text-indigo-600" :size="24" />
+            <Clock class="text-blue-900 dark:text-blue-400" :size="24" />
             Jadwal Pelajaran
           </h2>
           <p class="text-xs text-slate-500">Jadwal mata pelajaran dan ruang kelas mingguan</p>
@@ -76,7 +76,7 @@ const isCurrentLive = (day: string, startTime: string, endTime: string) => {
 
       <!-- Child Selector -->
       <div v-if="myChildren.length > 1" class="w-48">
-        <select v-model="selectedChildId" @change="loadSchedule" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600">
+        <select v-model="selectedChildId" @change="loadSchedule" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-blue-700">
           <option v-for="c in myChildren" :key="c.student_id" :value="c.student_id">
             {{ c.student_name }}
           </option>
@@ -93,7 +93,7 @@ const isCurrentLive = (day: string, startTime: string, endTime: string) => {
         :class="[
           'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0',
           activeDay === day
-            ? 'bg-violet-600 text-white shadow-md shadow-violet-500/20'
+            ? 'bg-blue-900 dark:bg-blue-600 text-white shadow-sm'
             : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800 hover:border-slate-300'
         ]"
       >
@@ -103,7 +103,7 @@ const isCurrentLive = (day: string, startTime: string, endTime: string) => {
     </div>
 
     <div v-if="loading" class="flex justify-center py-20">
-      <div class="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-10 h-10 border-4 border-blue-900 dark:border-blue-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <div v-else class="space-y-3">
@@ -126,7 +126,7 @@ const isCurrentLive = (day: string, startTime: string, endTime: string) => {
                 {{ item.subject_name }}
               </h3>
             </div>
-            <span class="text-xs font-black text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/40 px-2.5 py-1 rounded-lg">
+            <span class="text-xs font-black text-blue-900 dark:text-blue-400 bg-blue-50/60 dark:bg-blue-950/40 px-2.5 py-1 rounded-lg">
               {{ item.start_time }} - {{ item.end_time }}
             </span>
           </div>

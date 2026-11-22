@@ -835,7 +835,7 @@ const getStatusBadgeClass = (status: string) => {
     draft: 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-350 border-slate-200/60 dark:border-zinc-700',
     submitted: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
     approved: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
-    published: 'bg-violet-600/10 text-violet-600 dark:text-violet-400 border-violet-500/20'
+    published: 'bg-blue-600/10 text-blue-900 dark:text-blue-400 dark:text-blue-400 border-blue-500/20'
   }
   return classes[status] || 'bg-slate-100 text-slate-600'
 }
@@ -941,7 +941,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
         </p>
       </div>
       <div v-if="!isTKSchool && scheme && matrix.length > 0" class="flex gap-2">
-        <BaseButton variant="primary" @click="handleFinalizeScheme" class="py-2.5 px-4 text-xs font-bold shadow-lg shadow-violet-600/15">
+        <BaseButton variant="primary" @click="handleFinalizeScheme" class="py-2.5 px-4 text-xs font-bold shadow-lg shadow-sm">
           <Save class="mr-1.5" :size="14" /> Simpan & Kunci Nilai Akhir
         </BaseButton>
       </div>
@@ -951,14 +951,14 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5" :class="isTKSchool ? 'lg:col-span-3' : 'lg:col-span-2'">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option v-for="school in filteredSchools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
       </div>
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Kelas</label>
-        <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedClassId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Kelas</option>
           <option v-for="c in filteredClasses" :key="c.id" :value="c.id">{{ c.class_name }}</option>
         </select>
@@ -967,7 +967,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
       <!-- If TK: Template select filter -->
       <div v-if="isTKSchool" class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Template Rapor</label>
-        <select v-model="selectedTemplateId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedTemplateId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Template</option>
           <option v-for="temp in reportTemplates" :key="temp.id" :value="temp.id">{{ temp.name }}</option>
         </select>
@@ -976,7 +976,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
       <!-- If non-TK: Mata Pelajaran select filter -->
       <div v-else class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Mata Pelajaran</label>
-        <select v-model="selectedSubjectId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSubjectId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Mapel</option>
           <option v-for="sub in subjects" :key="sub.id" :value="sub.id">{{ sub.name }}</option>
         </select>
@@ -984,14 +984,14 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Tahun Ajaran</label>
-        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedAcademicYearId" :disabled="!selectedSchoolId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option v-for="y in academicYears" :key="y.id" :value="y.id">{{ y.name }}</option>
         </select>
       </div>
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Semester</label>
-        <select v-model="selectedSemester" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-violet-600 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSemester" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-semibold outline-none transition-all focus:border-blue-900 text-slate-900 dark:text-zinc-100">
           <option value="odd">Ganjil</option>
           <option value="even">Genap</option>
         </select>
@@ -1000,7 +1000,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
 
     <!-- Loading Panel -->
     <div v-if="loading || loadingTK" class="flex flex-col items-center justify-center py-20 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm animate-pulse">
-      <Loader2 class="text-violet-500 animate-spin mb-4" :size="36" />
+      <Loader2 class="text-blue-600 animate-spin mb-4" :size="36" />
       <p class="text-xs font-bold text-slate-500">Memuat data...</p>
     </div>
 
@@ -1049,7 +1049,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
             class="w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between"
             :class="[
               activeTKReport?.student_id === rep.student_id
-                ? 'bg-violet-600 border-violet-600 text-white shadow-md shadow-violet-600/10'
+                ? 'bg-blue-900 border-blue-900 text-white shadow-md shadow-blue-950/5'
                 : 'bg-slate-50/50 hover:bg-slate-50 dark:bg-zinc-950/40 dark:hover:bg-zinc-950 border-slate-200/60 dark:border-zinc-800 text-slate-800 dark:text-zinc-300'
             ]"
           >
@@ -1057,7 +1057,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
               <p class="text-xs font-bold leading-tight" :class="{'text-white': activeTKReport?.student_id === rep.student_id}">
                 {{ rep.full_name }}
               </p>
-              <p class="text-[9px]" :class="activeTKReport?.student_id === rep.student_id ? 'text-violet-200' : 'text-slate-400'">
+              <p class="text-[9px]" :class="activeTKReport?.student_id === rep.student_id ? 'text-blue-200' : 'text-slate-400'">
                 NIS: {{ rep.student_number || '-' }}
               </p>
             </div>
@@ -1089,14 +1089,14 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
           <button 
             @click="activeTKTab = 'rapor'"
             class="px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2"
-            :class="activeTKTab === 'rapor' ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-zinc-800/50'"
+            :class="activeTKTab === 'rapor' ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 dark:text-blue-300' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-zinc-800/50'"
           >
             <ClipboardCheck :size="14" /> Penilaian Rapor
           </button>
           <button 
             @click="activeTKTab = 'anecdotal'"
             class="px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2"
-            :class="activeTKTab === 'anecdotal' ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-zinc-800/50'"
+            :class="activeTKTab === 'anecdotal' ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 dark:text-blue-300' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-zinc-800/50'"
           >
             <Edit2 :size="14" /> Jurnal Anekdot Harian
           </button>
@@ -1120,7 +1120,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
           </div>
 
           <div v-if="loadingTKAssessments" class="py-20 text-center text-slate-400 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm">
-            <div class="w-8 h-8 rounded-full border-2 border-violet-600 border-t-transparent animate-spin mx-auto mb-3"></div>
+            <div class="w-8 h-8 rounded-full border-2 border-blue-900 border-t-transparent animate-spin mx-auto mb-3"></div>
             <p class="text-xs font-semibold">Memuat elemen penilaian...</p>
           </div>
 
@@ -1139,7 +1139,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
               variant="primary" 
               @click="handleSaveTKAssessments" 
               :disabled="savingTKAssessments || tkAssessmentsForm.length === 0" 
-              class="py-2 px-3 text-xs font-bold shadow-lg shadow-violet-600/10"
+              class="py-2 px-3 text-xs font-bold shadow-lg shadow-blue-950/5"
             >
               <Save class="mr-1.5" :size="14" /> {{ savingTKAssessments ? 'Menyimpan...' : 'Simpan Penilaian' }}
             </BaseButton>
@@ -1169,7 +1169,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                   <!-- Skala Kurikulum Merdeka Fase Fondasi (BB/MB/BSH/BSB) -->
                   <select 
                     v-model="item.letter_grade" 
-                    class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-1 text-xs font-black outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600 text-slate-900 dark:text-zinc-100"
+                    class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-1 text-xs font-black outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900/20 text-slate-900 dark:text-zinc-100"
                   >
                     <option :value="null">- Pilih Capaian -</option>
                     <option value="BB">BB — Belum Berkembang</option>
@@ -1186,7 +1186,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                   v-model="item.narrative" 
                   rows="4" 
                   placeholder="Masukkan catatan perkembangan atau deskripsi capaian ananda untuk aspek ini..."
-                  class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs font-semibold leading-relaxed outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600"
+                  class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs font-semibold leading-relaxed outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900/20"
                 ></textarea>
               </div>
             </div>
@@ -1217,12 +1217,12 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
             
             <!-- Form Input Anekdot (Left/Top Column) -->
             <div class="lg:col-span-5 flex flex-col gap-4">
-              <div class="bg-gradient-to-br from-violet-500 to-indigo-600 rounded-3xl p-6 text-white shadow-xl shadow-violet-500/20 relative overflow-hidden group">
+              <div class="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 rounded-3xl p-6 text-white shadow-xl shadow-blue-950/10 relative overflow-hidden group">
                 <div class="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all duration-700"></div>
                 <h3 class="text-lg font-black tracking-tight mb-1">
                   {{ editingAnecdotalId ? 'Edit Jurnal Anekdot' : 'Catat Jurnal Anekdot' }}
                 </h3>
-                <p class="text-xs text-violet-100/80 leading-relaxed">
+                <p class="text-xs text-blue-100/80 leading-relaxed">
                   {{ editingAnecdotalId ? 'Perbarui observasi untuk' : 'Observasi harian untuk' }} <strong>{{ activeTKReport.full_name }}</strong>
                 </p>
               </div>
@@ -1248,7 +1248,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                       v-model="anecdotalForm.observation_notes" 
                       rows="6" 
                       placeholder="Contoh: Budi menyusun balok vertikal hingga tinggi 1 meter tanpa jatuh, lalu memanggil gurunya, 'Lihat menaraku!'"
-                      class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all duration-300 resize-none placeholder:text-slate-400"
+                      class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-900/20 transition-all duration-300 resize-none placeholder:text-slate-400"
                     ></textarea>
                   </div>
 
@@ -1265,7 +1265,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                       variant="primary" 
                       @click="handleSaveAnecdotalNote" 
                       :disabled="savingAnecdotal || !anecdotalForm.observation_notes.trim()" 
-                      class="py-3 mt-2 rounded-xl text-sm font-bold shadow-lg shadow-violet-600/20 hover:shadow-violet-600/30 hover:-translate-y-0.5 transition-all duration-300 active:translate-y-0 relative overflow-hidden"
+                      class="py-3 mt-2 rounded-xl text-sm font-bold shadow-lg shadow-blue-950/10 hover:shadow-blue-950/20 hover:-translate-y-0.5 transition-all duration-300 active:translate-y-0 relative overflow-hidden"
                       :class="editingAnecdotalId ? 'w-2/3' : 'w-full'"
                     >
                       <span class="relative z-10 flex items-center justify-center gap-2">
@@ -1282,7 +1282,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
               <div class="bg-white dark:bg-zinc-900 border border-slate-200/50 dark:border-zinc-800/50 rounded-3xl p-6 shadow-sm flex flex-col h-full min-h-[500px]">
                 <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-zinc-800">
                   <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                    <div class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-600/10 flex items-center justify-center text-blue-900 dark:text-blue-400 dark:text-blue-400">
                       <History :size="20" />
                     </div>
                     <div>
@@ -1297,7 +1297,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                 </div>
 
                 <div v-if="loadingAnecdotal" class="flex-1 flex flex-col items-center justify-center">
-                  <Loader2 class="text-violet-500 animate-spin mb-3" :size="32" />
+                  <Loader2 class="text-blue-600 animate-spin mb-3" :size="32" />
                   <p class="text-xs font-semibold text-slate-500 animate-pulse">Memuat riwayat...</p>
                 </div>
 
@@ -1312,11 +1312,11 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                 <div v-else class="flex-1 space-y-6 overflow-y-auto pr-3 custom-scrollbar max-h-[500px]">
                   <div v-for="note in anecdotalNotes" :key="note.id" class="relative pl-6 group">
                     <div class="absolute left-[3px] top-4 bottom-[-24px] w-px bg-slate-200 dark:bg-zinc-800 group-last:bg-transparent"></div>
-                    <div class="absolute w-2 h-2 bg-white dark:bg-zinc-900 border-[2px] border-violet-500 rounded-full left-0 top-[18px] shadow-[0_0_8px_rgba(139,92,246,0.4)] group-hover:scale-125 transition-transform duration-300 z-10"></div>
+                    <div class="absolute w-2 h-2 bg-white dark:bg-zinc-900 border-[2px] border-blue-600 rounded-full left-0 top-[18px] shadow-[0_0_8px_rgba(139,92,246,0.4)] group-hover:scale-125 transition-transform duration-300 z-10"></div>
                     
-                    <div class="bg-slate-50/50 dark:bg-zinc-950/50 border border-slate-100 dark:border-zinc-800/80 rounded-2xl p-4 hover:shadow-md hover:border-violet-200 dark:hover:border-violet-900/50 transition-all duration-300">
+                    <div class="bg-slate-50/50 dark:bg-zinc-950/50 border border-slate-100 dark:border-zinc-800/80 rounded-2xl p-4 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900/30 transition-all duration-300">
                       <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-violet-100/50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400 text-[10px] font-bold uppercase tracking-wider">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-100/50 dark:bg-blue-50/600/10 text-blue-900 dark:text-blue-300 dark:text-blue-400 text-[10px] font-bold uppercase tracking-wider">
                           <Calendar :size="12" /> {{ new Date(note.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' }) }}
                         </span>
                         
@@ -1324,7 +1324,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                         <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                           <button 
                             @click="editAnecdotalNote(note)" 
-                            class="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 rounded-md transition-colors"
+                            class="p-1.5 text-slate-400 hover:text-blue-900 dark:text-blue-400 hover:bg-blue-50/60 dark:hover:bg-blue-50/600/10 rounded-md transition-colors"
                             title="Edit Catatan"
                           >
                             <Edit2 :size="14" />
@@ -1356,7 +1356,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                   <div class="flex items-center gap-1.5">
                     <span v-for="p in anecdotalPagination.total_pages" :key="p" 
                       class="h-1.5 rounded-full transition-all duration-300 cursor-pointer"
-                      :class="p === anecdotalPagination.page ? 'bg-violet-600 w-4' : 'bg-slate-200 dark:bg-zinc-700 w-1.5 hover:bg-violet-400'"
+                      :class="p === anecdotalPagination.page ? 'bg-blue-900 w-4' : 'bg-slate-200 dark:bg-zinc-700 w-1.5 hover:bg-blue-400'"
                       @click="fetchAnecdotalNotes(p)"
                     ></span>
                   </div>
@@ -1380,7 +1380,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
       <AlertCircle class="text-amber-500 mb-3" :size="40" />
       <p class="text-sm font-bold text-slate-700 dark:text-zinc-200">Skema Penilaian Belum Tersedia</p>
       <p class="text-xs text-slate-400 max-w-sm mt-1 mb-6">Skema penilaian untuk kelas ini belum dikonfigurasi. Silakan buat skema penilaian terlebih dahulu.</p>
-      <NuxtLink to="/gradebook/scheme" class="inline-flex items-center justify-center px-4 py-2.5 bg-violet-600 text-white rounded-lg text-xs font-bold hover:bg-violet-700 transition-colors shadow-lg shadow-violet-600/15">
+      <NuxtLink to="/gradebook/scheme" class="inline-flex items-center justify-center px-4 py-2.5 bg-blue-900 text-white rounded-lg text-xs font-bold hover:bg-blue-800 transition-colors shadow-lg shadow-sm">
         Buka Konfigurasi Skema
       </NuxtLink>
     </div>
@@ -1389,7 +1389,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
       <AlertCircle class="text-amber-500 mb-3" :size="40" />
       <p class="text-sm font-bold text-slate-700 dark:text-zinc-200">Belum Ada Komponen Nilai</p>
       <p class="text-xs text-slate-400 max-w-sm mt-1 mb-6">Skema penilaian aktif ditemukan, tetapi belum memiliki komponen nilai (seperti NH, PTS, PAS) untuk diisi.</p>
-      <NuxtLink to="/gradebook/scheme" class="inline-flex items-center justify-center px-4 py-2.5 bg-violet-600 text-white rounded-lg text-xs font-bold hover:bg-violet-700 transition-colors shadow-lg shadow-violet-600/15">
+      <NuxtLink to="/gradebook/scheme" class="inline-flex items-center justify-center px-4 py-2.5 bg-blue-900 text-white rounded-lg text-xs font-bold hover:bg-blue-800 transition-colors shadow-lg shadow-sm">
         Tambah Komponen di Skema
       </NuxtLink>
     </div>
@@ -1398,12 +1398,12 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
     <div v-else class="space-y-6">
       
       <!-- KKM Indicator Info -->
-      <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-violet-50 dark:bg-violet-950/20 border border-violet-100 dark:border-violet-900/50 p-4 rounded-2xl">
+      <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 p-4 rounded-2xl">
         <div class="flex gap-2.5 items-start">
-          <Info class="text-violet-600 shrink-0 mt-0.5" :size="16" />
-          <div class="text-xs text-violet-800 dark:text-violet-300 font-semibold leading-relaxed">
+          <Info class="text-blue-900 dark:text-blue-400 shrink-0 mt-0.5" :size="16" />
+          <div class="text-xs text-blue-950 dark:text-blue-200 dark:text-blue-300 font-semibold leading-relaxed">
             <p><strong>Tips Input Nilai:</strong> Nilai disimpan secara otomatis di latar belakang sesaat setelah Anda memindahkan kursor (blur) dari sel input.</p>
-            <p class="mt-1" v-if="kkm !== null">Batas KKM Aktif: <span class="bg-violet-200/60 dark:bg-violet-900 px-1.5 py-0.5 rounded text-[10px] font-black text-violet-700 dark:text-violet-400">{{ kkm }}</span>. Nilai di bawah KKM akan disorot berwarna merah.</p>
+            <p class="mt-1" v-if="kkm !== null">Batas KKM Aktif: <span class="bg-blue-100 dark:bg-blue-950 px-1.5 py-0.5 rounded text-[10px] font-black text-blue-900 dark:text-blue-300 dark:text-blue-400">{{ kkm }}</span>. Nilai di bawah KKM akan disorot berwarna merah.</p>
             <p class="mt-1" v-else>⚠ KKM mata pelajaran belum diatur. Nilai tidak akan diberi penanda tuntas.</p>
           </div>
         </div>
@@ -1416,7 +1416,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
             <thead>
               <!-- Header Row 1: Groups -->
               <tr class="border-b border-slate-200/50 dark:border-zinc-850 bg-slate-50/50 dark:bg-zinc-900/40 text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                <th class="px-6 py-3 border-r border-slate-100 dark:border-zinc-850 min-w-[200px]" rowspan="2">Nama Murid</th>
+                <th class="px-6 py-3 border-r border-slate-100 dark:border-zinc-850 min-w-[200px] sticky left-0 z-20 bg-slate-50 dark:bg-zinc-900 shadow-[2px_0_5px_rgba(0,0,0,0.05)]" rowspan="2">Nama Murid</th>
                 
                 <th 
                   v-for="group in groups" 
@@ -1432,7 +1432,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                   </div>
                 </th>
 
-                <th class="px-6 py-3 text-center bg-violet-50/40 dark:bg-violet-950/10 min-w-[90px]" colspan="2">Raport Akhir</th>
+                <th class="px-6 py-3 text-center bg-blue-50/40 dark:bg-blue-950/10 min-w-[90px]" colspan="2">Raport Akhir</th>
               </tr>
 
               <!-- Header Row 2: Components -->
@@ -1461,7 +1461,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                       </template>
                     </span>
                     <div class="flex gap-1 mt-1">
-                      <button @click="openBulkModal(comp.id)" :disabled="comp.status === 'final'" class="px-1 py-0.5 bg-slate-200 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 hover:text-violet-600 rounded text-[8px] font-bold disabled:opacity-50" title="Input Massal">
+                      <button @click="openBulkModal(comp.id)" :disabled="comp.status === 'final'" class="px-1 py-0.5 bg-slate-200 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 hover:text-blue-900 dark:text-blue-400 rounded text-[8px] font-bold disabled:opacity-50" title="Input Massal">
                         Bulk
                       </button>
                       <button @click="handleFinalizeComponent(comp.id)" :disabled="comp.status === 'final'" class="px-1 py-0.5 bg-slate-200 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 hover:text-emerald-600 rounded text-[8px] font-bold disabled:opacity-50" title="Finalisasi Kolom">
@@ -1471,15 +1471,15 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                   </div>
                 </th>
 
-                <th class="px-4 py-2 text-center bg-violet-50/40 dark:bg-violet-950/10 text-[10px] font-bold text-violet-700 dark:text-violet-400 border-r border-slate-100 dark:border-zinc-850">Nilai</th>
-                <th class="px-4 py-2 text-center bg-violet-50/40 dark:bg-violet-950/10 text-[10px] font-bold text-violet-700 dark:text-violet-400">Predikat</th>
+                <th class="px-4 py-2 text-center bg-blue-50/40 dark:bg-blue-950/10 text-[10px] font-bold text-blue-900 dark:text-blue-300 dark:text-blue-400 border-r border-slate-100 dark:border-zinc-850">Nilai</th>
+                <th class="px-4 py-2 text-center bg-blue-50/40 dark:bg-blue-950/10 text-[10px] font-bold text-blue-900 dark:text-blue-300 dark:text-blue-400">Predikat</th>
               </tr>
             </thead>
                        <tbody class="divide-y divide-slate-100 dark:divide-zinc-850">
               <template v-for="row in matrix" :key="row.student.id">
                 <tr class="hover:bg-slate-50/20 dark:hover:bg-zinc-900/10 transition-colors">
                   <!-- Student details -->
-                  <td class="px-6 py-3 border-r border-slate-100 dark:border-zinc-855 font-semibold">
+                  <td class="px-6 py-3 border-r border-slate-100 dark:border-zinc-855 font-semibold sticky left-0 z-10 bg-white dark:bg-zinc-900 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
                     <p class="font-bold text-slate-900 dark:text-zinc-200 text-xs truncate max-w-[180px]">{{ row.student.full_name }}</p>
                     <div class="flex items-center gap-2 mt-0.5">
                       <span class="text-[9px] text-slate-450 dark:text-zinc-550">NIS: {{ row.student.student_number || '-' }}</span>
@@ -1487,7 +1487,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                         v-if="row.calculated.final_grade_id"
                         type="button"
                         @click="toggleExpandDesc(row.student.id, row.calculated.description)"
-                        class="text-[9px] font-bold text-violet-600 hover:text-violet-750 flex items-center gap-0.5 underline shrink-0 cursor-pointer"
+                        class="text-[9px] font-bold text-blue-900 dark:text-blue-400 hover:text-blue-800 flex items-center gap-0.5 underline shrink-0 cursor-pointer"
                       >
                         <Edit2 :size="8" /> {{ expandedStudentDescId === row.student.id ? 'Tutup Deskripsi' : 'Edit Deskripsi' }}
                       </button>
@@ -1519,7 +1519,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                         min="0"
                         :max="Number(comp.max_score)"
                         placeholder="-"
-                        class="w-14 bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded px-1.5 py-1 text-xs font-bold text-center outline-none focus:border-violet-600 disabled:bg-slate-100/70 dark:disabled:bg-zinc-900/70 disabled:text-slate-400"
+                        class="w-14 bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded px-1.5 py-1 text-xs font-bold text-center outline-none focus:border-blue-900 disabled:bg-slate-100/70 dark:disabled:bg-zinc-900/70 disabled:text-slate-400"
                         :class="{
                           'text-rose-600 bg-rose-500/5 border-rose-200 dark:border-rose-900': kkm !== null && row.scores[comp.id].score !== null && Number(row.scores[comp.id].score) < kkm
                         }"
@@ -1530,7 +1530,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                         v-model="row.scores[comp.id].grade_letter"
                         @change="handleCellSave(row.student.id, comp.id)"
                         :disabled="row.scores[comp.id].status === 'final'"
-                        class="w-16 bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded px-1 py-1 text-[10px] font-bold text-center outline-none focus:border-violet-600 disabled:opacity-75 text-slate-900 dark:text-zinc-100"
+                        class="w-16 bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded px-1 py-1 text-[10px] font-bold text-center outline-none focus:border-blue-900 disabled:opacity-75 text-slate-900 dark:text-zinc-100"
                       >
                         <option :value="null">-</option>
                         <option value="BB">BB</option>
@@ -1541,7 +1541,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
 
                       <!-- Save states and Audit Log icon -->
                       <div class="flex flex-col items-center justify-center">
-                        <Loader2 v-if="savingState[`${row.student.id}-${comp.id}`] === 'saving'" class="text-violet-500 animate-spin" :size="10" />
+                        <Loader2 v-if="savingState[`${row.student.id}-${comp.id}`] === 'saving'" class="text-blue-600 animate-spin" :size="10" />
                         <Check v-else-if="savingState[`${row.student.id}-${comp.id}`] === 'saved'" class="text-emerald-500" :size="10" />
                         <button 
                           v-else-if="row.scores[comp.id].id" 
@@ -1556,7 +1556,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                   </td>
 
                   <!-- Calculated Final Grade preview -->
-                  <td class="px-4 py-3 text-center bg-violet-50/40 dark:bg-violet-950/10 font-bold border-r border-slate-100 dark:border-zinc-850 text-xs">
+                  <td class="px-4 py-3 text-center bg-blue-50/40 dark:bg-blue-950/10 font-bold border-r border-slate-100 dark:border-zinc-850 text-xs">
                     <span 
                       :class="[
                         row.calculated.final_score !== null 
@@ -1567,12 +1567,12 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                       {{ row.calculated.final_score ?? row.calculated.grade_letter ?? '-' }}
                     </span>
                   </td>
-                  <td class="px-4 py-3 text-center bg-violet-50/40 dark:bg-violet-950/10 text-xs font-black">
+                  <td class="px-4 py-3 text-center bg-blue-50/40 dark:bg-blue-950/10 text-xs font-black">
                     <span 
                       class="px-2 py-0.5 rounded text-[10px] font-bold"
                       :class="{
                         'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/10': row.calculated.predicate === 'A' || row.calculated.predicate === 'BSB' || row.calculated.predicate === 'BSH',
-                        'bg-violet-500/15 text-violet-600 dark:text-violet-400 border border-violet-500/10': row.calculated.predicate === 'B' || row.calculated.predicate === 'MB',
+                        'bg-blue-600/10 text-blue-900 dark:text-blue-400 dark:text-blue-400 border border-blue-500/10': row.calculated.predicate === 'B' || row.calculated.predicate === 'MB',
                         'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/10': row.calculated.predicate === 'C',
                         'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/10': row.calculated.predicate === 'D' || row.calculated.predicate === 'BB'
                       }"
@@ -1584,11 +1584,11 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                 </tr>
 
                 <!-- Expanded Description Editor Row -->
-                <tr v-if="expandedStudentDescId === row.student.id" :key="'desc_' + row.student.id" class="bg-violet-50/5 dark:bg-violet-950/5">
+                <tr v-if="expandedStudentDescId === row.student.id" :key="'desc_' + row.student.id" class="bg-blue-50/60/5 dark:bg-blue-950/5">
                   <td :colspan="components.length + 3" class="px-6 py-4 bg-slate-50/50 dark:bg-zinc-950/20 border-t border-b border-slate-200/50 dark:border-zinc-850 text-left">
                     <div class="space-y-3">
                       <div class="flex items-center justify-between">
-                        <span class="text-[10px] font-extrabold text-violet-700 dark:text-violet-400 uppercase tracking-widest flex items-center gap-1">
+                        <span class="text-[10px] font-extrabold text-blue-900 dark:text-blue-300 dark:text-blue-400 uppercase tracking-widest flex items-center gap-1">
                           <Edit2 :size="10" /> Deskripsi Capaian Kompetensi - {{ row.student.full_name }}
                         </span>
                         <div class="flex gap-2">
@@ -1604,7 +1604,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                             type="button"
                             @click="handleSaveDescription(row.student.id, row.calculated.final_grade_id)"
                             :disabled="savingDescription[row.student.id]"
-                            class="px-3 py-1 text-[10px] bg-violet-600 text-white hover:bg-violet-750 rounded font-bold flex items-center gap-1 transition-colors shadow-sm"
+                            class="px-3 py-1 text-[10px] bg-blue-900 text-white hover:bg-blue-800 rounded font-bold flex items-center gap-1 transition-colors shadow-sm"
                           >
                             <Save :size="10" /> Simpan Catatan
                           </button>
@@ -1614,7 +1614,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
                       <textarea 
                         v-model="editingDescriptionText"
                         rows="3"
-                        class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs font-semibold leading-relaxed outline-none focus:border-violet-600 focus:ring-1 focus:ring-violet-600"
+                        class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs font-semibold leading-relaxed outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900/20"
                         placeholder="Masukkan deskripsi kompetensi..."
                       ></textarea>
                       
@@ -1642,7 +1642,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
     <!-- Bulk Copy-Paste Input Modal -->
     <BaseModal :show="showBulkModal" title="Input Massal Nilai" @close="showBulkModal = false">
       <div class="space-y-4">
-        <div class="flex items-start gap-2.5 p-3.5 bg-violet-50 dark:bg-violet-950/30 rounded-lg border border-violet-100 dark:border-violet-900/50 text-xs text-violet-700 dark:text-violet-300">
+        <div class="flex items-start gap-2.5 p-3.5 bg-blue-50/60 dark:bg-blue-950/30 rounded-lg border border-blue-100 dark:border-blue-900/30 text-xs text-blue-900 dark:text-blue-300 dark:text-blue-300">
           <Info class="shrink-0 mt-0.5" :size="14" />
           <div>
             <p class="font-bold mb-1">Panduan Copy-Paste Nilai:</p>
@@ -1658,7 +1658,7 @@ const handleRegenerateDescription = async (studentId: string, finalGradeId: stri
             v-model="bulkInputText" 
             rows="10" 
             placeholder="80&#10;85&#10;92&#10;78&#10;BSB&#10;BSH"
-            class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-mono font-bold outline-none focus:border-violet-600"
+            class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-mono font-bold outline-none focus:border-blue-900"
           ></textarea>
         </div>
 

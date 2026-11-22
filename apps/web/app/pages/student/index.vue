@@ -547,7 +547,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
         <BaseButton variant="outline" @click="showImportModal = true" :disabled="!selectedSchoolId" class="py-2.5 px-4 text-xs font-bold">
           <Upload class="mr-1.5" :size="14" /> Import Excel
         </BaseButton>
-        <BaseButton variant="outline" @click="openMassPromotionModal()" :disabled="!selectedSchoolId" class="py-2.5 px-4 text-xs font-bold border-violet-200 text-violet-700 hover:bg-violet-50 dark:border-violet-800 dark:text-violet-400 dark:hover:bg-violet-900/30">
+        <BaseButton variant="outline" @click="openMassPromotionModal()" :disabled="!selectedSchoolId" class="py-2.5 px-4 text-xs font-bold border-blue-200 text-blue-900 hover:bg-blue-50/60 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950/40">
           <TrendingUp class="mr-1.5" :size="14" /> Naik Kelas Massal
         </BaseButton>
         <BaseButton variant="primary" @click="showCreateModal = true; resetCreateForm()" :disabled="!selectedSchoolId" class="py-2.5 px-4 text-xs font-bold">
@@ -578,7 +578,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
         <!-- Foundation Selection -->
         <div class="flex flex-col gap-1.5">
           <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 pl-1">Yayasan</label>
-          <select v-model="selectedFoundationId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="selectedFoundationId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option v-for="f in foundations" :key="f.id" :value="f.id">{{ f.name }}</option>
           </select>
         </div>
@@ -586,7 +586,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
         <!-- School Selection -->
         <div class="flex flex-col gap-1.5">
           <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 pl-1">Unit Sekolah</label>
-          <select v-model="selectedSchoolId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="selectedSchoolId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option v-for="s in schools" :key="s.id" :value="s.id">{{ s.name }} ({{ s.level }})</option>
           </select>
         </div>
@@ -594,7 +594,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
         <!-- Academic Year filter -->
         <div class="flex flex-col gap-1.5">
           <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 pl-1">Tahun Ajaran</label>
-          <select v-model="selectedAcademicYearId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="selectedAcademicYearId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option value="">Semua Tahun Ajaran</option>
             <option v-for="y in academicYears" :key="y.id" :value="y.id">{{ y.name }}</option>
           </select>
@@ -603,7 +603,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
         <!-- Class filter -->
         <div class="flex flex-col gap-1.5">
           <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 pl-1">Filter Kelas</label>
-          <select v-model="selectedClassFilter" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="selectedClassFilter" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option value="">Semua Kelas</option>
             <option value="__none__">— Belum di Kelas —</option>
             <option v-for="c in filteredClasses" :key="c.id" :value="c.id">{{ c.class_name }} ({{ c.level }})</option>
@@ -620,7 +620,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
             v-model="searchQuery"
             type="text" 
             placeholder="Cari siswa, NIS, NISN, atau RFID..." 
-            class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg pl-9 pr-4 py-2 text-xs font-semibold transition-all outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10"
+            class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg pl-9 pr-4 py-2 text-xs font-semibold transition-all outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10"
           />
         </div>
       </div>
@@ -649,7 +649,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
             >
               <td class="px-6 py-4">
                 <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-lg bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 flex items-center justify-center font-bold text-sm">
+                  <div class="w-9 h-9 rounded-lg bg-blue-50/60 dark:bg-blue-950/40 text-blue-900 dark:text-blue-400 flex items-center justify-center font-bold text-sm">
                     {{ student.full_name[0] }}
                   </div>
                   <div>
@@ -661,10 +661,10 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
               <td class="px-6 py-4">
                 <p class="text-slate-900 dark:text-zinc-100">{{ student.student_number || '-' }}</p>
                 <p class="text-[9px] text-slate-400 dark:text-zinc-500 mt-0.5">NISN: {{ student.national_student_number || '-' }}</p>
-                <p v-if="student.rfid_uid" class="text-[9px] text-violet-600 dark:text-violet-400 font-bold mt-0.5">🏷️ RFID: {{ student.rfid_uid }}</p>
+                <p v-if="student.rfid_uid" class="text-[9px] text-blue-900 dark:text-blue-400 font-bold mt-0.5">🏷️ RFID: {{ student.rfid_uid }}</p>
               </td>
               <td class="px-6 py-4">
-                <span v-if="student.class_name" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300 border border-violet-100 dark:border-violet-900/50">
+                <span v-if="student.class_name" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50/60 dark:bg-blue-950/30 text-blue-900 dark:text-blue-300 border border-blue-100 dark:border-blue-900/30">
                   <LayoutGrid :size="10" />
                   {{ student.class_name }}
                   <span class="opacity-60">· {{ student.class_level }}</span>
@@ -701,7 +701,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
                   <button @click="openHistoryModal(student)" class="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg transition-colors" title="Riwayat Akademik">
                     <History :size="14" />
                   </button>
-                  <button @click="openEditModal(student)" class="p-1.5 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg transition-colors">
+                  <button @click="openEditModal(student)" class="p-1.5 text-slate-400 hover:text-blue-900 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg transition-colors">
                     <Edit2 :size="14" />
                   </button>
                   <button @click="handleDeleteStudent(student.id)" class="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg transition-colors">
@@ -749,7 +749,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">
             Masukkan ke Kelas
           </label>
-          <select v-model="studentForm.class_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="studentForm.class_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option value="">— Belum di Kelas —</option>
             <option v-for="c in filteredClasses" :key="c.id" :value="c.id">
               {{ c.class_name }} · {{ c.level }}
@@ -763,7 +763,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5 w-full">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Jenis Kelamin</label>
-            <select v-model="studentForm.gender" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+            <select v-model="studentForm.gender" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
               <option value="Laki-laki">Laki-laki</option>
               <option value="Perempuan">Perempuan</option>
             </select>
@@ -774,7 +774,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
           <BaseDateInput class="col-span-2" v-model="studentForm.birth_date" label="Tanggal Lahir" />
           <div class="flex flex-col gap-1.5 w-full">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Status</label>
-            <select v-model="studentForm.status" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+            <select v-model="studentForm.status" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
@@ -810,11 +810,11 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
         <div class="flex flex-col gap-1.5">
           <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">
             Kelas
-            <span v-if="editForm.class_id" class="ml-2 font-normal normal-case text-violet-500">
+            <span v-if="editForm.class_id" class="ml-2 font-normal normal-case text-blue-600">
               (saat ini: {{ classes.find(c => c.id === editForm.class_id)?.class_name || '—' }})
             </span>
           </label>
-          <select v-model="editForm.class_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+          <select v-model="editForm.class_id" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
             <option value="">— Belum di Kelas —</option>
             <option v-for="c in classes" :key="c.id" :value="c.id">
               {{ c.class_name }} · {{ c.level }}
@@ -825,7 +825,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5 w-full">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Jenis Kelamin</label>
-            <select v-model="editForm.gender" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+            <select v-model="editForm.gender" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
               <option value="Laki-laki">Laki-laki</option>
               <option value="Perempuan">Perempuan</option>
             </select>
@@ -836,7 +836,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
           <BaseDateInput class="col-span-2" v-model="editForm.birth_date" label="Tanggal Lahir" />
           <div class="flex flex-col gap-1.5 w-full">
             <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Status</label>
-            <select v-model="editForm.status" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+            <select v-model="editForm.status" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
@@ -858,11 +858,11 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
     <BaseModal :show="showImportModal" title="Import Data Siswa via Excel" @close="showImportModal = false; importResult = null; importFile = null">
       <div class="space-y-5">
         <!-- Instructions -->
-        <div class="flex items-start gap-3 p-4 bg-violet-50 dark:bg-violet-950/30 rounded-lg border border-violet-100 dark:border-violet-900/50">
-          <FileSpreadsheet class="text-violet-500 shrink-0 mt-0.5" :size="18" />
-          <div class="text-xs text-violet-700 dark:text-violet-300">
+        <div class="flex items-start gap-3 p-4 bg-blue-50/60 dark:bg-blue-950/30 rounded-lg border border-blue-100 dark:border-blue-900/30">
+          <FileSpreadsheet class="text-blue-600 shrink-0 mt-0.5" :size="18" />
+          <div class="text-xs text-blue-900 dark:text-blue-300">
             <p class="font-bold mb-1">Panduan Import</p>
-            <ol class="list-decimal ml-4 space-y-0.5 text-violet-600 dark:text-violet-400">
+            <ol class="list-decimal ml-4 space-y-0.5 text-blue-900 dark:text-blue-400">
               <li>Unduh template Excel terlebih dahulu melalui tombol <strong>Unduh Template</strong>.</li>
               <li>Buka sheet <strong>DATA KELAS</strong> — salin <strong>ID Kelas</strong> yang ingin di-assign.</li>
               <li>Isi data siswa di sheet <strong>PENGISIAN DATA</strong> mulai baris ke-10.</li>
@@ -875,8 +875,8 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
         <!-- File picker -->
         <div class="flex flex-col gap-1.5">
           <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Pilih File Excel (.xlsx)</label>
-          <label class="flex items-center gap-3 cursor-pointer border-2 border-dashed border-slate-200 dark:border-zinc-700 rounded-lg px-4 py-5 hover:border-violet-400 dark:hover:border-violet-600 transition-colors group">
-            <Upload class="text-slate-400 group-hover:text-violet-500 transition-colors" :size="20" />
+          <label class="flex items-center gap-3 cursor-pointer border-2 border-dashed border-slate-200 dark:border-zinc-700 rounded-lg px-4 py-5 hover:border-blue-400 dark:hover:border-blue-900 transition-colors group">
+            <Upload class="text-slate-400 group-hover:text-blue-600 transition-colors" :size="20" />
             <div class="flex-1 min-w-0">
               <p v-if="importFile" class="text-sm font-semibold text-slate-800 dark:text-zinc-200 truncate">{{ importFile.name }}</p>
               <p v-else class="text-sm text-slate-400 dark:text-zinc-500">Klik untuk memilih file atau seret ke sini</p>
@@ -932,13 +932,13 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
           <p class="text-xs text-slate-500">NISN: {{ selectedStudentHistory.person.national_student_number || '-' }}</p>
         </div>
         
-        <div v-for="school in selectedStudentHistory.history" :key="school.id" class="border-l-2 border-violet-500 pl-4 py-2 relative">
-          <div class="absolute -left-[5px] top-4 w-2 h-2 rounded-full bg-violet-600"></div>
+        <div v-for="school in selectedStudentHistory.history" :key="school.id" class="border-l-2 border-blue-600 pl-4 py-2 relative">
+          <div class="absolute -left-[5px] top-4 w-2 h-2 rounded-full bg-blue-900"></div>
           <h3 class="font-bold text-sm text-slate-800 dark:text-zinc-200">{{ school.school_name }} <span class="text-xs text-slate-400 font-normal">({{ school.school_level }})</span></h3>
           <div class="mt-2 space-y-2">
             <div v-for="cls in school.class_histories" :key="cls.changed_at" class="text-xs bg-slate-50 dark:bg-zinc-900/50 p-2 rounded flex justify-between items-center border border-slate-100 dark:border-zinc-800">
               <div>
-                <span class="font-bold text-violet-600 dark:text-violet-400">{{ cls.class_name }}</span>
+                <span class="font-bold text-blue-900 dark:text-blue-400">{{ cls.class_name }}</span>
                 <span class="text-slate-400 ml-2">TA: {{ cls.academic_year_name || '-' }}</span>
               </div>
               <span class="text-[10px] text-slate-400">{{ new Date(cls.changed_at).toLocaleDateString('id-ID') }}</span>
@@ -956,12 +956,12 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
     <!-- Mass Promotion Modal -->
     <BaseModal :show="showMassPromotionModal" title="Kenaikan Kelas Massal" @close="showMassPromotionModal = false" custom-class="max-w-4xl w-full">
       <div class="space-y-4">
-        <div class="bg-violet-50 dark:bg-violet-900/20 p-4 rounded-lg border border-violet-100 dark:border-violet-900/50 flex flex-col gap-3">
+        <div class="bg-blue-50/60 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-100 dark:border-blue-900/30 flex flex-col gap-3">
           <div class="flex items-center gap-2">
-            <TrendingUp class="text-violet-600 dark:text-violet-400" :size="20" />
-            <h3 class="font-bold text-violet-900 dark:text-violet-100">Proses Kenaikan Kelas</h3>
+            <TrendingUp class="text-blue-900 dark:text-blue-400" :size="20" />
+            <h3 class="font-bold text-blue-950 dark:text-blue-100">Proses Kenaikan Kelas</h3>
           </div>
-          <p class="text-xs text-violet-700 dark:text-violet-300">
+          <p class="text-xs text-blue-900 dark:text-blue-300">
             Pilih kelas asal untuk melihat daftar siswa, kemudian centang siswa yang ingin dipindahkan ke kelas tujuan.
           </p>
         </div>
@@ -969,7 +969,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5">
             <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 pl-1">Pilih Kelas Asal</label>
-            <select v-model="massPromotionSourceClassId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+            <select v-model="massPromotionSourceClassId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
               <option value="">— Belum di Kelas —</option>
               <option v-for="c in formattedAllClasses" :key="c.id" :value="c.id">{{ c.display_name }}</option>
             </select>
@@ -977,7 +977,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
           
           <div class="flex flex-col gap-1.5">
             <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 pl-1">Pilih Kelas Tujuan</label>
-            <select v-model="massPromotionTargetClassId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+            <select v-model="massPromotionTargetClassId" class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
               <option value="" disabled>— Pilih Kelas Tujuan —</option>
               <option v-for="c in formattedAllClasses" :key="c.id" :value="c.id">{{ c.display_name }}</option>
             </select>
@@ -988,10 +988,10 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
         <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg overflow-hidden flex flex-col h-[400px]">
           <div class="bg-slate-50 dark:bg-zinc-950 p-3 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <input type="checkbox" :checked="selectedStudentIds.length > 0 && selectedStudentIds.length === modalAvailableStudents.length" @change="toggleAllStudents" class="w-4 h-4 text-violet-600 bg-gray-100 border-gray-300 rounded focus:ring-violet-500 dark:focus:ring-violet-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+              <input type="checkbox" :checked="selectedStudentIds.length > 0 && selectedStudentIds.length === modalAvailableStudents.length" @change="toggleAllStudents" class="w-4 h-4 text-blue-900 bg-gray-100 border-gray-300 rounded focus:ring-blue-900/20 dark:focus:ring-blue-900/20 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
               <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Pilih Semua ({{ modalAvailableStudents.length }} Siswa)</span>
             </div>
-            <span class="text-[10px] font-bold px-2 py-1 bg-violet-100 text-violet-700 rounded-full dark:bg-violet-900/30 dark:text-violet-400">
+            <span class="text-[10px] font-bold px-2 py-1 bg-blue-50 text-blue-900 rounded-full dark:bg-blue-950/40 dark:text-blue-400">
               {{ selectedStudentIds.length }} Terpilih
             </span>
           </div>
@@ -1001,9 +1001,9 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
               v-for="student in modalAvailableStudents" 
               :key="student.id"
               class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors"
-              :class="selectedStudentIds.includes(student.id) ? 'bg-violet-50/50 border-violet-200 dark:bg-violet-900/10 dark:border-violet-800' : 'bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-zinc-800'"
+              :class="selectedStudentIds.includes(student.id) ? 'bg-blue-50/50 border-blue-200 dark:bg-blue-950/10 dark:border-blue-800' : 'bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-zinc-800'"
             >
-              <input type="checkbox" :value="student.id" v-model="selectedStudentIds" class="w-4 h-4 text-violet-600 bg-gray-100 border-gray-300 rounded focus:ring-violet-500 dark:focus:ring-violet-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+              <input type="checkbox" :value="student.id" v-model="selectedStudentIds" class="w-4 h-4 text-blue-900 bg-gray-100 border-gray-300 rounded focus:ring-blue-900/20 dark:focus:ring-blue-900/20 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
               <div class="flex-1">
                 <p class="text-sm font-bold text-slate-800 dark:text-zinc-200">{{ student.full_name }}</p>
                 <p class="text-[10px] text-slate-500 dark:text-zinc-400">{{ student.student_number || '-' }} | {{ student.national_student_number || '-' }}</p>
@@ -1032,7 +1032,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
       <div v-if="selectedStudentForQr" class="space-y-5">
         
         <!-- Printable Student Card Badge -->
-        <div id="printable-student-card" class="bg-gradient-to-br from-violet-600 via-indigo-700 to-purple-800 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden border border-white/10">
+        <div id="printable-student-card" class="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden border border-white/10">
           <!-- Background ornaments -->
           <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10 blur-xl pointer-events-none"></div>
           <div class="absolute -left-8 -bottom-8 w-32 h-32 rounded-full bg-indigo-500/20 blur-xl pointer-events-none"></div>
@@ -1046,7 +1046,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
                 <h4 class="font-black text-base tracking-tight text-white leading-tight">
                   {{ selectedStudentForQr.full_name }}
                 </h4>
-                <p class="text-xs text-violet-200 mt-0.5 font-medium">
+                <p class="text-xs text-blue-200 mt-0.5 font-medium">
                   NIS: <span class="font-bold text-white">{{ selectedStudentForQr.student_number || '-' }}</span>
                   <span class="mx-1.5 opacity-60">|</span>
                   NISN: <span class="font-bold text-white">{{ selectedStudentForQr.national_student_number || '-' }}</span>
@@ -1064,7 +1064,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
           <!-- QR Code Center -->
           <div class="my-5 flex flex-col items-center justify-center bg-white rounded-2xl p-5 text-slate-900 shadow-lg relative z-10">
             <div v-if="qrLoading" class="py-10 flex flex-col items-center gap-3">
-              <div class="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+              <div class="w-8 h-8 border-4 border-blue-900 border-t-transparent rounded-full animate-spin"></div>
               <span class="text-xs font-bold text-slate-500">Memuat Token QR...</span>
             </div>
             <template v-else-if="qrTokenData">
@@ -1093,7 +1093,7 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
           </div>
 
           <!-- Card Footer -->
-          <div class="flex items-center justify-between text-[10px] text-violet-200 font-bold tracking-wider uppercase pt-1 relative z-10">
+          <div class="flex items-center justify-between text-[10px] text-blue-200 font-bold tracking-wider uppercase pt-1 relative z-10">
             <span>KARTU PRESENSI DIGITAL</span>
             <span>EDURAPORT SECURITY BADGE</span>
           </div>
@@ -1110,12 +1110,12 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
         </button>
 
         <!-- RFID Card Section -->
-        <div class="p-4 rounded-2xl bg-violet-500/10 border border-violet-500/30 text-left">
+        <div class="p-4 rounded-2xl bg-blue-600/10 border border-blue-500/30 text-left">
           <div class="flex items-start gap-3">
             <span class="text-xl">🏷️</span>
             <div class="flex-1">
               <div class="flex items-center justify-between">
-                <h5 class="text-xs font-black text-violet-500 uppercase tracking-wide">
+                <h5 class="text-xs font-black text-blue-600 uppercase tracking-wide">
                   Kartu Fisik RFID (125kHz / 13.56MHz)
                 </h5>
                 <span v-if="selectedStudentForQr.rfid_uid" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
@@ -1132,12 +1132,12 @@ const studentsWithoutClass = computed(() => students.value.filter(s => !s.class_
                 <input
                   v-model="quickRfidUid"
                   placeholder="Tap kartu RFID ke reader..."
-                  class="flex-1 bg-white dark:bg-zinc-900 border border-violet-300 dark:border-violet-700 rounded-xl px-3 py-2 text-xs font-bold font-mono text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-violet-500"
+                  class="flex-1 bg-white dark:bg-zinc-900 border border-blue-300 dark:border-blue-700 rounded-xl px-3 py-2 text-xs font-bold font-mono text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-900/20"
                 />
                 <button
                   @click="handleSaveRfid"
                   :disabled="isSavingRfid"
-                  class="px-4 py-2 bg-violet-600 hover:bg-violet-700 active:bg-violet-800 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
+                  class="px-4 py-2 bg-blue-900 hover:bg-blue-800 active:bg-blue-950 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
                 >
                   {{ isSavingRfid ? 'Menyimpan...' : 'Simpan Kartu RFID' }}
                 </button>

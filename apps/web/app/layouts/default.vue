@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { GraduationCap, LogOut, LayoutDashboard, School, Users, Calendar, LayoutGrid, BookOpen, Clock, Trophy, UserCheck, ClipboardCheck, FileSpreadsheet, DollarSign, LayoutTemplate, Key, BarChart3, UserPlus, Landmark, Menu, X, CalendarRange, Smartphone, Settings, Sparkles, Sun, Moon, Boxes, ShieldAlert, HeartHandshake, Scale, Activity, Crown, Library, MessageSquare, FileText, Wallet, BookMarked, Bell, ShieldCheck, CalendarCheck, Search } from 'lucide-vue-next'
-import { BaseModal, BaseButton, BaseInput } from '@eduraport/ui'
+import { BaseModal, BaseButton, BaseInput, AppBottomNav, type NavItem } from '@eduraport/ui'
 import B2cSoloBadge from '../components/b2c/SoloBadge.vue'
 import B2cPaywallModal from '../components/b2c/PaywallModal.vue'
+import OfflineBanner from '../components/pwa/OfflineBanner.vue'
+import PwaInstallPrompt from '../components/pwa/PwaInstallPrompt.vue'
 import { useB2CSubscription } from '../composables/useB2CSubscription'
 import { useAuth } from '../composables/useAuth'
 import { useToast } from '../composables/useToast'
@@ -25,9 +27,38 @@ const toggleTheme = () => {
   colorMode.value = colorMode.value === 'dark' ? 'light' : 'dark'
 }
 
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 const route = useRoute()
+const router = useRouter()
 const isFullScreenPage = computed(() => route.path.includes('/ai-asisten'))
+
+const mobileNavItems = computed<NavItem[]>(() => {
+  if (user.value?.role === 'parent') {
+    return [
+      { id: 'home', label: 'Beranda', to: '/', icon: LayoutDashboard, active: route.path === '/' },
+      { id: 'grades', label: 'Nilai', to: '/parent/grades', icon: Trophy, active: route.path.startsWith('/parent/grades') },
+      { id: 'attendance', label: 'Presensi', to: '/parent/attendance', icon: CalendarCheck, active: route.path.startsWith('/parent/attendance') },
+      { id: 'bills', label: 'Tagihan', to: '/parent/bills', icon: DollarSign, active: route.path.startsWith('/parent/bills') },
+      { id: 'menu', label: 'Menu', icon: Menu, active: isMobileMenuOpen.value }
+    ]
+  }
+
+  return [
+    { id: 'home', label: 'Beranda', to: '/', icon: LayoutDashboard, active: route.path === '/' },
+    { id: 'grades', label: 'Nilai', to: '/gradebook/input', icon: FileSpreadsheet, active: route.path.startsWith('/gradebook') },
+    { id: 'attendance', label: 'Presensi', to: '/student/attendance', icon: ClipboardCheck, active: route.path.startsWith('/student/attendance') },
+    { id: 'schedule', label: 'Jadwal', to: '/schedule', icon: Clock, active: route.path.startsWith('/schedule') },
+    { id: 'menu', label: 'Menu', icon: Menu, active: isMobileMenuOpen.value }
+  ]
+})
+
+const handleMobileNavSelect = (item: NavItem) => {
+  if (item.id === 'menu') {
+    isMobileMenuOpen.value = true
+  } else if (item.to) {
+    router.push(item.to)
+  }
+}
 const isPaywallVisible = computed(() => {
   if (!isSoloTeacher.value || !subscription.value) return false;
   if (route.path.startsWith('/b2c/subscription')) return false;
@@ -105,7 +136,7 @@ const menuSearchQuery = ref('')
 const getBadgeClass = (badge?: string) => {
   if (!badge) return ''
   if (badge.includes('TK/PAUD')) return 'bg-amber-100/90 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border-amber-300/70 dark:border-amber-700/60'
-  if (badge.includes('AI')) return 'bg-violet-100/90 text-violet-700 dark:bg-violet-950/70 dark:text-violet-300 border-violet-300/70 dark:border-violet-700/60'
+  if (badge.includes('AI')) return 'bg-blue-50/90 text-blue-900 dark:bg-blue-950/70 dark:text-blue-300 border-blue-300/70 dark:border-blue-700/60'
   if (badge.includes('BK')) return 'bg-rose-100/90 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 border-rose-300/70 dark:border-rose-700/60'
   if (badge.includes('Wali Kelas')) return 'bg-blue-100/90 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 border-blue-300/70 dark:border-blue-700/60'
   if (badge.includes('Tahfidz') || badge.includes('Pesantren')) return 'bg-emerald-100/90 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border-emerald-300/70 dark:border-emerald-700/60'
@@ -182,7 +213,7 @@ const menuGroups = computed(() => {
         ...(isSoloTeacher.value ? [] : [
           { to: '/dashboard', label: 'Dashboard Eksekutif', icon: BarChart3, access: '/dashboard', badge: 'Pimpinan', subtitle: 'KPI sekolah, tren nilai & analitik' }
         ]),
-        ...(isSoloTeacher.value ? [{ to: '/b2c/subscription', label: 'Kelola Paket & Layanan', icon: Crown, access: '/', customClass: 'text-violet-500 hover:text-violet-400 hover:bg-violet-900/30 font-semibold', badge: 'B2C', subtitle: 'Status lisensi guru solo' }] : []),
+        ...(isSoloTeacher.value ? [{ to: '/b2c/subscription', label: 'Kelola Paket & Layanan', icon: Crown, access: '/', customClass: 'text-blue-600 hover:text-blue-400 hover:bg-blue-950/40 font-semibold', badge: 'B2C', subtitle: 'Status lisensi guru solo' }] : []),
         ...(isSoloTeacher.value ? [] : [
           { to: '/scanner', label: 'QR Scanner PWA', icon: Smartphone, access: '/dashboard', external: true, customClass: 'text-amber-400 hover:text-amber-300 hover:bg-amber-900/30', badge: 'Petugas', subtitle: 'Pemindai presensi QR & wajah' }
         ])
@@ -230,7 +261,7 @@ const menuGroups = computed(() => {
     {
       title: 'Akademik & Penilaian',
       items: [
-        { to: '/ai-asisten', label: 'AI Asisten Guru', icon: Sparkles, access: '/gradebook', customClass: 'text-violet-400 hover:text-violet-300 hover:bg-violet-900/30', badge: 'AI', subtitle: 'Generator RPP, modul ajar, ATP & soal' },
+        { to: '/ai-asisten', label: 'AI Asisten Guru', icon: Sparkles, access: '/gradebook', customClass: 'text-blue-400 hover:text-blue-300 hover:bg-blue-950/40', badge: 'AI', subtitle: 'Generator RPP, modul ajar, ATP & soal' },
         { to: '/gradebook/scheme', label: 'Skema Penilaian', icon: FileSpreadsheet, access: '/gradebook', badge: 'Kurikulum', subtitle: 'Bobot formatif, sumatif & KKM' },
         { 
           to: '/gradebook/input', 
@@ -310,7 +341,7 @@ const filteredMenuGroups = computed(() => {
 
         <!-- Logo / School Branding -->
         <div class="flex items-center gap-3 mb-5 px-1">
-          <div class="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-violet-600/20 shrink-0">
+          <div class="w-10 h-10 bg-blue-900 dark:bg-blue-600 rounded-lg flex items-center justify-center shadow-sm shrink-0">
             <GraduationCap class="text-white" :size="20" />
           </div>
           <div class="min-w-0">
@@ -328,7 +359,7 @@ const filteredMenuGroups = computed(() => {
               v-model="menuSearchQuery"
               type="text"
               placeholder="Cari menu & fitur..."
-              class="w-full pl-8 pr-7 py-1.5 text-xs rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500 transition-all"
+              class="w-full pl-8 pr-7 py-1.5 text-xs rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-700 transition-all"
             />
             <button 
               v-if="menuSearchQuery"
@@ -347,7 +378,7 @@ const filteredMenuGroups = computed(() => {
             <p class="text-xs text-slate-400 dark:text-slate-500">Tidak ada menu untuk "{{ menuSearchQuery }}"</p>
             <button 
               @click="menuSearchQuery = ''"
-              class="mt-2 text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline"
+              class="mt-2 text-xs font-semibold text-blue-800 dark:text-blue-400 hover:underline"
             >
               Reset Pencarian
             </button>
@@ -365,7 +396,7 @@ const filteredMenuGroups = computed(() => {
                   @click="isMobileMenuOpen = false"
                   class="group relative flex flex-col gap-0.5 px-3 py-2 rounded-xl transition-all duration-200"
                   :class="item.customClass || 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/90 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60'"
-                  active-class="!bg-violet-600 !text-white shadow-md shadow-violet-600/20"
+                  active-class="!bg-blue-900 dark:!bg-blue-600 !text-white shadow-sm"
                 >
                   <div class="flex items-center justify-between w-full gap-1.5">
                     <div class="flex items-center gap-2.5 min-w-0">
@@ -385,7 +416,7 @@ const filteredMenuGroups = computed(() => {
                   </div>
                   <p 
                     v-if="item.subtitle" 
-                    class="text-[10px] pl-[26px] truncate leading-tight transition-colors text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 group-[.router-link-active]:!text-violet-100"
+                    class="text-[10px] pl-[26px] truncate leading-tight transition-colors text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 group-[.router-link-active]:!text-blue-100"
                   >
                     {{ item.subtitle }}
                   </p>
@@ -402,7 +433,7 @@ const filteredMenuGroups = computed(() => {
               <p class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ user?.full_name || 'Guest User' }}</p>
               <p class="text-[9px] uppercase tracking-wider text-slate-500 font-bold">{{ user?.role || 'Guest' }}</p>
             </div>
-            <div class="w-8 h-8 rounded-full bg-violet-600/10 border border-violet-500/30 flex items-center justify-center text-[10px] font-bold text-violet-400 uppercase">
+            <div class="w-8 h-8 rounded-full bg-blue-900/10 dark:bg-blue-400/10 border border-blue-900/20 dark:border-blue-400/20 flex items-center justify-center text-[10px] font-bold text-blue-900 dark:text-blue-400 uppercase">
               {{ user?.full_name?.substring(0, 2) || 'GU' }}
             </div>
           </div>
@@ -428,7 +459,7 @@ const filteredMenuGroups = computed(() => {
     <aside class="hidden lg:flex fixed left-0 top-0 bottom-0 w-72 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 flex-col p-5 z-50 border-r border-slate-200 dark:border-slate-800">
       <!-- Logo / School Branding -->
       <div class="flex items-center gap-3 mb-5 px-1">
-        <div class="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-violet-600/20 shrink-0">
+        <div class="w-10 h-10 bg-blue-900 dark:bg-blue-600 rounded-lg flex items-center justify-center shadow-sm shrink-0">
           <GraduationCap class="text-white" :size="20" />
         </div>
         <div class="min-w-0">
@@ -446,7 +477,7 @@ const filteredMenuGroups = computed(() => {
             v-model="menuSearchQuery"
             type="text"
             placeholder="Cari menu & fitur..."
-            class="w-full pl-8 pr-7 py-1.5 text-xs rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500 transition-all"
+            class="w-full pl-8 pr-7 py-1.5 text-xs rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-700 transition-all"
           />
           <button 
             v-if="menuSearchQuery"
@@ -466,7 +497,7 @@ const filteredMenuGroups = computed(() => {
           <p class="text-xs text-slate-400 dark:text-slate-500">Tidak ada menu untuk "{{ menuSearchQuery }}"</p>
           <button 
             @click="menuSearchQuery = ''"
-            class="mt-2 text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline"
+            class="mt-2 text-xs font-semibold text-blue-800 dark:text-blue-400 hover:underline"
           >
             Reset Pencarian
           </button>
@@ -483,7 +514,7 @@ const filteredMenuGroups = computed(() => {
                 :target="item.external ? '_blank' : undefined"
                 class="group relative flex flex-col gap-0.5 px-3 py-2 rounded-xl transition-all duration-200"
                 :class="item.customClass || 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/90 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60'"
-                active-class="!bg-violet-600 !text-white shadow-md shadow-violet-600/20"
+                active-class="!bg-blue-900 dark:!bg-blue-600 !text-white shadow-sm"
               >
                 <div class="flex items-center justify-between w-full gap-1.5">
                   <div class="flex items-center gap-2.5 min-w-0">
@@ -503,7 +534,7 @@ const filteredMenuGroups = computed(() => {
                 </div>
                 <p 
                   v-if="item.subtitle" 
-                  class="text-[10px] pl-[26px] truncate leading-tight transition-colors text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 group-[.router-link-active]:!text-violet-100"
+                  class="text-[10px] pl-[26px] truncate leading-tight transition-colors text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 group-[.router-link-active]:!text-blue-100"
                 >
                   {{ item.subtitle }}
                 </p>
@@ -520,7 +551,7 @@ const filteredMenuGroups = computed(() => {
             <p class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ user?.full_name || 'Guest User' }}</p>
             <p class="text-[9px] uppercase tracking-wider text-slate-500 font-bold">{{ user?.role || 'Guest' }}</p>
           </div>
-          <div class="w-8 h-8 rounded-full bg-violet-600/10 border border-violet-500/30 flex items-center justify-center text-[10px] font-bold text-violet-400 uppercase">
+          <div class="w-8 h-8 rounded-full bg-blue-900/10 dark:bg-blue-400/10 border border-blue-900/20 dark:border-blue-400/20 flex items-center justify-center text-[10px] font-bold text-blue-900 dark:text-blue-400 uppercase">
             {{ user?.full_name?.substring(0, 2) || 'GU' }}
           </div>
         </div>
@@ -589,82 +620,12 @@ const filteredMenuGroups = computed(() => {
       </main>
     </div>
 
-    <!-- Floating Mobile Navigation Pill (Glassmorphism dock) -->
-    <nav class="lg:hidden fixed bottom-6 left-4 right-4 bg-slate-950/90 text-slate-400 rounded-full py-3 px-6 shadow-xl backdrop-blur-md flex justify-between items-center z-50 border border-slate-800/80 overflow-x-auto gap-4">
-      <NuxtLink 
-        to="/" 
-        class="flex flex-col items-center gap-0.5 transition-all duration-200 shrink-0"
-        active-class="text-violet-400 scale-110"
-      >
-        <LayoutDashboard :size="16" />
-        <span class="text-[8px] font-bold">Dashboard</span>
-      </NuxtLink>
-      <NuxtLink 
-        v-if="user && ['principal', 'treasurer', 'super_admin', 'vice_principal_curriculum'].includes(user.role)"
-        to="/dashboard" 
-        class="flex flex-col items-center gap-0.5 transition-all duration-200 shrink-0"
-        active-class="text-violet-400 scale-110"
-      >
-        <BarChart3 :size="16" />
-        <span class="text-[8px] font-bold">Eksekutif</span>
-      </NuxtLink>
-      <NuxtLink 
-        to="/school" 
-        class="flex flex-col items-center gap-0.5 transition-all duration-200 shrink-0"
-        active-class="text-violet-400 scale-110"
-      >
-        <School :size="16" />
-        <span class="text-[8px] font-bold">Sekolah</span>
-      </NuxtLink>
-      <NuxtLink 
-        to="/academic-year" 
-        class="flex flex-col items-center gap-0.5 transition-all duration-200 shrink-0"
-        active-class="text-violet-400 scale-110"
-      >
-        <Calendar :size="16" />
-        <span class="text-[8px] font-bold">Tahun</span>
-      </NuxtLink>
-      <NuxtLink 
-        to="/class" 
-        class="flex flex-col items-center gap-0.5 transition-all duration-200 shrink-0"
-        active-class="text-violet-400 scale-110"
-      >
-        <LayoutGrid :size="16" />
-        <span class="text-[8px] font-bold">Kelas</span>
-      </NuxtLink>
-      <NuxtLink 
-        to="/schedule" 
-        class="flex flex-col items-center gap-0.5 transition-all duration-200 shrink-0"
-        active-class="text-violet-400 scale-110"
-      >
-        <Clock :size="16" />
-        <span class="text-[8px] font-bold">Jadwal</span>
-      </NuxtLink>
-      <NuxtLink 
-        to="/student" 
-        class="flex flex-col items-center gap-0.5 transition-all duration-200 shrink-0"
-        active-class="text-violet-400 scale-110"
-      >
-        <Users :size="16" />
-        <span class="text-[8px] font-bold">Siswa</span>
-      </NuxtLink>
-      <NuxtLink 
-        to="/homeroom" 
-        class="flex flex-col items-center gap-0.5 transition-all duration-200 shrink-0"
-        active-class="text-violet-400 scale-110"
-      >
-        <ClipboardCheck :size="16" />
-        <span class="text-[8px] font-bold">Wali Kelas</span>
-      </NuxtLink>
-      <button 
-        type="button"
-        @click="isMobileMenuOpen = true"
-        class="flex flex-col items-center gap-0.5 transition-all duration-200 text-slate-400 hover:text-white shrink-0 outline-none"
-      >
-        <Menu :size="16" />
-        <span class="text-[8px] font-bold text-violet-400">Lainnya</span>
-      </button>
-    </nav>
+    <!-- Ergonomic Mobile Bottom Navigation -->
+    <AppBottomNav :items="mobileNavItems" @select="handleMobileNavSelect" />
+
+    <!-- Offline Alert Banner & PWA Install Prompt -->
+    <OfflineBanner />
+    <PwaInstallPrompt />
 
     <!-- B2C Paywall Modal for Subscription -->
     <B2cPaywallModal :model-value="isPaywallVisible" :forceUpgrade="true" title="Langganan Berakhir" message="Masa trial/langganan Anda telah berakhir. Anda harus memperpanjang paket untuk dapat terus menggunakan EduRaport." requiredPlan="PRO / BASIC" />
@@ -713,7 +674,7 @@ const filteredMenuGroups = computed(() => {
           <BaseButton type="button" variant="outline" @click="showChangePasswordModal = false" class="py-2 px-4 text-xs font-semibold">
             Batal
           </BaseButton>
-          <BaseButton type="submit" variant="primary" :disabled="changePasswordLoading" class="py-2 px-4 text-xs font-bold shadow-lg shadow-violet-600/10">
+          <BaseButton type="submit" variant="primary" :disabled="changePasswordLoading" class="py-2 px-4 text-xs font-bold shadow-sm">
             {{ changePasswordLoading ? 'Menyimpan...' : 'Simpan Password' }}
           </BaseButton>
         </div>

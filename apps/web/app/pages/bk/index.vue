@@ -23,13 +23,13 @@ definePageMeta({
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <NuxtLink to="/bk/counselors" class="group bg-white dark:bg-zinc-900/60 p-6 rounded-xl border border-slate-200/60 dark:border-zinc-800/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
         <div>
-          <div class="w-12 h-12 bg-violet-50 dark:bg-violet-900/20 rounded-lg flex items-center justify-center mb-4">
-            <Users class="w-6 h-6 text-violet-600 dark:text-violet-400" />
+          <div class="w-12 h-12 bg-blue-50/60 dark:bg-blue-950/20 rounded-lg flex items-center justify-center mb-4">
+            <Users class="w-6 h-6 text-blue-900 dark:text-blue-400" />
           </div>
           <h3 class="font-bold text-slate-900 dark:text-zinc-100 text-lg">Guru BK</h3>
           <p class="text-xs text-slate-500 mt-1">Kelola data guru bimbingan konseling</p>
         </div>
-        <div class="mt-6 flex items-center text-xs font-semibold text-violet-600 dark:text-violet-400 group-hover:gap-1 transition-all">
+        <div class="mt-6 flex items-center text-xs font-semibold text-blue-900 dark:text-blue-400 group-hover:gap-1 transition-all">
           Masuk Menu <ChevronRight class="w-4 h-4" />
         </div>
       </NuxtLink>

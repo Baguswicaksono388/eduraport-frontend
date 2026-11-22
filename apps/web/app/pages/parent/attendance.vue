@@ -88,7 +88,7 @@ const changeMonth = (delta: number) => {
   <div class="space-y-6 max-w-5xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-violet-600 transition">
+        <NuxtLink to="/" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-blue-900 transition">
           <ArrowLeft :size="18" />
         </NuxtLink>
         <div>
@@ -102,7 +102,7 @@ const changeMonth = (delta: number) => {
 
       <!-- Child Selector if multiple children -->
       <div v-if="myChildren.length > 1" class="w-48">
-        <select v-model="selectedChildId" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600">
+        <select v-model="selectedChildId" class="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-blue-900">
           <option v-for="c in myChildren" :key="c.student_id" :value="c.student_id">
             {{ c.student_name }}
           </option>
@@ -135,7 +135,7 @@ const changeMonth = (delta: number) => {
         :class="[
           'px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap',
           activeActivityTab === 'school'
-            ? 'bg-violet-600 text-white shadow-sm'
+            ? 'bg-blue-900 dark:bg-blue-600 text-white shadow-sm'
             : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800'
         ]"
       >
@@ -170,7 +170,7 @@ const changeMonth = (delta: number) => {
     </div>
 
     <div v-if="loading" class="flex justify-center py-20">
-      <div class="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-10 h-10 border-4 border-blue-900 dark:border-blue-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <template v-else-if="activeActivityTab === 'school'">

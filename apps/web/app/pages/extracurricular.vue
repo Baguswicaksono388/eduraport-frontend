@@ -607,7 +607,7 @@ const handleDeleteEkskul = async (id: string) => {
     <div v-if="!isSchoolLocked" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-zinc-900/60 border border-slate-200/60 dark:border-zinc-800/80 rounded-xl p-5 shadow-sm">
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Yayasan</label>
-        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Yayasan</option>
           <option v-for="found in foundations" :key="found.id" :value="found.id">{{ found.name }}</option>
         </select>
@@ -615,7 +615,7 @@ const handleDeleteEkskul = async (id: string) => {
 
       <div class="flex flex-col gap-1.5">
         <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest px-1">Unit Sekolah</label>
-        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 text-slate-900 dark:text-zinc-100">
+        <select v-model="selectedSchoolId" :disabled="!selectedFoundationId" class="w-full bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 text-slate-900 dark:text-zinc-100">
           <option value="" disabled>Pilih Unit Sekolah</option>
           <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
         </select>
@@ -631,7 +631,7 @@ const handleDeleteEkskul = async (id: string) => {
         :class="[
           'px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition cursor-pointer flex items-center gap-1.5',
           activeTab === 'master'
-            ? 'border-violet-600 text-violet-700 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-950/20'
+            ? 'border-blue-900 text-blue-900 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20'
             : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400'
         ]"
       >
@@ -645,7 +645,7 @@ const handleDeleteEkskul = async (id: string) => {
         :class="[
           'px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition cursor-pointer flex items-center gap-1.5',
           activeTab === 'monitoring'
-            ? 'border-violet-600 text-violet-700 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-950/20'
+            ? 'border-blue-900 text-blue-900 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20'
             : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400'
         ]"
       >
@@ -670,7 +670,7 @@ const handleDeleteEkskul = async (id: string) => {
           <tr v-for="ekskul in extracurriculars" :key="ekskul.id" class="border-b border-slate-100 dark:border-zinc-800/80 last:border-0 hover:bg-slate-50/20 dark:hover:bg-zinc-900/20 transition-colors">
             <td class="p-4 pl-6">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded bg-violet-50 dark:bg-zinc-850 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                <div class="w-8 h-8 rounded bg-blue-50/60 dark:bg-zinc-850 flex items-center justify-center text-blue-900 dark:text-blue-400">
                   <Trophy :size="16" />
                 </div>
                 <span class="font-bold text-slate-800 dark:text-zinc-200 text-sm">{{ ekskul.name }}</span>
@@ -721,7 +721,7 @@ const handleDeleteEkskul = async (id: string) => {
                     {{ ekskul.member_count ?? 0 }}
                   </span>
                 </button>
-                <button @click="openEditModal(ekskul)" class="p-2 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+                <button @click="openEditModal(ekskul)" class="p-2 text-slate-400 hover:text-blue-900 dark:hover:text-blue-400 transition-colors">
                   <Edit2 :size="14" />
                 </button>
                 <button @click="handleDeleteEkskul(ekskul.id)" class="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-450 transition-colors">
@@ -750,7 +750,7 @@ const handleDeleteEkskul = async (id: string) => {
             <select
               v-model="selectedMonitorEkstraId"
               data-testid="monitor-ekstra-select"
-              class="h-9 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 transition-all min-w-[210px]"
+              class="h-9 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 transition-all min-w-[210px]"
             >
               <option value="" disabled>-- Pilih Ekskul --</option>
               <option v-for="ex in extracurriculars" :key="ex.id" :value="ex.id">{{ ex.name }}</option>
@@ -761,7 +761,7 @@ const handleDeleteEkskul = async (id: string) => {
             <select
               v-model="selectedMonitorAcademicYearId"
               data-testid="monitor-ekstra-year"
-              class="h-9 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 transition-all min-w-[180px]"
+              class="h-9 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-blue-900 focus:ring-4 focus:ring-blue-900/10 transition-all min-w-[180px]"
             >
               <option value="" disabled>-- Tahun Ajaran --</option>
               <option v-for="ay in academicYears" :key="ay.id" :value="ay.id">
@@ -774,7 +774,7 @@ const handleDeleteEkskul = async (id: string) => {
               v-model="monitorDate"
               label="Tanggal"
               size="sm"
-              accent="violet"
+              accent="blue"
               :clearable="false"
               data-testid="monitor-ekstra-date"
             />
@@ -878,7 +878,7 @@ const handleDeleteEkskul = async (id: string) => {
           <label class="text-xs font-semibold text-slate-650 dark:text-zinc-400">Pelatih / Instruktur</label>
           <select 
             v-model="ekskulForm.instructor" 
-            class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100"
+            class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100"
           >
             <option value="">-- Pilih Guru / Staf --</option>
             <option v-for="t in teachers" :key="t.id" :value="t.full_name">
@@ -902,8 +902,8 @@ const handleDeleteEkskul = async (id: string) => {
               :class="[
                 'min-h-[34px] px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer',
                 ekskulForm.schedule_days.includes(day.id)
-                  ? 'bg-violet-600 text-white border-violet-600 shadow-sm'
-                  : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-800 hover:border-violet-400'
+                  ? 'bg-blue-900 text-white border-blue-900 shadow-sm'
+                  : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-800 hover:border-blue-400'
               ]"
             >
               {{ day.short }}
@@ -916,7 +916,7 @@ const handleDeleteEkskul = async (id: string) => {
                 type="time"
                 v-model="ekskulForm.schedule_start_time"
                 @change="syncScheduleBuilderToForm(ekskulForm)"
-                class="h-9 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600"
+                class="h-9 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-blue-900"
               />
             </div>
             <div class="flex flex-col gap-1">
@@ -925,7 +925,7 @@ const handleDeleteEkskul = async (id: string) => {
                 type="time"
                 v-model="ekskulForm.schedule_end_time"
                 @change="syncScheduleBuilderToForm(ekskulForm)"
-                class="h-9 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600"
+                class="h-9 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-blue-900"
               />
             </div>
           </div>
@@ -933,7 +933,7 @@ const handleDeleteEkskul = async (id: string) => {
         </div>
         
         <div class="flex items-center gap-2 px-1 py-1">
-          <input type="checkbox" id="is_active_ekskul_create" v-model="ekskulForm.is_active" class="rounded border-slate-350 dark:border-zinc-800 text-violet-600 focus:ring-violet-600/20" />
+          <input type="checkbox" id="is_active_ekskul_create" v-model="ekskulForm.is_active" class="rounded border-slate-350 dark:border-zinc-800 text-blue-900 focus:ring-blue-900/20" />
           <label for="is_active_ekskul_create" class="text-xs font-semibold text-slate-600 dark:text-zinc-400">Aktifkan ekskul ini</label>
         </div>
 
@@ -959,7 +959,7 @@ const handleDeleteEkskul = async (id: string) => {
           <label class="text-xs font-semibold text-slate-650 dark:text-zinc-400">Pelatih / Instruktur</label>
           <select 
             v-model="editForm.instructor" 
-            class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-violet-600 text-slate-900 dark:text-zinc-100"
+            class="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-semibold outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100"
           >
             <option value="">-- Pilih Guru / Staf --</option>
             <option v-for="t in teachers" :key="t.id" :value="t.full_name">
@@ -983,8 +983,8 @@ const handleDeleteEkskul = async (id: string) => {
               :class="[
                 'min-h-[34px] px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer',
                 editForm.schedule_days.includes(day.id)
-                  ? 'bg-violet-600 text-white border-violet-600 shadow-sm'
-                  : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-800 hover:border-violet-400'
+                  ? 'bg-blue-900 text-white border-blue-900 shadow-sm'
+                  : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-800 hover:border-blue-400'
               ]"
             >
               {{ day.short }}
@@ -997,7 +997,7 @@ const handleDeleteEkskul = async (id: string) => {
                 type="time"
                 v-model="editForm.schedule_start_time"
                 @change="syncScheduleBuilderToForm(editForm)"
-                class="h-9 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600"
+                class="h-9 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-blue-900"
               />
             </div>
             <div class="flex flex-col gap-1">
@@ -1006,7 +1006,7 @@ const handleDeleteEkskul = async (id: string) => {
                 type="time"
                 v-model="editForm.schedule_end_time"
                 @change="syncScheduleBuilderToForm(editForm)"
-                class="h-9 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600"
+                class="h-9 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-blue-900"
               />
             </div>
           </div>
@@ -1014,7 +1014,7 @@ const handleDeleteEkskul = async (id: string) => {
         </div>
         
         <div class="flex items-center gap-2 px-1 py-1">
-          <input type="checkbox" id="is_active_ekskul_edit" v-model="editForm.is_active" class="rounded border-slate-350 dark:border-zinc-800 text-violet-600 focus:ring-violet-600/20" />
+          <input type="checkbox" id="is_active_ekskul_edit" v-model="editForm.is_active" class="rounded border-slate-350 dark:border-zinc-800 text-blue-900 focus:ring-blue-900/20" />
           <label for="is_active_ekskul_edit" class="text-xs font-semibold text-slate-600 dark:text-zinc-400">Ekskul aktif</label>
         </div>
 
@@ -1031,7 +1031,7 @@ const handleDeleteEkskul = async (id: string) => {
         <!-- Club Schedule Summary Banner -->
         <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-950/60 px-3.5 py-2.5 text-xs">
           <div class="flex items-center gap-2 text-slate-600 dark:text-zinc-300">
-            <Clock :size="14" class="text-violet-600 dark:text-violet-400 shrink-0" />
+            <Clock :size="14" class="text-blue-900 dark:text-blue-400 shrink-0" />
             <span>Jadwal Ekskul Ini:</span>
             <span class="font-bold text-slate-900 dark:text-zinc-100">
               {{ membersEkskul?.schedule || 'Belum diatur' }}
@@ -1069,7 +1069,7 @@ const handleDeleteEkskul = async (id: string) => {
               v-model="selectedMemberAcademicYearId"
               data-testid="member-ekstra-year"
               @change="onMemberAcademicYearChange"
-              class="h-9 w-full min-w-0 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600"
+              class="h-9 w-full min-w-0 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-blue-900"
             >
               <option value="" disabled>-- Pilih Tahun Ajaran --</option>
               <option v-for="ay in academicYears" :key="ay.id" :value="ay.id">
@@ -1084,7 +1084,7 @@ const handleDeleteEkskul = async (id: string) => {
               <select
                 v-model="cloneSourceAcademicYearId"
                 data-testid="member-clone-source-year"
-                class="h-9 flex-1 min-w-0 truncate bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 text-xs font-semibold text-slate-800 dark:text-zinc-100 outline-none focus:border-violet-600"
+                class="h-9 flex-1 min-w-0 truncate bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 text-xs font-semibold text-slate-800 dark:text-zinc-100 outline-none focus:border-blue-900"
               >
                 <option value="" disabled>-- Sumber --</option>
                 <option v-for="ay in otherMemberAcademicYears" :key="ay.id" :value="ay.id">
@@ -1115,7 +1115,7 @@ const handleDeleteEkskul = async (id: string) => {
               :class="[
                 'px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer',
                 memberViewFilter === 'all'
-                  ? 'bg-violet-600 text-white border-violet-600 shadow-sm'
+                  ? 'bg-blue-900 text-white border-blue-900 shadow-sm'
                   : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800'
               ]"
             >
@@ -1156,7 +1156,7 @@ const handleDeleteEkskul = async (id: string) => {
               type="text"
               v-model="memberSearch"
               placeholder="Cari nama atau NIS siswa..."
-              class="w-full h-9 pl-9 pr-3 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 outline-none focus:border-violet-600"
+              class="w-full h-9 pl-9 pr-3 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 outline-none focus:border-blue-900"
             />
           </div>
         </div>
@@ -1240,7 +1240,7 @@ const handleDeleteEkskul = async (id: string) => {
               :checked="selectedMemberIds.includes(s.id)"
               :disabled="hasStudentScheduleConflict(s.id) && !selectedMemberIds.includes(s.id)"
               @change="toggleMemberSelection(s.id)"
-              class="w-4 h-4 mt-0.5 sm:mt-0 rounded text-violet-600 border-slate-300 dark:border-zinc-700 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+              class="w-4 h-4 mt-0.5 sm:mt-0 rounded text-blue-900 border-slate-300 dark:border-zinc-700 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
             />
           </label>
         </div>

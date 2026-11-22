@@ -248,7 +248,7 @@ const getMetricName = (key: string) => {
       <!-- Header -->
       <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-zinc-800 sticky top-0 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md z-10">
         <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-950/30 flex items-center justify-center text-violet-600">
+          <div class="w-8 h-8 rounded-lg bg-blue-50/60 dark:bg-blue-950/30 flex items-center justify-center text-blue-900">
             <Mail :size="18" />
           </div>
           <div>
@@ -270,14 +270,14 @@ const getMetricName = (key: string) => {
         <button 
           @click="setTab('list')" 
           class="px-4 py-3.5 text-xs font-bold transition-all border-b-2"
-          :class="[activeTab === 'list' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-400 hover:text-slate-600']"
+          :class="[activeTab === 'list' ? 'border-blue-900 text-blue-900 dark:text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-600']"
         >
           Daftar Jadwal Digest
         </button>
         <button 
           @click="setTab('form')" 
           class="px-4 py-3.5 text-xs font-bold transition-all border-b-2"
-          :class="[activeTab === 'form' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-400 hover:text-slate-600']"
+          :class="[activeTab === 'form' ? 'border-blue-900 text-blue-900 dark:text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-600']"
         >
           {{ editingId ? 'Sunting Jadwal' : '+ Tambah Jadwal' }}
         </button>
@@ -286,13 +286,13 @@ const getMetricName = (key: string) => {
       <!-- Tab Content: LIST -->
       <div v-if="activeTab === 'list'" class="p-6 space-y-4 flex-1">
         <div v-if="loading" class="flex justify-center py-12">
-          <div class="w-8 h-8 border-3 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+          <div class="w-8 h-8 border-3 border-blue-900 border-t-transparent rounded-full animate-spin"></div>
         </div>
 
         <div v-else-if="digests.length === 0" class="flex flex-col items-center justify-center py-16 text-slate-400">
           <Info :size="32" class="mb-2 text-slate-300" />
           <p class="text-xs font-semibold">Belum ada jadwal digest yang dikonfigurasi.</p>
-          <button @click="setTab('form')" class="mt-4 px-3.5 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold transition-all shadow-md shadow-violet-600/10">
+          <button @click="setTab('form')" class="mt-4 px-3.5 py-2 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-xs font-bold transition-all shadow-md shadow-sm">
             Jadwalkan Digest Pertama
           </button>
         </div>
@@ -343,7 +343,7 @@ const getMetricName = (key: string) => {
               <button 
                 @click="handleSendNow(d.id)"
                 :disabled="sendingId === d.id"
-                class="flex items-center gap-1 text-[10px] font-bold text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 transition-all"
+                class="flex items-center gap-1 text-[10px] font-bold text-blue-900 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 transition-all"
               >
                 <Send :size="10" />
                 {{ sendingId === d.id ? 'Mengirim...' : 'Kirim Sekarang' }}
@@ -380,7 +380,7 @@ const getMetricName = (key: string) => {
                 type="text" 
                 v-model="form.name" 
                 placeholder="Contoh: Laporan Harian Kepala Sekolah"
-                class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none focus:border-violet-600"
+                class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none focus:border-blue-900"
               />
             </div>
 
@@ -389,7 +389,7 @@ const getMetricName = (key: string) => {
                 <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Saluran</label>
                 <select 
                   v-model="form.channel" 
-                  class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none focus:border-violet-600"
+                  class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none focus:border-blue-900"
                 >
                   <option value="in_app">Notifikasi In-App</option>
                   <option value="email">Email</option>
@@ -401,7 +401,7 @@ const getMetricName = (key: string) => {
                 <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Frekuensi</label>
                 <select 
                   v-model="form.schedule_type" 
-                  class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none focus:border-violet-600"
+                  class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none focus:border-blue-900"
                 >
                   <option value="daily">Harian</option>
                   <option value="weekly">Mingguan</option>
@@ -423,7 +423,7 @@ const getMetricName = (key: string) => {
                 <input 
                   type="time" 
                   v-model="form.schedule_time" 
-                  class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-1.5 text-xs font-semibold outline-none focus:border-violet-600"
+                  class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-1.5 text-xs font-semibold outline-none focus:border-blue-900"
                 />
               </div>
 
@@ -431,7 +431,7 @@ const getMetricName = (key: string) => {
                 <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Hari Pengiriman</label>
                 <select 
                   v-model="form.schedule_day" 
-                  class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none focus:border-violet-600"
+                  class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none focus:border-blue-900"
                 >
                   <option v-for="w in weekdayList" :key="w.value" :value="w.value">{{ w.label }}</option>
                 </select>
@@ -441,7 +441,7 @@ const getMetricName = (key: string) => {
                 <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Tanggal Pengiriman</label>
                 <select 
                   v-model="form.schedule_day" 
-                  class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none focus:border-violet-600"
+                  class="bg-slate-50/50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-semibold outline-none focus:border-blue-900"
                 >
                   <option v-for="d in 28" :key="d" :value="String(d)">Tanggal {{ d }}</option>
                 </select>
@@ -459,7 +459,7 @@ const getMetricName = (key: string) => {
                   class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border"
                   :class="[
                     form.recipient_roles.includes(r.value)
-                      ? 'bg-violet-50 border-violet-200 dark:bg-violet-950/20 dark:border-violet-900 text-violet-600 dark:text-violet-400'
+                      ? 'bg-blue-50/60 border-blue-200 dark:bg-blue-950/20 dark:border-blue-950 text-blue-900 dark:text-blue-400'
                       : 'bg-white border-slate-200 dark:bg-zinc-900 dark:border-zinc-800 text-slate-500 hover:border-slate-300'
                   ]"
                 >
@@ -470,7 +470,7 @@ const getMetricName = (key: string) => {
                 <input 
                   type="checkbox" 
                   v-model="form.send_to_me"
-                  class="rounded border-slate-300 dark:border-zinc-700 text-violet-600 focus:ring-violet-600 w-3.5 h-3.5"
+                  class="rounded border-slate-300 dark:border-zinc-700 text-blue-900 focus:ring-blue-900/20 w-3.5 h-3.5"
                 />
                 <span class="text-[10px] font-bold text-slate-600 dark:text-zinc-400">
                   Tembuskan laporan ke nomor WhatsApp saya ({{ user?.full_name }})
@@ -490,14 +490,14 @@ const getMetricName = (key: string) => {
                 class="flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition-all border"
                 :class="[
                   form.metric_keys.includes(c.metric_key)
-                    ? 'border-violet-200 bg-violet-50/20 dark:border-violet-950/40 dark:bg-violet-950/10'
+                    ? 'border-blue-200 bg-blue-50/60 dark:border-blue-950/40 dark:bg-blue-950/10'
                     : 'border-transparent hover:bg-slate-100/50 dark:hover:bg-zinc-800/40'
                 ]"
               >
                 <input 
                   type="checkbox" 
                   :checked="form.metric_keys.includes(c.metric_key)"
-                  class="rounded border-slate-300 dark:border-zinc-700 text-violet-600 focus:ring-violet-600 w-3.5 h-3.5"
+                  class="rounded border-slate-300 dark:border-zinc-700 text-blue-900 focus:ring-blue-900/20 w-3.5 h-3.5"
                 />
                 <div>
                   <h5 class="text-[11px] font-bold text-slate-700 dark:text-zinc-200 leading-tight">{{ c.display_name }}</h5>
@@ -520,7 +520,7 @@ const getMetricName = (key: string) => {
           <button 
             @click="handleSave"
             :disabled="saving"
-            class="flex items-center gap-1.5 px-5 py-2 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-50 transition-all shadow-md shadow-violet-600/15"
+            class="flex items-center gap-1.5 px-5 py-2 rounded-lg text-xs font-bold bg-blue-900 hover:bg-blue-800 text-white disabled:opacity-50 transition-all shadow-md shadow-sm"
           >
             <Check :size="12" />
             {{ saving ? 'Menyimpan...' : (editingId ? 'Simpan Perubahan' : 'Jadwalkan Digest') }}

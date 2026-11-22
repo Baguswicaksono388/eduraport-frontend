@@ -174,7 +174,7 @@ const features = [
     icon: '🏫',
     title: 'Satu Identitas Lintas Jenjang',
     desc: 'Siswa naik SD ke SMP tak perlu input ulang. Sinkronisasi otomatis data yayasan menghemat biaya operasional (OpEx) secara signifikan.',
-    color: 'violet'
+    color: 'blue'
   },
   {
     icon: '❤️',
@@ -528,7 +528,7 @@ const chartHeights = [65,80,55,90,70,85,60,95]
                         </div>
                         <div class="exec-mcard-footer">
                           <button class="exec-btn-mcard">↺ Hitung Ulang</button>
-                          <button class="exec-btn-mcard text-violet">Detail ↗</button>
+                          <button class="exec-btn-mcard text-blue">Detail ↗</button>
                         </div>
                       </div>
 
@@ -569,7 +569,7 @@ const chartHeights = [65,80,55,90,70,85,60,95]
                         </div>
                         <div class="exec-mcard-footer">
                           <button class="exec-btn-mcard">↺ Hitung Ulang</button>
-                          <button class="exec-btn-mcard text-violet">Detail ↗</button>
+                          <button class="exec-btn-mcard text-blue">Detail ↗</button>
                         </div>
                       </div>
 
@@ -590,7 +590,7 @@ const chartHeights = [65,80,55,90,70,85,60,95]
                         </div>
                         <div class="exec-mcard-footer">
                           <button class="exec-btn-mcard">↺ Hitung Ulang</button>
-                          <button class="exec-btn-mcard text-violet">Detail ↗</button>
+                          <button class="exec-btn-mcard text-blue">Detail ↗</button>
                         </div>
                       </div>
                     </div>
@@ -1931,7 +1931,7 @@ html.dark {
   cursor: pointer;
   padding: 0;
 }
-.exec-btn-mcard.text-violet {
+.exec-btn-mcard.text-blue {
   color: #a78bfa;
 }
 .exec-btn-mcard.text-rose {
@@ -2126,9 +2126,9 @@ html.dark {
 .faq-item { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; overflow: hidden; transition: border-color 0.2s, background-color 0.2s; }
 .faq-item.faq-open { border-color: rgba(124, 58, 237, 0.4); background: rgba(124, 58, 237, 0.03); }
 .faq-trigger { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; background: none; border: none; cursor: pointer; text-align: left; color: var(--text-main); font-size: 15px; font-weight: 600; line-height: 1.4; transition: color 0.2s; }
-.faq-trigger:hover { color: #8b5cf6; }
+.faq-trigger:hover { color: #2563EB; }
 .faq-chevron { color: var(--text-muted); flex-shrink: 0; transition: transform 0.25s ease; }
-.faq-open .faq-chevron { transform: rotate(180deg); color: #8b5cf6; }
+.faq-open .faq-chevron { transform: rotate(180deg); color: #2563EB; }
 .faq-answer { padding: 0 22px 18px; font-size: 14px; line-height: 1.7; color: var(--text-secondary); border-top: 1px dashed var(--border-color); padding-top: 14px; }
 
 /* TESTIMONIALS */
