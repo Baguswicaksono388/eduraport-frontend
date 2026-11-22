@@ -121,6 +121,7 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
+    '/dev-sw.js**': { ssr: false },
     '/api/v1/**': { proxy: 'http://eduraport_backend_staging:3002/api/v1/**' },
     '/uploads/**': { proxy: 'http://eduraport_backend_staging:3002/uploads/**' },
     '/ai-images/**': { proxy: 'http://eduraport_backend_staging:3002/ai-images/**' }
@@ -162,5 +163,9 @@ export default defineNuxtConfig({
 
   future: {
     compatibilityVersion: 4,
+  },
+
+  experimental: {
+    appManifest: false,
   }
 })

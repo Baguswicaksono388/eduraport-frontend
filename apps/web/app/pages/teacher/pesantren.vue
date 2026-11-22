@@ -40,7 +40,9 @@ import {
   RotateCcw,
   CheckCheck,
   Sunrise,
-  Sunset
+  Sunset,
+  LayoutGrid,
+  Table
 } from 'lucide-vue-next'
 import { BaseCard, BaseButton } from '@eduraport/ui'
 import AppPagination from '../../components/AppPagination.vue'
@@ -258,6 +260,22 @@ const loadingAssignedItems = ref(false)
 const hasUnsavedChanges = ref(false)
 const ibadahSearch = ref('')
 const ibadahStatusFilter = ref<'all' | 'hadir' | 'uzur' | 'incomplete'>('all')
+const ibadahViewMode = ref<'card' | 'table'>('card')
+
+const toggleStudentItem = (studentId: string, itemId: string) => {
+  if (!ibadahGrid.value[studentId]) {
+    ibadahGrid.value[studentId] = { check_data: {}, is_excused: false, notes: '' }
+  }
+  if (!ibadahGrid.value[studentId].check_data) {
+    ibadahGrid.value[studentId].check_data = {}
+  }
+  const item = assignedMutabaahItems.value.find((i: any) => i.id === itemId)
+  if (ibadahGrid.value[studentId].is_excused && item?.category === 'fardhu') {
+    return
+  }
+  ibadahGrid.value[studentId].check_data[itemId] = !ibadahGrid.value[studentId].check_data[itemId]
+  markIbadahChanged()
+}
 
 const markIbadahChanged = () => {
   hasUnsavedChanges.value = true
@@ -482,6 +500,9 @@ const commonSurahs = [
 
 // Initialize school data
 onMounted(async () => {
+  if (typeof window !== 'undefined') {
+    ibadahViewMode.value = window.innerWidth >= 768 ? 'table' : 'card'
+  }
   const schoolId = await initContext()
   if (schoolId) {
     await loadSchoolData(schoolId)
@@ -2355,7 +2376,7 @@ const handleSaveBulkIbadah = async () => {
                 type="button"
                 data-testid="btn-master-mutabaah"
                 @click="openMasterModal"
-                class="px-3 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                class="px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 text-blue-900 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                 title="Kelola bank amalan yayasan dan penugasan per unit sekolah"
               >
                 <Settings :size="14" />
@@ -2386,7 +2407,7 @@ const handleSaveBulkIbadah = async () => {
                 type="button"
                 @click="handleSaveBulkIbadah"
                 :disabled="saving"
-                class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black transition flex items-center gap-2 shadow-md hover:shadow-lg disabled:opacity-50 cursor-pointer relative"
+                class="px-4 py-2 rounded-xl bg-blue-900 hover:bg-blue-800 text-white text-xs font-black transition flex items-center gap-2 shadow-md hover:shadow-lg disabled:opacity-50 cursor-pointer relative"
               >
                 <RefreshCw v-if="saving" :size="14" class="animate-spin" />
                 <Save v-else :size="14" />
@@ -2419,25 +2440,61 @@ const handleSaveBulkIbadah = async () => {
             </button>
           </div>
 
-          <!-- Search & Filter Filter Bar -->
+          <!-- Search & Filter Bar with View Mode Toggle -->
           <div v-else class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 pb-2">
-            <!-- Search Input -->
-            <div class="relative flex-1 max-w-xs">
-              <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" :size="14" />
-              <input
-                type="text"
-                v-model="ibadahSearch"
-                placeholder="Cari nama santri / NIS..."
-                class="w-full bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-xl pl-9 pr-3 py-1.5 text-xs outline-none focus:border-indigo-500 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400"
-              />
-              <button
-                v-if="ibadahSearch"
-                type="button"
-                @click="ibadahSearch = ''"
-                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-xs"
-              >
-                &times;
-              </button>
+            <!-- Search Input & View Switcher -->
+            <div class="flex items-center justify-between gap-2 w-full sm:w-auto flex-1">
+              <div class="relative flex-1 sm:max-w-xs min-w-0">
+                <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" :size="14" />
+                <input
+                  type="text"
+                  v-model="ibadahSearch"
+                  placeholder="Cari nama santri / NIS..."
+                  class="w-full bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-xl pl-9 pr-3 py-1.5 text-xs outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400"
+                />
+                <button
+                  v-if="ibadahSearch"
+                  type="button"
+                  @click="ibadahSearch = ''"
+                  class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-xs cursor-pointer"
+                >
+                  &times;
+                </button>
+              </div>
+
+              <!-- View Switcher (Kartu vs Tabel) -->
+              <div class="inline-flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-zinc-800/80 border border-slate-200/80 dark:border-zinc-700/80 shrink-0">
+                <button
+                  type="button"
+                  data-testid="btn-view-card"
+                  @click="ibadahViewMode = 'card'"
+                  :class="[
+                    'px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer',
+                    ibadahViewMode === 'card'
+                      ? 'bg-white dark:bg-zinc-900 text-blue-900 dark:text-blue-400 shadow-xs'
+                      : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'
+                  ]"
+                  title="Tampilan Kartu (Optimal untuk HP / Layar Sentuh)"
+                >
+                  <LayoutGrid :size="13" />
+                  <span class="inline">Kartu</span>
+                </button>
+                <button
+                  type="button"
+                  data-testid="btn-view-table"
+                  @click="ibadahViewMode = 'table'"
+                  :class="[
+                    'px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer',
+                    ibadahViewMode === 'table'
+                      ? 'bg-white dark:bg-zinc-900 text-blue-900 dark:text-blue-400 shadow-xs'
+                      : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'
+                  ]"
+                  title="Tampilan Tabel (Optimal untuk Desktop)"
+                >
+                  <Table :size="13" />
+                  <span class="inline">Tabel</span>
+                </button>
+              </div>
             </div>
 
             <!-- Filter Status Tabs -->
@@ -2495,14 +2552,179 @@ const handleSaveBulkIbadah = async () => {
             </div>
           </div>
 
-          <!-- Student Checklist Matrix Table -->
-          <div v-if="assignedMutabaahItems.length > 0" class="overflow-x-auto border border-slate-200 dark:border-zinc-800 rounded-xl relative max-h-[70vh]">
+          <!-- 1. MOBILE CARD VIEW (Active when ibadahViewMode === 'card') -->
+          <div v-if="assignedMutabaahItems.length > 0 && ibadahViewMode === 'card'" class="space-y-3.5">
+            <div
+              v-for="s in filteredClassStudents"
+              :key="'card_' + s.id"
+              class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4 shadow-xs transition hover:border-slate-300 dark:hover:border-zinc-700 space-y-3"
+              :class="{ 'bg-rose-50/20 dark:bg-rose-950/10 border-rose-200 dark:border-rose-900/40': ibadahGrid[s.id]?.is_excused }"
+            >
+              <!-- Card Header: Student Avatar, Name, NIS, Uzur Syar'i Pill Button -->
+              <div class="flex items-start justify-between gap-2.5">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div
+                    :class="[
+                      'w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black shrink-0 shadow-2xs',
+                      s.gender === 'P'
+                        ? 'bg-pink-100 text-pink-700 dark:bg-pink-950/60 dark:text-pink-300 border border-pink-200 dark:border-pink-800'
+                        : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                    ]"
+                  >
+                    {{ getInitials(s.full_name) }}
+                  </div>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <h4 class="font-bold text-sm text-slate-900 dark:text-zinc-100 truncate" :title="s.full_name">
+                        {{ s.full_name }}
+                      </h4>
+                      <span
+                        v-if="s.gender === 'P'"
+                        class="px-1 py-0.2 rounded text-[8px] font-extrabold bg-pink-100 text-pink-700 dark:bg-pink-950/60 dark:text-pink-300 shrink-0"
+                      >
+                        P
+                      </span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 font-mono mt-0.5">NIS: {{ s.student_number || '-' }}</p>
+                  </div>
+                </div>
+
+                <!-- Uzur / Haid Button (Min touch target 44px) -->
+                <button
+                  type="button"
+                  @click="toggleStudentExcused(s.id)"
+                  :class="[
+                    'min-h-[40px] px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer border shadow-2xs inline-flex items-center gap-1.5 shrink-0 select-none',
+                    ibadahGrid[s.id]?.is_excused
+                      ? 'bg-rose-100 text-rose-700 border-rose-300 dark:bg-rose-950/70 dark:text-rose-300 dark:border-rose-800 ring-2 ring-rose-400/20'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
+                  ]"
+                >
+                  <span v-if="ibadahGrid[s.id]?.is_excused">🌸 Uzur Syar'i</span>
+                  <span v-else class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>Hadir</span>
+                  </span>
+                </button>
+              </div>
+
+              <!-- Prayer / Amalan Checklist Chips (Touch Target >= 44x44px per item) -->
+              <div v-if="!ibadahGrid[s.id]?.is_excused" class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+                <button
+                  v-for="item in assignedMutabaahItems"
+                  :key="item.id"
+                  type="button"
+                  @click="toggleStudentItem(s.id, item.id)"
+                  :class="[
+                    'min-h-[44px] px-3 py-2 rounded-xl border text-left flex items-center justify-between gap-2 transition cursor-pointer select-none',
+                    ibadahGrid[s.id]?.check_data?.[item.id]
+                      ? 'bg-emerald-50 border-emerald-300 text-emerald-900 dark:bg-emerald-950/40 dark:border-emerald-700 dark:text-emerald-200 font-bold'
+                      : 'bg-slate-50/80 border-slate-200/80 text-slate-700 hover:bg-slate-100 dark:bg-zinc-800/60 dark:border-zinc-700/80 dark:text-zinc-300'
+                  ]"
+                >
+                  <div class="flex items-center gap-2 min-w-0">
+                    <component
+                      :is="getItemIconComponent(item)"
+                      :size="15"
+                      :class="[
+                        'shrink-0',
+                        ibadahGrid[s.id]?.check_data?.[item.id]
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : (item.category === 'fardhu' ? 'text-emerald-600/70' : 'text-amber-500/70')
+                      ]"
+                    />
+                    <div class="min-w-0">
+                      <p class="text-xs truncate leading-tight">{{ getItemName(item) }}</p>
+                      <span
+                        class="text-[9px] font-bold uppercase tracking-wider opacity-70"
+                        :class="item.category === 'fardhu' ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'"
+                      >
+                        {{ item.category }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Checkmark Box -->
+                  <div
+                    :class="[
+                      'w-5 h-5 rounded-lg flex items-center justify-center shrink-0 border transition',
+                      ibadahGrid[s.id]?.check_data?.[item.id]
+                        ? 'bg-emerald-600 border-emerald-600 text-white'
+                        : 'border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-900'
+                    ]"
+                  >
+                    <Check v-if="ibadahGrid[s.id]?.check_data?.[item.id]" :size="12" class="stroke-[3]" />
+                  </div>
+                </button>
+              </div>
+
+              <!-- Uzur Syar'i Notice -->
+              <div
+                v-else
+                class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/50 text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2"
+              >
+                <span class="text-base">🌸</span>
+                <span class="leading-relaxed">Santriwati sedang berhalangan syar'i (haid/uzur). Seluruh sholat fardhu dikecualikan otomatis.</span>
+              </div>
+
+              <!-- Card Footer: Progress & Quick Actions -->
+              <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-zinc-800/80 text-xs">
+                <!-- Progress Bar -->
+                <div class="flex items-center gap-2.5">
+                  <div class="w-20 bg-slate-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
+                    <div
+                      class="h-full rounded-full transition-all duration-300"
+                      :class="getStudentProgress(s.id).pct === 100 ? 'bg-emerald-500' : (getStudentProgress(s.id).pct >= 50 ? 'bg-amber-500' : 'bg-slate-400')"
+                      :style="{ width: `${getStudentProgress(s.id).pct}%` }"
+                    ></div>
+                  </div>
+                  <span class="font-bold text-[11px] font-mono text-slate-600 dark:text-zinc-400">
+                    {{ getStudentProgress(s.id).completed }}/{{ getStudentProgress(s.id).total }} ({{ getStudentProgress(s.id).pct }}%)
+                  </span>
+                </div>
+
+                <!-- 1-Click Toggle All for Student -->
+                <button
+                  type="button"
+                  @click="toggleStudentAll(s.id)"
+                  class="text-[11px] font-bold text-blue-900 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer py-1 px-2 rounded hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                >
+                  <CheckCheck :size="13" />
+                  <span>{{ getStudentProgress(s.id).pct === 100 ? 'Batal Semua' : 'Centang Semua' }}</span>
+                </button>
+              </div>
+
+              <!-- Notes Input -->
+              <div class="pt-1">
+                <input
+                  type="text"
+                  v-if="ibadahGrid[s.id]"
+                  v-model="ibadahGrid[s.id].notes"
+                  @input="markIbadahChanged"
+                  placeholder="Catatan khusus untuk santri ini..."
+                  class="w-full bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/80 rounded-xl px-3 py-1.5 text-xs outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. DESKTOP / MATRIX TABLE VIEW (Active when ibadahViewMode === 'table') -->
+          <div v-if="assignedMutabaahItems.length > 0 && ibadahViewMode === 'table'" class="space-y-2">
+            <!-- Scroll hint on mobile devices -->
+            <div class="md:hidden flex items-center justify-between px-3 py-1.5 rounded-lg bg-blue-50/70 dark:bg-blue-950/30 text-blue-900 dark:text-blue-300 text-[11px] font-medium border border-blue-200/50 dark:border-blue-900/30">
+              <span>👉 Geser tabel ke kanan untuk melihat seluruh amalan</span>
+              <button type="button" @click="ibadahViewMode = 'card'" class="font-bold underline cursor-pointer">
+                Buka Tampilan Kartu
+              </button>
+            </div>
+
+            <div class="overflow-x-auto border border-slate-200 dark:border-zinc-800 rounded-xl relative max-h-[70vh]">
             <table class="w-full text-left text-xs border-collapse">
               <!-- Sticky Table Header with Informative Prayer Details -->
               <thead class="sticky top-0 bg-slate-50/95 dark:bg-zinc-900/95 backdrop-blur-md z-20 border-b border-slate-200 dark:border-zinc-800 text-slate-500 dark:text-zinc-400">
                 <tr>
                   <!-- Kolom 1: Nama Santri (Sticky Left) -->
-                  <th class="py-3 px-3.5 sticky left-0 bg-slate-50/95 dark:bg-zinc-900/95 backdrop-blur-md z-30 min-w-[200px] border-r border-slate-200/60 dark:border-zinc-800/60">
+                  <th class="py-3 px-3.5 sticky left-0 bg-slate-50/95 dark:bg-zinc-900/95 backdrop-blur-md z-30 min-w-[130px] sm:min-w-[180px] border-r border-slate-200/60 dark:border-zinc-800/60">
                     <div class="flex items-center justify-between">
                       <span class="font-extrabold uppercase text-[10px] tracking-wider text-slate-600 dark:text-zinc-300">
                         Nama Santri
@@ -2514,7 +2736,7 @@ const handleSaveBulkIbadah = async () => {
                   </th>
 
                   <!-- Kolom 2: Status Uzur / Haid -->
-                  <th class="py-3 px-2 text-center min-w-[100px] border-r border-slate-200/60 dark:border-zinc-800/60" title="Status Uzur Syar'i (Haid/Sakit) untuk santriwati">
+                  <th class="py-3 px-2 text-center min-w-[85px] sm:min-w-[100px] border-r border-slate-200/60 dark:border-zinc-800/60" title="Status Uzur Syar'i (Haid/Sakit) untuk santriwati">
                     <div class="flex flex-col items-center">
                       <span class="font-extrabold uppercase text-[10px] tracking-wider text-slate-600 dark:text-zinc-300">
                         Uzur / Haid
@@ -2529,7 +2751,7 @@ const handleSaveBulkIbadah = async () => {
                   <th
                     v-for="item in assignedMutabaahItems"
                     :key="item.id"
-                    class="py-2.5 px-3 text-center min-w-[125px] border-r border-slate-200/60 dark:border-zinc-800/60 group"
+                    class="py-2.5 px-3 text-center min-w-[95px] sm:min-w-[125px] border-r border-slate-200/60 dark:border-zinc-800/60 group"
                   >
                     <div class="flex flex-col items-center gap-1">
                       <!-- Amalan Icon + Name -->
@@ -2741,13 +2963,14 @@ const handleSaveBulkIbadah = async () => {
                       v-model="ibadahGrid[s.id].notes"
                       @input="markIbadahChanged"
                       placeholder="Catatan sholat/ibadah..."
-                      class="w-full min-w-[160px] bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1 text-[11px] outline-none focus:border-indigo-500 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 transition"
+                      class="w-full min-w-[160px] bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1 text-[11px] outline-none focus:border-blue-900 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 transition"
                     />
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
+        </div>
         </BaseCard>
       </div>
     </div>
