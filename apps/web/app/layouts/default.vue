@@ -13,6 +13,7 @@ import { useAcademicYear } from '../composables/useAcademicYear'
 import { useRbac } from '../composables/useRbac'
 import { usePaywallStore } from '../stores/paywall'
 import { isEarlyChildhood } from '../composables/useSchoolLevel'
+import { usePwaInstall } from '../composables/usePwaInstall'
 import { useColorMode } from '@vueuse/core'
 
 const { user, isSoloTeacher, logout, fetchUser, changePassword } = useAuth()
@@ -20,6 +21,7 @@ const { currentSchoolId, currentSchool, foundations } = useSchool()
 const { subscription, fetchSubscription } = useB2CSubscription()
 const { academicYears, fetchAcademicYears } = useAcademicYear()
 const { canAccess } = useRbac()
+const { canInstall, openPrompt: openPwaPrompt } = usePwaInstall()
 const paywallStore = usePaywallStore()
 
 const colorMode = useColorMode()
@@ -437,6 +439,17 @@ const filteredMenuGroups = computed(() => {
               {{ user?.full_name?.substring(0, 2) || 'GU' }}
             </div>
           </div>
+          <!-- PWA Install Action in Mobile Drawer -->
+          <button 
+            v-if="canInstall"
+            type="button"
+            @click="openPwaPrompt(); isMobileMenuOpen = false" 
+            class="flex w-full items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-blue-900 to-indigo-900 text-white hover:from-blue-800 hover:to-indigo-800 transition-all text-xs font-black mb-2 shadow-sm cursor-pointer select-none"
+          >
+            <Smartphone :size="16" class="text-blue-200" />
+            <span class="flex-1 text-left">Pasang Aplikasi HP (PWA)</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded bg-white/20 text-white font-extrabold uppercase">Instal</span>
+          </button>
           <button 
             @click="showChangePasswordModal = true; isMobileMenuOpen = false" 
             class="flex w-full items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60 transition-colors text-xs font-bold mb-1"

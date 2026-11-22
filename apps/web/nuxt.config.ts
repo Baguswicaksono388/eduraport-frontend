@@ -133,10 +133,17 @@ export default defineNuxtConfig({
     head: {
       title: 'EduRaport - Sistem E-Raport & Manajemen Keuangan Sekolah',
       meta: [
-        { name: 'description', content: 'EduRaport is an integrated digital report card and financial management system for schools.' }
+        { name: 'description', content: 'EduRaport is an integrated digital report card and financial management system for schools.' },
+        { name: 'theme-color', content: '#1E3A8A' },
+        { name: 'mobile-web-app-capable', content: 'yes' },
+        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
+        { name: 'apple-mobile-web-app-title', content: 'EduRaport' }
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'manifest', href: '/manifest.webmanifest' },
+        { rel: 'apple-touch-icon', href: '/pwa-192x192.png' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap' }
